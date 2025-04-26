@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Stopwatch</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- Ikon untuk homescreen iOS -->
+    <link rel="apple-touch-icon" href="./icon/icon-192x192.png">
+    <link rel="apple-touch-startup-image" href="./icon/icon-512x512.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Stopwatch">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon/icon-192x192.png">
+
+    <style>
+        :root {
+            font-size: 16px;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: black;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .time-display {
+            display: flex;
+            font-size: 23vw !important;
+            font-weight: 200;
+            margin: 25vh 0 15vh;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+            font-feature-settings: "tnum";
+            /* Tabular numbers */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .time-part {
+            display: inline-block;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .time-part.separator {
+            margin: 0 0.04em;
+            font-size: 0.75em;
+            transform: translateY(-5%);
+            font-weight: 300;
+        }
+
+
+
+        .time-part.separator {
+            margin: 0 0.05em;
+            font-size: 0.85em;
+            transform: translateY(-5%);
+        }
+
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+            /* sedikit ke pinggir */
+            max-width: 320px;
+            width: 100%;
+            margin-bottom: 2vh;
+        }
+
+        .button {
+            width: 18vw;
+            height: 18vw;
+            min-width: 80px;
+            min-height: 80px;
+            max-width: 90px;
+            max-height: 90px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem !important;
+            cursor: pointer;
+            user-select: none;
+        }
+
+
+        .indicator-dots {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .indicator-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: gray;
+        }
+
+        .dot-white {
+            background-color: white;
+        }
+
+        .dot-grey {
+            background-color: #666;
+        }
+
+        .reset,
+        .lap {
+            background-color: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .start {
+            background-color: rgba(49, 164, 61, 0.3);
+            color: #3cd14b;
+        }
+
+        .stop {
+            background-color: rgba(255, 69, 58, 0.2);
+            color: #FF453A;
+        }
+
+        .lap-list-container {
+            width: 90%;
+            max-width: 400px;
+            border-top: 1px solid #333;
+            margin-top: 2vh;
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-bottom: 70px;
+        }
+
+        .lap-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #222;
+            font-size: 1.0rem !important;
+            font-weight: 500;
+        }
+
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            height: 60px;
+            background-color: black;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+            text-decoration: none;
+            color: #aaa;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            font-weight: 400;
+            text-align: center;
+        }
+
+        .nav-icon {
+            width: 25px;
+            height: 25px;
+            background-image: var(--icon-url);
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .nav-item.active {
+            color: #ffa500;
+        }
+
+        .lap-item.fastest {
+            color: #3cd14b;
+        }
+
+        .lap-item.slowest {
+            color: #FF453A;
+        }
+
+        @media (max-width: 400px) {
+            .time-display {
+                font-size: 18vw;
+            }
+
+            .button {
+                width: 52px;
+                height: 52px;
+                font-size: 0.9rem;
+            }
+
+            .lap-item {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="time-display" id="time">
+        <span class="time-part number" id="min">00</span>
+        <span class="time-part separator">:</span>
+        <span class="time-part number" id="sec">00</span>
+        <span class="time-part separator">,</span>
+        <span class="time-part number" id="ms">00</span>
+    </div>
+
+    <div class="buttons">
+        <div class="button reset" id="leftBtn">Reset</div>
+        <div class="indicator-dots">
+            <span class="indicator-dot dot-white"></span>
+            <span class="indicator-dot dot-grey"></span>
+        </div>
+        <div class="button start" id="rightBtn">Start</div>
+    </div>
+
+    <div class="lap-list-container" id="lapList"></div>
+
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item">
+            <span class="nav-icon" style="--icon-url: url('./icon/world-clock1.png');"></span>
+            <span class="nav-label">World Clock</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon" style="--icon-url: url('./icon/alarms2.png');"></span>
+            <span class="nav-label">Alarms</span>
+        </a>
+        <a href="#" class="nav-item active">
+            <span class="nav-icon" style="--icon-url: url('./icon/stopwatch-icon2.png');"></span>
+            <span class="nav-label">Stopwatch</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon" style="--icon-url: url('./icon/timers2.png');"></span>
+            <span class="nav-label">Timers</span>
+        </a>
+    </nav>
+
+    <!-- Script tetap -->
+    <script>
+        let isForcedMsActive = false;  // Variabel untuk status paksa milidetik
+        let forcedMs = null;
+        let isStartedOnce = false;  // Flag untuk memeriksa apakah Start sudah pernah ditekan
+
+        let startTime = 0;
+        let elapsedTime = 0;
+        let timerInterval;
+        let isRunning = false;
+        let lapCount = 1;
+
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+        const lapList = document.getElementById('lapList');
+
+        const minEl = document.getElementById('min');
+        const secEl = document.getElementById('sec');
+        const msEl = document.getElementById('ms');
+
+        let lapTimestamps = [];
+
+        // Fungsi untuk toggle paksa milidetik
+        function toggleForcedMs() {
+            isForcedMsActive = !isForcedMsActive; // Toggle status paksa milidetik
+            if (isForcedMsActive) {
+                alert("Angka paksa milidetik diaktifkan!");
+            } else {
+                alert("Angka paksa milidetik dinonaktifkan.");
+            }
+        }
+
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+            const milliseconds = Math.floor((ms % 1000) / 10).toString().padStart(2, '0');
+            return `${minutes}:${seconds},${milliseconds}`;
+        }
+
+        function updateTime() {
+            const now = Date.now();
+            elapsedTime = now - startTime;
+
+            const totalSeconds = Math.floor(elapsedTime / 1000);
+            const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+
+            let milliseconds;
+            if (!isRunning && forcedMs !== null) {
+                milliseconds = forcedMs.toString().padStart(2, '0');
+            } else {
+                milliseconds = Math.floor((elapsedTime % 1000) / 10).toString().padStart(2, '0');
+            }
+
+            minEl.textContent = minutes;
+            secEl.textContent = seconds;
+            msEl.textContent = milliseconds;
+
+            if (lapList.firstChild && lapTimestamps.length > 0) {
+                const lapTime = elapsedTime - lapTimestamps[lapTimestamps.length - 1];
+                lapList.firstChild.querySelector('span:last-child').textContent = formatTime(lapTime);
+            }
+        }
+
+        function startTimer() {
+            if (isStartedOnce) {
+                // Jika sudah pernah ditekan, paksa milidetik jika ada
+                startTime = Date.now() - elapsedTime;
+                isForcedMsActive = true;  // Paksa milidetik
+            } else {
+                // Jika pertama kali tekan Start, timer berjalan normal
+                startTime = Date.now() - elapsedTime;
+                isStartedOnce = true; // Set flag jika sudah pernah ditekan
+            }
+
+            timerInterval = setInterval(updateTime, 10);
+            isRunning = true;
+
+            rightBtn.textContent = "Stop";
+            rightBtn.classList.remove("start");
+            rightBtn.classList.add("stop");
+
+            leftBtn.textContent = "Lap";
+            leftBtn.classList.remove("reset");
+            leftBtn.classList.add("lap");
+
+            if (lapCount === 1) addLap();
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+
+            rightBtn.textContent = "Start";
+            rightBtn.classList.remove("stop");
+            rightBtn.classList.add("start");
+
+            leftBtn.textContent = "Reset";
+            leftBtn.classList.remove("lap");
+            leftBtn.classList.add("reset");
+
+            updateTime(); // <--- Tambahan baris ini penting!
+        }
+
+        function resetTimer() {
+            elapsedTime = 0;
+            lapCount = 1;
+            lapTimestamps = [];
+            forcedMs = null;
+            isStartedOnce = false; // Reset flag setelah reset
+            minEl.textContent = "00";
+            secEl.textContent = "00";
+            msEl.textContent = "00";
+            lapList.innerHTML = '';
+        }
+
+        function addLap() {
+            let currentElapsed = elapsedTime;
+
+            // Jika stopwatch dihentikan dan milidetik dipaksa, sesuaikan waktu
+            if (!isRunning && forcedMs !== null) {
+                currentElapsed = elapsedTime - (elapsedTime % 1000) + forcedMs * 10;
+            }
+
+            // Hitung waktu lap berdasarkan selisih antara lap sebelumnya dengan lap sekarang
+            const lapTime = currentElapsed - (lapTimestamps[lapTimestamps.length - 1] || 0);
+
+            // Simpan waktu lap untuk referensi nanti
+            lapTimestamps.push(currentElapsed);
+
+            // Buat elemen baru untuk lap yang ditambahkan
+            const lapItem = document.createElement("div");
+            lapItem.className = "lap-item";
+            lapItem.innerHTML = `<span>Lap ${lapCount++}</span><span>${formatTime(lapTime)}</span>`;
+            lapItem.dataset.lapTime = lapTime;
+
+            // Tambahkan lap baru ke daftar di atas
+            lapList.prepend(lapItem);
+
+            // Perbarui status lap tercepat dan terlambat
+            const laps = Array.from(lapList.querySelectorAll('.lap-item'));
+            if (laps.length < 2) return;
+
+            const lapTimes = laps.map(lap => parseInt(lap.dataset.lapTime));
+            const fastestTime = Math.min(...lapTimes);
+            const slowestTime = Math.max(...lapTimes);
+
+            laps.forEach(lap => {
+                lap.classList.remove('fastest', 'slowest');
+                const time = parseInt(lap.dataset.lapTime);
+                if (time === fastestTime) lap.classList.add('fastest');
+                if (time === slowestTime) lap.classList.add('slowest');
+            });
+        }
+
+        rightBtn.addEventListener('click', () => {
+            isRunning ? stopTimer() : startTimer();
+        });
+
+        leftBtn.addEventListener('click', () => {
+            isRunning ? addLap() : resetTimer();
+        });
+
+        msEl.addEventListener('click', () => {
+            const input = prompt("Masukkan milidetik sulap (00–99):");
+            if (input === null) return;
+            const value = parseInt(input);
+            if (!isNaN(value) && value >= 0 && value <= 99) {
+                forcedMs = value;
+            } else {
+                alert("Input tidak valid. Gunakan angka 00–99.");
+            }
+        });
+
+    </script>
+</body>
+
+</html>

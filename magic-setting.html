@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Magic Time Setting</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            background-color: black;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-top: 40px;
+            font-size: 24px;
+            color: #ffa500;
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        input {
+            margin-top: 5px;
+            width: 100%;
+            max-width: 200px;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            font-size: 16px;
+            background-color: #222;
+            color: white;
+        }
+
+        button {
+            margin-top: 30px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: none;
+            background-color: #3cd14b;
+            color: black;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #2da73b;
+        }
+
+        .back {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #aaa;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Set Magic Time</h1>
+
+    <label for="seconds">Magic Time (in seconds):</label>
+    <input type="number" id="seconds" placeholder="e.g. 22" min="0">
+
+    <button onclick="saveMagicTime()">Save</button>
+
+    <a class="back" href="stopwatch.html">← Back to Stopwatch</a>
+
+    <script>
+        function saveMagicTime() {
+            const seconds = parseInt(document.getElementById("seconds").value);
+            if (isNaN(seconds) || seconds < 0) {
+                alert("Please enter a valid number.");
+                return;
+            }
+
+            localStorage.setItem("magicTime", seconds);
+            alert("Magic time saved!");
+        }
+
+        // Auto-fill jika sudah pernah disimpan
+        const saved = localStorage.getItem("magicTime");
+        if (saved) {
+            document.getElementById("seconds").value = saved;
+        }
+    </script>
+</body>
+
+</html>

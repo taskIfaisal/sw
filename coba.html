@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Tombol Start</title>
+    <style>
+        .button-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100px;
+            height: 100px;
+        }
+
+        .circle-black-outer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 106px;
+            /* Sedikit lebih besar dari tombol hijau */
+            height: 106px;
+            /* Sedikit lebih besar dari tombol hijau */
+            background-color: black;
+            border-radius: 50%;
+            z-index: 1;
+            /* Di bawah tombol hijau */
+        }
+
+        .button-start {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100px;
+            height: 100px;
+            background-color: #4CAF50;
+            /* Warna hijau */
+            color: white;
+            border-radius: 50%;
+            /* Membuat lingkaran */
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            position: relative;
+            /* Untuk z-index */
+            z-index: 2;
+            /* Di atas lingkaran hitam */
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="button-container">
+        <div class="circle-black-outer"></div>
+        <button class="button-start">Start</button>
+    </div>
+
+</body>
+
+</html>

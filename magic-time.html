@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Magic Time Setting</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        body {
+            background: black;
+            color: white;
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        input,
+        button {
+            font-size: 18px;
+            padding: 10px;
+            margin-top: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Magic Lap Setting</h1>
+    <p>Masukkan 4 angka milidetik, pisahkan dengan koma:</p>
+
+    <input type="text" id="magicInput" placeholder="Contoh: 12,34,56,78">
+    <button onclick="saveMagic()">Simpan</button>
+
+    <script>
+        function saveMagic() {
+            const input = document.getElementById('magicInput').value;
+            const values = input.split(",").map(v => parseInt(v.trim())).filter(v => !isNaN(v) && v >= 0 && v <= 99);
+            if (values.length !== 4) {
+                alert("Masukkan tepat 4 angka antara 00 dan 99.");
+                return;
+            }
+            localStorage.setItem('magicLap', JSON.stringify(values));
+            alert("Magic Lap disimpan!");
+        }
+    </script>
+
+</body>
+
+</html>
