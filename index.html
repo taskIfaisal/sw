@@ -304,6 +304,12 @@
 
         let lapTimestamps = [];
 
+        // Set tampilan awal tombol kiri jadi "Lap"
+        leftBtn.textContent = "Lap";
+        leftBtn.classList.remove("reset");
+        leftBtn.classList.add("lap");
+
+
         // Fungsi untuk toggle paksa milidetik
         function toggleForcedMs() {
             isForcedMsActive = !isForcedMsActive; // Toggle status paksa milidetik
@@ -407,9 +413,6 @@
             leftBtn.classList.add("reset");
         }
 
-
-
-
         function resetTimer() {
             elapsedTime = 0;
             lapCount = 1;
@@ -420,7 +423,17 @@
             secEl.textContent = "00";
             msEl.textContent = "00";
             lapList.innerHTML = '';
+
+            // Tambahkan ini supaya tombol kembali ke kondisi awal
+            rightBtn.textContent = "Start";
+            rightBtn.classList.remove("stop");
+            rightBtn.classList.add("start");
+
+            leftBtn.textContent = "Lap";
+            leftBtn.classList.remove("reset");
+            leftBtn.classList.add("lap");
         }
+
 
         function addLap() {
             let currentElapsed;
