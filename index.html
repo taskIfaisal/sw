@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <title>Clock</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
     <link rel="apple-touch-icon" href="./icon/icon-192x192.png">
     <link rel="apple-touch-startup-image" href="./icon/icon-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -74,11 +73,8 @@
 
         .button {
             width: 70px;
-            /* Ukuran tombol */
             height: 70px;
-            /* Ukuran tombol */
             border-radius: 50%;
-            /* Membuat tombol berbentuk lingkaran */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -86,7 +82,6 @@
             cursor: pointer;
             user-select: none;
             position: relative;
-            /* Agar border bisa ditambahkan di luar */
         }
 
         .button::after {
@@ -98,28 +93,22 @@
             bottom: -4px;
             border-radius: 50%;
             border: 2px solid;
-            /* Border mengikuti warna tombol */
-            /* transition: border-color 0.3s ease; */
         }
 
         .reset::after {
             border-color: rgba(255, 255, 255, 0.3);
-            /* Sesuaikan dengan warna background reset */
         }
 
         .start::after {
             border-color: rgba(49, 164, 61, 0.3);
-            /* Sesuaikan dengan warna background start */
         }
 
         .stop::after {
             border-color: rgba(255, 69, 58, 0.2);
-            /* Sesuaikan dengan warna background stop */
         }
 
         .lap::after {
             border-color: rgba(255, 255, 255, 0.3);
-            /* Sesuaikan dengan warna background lap */
         }
 
         .indicator-dots {
@@ -232,7 +221,6 @@
         @media (max-width: 600px) {
             .time-display {
                 font-size: 23vw;
-                /* Ukuran font lebih besar untuk layar kecil */
             }
         }
     </style>
@@ -277,16 +265,12 @@
         </a>
     </nav>
 
-    <!-- Script tetap -->
     <script>
-        let forcedMsList = []; // Daftar angka paksa
-        let forcedMsIndex = 0; // Posisi angka paksa sekarang
-        let forcedMs = null; // <- Tambahkan ini
+        let forcedMsList = [];
+        let forcedMsIndex = 0;
+        let forcedMs = null;
         let isForcedMsActive = false;
-
-        // let isForcedMsActive = false;  // Variabel untuk status paksa milidetik
-        // let forcedMs = null;
-        let isStartedOnce = false;  // Flag untuk memeriksa apakah Start sudah pernah ditekan
+        let isStartedOnce = false;
 
         let startTime = 0;
         let elapsedTime = 0;
@@ -304,15 +288,12 @@
 
         let lapTimestamps = [];
 
-        // Set tampilan awal tombol kiri jadi "Lap"
         leftBtn.textContent = "Lap";
         leftBtn.classList.remove("reset");
         leftBtn.classList.add("lap");
 
-
-        // Fungsi untuk toggle paksa milidetik
         function toggleForcedMs() {
-            isForcedMsActive = !isForcedMsActive; // Toggle status paksa milidetik
+            isForcedMsActive = !isForcedMsActive;
             if (isForcedMsActive) {
                 alert("Angka paksa milidetik diaktifkan!");
             } else {
@@ -338,10 +319,8 @@
 
             let milliseconds;
             if (!isRunning && forcedMs !== null) {
-                // Gunakan angka paksa saat stopwatch berhenti
                 milliseconds = forcedMs.toString().padStart(2, '0');
             } else {
-                // Stopwatch berjalan normal
                 milliseconds = Math.floor((elapsedTime % 1000) / 10).toString().padStart(2, '0');
             }
 
@@ -349,7 +328,6 @@
             secEl.textContent = seconds;
             msEl.textContent = milliseconds;
 
-            // Update lap yang terakhir dengan waktu yang baru
             if (lapList.firstChild && lapTimestamps.length > 0) {
                 let lapTime;
                 if (!isRunning && forcedMs !== null) {
@@ -361,20 +339,13 @@
             }
         }
 
-
-
-
-
-
         function startTimer() {
             if (isStartedOnce) {
-                // Jika sudah pernah ditekan, paksa milidetik jika ada
                 startTime = Date.now() - elapsedTime;
-                isForcedMsActive = true;  // Paksa milidetik
+                isForcedMsActive = true;
             } else {
-                // Jika pertama kali tekan Start, timer berjalan normal
                 startTime = Date.now() - elapsedTime;
-                isStartedOnce = true; // Set flag jika sudah pernah ditekan
+                isStartedOnce = true;
             }
 
             timerInterval = setInterval(updateTime, 10);
@@ -395,14 +366,13 @@
             clearInterval(timerInterval);
             isRunning = false;
 
-            // Ambil angka paksa dari daftar, kalau masih ada
             if (forcedMsList.length > 0 && forcedMsIndex < forcedMsList.length) {
                 forcedMs = forcedMsList[forcedMsIndex++];
             } else {
                 forcedMs = null;
             }
 
-            updateTime(); // tampilkan angka paksa langsung
+            updateTime();
 
             rightBtn.textContent = "Start";
             rightBtn.classList.remove("stop");
@@ -418,13 +388,12 @@
             lapCount = 1;
             lapTimestamps = [];
             forcedMs = null;
-            isStartedOnce = false; // Reset flag setelah reset
+            isStartedOnce = false;
             minEl.textContent = "00";
             secEl.textContent = "00";
             msEl.textContent = "00";
             lapList.innerHTML = '';
 
-            // Tambahkan ini supaya tombol kembali ke kondisi awal
             rightBtn.textContent = "Start";
             rightBtn.classList.remove("stop");
             rightBtn.classList.add("start");
@@ -434,22 +403,19 @@
             leftBtn.classList.add("lap");
         }
 
-
         function addLap() {
             let currentElapsed;
 
             if (!isRunning && forcedMs !== null) {
-                // Stopwatch tidak berjalan dan milidetik dipaksa
-                currentElapsed = elapsedTime + forcedMs * 10; // Gunakan elapsedTime yang sudah dihitung dan tambahkan milidetik paksa
+                currentElapsed = elapsedTime + forcedMs * 10;
             } else {
-                // Stopwatch sedang berjalan normal
                 currentElapsed = elapsedTime;
             }
 
             const previousElapsed = lapTimestamps.length > 0 ? lapTimestamps[lapTimestamps.length - 1] : 0;
             const lapTime = currentElapsed - previousElapsed;
 
-            lapTimestamps.push(currentElapsed); // Simpan timestamp terbaru
+            lapTimestamps.push(currentElapsed);
 
             const formattedLapTime = formatTime(lapTime);
 
@@ -460,15 +426,10 @@
 
             lapList.prepend(lapItem);
 
-            // Update lap terbaru dengan waktu yang benar-benar baru
             updateLapTimes();
-
-            // Menyegarkan lap list
             updateLapList();
         }
 
-
-        // Fungsi untuk menyegarkan lap yang telah ditambahkan
         function updateLapTimes() {
             const laps = Array.from(lapList.querySelectorAll('.lap-item'));
             if (laps.length < 2) return;
@@ -494,22 +455,20 @@
         });
 
         msEl.addEventListener('click', () => {
-            const input = prompt("Masukkan 4 angka (contoh: 12,31,45,77):");
+            const input = prompt("Masukkan angka milidetik (pisahkan dengan koma jika lebih dari satu):");
             if (!input) return;
 
             const values = input.split(",").map(v => parseInt(v.trim())).filter(v => !isNaN(v) && v >= 0 && v <= 99);
 
-            if (values.length !== 4) {
-                alert("Masukkan tepat 4 angka antara 00 dan 99.");
+            if (values.length === 0) {
+                alert("Masukkan minimal satu angka antara 00 dan 99.");
                 return;
             }
 
             forcedMsList = values;
             forcedMsIndex = 0;
-            alert("Empat angka milidetik telah disimpan.");
+            alert(`${values.length} angka milidetik telah disimpan.`);
         });
-
-
     </script>
 </body>
 
