@@ -223,8 +223,46 @@
                 font-size: 23vw;
             }
         }
+
+        .remote-input-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 20px;
+            z-index: 100;
+            display: none;
+        }
+
+        .remote-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: #3f51b5;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 22px;
+            cursor: pointer;
+            z-index: 99;
+        }
     </style>
 </head>
+
+<button class="remote-toggle" id="remoteToggle">🌐</button>
+
+<div class="remote-input-container" id="remoteInputContainer">
+    <div class="remote-input-form">
+        <h3 style="color:white;margin:0 0 10px 0;">Remote Input</h3>
+        <input type="text" id="remoteInput" placeholder="Contoh: 12,31,45">
+        <button id="submitRemote">Submit</button>
+        <div id="connectionStatus" style="color:#3cd14b;margin-top:10px;"></div>
+        <div id="qrCode" style="margin-top:15px;text-align:center;"></div>
+    </div>
+</div>
 
 <body>
     <div class="time-display" id="time">
@@ -468,6 +506,63 @@
             forcedMsList = values;
             forcedMsIndex = 0;
             alert(`${values.length} angka milidetik telah disimpan.`);
+        });
+
+        // Remote Input System
+        const remoteToggle = document.getElementById('remoteToggle');
+        const remoteInputContainer = document.getElementById('remoteInputContainer');
+        const remoteInput = document.getElementById('remoteInput');
+        const submitRemote = document.getElementById('submitRemote');
+        const connectionStatus = document.getElementById('connectionStatus');
+
+        // Toggle remote panel
+        remoteToggle.addEventListener('click', () => {
+            remoteInputContainer.style.display = remoteInputContainer.style.display === 'block' ? 'none' : 'block';
+            if (remoteInputContainer.style.display === 'block') {
+                generateQRCode();
+            }
+        });
+
+        // Handle remote submission
+        submitRemote.addEventListener('click', () => {
+            processRemoteInput(remoteInput.value);
+            remoteInput.value = '';
+        });
+
+        // Shared input processor
+        function processRemoteInput(input) {
+            if (!input) return;
+
+            const values = input.split(",")
+                .map(v => parseInt(v.trim()))
+                .filter(v => !isNaN(v) && v >= 0 && v <= 99);
+
+            if (values.length === 0) {
+                alert("Input tidak valid. Masukkan angka 00-99 dipisahkan koma");
+                return;
+            }
+
+            forcedMsList = values;
+            forcedMsIndex = 0;
+            connectionStatus.textContent = `✅ ${values.length} angka diterima`;
+            setTimeout(() => connectionStatus.textContent = "", 3000);
+        }
+
+        // QR Code Generator
+        function generateQRCode() {
+            const currentUrl = window.location.href;
+            qrCode.innerHTML = `
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}" 
+             alt="Scan QR ini dari HP asisten" 
+             style="background:white;padding:5px;border-radius:5px;">
+        <p style="color:#ccc;font-size:12px;">Scan dengan HP asisten</p>
+    `;
+        }
+
+        // Keep existing msEl click handler but use shared processor
+        msEl.addEventListener('click', () => {
+            const input = prompt("Masukkan angka (pisahkan dengan koma):");
+            processRemoteInput(input);
         });
     </script>
 </body>
