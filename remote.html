@@ -2,125 +2,472 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Clock with Remote Input</title>
+    <title>Clock</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="apple-touch-icon" href="./icon/icon-192x192.png">
+    <link rel="apple-touch-startup-image" href="./icon/icon-512x512.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Stopwatch">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon/icon-192x192.png">
+
     <style>
-        /* [Previous CSS styles remain exactly the same] */
-        /* ... */
-        
-        /* Add new styles for remote input */
-        .remote-input-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0,0,0,0.9);
-            padding: 15px;
-            z-index: 100;
-            display: none;
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow-x: hidden;
+            background-color: rgb(255, 255, 255);
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            box-sizing: border-box;
         }
-        
-        .remote-input-form {
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: inherit;
+        }
+
+        body {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            align-items: center;
+            justify-content: flex-start;
         }
-        
-        .remote-input-form input {
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 5px;
-            border: 1px solid #333;
+
+        .time-display {
+            display: flex;
+            font-size: 20vw;
+            font-weight: 200;
+            margin: 24vh 0 15.5vh;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+            font-feature-settings: "tnum";
+            align-items: center;
+            justify-content: center;
+            width: 100%;
         }
-        
-        .remote-input-form button {
-            padding: 10px;
-            background: #3cd14b;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
+
+        .time-part {
+            display: inline-block;
+            font-variant-numeric: tabular-nums;
         }
-        
-        .remote-toggle {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: #3f51b5;
-            color: white;
-            border: none;
+
+        .time-part.separator {
+            margin: 0 0.05em;
+            font-size: 0.8em;
+            transform: translateY(-5%);
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 5vw;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 2vh;
+        }
+
+        .button {
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
             cursor: pointer;
-            z-index: 99;
+            user-select: none;
+            position: relative;
+        }
+
+        .button::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border-radius: 50%;
+            border: 2px solid;
+        }
+
+        .reset::after {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .start::after {
+            border-color: rgba(49, 164, 61, 0.3);
+        }
+
+        .stop::after {
+            border-color: rgba(255, 69, 58, 0.2);
+        }
+
+        .lap::after {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .indicator-dots {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .indicator-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: gray;
+        }
+
+        .dot-white {
+            background-color: white;
+        }
+
+        .dot-grey {
+            background-color: #666;
+        }
+
+        .reset,
+        .lap {
+            background-color: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .start {
+            background-color: rgba(49, 164, 61, 0.3);
+            color: #3cd14b;
+        }
+
+        .stop {
+            background-color: rgba(255, 69, 58, 0.2);
+            color: #FF453A;
+        }
+
+        .lap-list-container {
+            width: 90%;
+            max-width: 400px;
+            border-top: 1px solid #333;
+            margin-top: 2vh;
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-bottom: 70px;
+        }
+
+        .lap-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #222;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            height: 60px;
+            background-color: black;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+            text-decoration: none;
+            color: #aaa;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            font-weight: 400;
+            text-align: center;
+        }
+
+        .nav-icon {
+            width: 25px;
+            height: 25px;
+            background-image: var(--icon-url);
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .nav-item.active {
+            color: #ffa500;
+        }
+
+        .lap-item.fastest {
+            color: #3cd14b;
+        }
+
+        .lap-item.slowest {
+            color: #FF453A;
+        }
+
+        @media (max-width: 600px) {
+            .time-display {
+                font-size: 23vw;
+            }
         }
     </style>
 </head>
+
 <body>
-    <button class="remote-toggle" id="remoteToggle">🌐</button>
-    
-    <div class="remote-input-container" id="remoteInputContainer">
-        <div class="remote-input-form">
-            <h3 style="color:white;margin:0 0 10px 0;">Remote Input</h3>
-            <input type="text" id="remoteInput" placeholder="Enter numbers (e.g., 12,31,45,77)">
-            <button id="submitRemote">Submit</button>
-            <div id="qrCode" style="margin-top: 15px; text-align: center;"></div>
-        </div>
+    <div class="time-display" id="time">
+        <span class="time-part number" id="min">00</span>
+        <span class="time-part separator">:</span>
+        <span class="time-part number" id="sec">00</span>
+        <span class="time-part separator">,</span>
+        <span class="time-part number" id="ms">00</span>
     </div>
 
-    <!-- [Previous HTML content remains exactly the same] -->
-    <!-- ... -->
+    <div class="buttons">
+        <div class="button reset" id="leftBtn">Reset</div>
+        <div class="indicator-dots">
+            <span class="indicator-dot dot-white"></span>
+            <span class="indicator-dot dot-grey"></span>
+        </div>
+        <div class="button start" id="rightBtn">Start</div>
+    </div>
+
+    <div class="lap-list-container" id="lapList"></div>
+
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item">
+            <span class="nav-icon" style="--icon-url: url('./icon/world-clock1.png');"></span>
+            <span class="nav-label">World Clock</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon" style="--icon-url: url('./icon/alarms2.png');"></span>
+            <span class="nav-label">Alarms</span>
+        </a>
+        <a href="#" class="nav-item active">
+            <span class="nav-icon" style="--icon-url: url('./icon/stopwatch-icon2.png');"></span>
+            <span class="nav-label">Stopwatch</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon" style="--icon-url: url('./icon/timers2.png');"></span>
+            <span class="nav-label">Timers</span>
+        </a>
+    </nav>
 
     <script>
-        // [Previous JavaScript variables and functions remain the same]
-        // ...
-        
-        // Add new remote input functionality
-        const remoteToggle = document.getElementById('remoteToggle');
-        const remoteInputContainer = document.getElementById('remoteInputContainer');
-        const remoteInput = document.getElementById('remoteInput');
-        const submitRemote = document.getElementById('submitRemote');
-        const qrCode = document.getElementById('qrCode');
-        
-        // Generate QR code for remote connection
-        function generateQRCode() {
-            const currentUrl = window.location.href;
-            qrCode.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}" 
-                               alt="Scan to connect" style="background:white;padding:5px;">`;
-        }
-        
-        // Toggle remote input panel
-        remoteToggle.addEventListener('click', () => {
-            remoteInputContainer.style.display = remoteInputContainer.style.display === 'block' ? 'none' : 'block';
-            if (remoteInputContainer.style.display === 'block') {
-                generateQRCode();
+        let forcedMsList = [];
+        let forcedMsIndex = 0;
+        let forcedMs = null;
+        let isForcedMsActive = false;
+        let isStartedOnce = false;
+
+        let startTime = 0;
+        let elapsedTime = 0;
+        let timerInterval;
+        let isRunning = false;
+        let lapCount = 1;
+
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+        const lapList = document.getElementById('lapList');
+
+        const minEl = document.getElementById('min');
+        const secEl = document.getElementById('sec');
+        const msEl = document.getElementById('ms');
+
+        let lapTimestamps = [];
+
+        leftBtn.textContent = "Lap";
+        leftBtn.classList.remove("reset");
+        leftBtn.classList.add("lap");
+
+        function toggleForcedMs() {
+            isForcedMsActive = !isForcedMsActive;
+            if (isForcedMsActive) {
+                alert("Angka paksa milidetik diaktifkan!");
+            } else {
+                alert("Angka paksa milidetik dinonaktifkan.");
             }
+        }
+
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+            const milliseconds = Math.floor((ms % 1000) / 10).toString().padStart(2, '0');
+            return `${minutes}:${seconds},${milliseconds}`;
+        }
+
+        function updateTime() {
+            const now = Date.now();
+            elapsedTime = now - startTime;
+
+            const totalSeconds = Math.floor(elapsedTime / 1000);
+            const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+
+            let milliseconds;
+            if (!isRunning && forcedMs !== null) {
+                milliseconds = forcedMs.toString().padStart(2, '0');
+            } else {
+                milliseconds = Math.floor((elapsedTime % 1000) / 10).toString().padStart(2, '0');
+            }
+
+            minEl.textContent = minutes;
+            secEl.textContent = seconds;
+            msEl.textContent = milliseconds;
+
+            if (lapList.firstChild && lapTimestamps.length > 0) {
+                let lapTime;
+                if (!isRunning && forcedMs !== null) {
+                    lapTime = Math.floor(elapsedTime / 1000) * 1000 + forcedMs * 10 - lapTimestamps[lapTimestamps.length - 1];
+                } else {
+                    lapTime = elapsedTime - lapTimestamps[lapTimestamps.length - 1];
+                }
+                lapList.firstChild.querySelector('span:last-child').textContent = formatTime(lapTime);
+            }
+        }
+
+        function startTimer() {
+            if (isStartedOnce) {
+                startTime = Date.now() - elapsedTime;
+                isForcedMsActive = true;
+            } else {
+                startTime = Date.now() - elapsedTime;
+                isStartedOnce = true;
+            }
+
+            timerInterval = setInterval(updateTime, 10);
+            isRunning = true;
+
+            rightBtn.textContent = "Stop";
+            rightBtn.classList.remove("start");
+            rightBtn.classList.add("stop");
+
+            leftBtn.textContent = "Lap";
+            leftBtn.classList.remove("reset");
+            leftBtn.classList.add("lap");
+
+            if (lapCount === 1) addLap();
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+
+            if (forcedMsList.length > 0 && forcedMsIndex < forcedMsList.length) {
+                forcedMs = forcedMsList[forcedMsIndex++];
+            } else {
+                forcedMs = null;
+            }
+
+            updateTime();
+
+            rightBtn.textContent = "Start";
+            rightBtn.classList.remove("stop");
+            rightBtn.classList.add("start");
+
+            leftBtn.textContent = "Reset";
+            leftBtn.classList.remove("lap");
+            leftBtn.classList.add("reset");
+        }
+
+        function resetTimer() {
+            elapsedTime = 0;
+            lapCount = 1;
+            lapTimestamps = [];
+            forcedMs = null;
+            isStartedOnce = false;
+            minEl.textContent = "00";
+            secEl.textContent = "00";
+            msEl.textContent = "00";
+            lapList.innerHTML = '';
+
+            rightBtn.textContent = "Start";
+            rightBtn.classList.remove("stop");
+            rightBtn.classList.add("start");
+
+            leftBtn.textContent = "Lap";
+            leftBtn.classList.remove("reset");
+            leftBtn.classList.add("lap");
+        }
+
+        function addLap() {
+            let currentElapsed;
+
+            if (!isRunning && forcedMs !== null) {
+                currentElapsed = elapsedTime + forcedMs * 10;
+            } else {
+                currentElapsed = elapsedTime;
+            }
+
+            const previousElapsed = lapTimestamps.length > 0 ? lapTimestamps[lapTimestamps.length - 1] : 0;
+            const lapTime = currentElapsed - previousElapsed;
+
+            lapTimestamps.push(currentElapsed);
+
+            const formattedLapTime = formatTime(lapTime);
+
+            const lapItem = document.createElement("div");
+            lapItem.className = "lap-item";
+            lapItem.innerHTML = `<span>Lap ${lapCount++}</span><span>${formattedLapTime}</span>`;
+            lapItem.dataset.lapTime = lapTime;
+
+            lapList.prepend(lapItem);
+
+            updateLapTimes();
+            updateLapList();
+        }
+
+        function updateLapTimes() {
+            const laps = Array.from(lapList.querySelectorAll('.lap-item'));
+            if (laps.length < 2) return;
+
+            const lapTimes = laps.map(lap => parseInt(lap.dataset.lapTime));
+            const fastestTime = Math.min(...lapTimes);
+            const slowestTime = Math.max(...lapTimes);
+
+            laps.forEach(lap => {
+                lap.classList.remove('fastest', 'slowest');
+                const time = parseInt(lap.dataset.lapTime);
+                if (time === fastestTime) lap.classList.add('fastest');
+                if (time === slowestTime) lap.classList.add('slowest');
+            });
+        }
+
+        rightBtn.addEventListener('click', () => {
+            isRunning ? stopTimer() : startTimer();
         });
-        
-        // Handle remote input submission
-        submitRemote.addEventListener('click', () => {
-            const input = remoteInput.value.trim();
+
+        leftBtn.addEventListener('click', () => {
+            isRunning ? addLap() : resetTimer();
+        });
+
+        msEl.addEventListener('click', () => {
+            const input = prompt("Masukkan angka milidetik (pisahkan dengan koma jika lebih dari satu):");
             if (!input) return;
-            
+
             const values = input.split(",").map(v => parseInt(v.trim())).filter(v => !isNaN(v) && v >= 0 && v <= 99);
 
             if (values.length === 0) {
-                alert("Please enter at least one number between 00 and 99.");
+                alert("Masukkan minimal satu angka antara 00 dan 99.");
                 return;
             }
 
             forcedMsList = values;
             forcedMsIndex = 0;
-            alert(`${values.length} numbers received: ${values.join(', ')}`);
-            remoteInput.value = '';
-            remoteInputContainer.style.display = 'none';
+            alert(`${values.length} angka milidetik telah disimpan.`);
         });
-        
-        // [Rest of the previous JavaScript remains the same]
-        // ...
     </script>
 </body>
 </html>
