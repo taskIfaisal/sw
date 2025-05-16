@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Clock with Remote Input</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        /* [Previous CSS styles remain exactly the same] */
+        /* ... */
+        
+        /* Add new styles for remote input */
+        .remote-input-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.9);
+            padding: 15px;
+            z-index: 100;
+            display: none;
+        }
+        
+        .remote-input-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .remote-input-form input {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #333;
+        }
+        
+        .remote-input-form button {
+            padding: 10px;
+            background: #3cd14b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .remote-toggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #3f51b5;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 99;
+        }
+    </style>
+</head>
+<body>
+    <button class="remote-toggle" id="remoteToggle">🌐</button>
+    
+    <div class="remote-input-container" id="remoteInputContainer">
+        <div class="remote-input-form">
+            <h3 style="color:white;margin:0 0 10px 0;">Remote Input</h3>
+            <input type="text" id="remoteInput" placeholder="Enter numbers (e.g., 12,31,45,77)">
+            <button id="submitRemote">Submit</button>
+            <div id="qrCode" style="margin-top: 15px; text-align: center;"></div>
+        </div>
+    </div>
+
+    <!-- [Previous HTML content remains exactly the same] -->
+    <!-- ... -->
+
+    <script>
+        // [Previous JavaScript variables and functions remain the same]
+        // ...
+        
+        // Add new remote input functionality
+        const remoteToggle = document.getElementById('remoteToggle');
+        const remoteInputContainer = document.getElementById('remoteInputContainer');
+        const remoteInput = document.getElementById('remoteInput');
+        const submitRemote = document.getElementById('submitRemote');
+        const qrCode = document.getElementById('qrCode');
+        
+        // Generate QR code for remote connection
+        function generateQRCode() {
+            const currentUrl = window.location.href;
+            qrCode.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}" 
+                               alt="Scan to connect" style="background:white;padding:5px;">`;
+        }
+        
+        // Toggle remote input panel
+        remoteToggle.addEventListener('click', () => {
+            remoteInputContainer.style.display = remoteInputContainer.style.display === 'block' ? 'none' : 'block';
+            if (remoteInputContainer.style.display === 'block') {
+                generateQRCode();
+            }
+        });
+        
+        // Handle remote input submission
+        submitRemote.addEventListener('click', () => {
+            const input = remoteInput.value.trim();
+            if (!input) return;
+            
+            const values = input.split(",").map(v => parseInt(v.trim())).filter(v => !isNaN(v) && v >= 0 && v <= 99);
+
+            if (values.length === 0) {
+                alert("Please enter at least one number between 00 and 99.");
+                return;
+            }
+
+            forcedMsList = values;
+            forcedMsIndex = 0;
+            alert(`${values.length} numbers received: ${values.join(', ')}`);
+            remoteInput.value = '';
+            remoteInputContainer.style.display = 'none';
+        });
+        
+        // [Rest of the previous JavaScript remains the same]
+        // ...
+    </script>
+</body>
+</html>
