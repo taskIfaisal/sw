@@ -150,17 +150,15 @@
         }
 
         .lap-list-container {
-    width: 90%;
+    width: 100vw;
     max-width: 400px;
     border-top: 1px solid #333;
     margin-top: 2vh;
     flex-grow: 1;
     overflow-y: auto;
     padding-bottom: 70px;
-    padding-right: 10px; /* Tambahkan ini untuk beri jarak dari scrollbar */
+    box-sizing: content-box; /* memastikan scrollbar tidak tergeser oleh padding */
 }
-
-
         .lap-item {
             display: flex;
             justify-content: space-between;
