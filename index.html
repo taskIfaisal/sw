@@ -1,5 +1,7 @@
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Clock</title>
@@ -149,15 +151,14 @@
         }
 
         .lap-list-container {
-            width: 90%;
-            max-width: 400px;
-            border-top: 1px solid #333;
-            margin-top: 2vh;
-            flex-grow: 1;
-            overflow-y: auto;
-            padding-bottom: 70px;
-        }
-
+    width: 100vw;
+    max-width: 400px;
+    border-top: 1px solid #333;
+    margin-top: 2vh;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-bottom: 70px;
+}
         .lap-item {
             display: flex;
             justify-content: space-between;
@@ -165,6 +166,8 @@
             border-bottom: 1px solid #222;
             font-size: 1rem;
             font-weight: 500;
+            color: white;
+            /* Default color for all laps */
         }
 
         .bottom-nav {
@@ -211,10 +214,12 @@
 
         .lap-item.fastest {
             color: #3cd14b;
+            /* Green for fastest */
         }
 
         .lap-item.slowest {
             color: #FF453A;
+            /* Red for slowest */
         }
 
         @media (max-width: 600px) {
@@ -426,12 +431,18 @@
             lapList.prepend(lapItem);
 
             updateLapTimes();
-            updateLapList();
         }
 
         function updateLapTimes() {
             const laps = Array.from(lapList.querySelectorAll('.lap-item'));
-            if (laps.length < 2) return;
+
+            // Only color laps when there are at least 3 laps
+            if (laps.length < 3) {
+                laps.forEach(lap => {
+                    lap.classList.remove('fastest', 'slowest');
+                });
+                return;
+            }
 
             const lapTimes = laps.map(lap => parseInt(lap.dataset.lapTime));
             const fastestTime = Math.min(...lapTimes);
@@ -440,8 +451,11 @@
             laps.forEach(lap => {
                 lap.classList.remove('fastest', 'slowest');
                 const time = parseInt(lap.dataset.lapTime);
-                if (time === fastestTime) lap.classList.add('fastest');
-                if (time === slowestTime) lap.classList.add('slowest');
+                if (time === fastestTime) {
+                    lap.classList.add('fastest');
+                } else if (time === slowestTime) {
+                    lap.classList.add('slowest');
+                }
             });
         }
 
@@ -470,4 +484,5 @@
         });
     </script>
 </body>
+
 </html>
