@@ -97,10 +97,6 @@
       max-height: 80vh;
     }
 
-    #cropModal button {
-      margin-top: 10px;
-    }
-
     @media (max-width: 500px) {
       #uploadForm {
         padding: 15px;
@@ -124,7 +120,6 @@
   <input type="file" id="imageInput2" accept="image/*"><br>
   <label>Waktu delay sebelum ganti (detik):</label><br>
   <input type="number" id="delayInput" min="1" value="3"><br>
-  <button type="button" id="runBtn" disabled>Jalankan</button>
 </form>
 
 <div id="cropModal">
@@ -140,25 +135,15 @@
   const imageInput1 = document.getElementById('imageInput1');
   const imageInput2 = document.getElementById('imageInput2');
   const delayInput = document.getElementById('delayInput');
-  const runBtn = document.getElementById('runBtn');
-
   const cropModal = document.getElementById('cropModal');
   const cropImage = document.getElementById('cropImage');
+
   let cropper;
   let cropTargetIndex = null;
   let backgrounds = [null, null];
 
-  let lastTap = 0;
-  document.addEventListener('click', () => {
-    const now = new Date().getTime();
-    if (now - lastTap < 400) {
-      uploadForm.style.display = 'block';
-    }
-    lastTap = now;
-  });
-
   function checkReady() {
-    runBtn.disabled = !(backgrounds[0] && backgrounds[1]);
+    return backgrounds[0] && backgrounds[1];
   }
 
   function openCropper(file, index) {
@@ -171,33 +156,22 @@
       cropper = new Cropper(cropImage, {
         viewMode: 1,
         autoCropArea: 1,
-        movable: false,
+        movable: true,
         zoomable: true,
-        scalable: false,
-        cropBoxMovable: false,
+        scalable: true,
         cropBoxResizable: true,
-        ready() {
-          const imageData = cropper.getImageData();
-          const cropHeight = imageData.height * 0.5;
-          cropper.setCropBoxData({
-            left: 0,
-            top: 0,
-            width: imageData.width,
-            height: cropHeight
-          });
-        }
+        cropBoxMovable: true
       });
     };
     reader.readAsDataURL(file);
   }
 
   function applyCrop() {
-    const canvas = cropper.getCroppedCanvas(); // FULL resolution
-    const croppedDataUrl = canvas.toDataURL("image/jpeg", 1.0); // quality 100%
+    const canvas = cropper.getCroppedCanvas(); // biarkan ukuran asli
+    const croppedDataUrl = canvas.toDataURL("image/jpeg", 1.0);
     backgrounds[cropTargetIndex] = croppedDataUrl;
     cropper.destroy();
     cropModal.style.display = 'none';
-    checkReady();
   }
 
   imageInput1.addEventListener('change', () => {
@@ -212,10 +186,11 @@
     }
   });
 
-  runBtn.addEventListener('click', () => {
+  function startTransition() {
+    if (!checkReady()) return alert("Silakan pilih dan crop kedua gambar terlebih dahulu.");
+
     const delaySec = parseInt(delayInput.value) || 3;
     uploadForm.style.display = 'none';
-
     bg.style.backgroundImage = `url('${backgrounds[0]}')`;
 
     setTimeout(() => {
@@ -236,6 +211,24 @@
         bgNext.style.filter = 'blur(8px)';
       }, 500);
     }, delaySec * 1000);
+  }
+
+  // Detect tap count
+  let tapTimes = [];
+  document.addEventListener('click', () => {
+    const now = Date.now();
+    tapTimes.push(now);
+
+    // Keep only last 3 taps in 1 second
+    tapTimes = tapTimes.filter(t => now - t < 1000);
+
+    if (tapTimes.length === 2) {
+      startTransition();
+      tapTimes = [];
+    } else if (tapTimes.length === 3) {
+      uploadForm.style.display = 'block';
+      tapTimes = [];
+    }
   });
 </script>
 
