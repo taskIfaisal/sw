@@ -75,11 +75,6 @@
       cursor: pointer;
     }
 
-    button:disabled {
-      background-color: #555;
-      cursor: not-allowed;
-    }
-
     #cropModal {
       display: none;
       position: fixed;
@@ -96,16 +91,6 @@
       max-width: 90vw;
       max-height: 80vh;
     }
-
-    @media (max-width: 500px) {
-      #uploadForm {
-        padding: 15px;
-      }
-
-      input, button {
-        font-size: 14px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -120,6 +105,7 @@
   <input type="file" id="imageInput2" accept="image/*"><br>
   <label>Waktu delay sebelum ganti (detik):</label><br>
   <input type="number" id="delayInput" min="1" value="3"><br>
+  <button type="button" id="saveBtn">Simpan</button>
 </form>
 
 <div id="cropModal">
@@ -135,16 +121,15 @@
   const imageInput1 = document.getElementById('imageInput1');
   const imageInput2 = document.getElementById('imageInput2');
   const delayInput = document.getElementById('delayInput');
+  const saveBtn = document.getElementById('saveBtn');
   const cropModal = document.getElementById('cropModal');
   const cropImage = document.getElementById('cropImage');
 
   let cropper;
   let cropTargetIndex = null;
   let backgrounds = [null, null];
-
-  function checkReady() {
-    return backgrounds[0] && backgrounds[1];
-  }
+  let readyToRun = false;
+  let transitionStarted = false;
 
   function openCropper(file, index) {
     cropTargetIndex = index;
@@ -167,7 +152,7 @@
   }
 
   function applyCrop() {
-    const canvas = cropper.getCroppedCanvas(); // biarkan ukuran asli
+    const canvas = cropper.getCroppedCanvas(); // full size
     const croppedDataUrl = canvas.toDataURL("image/jpeg", 1.0);
     backgrounds[cropTargetIndex] = croppedDataUrl;
     cropper.destroy();
@@ -175,60 +160,59 @@
   }
 
   imageInput1.addEventListener('change', () => {
-    if (imageInput1.files[0]) {
-      openCropper(imageInput1.files[0], 0);
-    }
+    if (imageInput1.files[0]) openCropper(imageInput1.files[0], 0);
   });
 
   imageInput2.addEventListener('change', () => {
-    if (imageInput2.files[0]) {
-      openCropper(imageInput2.files[0], 1);
+    if (imageInput2.files[0]) openCropper(imageInput2.files[0], 1);
+  });
+
+  saveBtn.addEventListener('click', () => {
+    if (!backgrounds[0] || !backgrounds[1]) {
+      alert("Silakan upload dan crop kedua gambar terlebih dahulu.");
+      return;
+    }
+    bg.style.backgroundImage = `url('${backgrounds[0]}')`;
+    uploadForm.style.display = 'none';
+    readyToRun = true;
+  });
+
+  document.addEventListener('click', () => {
+    // Double tap = buka form
+    const now = new Date().getTime();
+    if (!transitionStarted && readyToRun) {
+      transitionStarted = true;
+      const delaySec = parseInt(delayInput.value) || 3;
+
+      setTimeout(() => {
+        bgNext.style.backgroundImage = `url('${backgrounds[1]}')`;
+        bgNext.style.zIndex = 1;
+        bg.style.zIndex = 0;
+
+        requestAnimationFrame(() => {
+          bgNext.style.opacity = 1;
+          bgNext.style.transform = 'scale(1)';
+          bgNext.style.filter = 'blur(0px)';
+        });
+
+        setTimeout(() => {
+          bg.style.backgroundImage = `url('${backgrounds[1]}')`;
+          bgNext.style.opacity = 0;
+          bgNext.style.transform = 'scale(1.05)';
+          bgNext.style.filter = 'blur(8px)';
+        }, 500);
+      }, delaySec * 1000);
     }
   });
 
-  function startTransition() {
-    if (!checkReady()) return alert("Silakan pilih dan crop kedua gambar terlebih dahulu.");
-
-    const delaySec = parseInt(delayInput.value) || 3;
-    uploadForm.style.display = 'none';
-    bg.style.backgroundImage = `url('${backgrounds[0]}')`;
-
-    setTimeout(() => {
-      bgNext.style.backgroundImage = `url('${backgrounds[1]}')`;
-      bgNext.style.zIndex = 1;
-      bg.style.zIndex = 0;
-
-      requestAnimationFrame(() => {
-        bgNext.style.opacity = 1;
-        bgNext.style.transform = 'scale(1)';
-        bgNext.style.filter = 'blur(0px)';
-      });
-
-      setTimeout(() => {
-        bg.style.backgroundImage = `url('${backgrounds[1]}')`;
-        bgNext.style.opacity = 0;
-        bgNext.style.transform = 'scale(1.05)';
-        bgNext.style.filter = 'blur(8px)';
-      }, 500);
-    }, delaySec * 1000);
-  }
-
-  // Detect tap count
-  let tapTimes = [];
+  // Tap 2x untuk buka form
+  let lastTap = 0;
   document.addEventListener('click', () => {
-    const now = Date.now();
-    tapTimes.push(now);
-
-    // Keep only last 3 taps in 1 second
-    tapTimes = tapTimes.filter(t => now - t < 1000);
-
-    if (tapTimes.length === 2) {
-      startTransition();
-      tapTimes = [];
-    } else if (tapTimes.length === 3) {
+    const now = new Date().getTime();
+    if (now - lastTap < 400) {
       uploadForm.style.display = 'block';
-      tapTimes = [];
     }
+    lastTap = now;
   });
 </script>
 
