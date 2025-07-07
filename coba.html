@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <title>Wallpaper Cropper</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="lock">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="lock">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>
   <style>
@@ -75,6 +75,11 @@
       cursor: pointer;
     }
 
+    button:disabled {
+      background-color: #555;
+      cursor: not-allowed;
+    }
+
     #cropModal {
       display: none;
       position: fixed;
@@ -84,12 +89,25 @@
       background: rgba(0,0,0,0.85);
       justify-content: center;
       align-items: center;
-      flex-direction: column;
     }
 
     #cropModal img {
       max-width: 90vw;
       max-height: 80vh;
+    }
+
+    #cropModal button {
+      margin-top: 10px;
+    }
+
+    @media (max-width: 500px) {
+      #uploadForm {
+        padding: 15px;
+      }
+
+      input, button {
+        font-size: 14px;
+      }
     }
   </style>
 </head>
@@ -105,12 +123,15 @@
   <input type="file" id="imageInput2" accept="image/*"><br>
   <label>Waktu delay sebelum ganti (detik):</label><br>
   <input type="number" id="delayInput" min="1" value="3"><br>
-  <button type="button" id="saveBtn">Simpan</button>
+  <button type="button" id="runBtn" disabled>Jalankan</button>
 </form>
 
 <div id="cropModal">
-  <img id="cropImage" />
-  <button onclick="applyCrop()">Simpan Gambar</button>
+  <div style="text-align:center">
+    <img id="cropImage" />
+    <br>
+    <button onclick="applyCrop()">Simpan Gambar</button>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
@@ -121,15 +142,26 @@
   const imageInput1 = document.getElementById('imageInput1');
   const imageInput2 = document.getElementById('imageInput2');
   const delayInput = document.getElementById('delayInput');
-  const saveBtn = document.getElementById('saveBtn');
+  const runBtn = document.getElementById('runBtn');
+
   const cropModal = document.getElementById('cropModal');
   const cropImage = document.getElementById('cropImage');
-
   let cropper;
   let cropTargetIndex = null;
   let backgrounds = [null, null];
-  let readyToRun = false;
-  let transitionStarted = false;
+
+  let lastTap = 0;
+  document.addEventListener('click', () => {
+    const now = new Date().getTime();
+    if (now - lastTap < 400) {
+      uploadForm.style.display = 'block';
+    }
+    lastTap = now;
+  });
+
+  function checkReady() {
+    runBtn.disabled = !(backgrounds[0] && backgrounds[1]);
+  }
 
   function openCropper(file, index) {
     cropTargetIndex = index;
@@ -139,80 +171,67 @@
       cropModal.style.display = 'flex';
       if (cropper) cropper.destroy();
       cropper = new Cropper(cropImage, {
-        viewMode: 1,
-        autoCropArea: 1,
-        movable: true,
-        zoomable: true,
-        scalable: true,
-        cropBoxResizable: true,
-        cropBoxMovable: true
-      });
+  viewMode: 1,
+  autoCropArea: 1,
+  movable: true,
+  zoomable: true,
+  scalable: true,
+  cropBoxResizable: true,
+  cropBoxMovable: true
+});
+
     };
     reader.readAsDataURL(file);
   }
 
   function applyCrop() {
-    const canvas = cropper.getCroppedCanvas(); // full size
-    const croppedDataUrl = canvas.toDataURL("image/jpeg", 1.0);
+    const canvas = cropper.getCroppedCanvas({
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
+    const croppedDataUrl = canvas.toDataURL();
     backgrounds[cropTargetIndex] = croppedDataUrl;
     cropper.destroy();
     cropModal.style.display = 'none';
+    checkReady();
   }
 
   imageInput1.addEventListener('change', () => {
-    if (imageInput1.files[0]) openCropper(imageInput1.files[0], 0);
+    if (imageInput1.files[0]) {
+      openCropper(imageInput1.files[0], 0);
+    }
   });
 
   imageInput2.addEventListener('change', () => {
-    if (imageInput2.files[0]) openCropper(imageInput2.files[0], 1);
-  });
-
-  saveBtn.addEventListener('click', () => {
-    if (!backgrounds[0] || !backgrounds[1]) {
-      alert("Silakan upload dan crop kedua gambar terlebih dahulu.");
-      return;
+    if (imageInput2.files[0]) {
+      openCropper(imageInput2.files[0], 1);
     }
-    bg.style.backgroundImage = `url('${backgrounds[0]}')`;
-    uploadForm.style.display = 'none';
-    readyToRun = true;
   });
 
-  document.addEventListener('click', () => {
-    // Double tap = buka form
-    const now = new Date().getTime();
-    if (!transitionStarted && readyToRun) {
-      transitionStarted = true;
-      const delaySec = parseInt(delayInput.value) || 3;
+  runBtn.addEventListener('click', () => {
+    const delaySec = parseInt(delayInput.value) || 3;
+    uploadForm.style.display = 'none';
+
+    bg.style.backgroundImage = `url('${backgrounds[0]}')`;
+
+    setTimeout(() => {
+      bgNext.style.backgroundImage = `url('${backgrounds[1]}')`;
+      bgNext.style.zIndex = 1;
+      bg.style.zIndex = 0;
+
+      requestAnimationFrame(() => {
+        bgNext.style.opacity = 1;
+        bgNext.style.transform = 'scale(1)';
+        bgNext.style.filter = 'blur(0px)';
+      });
 
       setTimeout(() => {
-        bgNext.style.backgroundImage = `url('${backgrounds[1]}')`;
-        bgNext.style.zIndex = 1;
-        bg.style.zIndex = 0;
-
-        requestAnimationFrame(() => {
-          bgNext.style.opacity = 1;
-          bgNext.style.transform = 'scale(1)';
-          bgNext.style.filter = 'blur(0px)';
-        });
-
-        setTimeout(() => {
-          bg.style.backgroundImage = `url('${backgrounds[1]}')`;
-          bgNext.style.opacity = 0;
-          bgNext.style.transform = 'scale(1.05)';
-          bgNext.style.filter = 'blur(8px)';
-        }, 500);
-      }, delaySec * 1000);
-    }
-  });
-
-  // Tap 2x untuk buka form
-  let lastTap = 0;
-  document.addEventListener('click', () => {
-    const now = new Date().getTime();
-    if (now - lastTap < 400) {
-      uploadForm.style.display = 'block';
-    }
-    lastTap = now;
+        bg.style.backgroundImage = `url('${backgrounds[1]}')`;
+        bgNext.style.opacity = 0;
+        bgNext.style.transform = 'scale(1.05)';
+        bgNext.style.filter = 'blur(8px)';
+      }, 500);
+    }, delaySec * 1000);
   });
 </script>
 
