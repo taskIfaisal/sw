@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <title>Wallpaper Cropper</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="lock">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="o">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>
   <style>
     html, body {
@@ -89,6 +89,7 @@
       background: rgba(0,0,0,0.85);
       justify-content: center;
       align-items: center;
+      flex-direction: column;
     }
 
     #cropModal img {
@@ -127,11 +128,8 @@
 </form>
 
 <div id="cropModal">
-  <div style="text-align:center">
-    <img id="cropImage" />
-    <br>
-    <button onclick="applyCrop()">Simpan Gambar</button>
-  </div>
+  <img id="cropImage" />
+  <button onclick="applyCrop()">Simpan Gambar</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
@@ -171,24 +169,30 @@
       cropModal.style.display = 'flex';
       if (cropper) cropper.destroy();
       cropper = new Cropper(cropImage, {
-  viewMode: 1,
-  autoCropArea: 1,
-  movable: true,
-  zoomable: true,
-  scalable: true,
-  cropBoxResizable: true,
-  cropBoxMovable: true
-});
-
+        viewMode: 1,
+        autoCropArea: 1,
+        movable: false,
+        zoomable: true,
+        scalable: false,
+        cropBoxMovable: false,
+        cropBoxResizable: true,
+        ready() {
+          const imageData = cropper.getImageData();
+          const cropHeight = imageData.height * 0.5;
+          cropper.setCropBoxData({
+            top: 0,
+            left: 0,
+            width: imageData.width,
+            height: cropHeight
+          });
+        }
+      });
     };
     reader.readAsDataURL(file);
   }
 
   function applyCrop() {
-    const canvas = cropper.getCroppedCanvas({
-      width: window.innerWidth,
-      height: window.innerHeight
-    });
+    const canvas = cropper.getCroppedCanvas(); // Resolusi asli
     const croppedDataUrl = canvas.toDataURL();
     backgrounds[cropTargetIndex] = croppedDataUrl;
     cropper.destroy();
