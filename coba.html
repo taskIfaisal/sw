@@ -171,28 +171,18 @@
       cropper = new Cropper(cropImage, {
         viewMode: 1,
         autoCropArea: 1,
-        movable: false,
+        movable: true,
         zoomable: true,
-        scalable: false,
-        cropBoxMovable: false,
+        scalable: true,
         cropBoxResizable: true,
-        ready() {
-          const imageData = cropper.getImageData();
-          const cropHeight = imageData.height * 0.5;
-          cropper.setCropBoxData({
-            top: 0,
-            left: 0,
-            width: imageData.width,
-            height: cropHeight
-          });
-        }
+        cropBoxMovable: true
       });
     };
     reader.readAsDataURL(file);
   }
 
   function applyCrop() {
-    const canvas = cropper.getCroppedCanvas(); // Resolusi asli
+    const canvas = cropper.getCroppedCanvas(); // Keep full resolution
     const croppedDataUrl = canvas.toDataURL();
     backgrounds[cropTargetIndex] = croppedDataUrl;
     cropper.destroy();
