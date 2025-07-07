@@ -1,61 +1,158 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <title>Tombol Start</title>
-    <style>
-        .button-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100px;
-            height: 100px;
-        }
+  <meta charset="UTF-8">
+  <title>iPhone Unlock Effect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: black;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
 
-        .circle-black-outer {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 106px;
-            /* Sedikit lebih besar dari tombol hijau */
-            height: 106px;
-            /* Sedikit lebih besar dari tombol hijau */
-            background-color: black;
-            border-radius: 50%;
-            z-index: 1;
-            /* Di bawah tombol hijau */
-        }
+    #bg, #bgNext {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      z-index: 0;
+      transition: transform 0.9s ease, opacity 0.9s ease, filter 0.9s ease;
+    }
 
-        .button-start {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100px;
-            height: 100px;
-            background-color: #4CAF50;
-            /* Warna hijau */
-            color: white;
-            border-radius: 50%;
-            /* Membuat lingkaran */
-            font-size: 16px;
-            cursor: pointer;
-            border: none;
-            position: relative;
-            /* Untuk z-index */
-            z-index: 2;
-            /* Di atas lingkaran hitam */
-        }
-    </style>
+    #bgNext {
+      opacity: 0;
+      transform: scale(1.05);
+      filter: blur(8px);
+    }
+
+    #uploadForm {
+      display: none;
+      position: absolute;
+      top: 10vh;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.85);
+      padding: 20px;
+      border-radius: 10px;
+      z-index: 10;
+      color: white;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    input[type="file"], input[type="number"], button {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    input[type="file"] {
+      background-color: #444;
+      color: white;
+    }
+
+    input[type="number"] {
+      background-color: #222;
+      color: white;
+    }
+
+    button {
+      background-color: #28a745;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
 </head>
-
 <body>
 
-    <div class="button-container">
-        <div class="circle-black-outer"></div>
-        <button class="button-start">Start</button>
-    </div>
+<div id="bg"></div>
+<div id="bgNext"></div>
+
+<form id="uploadForm">
+  <label>Upload 2 Gambar Wallpaper:</label><br>
+  <input type="file" id="imageInput" accept="image/*" multiple><br>
+  <label>Setel waktu ganti (detik):</label><br>
+  <input type="number" id="delayInput" min="1" value="5">
+</form>
+
+<script>
+  const bg = document.getElementById('bg');
+  const bgNext = document.getElementById('bgNext');
+  const uploadForm = document.getElementById('uploadForm');
+  const imageInput = document.getElementById('imageInput');
+  const delayInput = document.getElementById('delayInput');
+
+  let lastTap = 0;
+  let backgrounds = [];
+
+  document.addEventListener('click', () => {
+    const now = new Date().getTime();
+    if (now - lastTap < 400) {
+      uploadForm.style.display = 'block';
+    }
+    lastTap = now;
+  });
+
+  imageInput.addEventListener('change', function () {
+    const files = Array.from(this.files).slice(0, 2);
+    if (files.length === 0) return;
+
+    let loaded = 0;
+    backgrounds = [];
+
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        backgrounds.push(e.target.result);
+        loaded++;
+        if (loaded === files.length) {
+          showOnce();
+          uploadForm.style.display = 'none';
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  function showOnce() {
+    if (backgrounds.length === 0) return;
+    bg.style.backgroundImage = `url('${backgrounds[0]}')`;
+
+    const delaySec = parseInt(delayInput.value) || 5;
+
+    if (backgrounds.length > 1) {
+      setTimeout(() => {
+        bgNext.style.backgroundImage = `url('${backgrounds[1]}')`;
+        bgNext.style.zIndex = 1;
+        bg.style.zIndex = 0;
+
+        // Trigger unlock-like animation
+        requestAnimationFrame(() => {
+          bgNext.style.opacity = 1;
+          bgNext.style.transform = 'scale(1)';
+          bgNext.style.filter = 'blur(0px)';
+        });
+
+        setTimeout(() => {
+          bg.style.backgroundImage = `url('${backgrounds[1]}')`;
+          bgNext.style.opacity = 0;
+          bgNext.style.transform = 'scale(1.05)';
+          bgNext.style.filter = 'blur(8px)';
+        }, 1200);
+      }, delaySec * 1000);
+    }
+  }
+</script>
 
 </body>
-
 </html>
