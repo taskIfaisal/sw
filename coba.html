@@ -5,7 +5,7 @@
   <title>Wallpaper Cropper</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="o">
+  <meta name="apple-mobile-web-app-title" content="lock">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>
   <style>
@@ -171,19 +171,29 @@
       cropper = new Cropper(cropImage, {
         viewMode: 1,
         autoCropArea: 1,
-        movable: true,
+        movable: false,
         zoomable: true,
-        scalable: true,
+        scalable: false,
+        cropBoxMovable: false,
         cropBoxResizable: true,
-        cropBoxMovable: true
+        ready() {
+          const imageData = cropper.getImageData();
+          const cropHeight = imageData.height * 0.5;
+          cropper.setCropBoxData({
+            left: 0,
+            top: 0,
+            width: imageData.width,
+            height: cropHeight
+          });
+        }
       });
     };
     reader.readAsDataURL(file);
   }
 
   function applyCrop() {
-    const canvas = cropper.getCroppedCanvas(); // Keep full resolution
-    const croppedDataUrl = canvas.toDataURL();
+    const canvas = cropper.getCroppedCanvas(); // FULL resolution
+    const croppedDataUrl = canvas.toDataURL("image/jpeg", 1.0); // quality 100%
     backgrounds[cropTargetIndex] = croppedDataUrl;
     cropper.destroy();
     cropModal.style.display = 'none';
