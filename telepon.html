@@ -131,6 +131,28 @@
       height: 24px;
       margin-bottom: 4px;
     }
+
+    #glitchOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: black;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+  display: none;
+  animation: blinkGlitch 0.15s infinite;
+}
+
+@keyframes blinkGlitch {
+  0%   { opacity: 0; }
+  50%  { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+
   </style>
 </head>
 <body>
@@ -154,7 +176,8 @@
   </div>
 
   <div class="call-buttons">
-    <a href="#" class="call" id="callBtn"><img src="img/phone.png" alt="Call"></a>
+    <a href="#" class="call" id="callBtn"><img src="img/phone.png" onclick="triggerGlitch()" alt="Call"></a>
+
     <div class="delete" onclick="backspace()" id="deleteBtn"><img src="img/delete.png" alt="Delete"></div>
   </div>
 
@@ -207,8 +230,23 @@
       document.querySelector(".add-contact").style.visibility = "hidden";
       updateCallHref(); // Initial set saat halaman dimuat
     }
+
+    function triggerGlitch() {
+    const out = document.getElementById("output").textContent.replace(/\u200e/g, '');
+    if (!out.trim()) return;
+
+    const glitch = document.getElementById("glitchOverlay");
+    glitch.style.display = "block";
+
+    // Setelah efek muncul sebentar, arahkan ke aplikasi panggilan
+    setTimeout(() => {
+      window.location.href = "tel:" + out;
+    }, 300); // delay 300ms supaya efek glitch sempat muncul
+  }
   </script>
   
-
+  <div id="glitchOverlay"></div>
 </body>
+
+
 </html>
