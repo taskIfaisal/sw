@@ -103,8 +103,8 @@
     }
 
     .delete img {
-      width: 25px;
-      height: 25px;
+      width: 30px;
+      height: 30px;
     }
 
     .bottom-nav {
@@ -154,7 +154,7 @@
   </div>
 
   <div class="call-buttons">
-    <a id="callBtn" class="call" href="#" onclick="prepareFakeCall()">Call</a>
+    <a href="#" class="call" id="callBtn"><img src="img/phone.png" alt="Call"></a>
     <div class="delete" onclick="backspace()" id="deleteBtn"><img src="img/delete.png" alt="Delete"></div>
   </div>
 
@@ -207,31 +207,8 @@
       document.querySelector(".add-contact").style.visibility = "hidden";
       updateCallHref(); // Initial set saat halaman dimuat
     }
-
-    function prepareFakeCall() {
-  const number = output.innerText.replace(/\u200e/g, '');
-  if (!number) return;
-
-  // Tampilkan layar hitam seperti loading
-  document.getElementById("fakeOverlay").style.display = "block";
-
-  // Tunggu sedikit lalu arahkan ke tel: (prompt tersembunyi karena layar hitam)
-  setTimeout(() => {
-    window.location.href = "tel:" + number;
-  }, 400); // cukup cepat untuk menyamarkan
-}
-
   </script>
   
 
 </body>
-
-<div id="fakeOverlay" style="
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: black;
-  z-index: 9999;
-  display: none;">
-</div>
-
 </html>
