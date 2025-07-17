@@ -25,10 +25,12 @@
 
     .display {
       text-align: center;
-      margin-top: 40px;
       font-size: 40px;
       font-weight: 300;
       word-break: break-word;
+      padding: 30px 20px 10px;
+      transition: font-size 0.2s ease;
+      min-height: 60px;
     }
 
     .add-contact {
@@ -131,28 +133,6 @@
       height: 24px;
       margin-bottom: 4px;
     }
-
-    #glitchOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: black;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 9999;
-  display: none;
-  animation: blinkGlitch 0.15s infinite;
-}
-
-@keyframes blinkGlitch {
-  0%   { opacity: 0; }
-  50%  { opacity: 0.6; }
-  100% { opacity: 0; }
-}
-
-
   </style>
 </head>
 <body>
@@ -176,8 +156,7 @@
   </div>
 
   <div class="call-buttons">
-    <a href="#" class="call" id="callBtn"><img src="img/phone.png" onclick="triggerGlitch()" alt="Call"></a>
-
+    <a href="#" class="call" id="callBtn"><img src="img/phone.png" alt="Call"></a>
     <div class="delete" onclick="backspace()" id="deleteBtn"><img src="img/delete.png" alt="Delete"></div>
   </div>
 
@@ -194,64 +173,61 @@
       const out = document.getElementById("output");
       const addContact = document.querySelector(".add-contact");
       const deleteBtn = document.getElementById("deleteBtn");
-  
+
       out.textContent = (out.textContent === "‎") ? value : out.textContent + value;
       addContact.style.visibility = "visible";
-  
+
       if (out.textContent !== "‎") {
         deleteBtn.style.display = "block";
       }
-  
-      updateCallHref(); // Update href call setiap kali input berubah
+
+      updateFontSize();
+      updateCallHref();
     }
-  
+
     function backspace() {
       const out = document.getElementById("output");
       const deleteBtn = document.getElementById("deleteBtn");
       const addContact = document.querySelector(".add-contact");
-  
+
       out.textContent = out.textContent.slice(0, -1) || "‎";
-  
+
       if (out.textContent === "‎") {
         deleteBtn.style.display = "none";
         addContact.style.visibility = "hidden";
       }
-  
-      updateCallHref(); // Update juga setelah hapus karakter
+
+      updateFontSize();
+      updateCallHref();
     }
-  
+
     function updateCallHref() {
       const out = document.getElementById("output").textContent.replace(/\u200e/g, '');
       const callBtn = document.getElementById("callBtn");
       callBtn.href = out ? "tel:" + out : "#";
     }
-  
-    window.onload = function () {
-      document.querySelector(".add-contact").style.visibility = "hidden";
-      updateCallHref(); // Initial set saat halaman dimuat
+
+    function updateFontSize() {
+      const out = document.getElementById("output");
+      const length = out.textContent.length;
+
+      if (length < 11) {
+        out.style.fontSize = "40px";
+      } else if (length < 16) {
+        out.style.fontSize = "32px";
+      } else if (length < 20) {
+        out.style.fontSize = "24px";
+      } else {
+        out.style.fontSize = "18px";
+      }
     }
 
-    function triggerGlitch() {
-  const out = document.getElementById("output").textContent.replace(/\u200e/g, '');
-  if (!out.trim()) return;
-
-  const glitch = document.getElementById("glitchOverlay");
-  glitch.style.display = "block";
-
-  // Setelah efek muncul sebentar
-  setTimeout(() => {
-    glitch.style.animation = "none";       // matikan animasi
-    glitch.style.opacity = "0";            // sembunyikan
-    glitch.style.display = "none";         // sembunyikan total
-
-    window.location.href = "tel:" + out;   // lakukan panggilan
-  }, 300); // delay efek glitch
-}
-
+    window.onload = function () {
+      document.querySelector(".add-contact").style.visibility = "hidden";
+      updateFontSize();
+      updateCallHref();
+    }
   </script>
-  
-  <div id="glitchOverlay"></div>
+
 </body>
-
-
 </html>
