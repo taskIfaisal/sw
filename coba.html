@@ -185,14 +185,20 @@
   }
 
   function applyCrop() {
-    const canvas = cropper.getCroppedCanvas();
+  const cropData = cropper.getData(true); // ambil ukuran crop asli
+  const canvas = cropper.getCroppedCanvas({
+    width: cropData.width,
+    height: cropData.height,
+    imageSmoothingEnabled: false,
+    imageSmoothingQuality: 'high'
+  });
 
-    const croppedDataUrl = canvas.toDataURL();
-    backgrounds[cropTargetIndex] = croppedDataUrl;
-    cropper.destroy();
-    cropModal.style.display = 'none';
-    checkReady();
-  }
+  const croppedDataUrl = canvas.toDataURL('image/png'); // bisa juga pakai 'image/jpeg'
+  backgrounds[cropTargetIndex] = croppedDataUrl;
+  cropper.destroy();
+  cropModal.style.display = 'none';
+  checkReady();
+}
 
   imageInput1.addEventListener('change', () => {
     if (imageInput1.files[0]) {
