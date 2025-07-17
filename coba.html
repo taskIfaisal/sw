@@ -185,10 +185,8 @@
   }
 
   function applyCrop() {
-    const canvas = cropper.getCroppedCanvas({
-      width: window.innerWidth,
-      height: window.innerHeight
-    });
+    const canvas = cropper.getCroppedCanvas();
+
     const croppedDataUrl = canvas.toDataURL();
     backgrounds[cropTargetIndex] = croppedDataUrl;
     cropper.destroy();
