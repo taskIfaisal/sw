@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keypad iPhone Style</title>
+  <style>
+    body {
+      margin: 0;
+      /* font-family: -apple-system, BlinkMacSystemFont, sans-serif; */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      /* background-color: black; */
+      background-color: black;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      justify-content: space-between;
+    }
+
+    .display {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 40px;
+      font-weight: 300;
+    }
+
+    .add-contact {
+      color: #007AFF;
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      padding: 0 40px;
+      margin-bottom: 20px;
+    }
+
+    .key {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background-color: #343434;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 26px;
+      user-select: none;
+    }
+
+    .key small {
+      font-size: 12px;
+      color: #bbb;
+    }
+
+    .call-buttons {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      margin: 20px 0;
+    }
+
+    .call {
+      background-color: #2fd15a;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-left: 80px;
+    }
+
+    .call img, .delete img {
+      width: 30px;
+    }
+
+    .delete {
+  background-color: transparent;
+  border-radius: 10px;
+  padding: 8px;
+  margin-left: 50px;
+}
+
+
+    .bottom-nav {
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      background-color: #000;
+      /* background-color: white; */
+      /* border-top: 1px solid #222; */
+    }
+
+    .bottom-nav div {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 12px;
+      color: gray;
+    }
+
+    .bottom-nav .active {
+      color: #087ee0;
+    }
+
+    .bottom-nav img {
+      width: 24px;
+      height: 24px;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="display" id="output">‎</div>
+  <div class="add-contact">Tambah Nomor</div>
+
+  <div class="keypad">
+    <div class="key" onclick="append('1')">1</div>
+    <div class="key" onclick="append('2')">2<small>ABC</small></div>
+    <div class="key" onclick="append('3')">3<small>DEF</small></div>
+
+    <div class="key" onclick="append('4')">4<small>GHI</small></div>
+    <div class="key" onclick="append('5')">5<small>JKL</small></div>
+    <div class="key" onclick="append('6')">6<small>MNO</small></div>
+
+    <div class="key" onclick="append('7')">7<small>PQRS</small></div>
+    <div class="key" onclick="append('8')">8<small>TUV</small></div>
+    <div class="key" onclick="append('9')">9<small>WXYZ</small></div>
+
+    <div class="key" onclick="append('*')">*</div>
+    <div class="key" onclick="append('0')">0<small>+</small></div>
+    <div class="key" onclick="append('#')">#</div>
+  </div>
+
+  <div class="call-buttons">
+    <div class="call"><img src="img/phone.png" alt="Call"></div>
+    <div class="delete" onclick="backspace()"><img src="img/delete.png" alt="Delete"></div>
+  </div>
+
+  <div class="bottom-nav">
+    <div>
+      <img src="img/star.png" alt="Favorit">
+      Favorit
+    </div>
+    <div>
+      <img src="img/clock.png" alt="Terbaru">
+      Terbaru
+    </div>
+    <div>
+      <img src="img/contact.png" alt="Kontak">
+      Kontak
+    </div>
+    <div class="active">
+      <img src="img/keypad.png" alt="Keypad">
+      Keypad
+    </div>
+    <div>
+      <img src="img/voicemail.png" alt="Pesan Suara">
+      Pesan Suara
+    </div>
+  </div>
+
+  <script>
+    function append(value) {
+      const out = document.getElementById("output");
+      const addContact = document.querySelector(".add-contact");
+  
+      out.textContent = (out.textContent === "‎") ? value : out.textContent + value;
+  
+      if (out.textContent !== "‎") {
+        addContact.style.display = "block";
+      }
+    }
+  
+    function backspace() {
+      const out = document.getElementById("output");
+      const addContact = document.querySelector(".add-contact");
+  
+      out.textContent = out.textContent.slice(0, -1) || "‎";
+  
+      if (out.textContent === "‎") {
+        addContact.style.display = "none";
+      }
+    }
+  
+    // Sembunyikan "Tambah Nomor" saat awal
+    window.onload = function() {
+      document.querySelector(".add-contact").style.display = "none";
+    }
+  </script>
+  
+</body>
+</html>
