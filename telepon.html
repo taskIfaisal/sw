@@ -2,23 +2,25 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Keypad iPhone Style</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Telepon">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Telepon</title>
+  <link rel="apple-touch-icon" href="./img/icon.png">
+  <link rel="apple-touch-startup-image" href="./icon/icon-512x512.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Telepon">
+  <link rel="icon" type="image/png" sizes="192x192" href="./img/icon.png">
   <style>
     body {
       margin: 0;
-      /* font-family: -apple-system, BlinkMacSystemFont, sans-serif; */
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-      /* background-color: black; */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
       background-color: black;
       color: white;
       display: flex;
       flex-direction: column;
       height: 100vh;
       justify-content: space-between;
+      overflow: hidden;
     }
 
     .display {
@@ -26,13 +28,16 @@
       margin-top: 40px;
       font-size: 40px;
       font-weight: 300;
+      word-break: break-word;
     }
 
     .add-contact {
       color: #007AFF;
       text-align: center;
       font-size: 18px;
-      margin-bottom: 20px;
+      height: 24px;
+      margin-bottom: 10px;
+      visibility: hidden;
     }
 
     .keypad {
@@ -40,7 +45,7 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 15px;
       padding: 0 40px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
 
     .key {
@@ -63,43 +68,50 @@
     }
 
     .call-buttons {
+      position: relative;
+      height: 80px;
+      margin-bottom: 10px;
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 30px;
-      margin: 20px 0;
     }
 
     .call {
       background-color: #2fd15a;
-      width: 70px;
-      height: 70px;
+      width: 65px;
+      height: 65px;
       border-radius: 50%;
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-left: 80px;
+      z-index: 1;
     }
 
-    .call img, .delete img {
-      width: 30px;
+    .call img {
+      width: 22px;
+      height: 22px;
     }
 
     .delete {
-  background-color: transparent;
-  border-radius: 10px;
-  padding: 8px;
-  margin-left: 50px;
-}
+      position: absolute;
+      right: 80px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 5px;
+      background: transparent;
+      display: none;
+    }
 
+    .delete img {
+      width: 18px;
+      height: 18px;
+    }
 
     .bottom-nav {
       display: flex;
       justify-content: space-around;
       padding: 10px 0;
       background-color: #000;
-      /* background-color: white; */
-      /* border-top: 1px solid #222; */
     }
 
     .bottom-nav div {
@@ -130,76 +142,73 @@
     <div class="key" onclick="append('1')">1</div>
     <div class="key" onclick="append('2')">2<small>ABC</small></div>
     <div class="key" onclick="append('3')">3<small>DEF</small></div>
-
     <div class="key" onclick="append('4')">4<small>GHI</small></div>
     <div class="key" onclick="append('5')">5<small>JKL</small></div>
     <div class="key" onclick="append('6')">6<small>MNO</small></div>
-
     <div class="key" onclick="append('7')">7<small>PQRS</small></div>
     <div class="key" onclick="append('8')">8<small>TUV</small></div>
     <div class="key" onclick="append('9')">9<small>WXYZ</small></div>
-
     <div class="key" onclick="append('*')">*</div>
     <div class="key" onclick="append('0')">0<small>+</small></div>
     <div class="key" onclick="append('#')">#</div>
   </div>
 
   <div class="call-buttons">
-    <div class="call"><img src="img/phone.png" alt="Call"></div>
-    <div class="delete" onclick="backspace()"><img src="img/delete.png" alt="Delete"></div>
+    <a href="#" class="call" id="callBtn"><img src="img/phone.png" alt="Call"></a>
+    <div class="delete" onclick="backspace()" id="deleteBtn"><img src="img/delete.png" alt="Delete"></div>
   </div>
 
   <div class="bottom-nav">
-    <div>
-      <img src="img/star.png" alt="Favorit">
-      Favorit
-    </div>
-    <div>
-      <img src="img/clock.png" alt="Terbaru">
-      Terbaru
-    </div>
-    <div>
-      <img src="img/contact.png" alt="Kontak">
-      Kontak
-    </div>
-    <div class="active">
-      <img src="img/keypad.png" alt="Keypad">
-      Keypad
-    </div>
-    <div>
-      <img src="img/voicemail.png" alt="Pesan Suara">
-      Pesan Suara
-    </div>
+    <div><img src="img/star.png" alt="Favorit">Favorit</div>
+    <div><img src="img/clock.png" alt="Terbaru">Terbaru</div>
+    <div><img src="img/contact.png" alt="Kontak">Kontak</div>
+    <div class="active"><img src="img/keypad.png" alt="Keypad">Keypad</div>
+    <div><img src="img/voicemail.png" alt="Pesan Suara">Pesan Suara</div>
   </div>
 
   <script>
     function append(value) {
       const out = document.getElementById("output");
       const addContact = document.querySelector(".add-contact");
+      const deleteBtn = document.getElementById("deleteBtn");
   
       out.textContent = (out.textContent === "‎") ? value : out.textContent + value;
+      addContact.style.visibility = "visible";
   
       if (out.textContent !== "‎") {
-        addContact.style.display = "block";
+        deleteBtn.style.display = "block";
       }
+  
+      updateCallHref(); // Update href call setiap kali input berubah
     }
   
     function backspace() {
       const out = document.getElementById("output");
+      const deleteBtn = document.getElementById("deleteBtn");
       const addContact = document.querySelector(".add-contact");
   
       out.textContent = out.textContent.slice(0, -1) || "‎";
   
       if (out.textContent === "‎") {
-        addContact.style.display = "none";
+        deleteBtn.style.display = "none";
+        addContact.style.visibility = "hidden";
       }
+  
+      updateCallHref(); // Update juga setelah hapus karakter
     }
   
-    // Sembunyikan "Tambah Nomor" saat awal
-    window.onload = function() {
-      document.querySelector(".add-contact").style.display = "none";
+    function updateCallHref() {
+      const out = document.getElementById("output").textContent.replace(/\u200e/g, '');
+      const callBtn = document.getElementById("callBtn");
+      callBtn.href = out ? "tel:" + out : "#";
+    }
+  
+    window.onload = function () {
+      document.querySelector(".add-contact").style.visibility = "hidden";
+      updateCallHref(); // Initial set saat halaman dimuat
     }
   </script>
   
+
 </body>
 </html>
