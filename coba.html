@@ -109,6 +109,20 @@
         font-size: 14px;
       }
     }
+
+    #dotIndicator {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  width: 10px;
+  height: 10px;
+  background: white;
+  border-radius: 50%;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
   </style>
 </head>
 <body>
@@ -122,7 +136,7 @@
   <label>Gambar Kedua:</label><br>
   <input type="file" id="imageInput2" accept="image/*"><br>
   <label>Waktu delay sebelum ganti (detik):</label><br>
-  <input type="number" id="delayInput" min="1" value="10"><br>
+  <input type="number" id="delayInput" min="1" value="3"><br>
   <button type="button" id="runBtn" disabled>Jalankan</button>
 </form>
 
@@ -213,31 +227,44 @@
   });
 
   runBtn.addEventListener('click', () => {
-    const delaySec = parseInt(delayInput.value) || 3;
-    uploadForm.style.display = 'none';
+  const delaySec = parseInt(delayInput.value) || 3;
+  uploadForm.style.display = 'none';
 
-    bg.style.backgroundImage = `url('${backgrounds[0]}')`;
+  bg.style.backgroundImage = `url('${backgrounds[0]}')`;
 
+  const dot = document.getElementById('dotIndicator');
+
+  // Tampilkan titik 1 detik sebelum ganti gambar
+  setTimeout(() => {
+    dot.style.opacity = 1;
+  }, (delaySec - 1) * 1000);
+
+  setTimeout(() => {
+    // Mulai transisi gambar
+    bgNext.style.backgroundImage = `url('${backgrounds[1]}')`;
+    bgNext.style.zIndex = 1;
+    bg.style.zIndex = 0;
+
+    requestAnimationFrame(() => {
+      bgNext.style.opacity = 1;
+      bgNext.style.transform = 'scale(1)';
+      bgNext.style.filter = 'blur(0px)';
+    });
+
+    // Setelah transisi selesai, sembunyikan titik & atur ulang
     setTimeout(() => {
-      bgNext.style.backgroundImage = `url('${backgrounds[1]}')`;
-      bgNext.style.zIndex = 1;
-      bg.style.zIndex = 0;
+      bg.style.backgroundImage = `url('${backgrounds[1]}')`;
+      bgNext.style.opacity = 0;
+      bgNext.style.transform = 'scale(1.05)';
+      bgNext.style.filter = 'blur(8px)';
+      dot.style.opacity = 0;
+    }, 500);
+  }, delaySec * 1000);
+});
 
-      requestAnimationFrame(() => {
-        bgNext.style.opacity = 1;
-        bgNext.style.transform = 'scale(1)';
-        bgNext.style.filter = 'blur(0px)';
-      });
-
-      setTimeout(() => {
-        bg.style.backgroundImage = `url('${backgrounds[1]}')`;
-        bgNext.style.opacity = 0;
-        bgNext.style.transform = 'scale(1.05)';
-        bgNext.style.filter = 'blur(8px)';
-      }, 500);
-    }, delaySec * 1000);
-  });
 </script>
+
+<div id="dotIndicator"></div>
 
 </body>
 </html>
