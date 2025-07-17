@@ -232,17 +232,22 @@
     }
 
     function triggerGlitch() {
-    const out = document.getElementById("output").textContent.replace(/\u200e/g, '');
-    if (!out.trim()) return;
+  const out = document.getElementById("output").textContent.replace(/\u200e/g, '');
+  if (!out.trim()) return;
 
-    const glitch = document.getElementById("glitchOverlay");
-    glitch.style.display = "block";
+  const glitch = document.getElementById("glitchOverlay");
+  glitch.style.display = "block";
 
-    // Setelah efek muncul sebentar, arahkan ke aplikasi panggilan
-    setTimeout(() => {
-      window.location.href = "tel:" + out;
-    }, 300); // delay 300ms supaya efek glitch sempat muncul
-  }
+  // Setelah efek muncul sebentar
+  setTimeout(() => {
+    glitch.style.animation = "none";       // matikan animasi
+    glitch.style.opacity = "0";            // sembunyikan
+    glitch.style.display = "none";         // sembunyikan total
+
+    window.location.href = "tel:" + out;   // lakukan panggilan
+  }, 300); // delay efek glitch
+}
+
   </script>
   
   <div id="glitchOverlay"></div>
