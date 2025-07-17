@@ -227,6 +227,53 @@
       updateFontSize();
       updateCallHref();
     }
+
+    function formatNumber(number) {
+  const clean = number.replace(/\s+/g, '');
+  if (clean.startsWith("0") && clean.length > 4) {
+    return clean.slice(0, 4) + ' ' + clean.slice(4);
+  }
+  return clean;
+}
+
+// Ubah fungsi append agar menggunakan formatNumber
+function append(value) {
+  const out = document.getElementById("output");
+  const addContact = document.querySelector(".add-contact");
+  const deleteBtn = document.getElementById("deleteBtn");
+
+  let current = out.textContent.replace(/\u200e/g, '').replace(/\s+/g, '');
+  current = (current === "") ? value : current + value;
+
+  const formatted = formatNumber(current);
+  out.textContent = formatted;
+
+  addContact.style.visibility = "visible";
+  deleteBtn.style.display = "block";
+
+  updateFontSize();
+  updateCallHref();
+}
+
+// Ubah fungsi backspace agar tetap terformat
+function backspace() {
+  const out = document.getElementById("output");
+  const deleteBtn = document.getElementById("deleteBtn");
+  const addContact = document.querySelector(".add-contact");
+
+  let current = out.textContent.replace(/\u200e/g, '').replace(/\s+/g, '');
+  current = current.slice(0, -1);
+  out.textContent = current ? formatNumber(current) : "‎";
+
+  if (!current) {
+    deleteBtn.style.display = "none";
+    addContact.style.visibility = "hidden";
+  }
+
+  updateFontSize();
+  updateCallHref();
+}
+
   </script>
 
 </body>
