@@ -16,20 +16,20 @@
 
   <style>
     html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
-  touch-action: manipulation;
-  background-color: #0c0c0c;
-  color: white;
-  font-family: Arial, sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      touch-action: manipulation;
+      background-color: #0c0c0c;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
 
     .lock-icon {
       position: absolute;
@@ -117,7 +117,7 @@
       height: 80px;
     }
 
-    #unlockedPage {
+    #unlockedPage, #settingsPage {
       display: none;
       text-align: center;
       opacity: 0;
@@ -134,65 +134,70 @@
     }
 
     #displayPin {
-      color: white;
-      font-size: 32px;
-      font-weight: bold;
-      text-align: center;
-      margin-top: 20px;
-    }
+  position: absolute;
+  top: 40px;
+  width: 100%;
+  text-align: center;
+  font-size: 32px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 1px 1px 5px black;
+  z-index: 2;
+  display: none;
+}
+
+
+    #uploadedImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  display: none;
+}
+
   </style>
 </head>
 
 <body>
-  <!-- Lock Icon -->
   <div class="lock-icon">
     <svg width="28" height="13" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-7h-1V7a5 5 0 0 0-10 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zM9 7a3 3 0 0 1 6 0v3H9V7z" />
+      <path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-7h-1V7a5 5 0 0 0-10 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zM9 7a3 3 0 0 1 6 0v3H9V7z" />
     </svg>
   </div>
 
-  <!-- Prompt -->
   <div class="prompt">Touch ID or Enter Passcode</div>
-
-  <!-- Dots -->
   <div class="dots" id="dots">
-    <div class="dot"></div>
-    <div class="dot"></div>
-    <div class="dot"></div>
-    <div class="dot"></div>
-    <div class="dot"></div>
-    <div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
   </div>
 
-  <!-- Keypad -->
   <div class="keypad" id="keypad">
-    <div class="key">1<small></small></div>
-    <div class="key">2<small>ABC</small></div>
-    <div class="key">3<small>DEF</small></div>
-    <div class="key">4<small>GHI</small></div>
-    <div class="key">5<small>JKL</small></div>
-    <div class="key">6<small>MNO</small></div>
-    <div class="key">7<small>PQRS</small></div>
-    <div class="key">8<small>TUV</small></div>
-    <div class="key">9<small>WXYZ</small></div>
-    <div class="empty"></div>
-    <div class="key">0<small></small></div>
-    <div class="empty"></div>
+    <div class="key">1<small></small></div><div class="key">2<small>ABC</small></div><div class="key">3<small>DEF</small></div>
+    <div class="key">4<small>GHI</small></div><div class="key">5<small>JKL</small></div><div class="key">6<small>MNO</small></div>
+    <div class="key">7<small>PQRS</small></div><div class="key">8<small>TUV</small></div><div class="key">9<small>WXYZ</small></div>
+    <div class="empty"></div><div class="key">0<small></small></div><div class="empty"></div>
   </div>
 
-  <!-- Bottom Buttons -->
   <div class="bottom-buttons">
-    <div>Emergency</div>
+    <div id="emergencyBtn">Emergency</div>
     <div id="cancelDeleteBtn">Cancel</div>
   </div>
 
-  <!-- Unlocked Page -->
   <div id="unlockedPage">
     <div id="displayPin" style="display: none;"></div>
+    <img id="uploadedImage" src="" alt="Uploaded">
   </div>
 
-  <!-- Script -->
+  <div id="settingsPage">
+    <h2>Settings</h2>
+    <input type="number" id="pinRepeat" placeholder="Repeat Count" /><br><br>
+    <input type="file" id="fakeImageInput" accept="image/*" /><br><br>
+    <img id="fakeImagePreview" style="max-width: 80%; display: none;" /><br>
+    <button onclick="closeSettings()">Close</button>
+  </div>
+
   <script>
     const keys = document.querySelectorAll('.key');
     const dots = document.querySelectorAll('.dot');
@@ -200,10 +205,16 @@
     const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
     const unlockPage = document.getElementById('unlockedPage');
     const display = document.getElementById('displayPin');
+    const emergencyBtn = document.getElementById('emergencyBtn');
+    const settingsPage = document.getElementById('settingsPage');
+    const uploadedImage = document.getElementById('uploadedImage');
 
     let currentInput = '';
-    let savedPin = '';
+    let savedPins = [];
     let pinVisible = false;
+    let pinRepeatTarget = 1;
+    let emergencyClickCount = 0;
+    let uploadedImageSrc = '';
 
     keys.forEach(key => {
       key.addEventListener('click', () => {
@@ -222,32 +233,61 @@
       }
     });
 
+    emergencyBtn.addEventListener('click', () => {
+      emergencyClickCount++;
+      if (emergencyClickCount === 2) {
+        openSettings();
+        emergencyClickCount = 0;
+      }
+      setTimeout(() => emergencyClickCount = 0, 1000);
+    });
+
+    document.getElementById('pinRepeat').addEventListener('input', (e) => {
+      pinRepeatTarget = parseInt(e.target.value) || 1;
+    });
+
+    document.getElementById('fakeImageInput').addEventListener('change', (e) => {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        uploadedImageSrc = evt.target.result;
+        document.getElementById('fakeImagePreview').src = uploadedImageSrc;
+        document.getElementById('fakeImagePreview').style.display = 'block';
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    });
+
     function updateDots() {
       dots.forEach((dot, index) => {
         dot.classList.toggle('filled', index < currentInput.length);
       });
-
       cancelDeleteBtn.textContent = currentInput.length > 0 ? 'Delete' : 'Cancel';
     }
 
     function shakeDots() {
       dotsContainer.classList.add('shake');
-
       setTimeout(() => {
         dotsContainer.classList.remove('shake');
-        savedPin = currentInput;
-
-        // Sembunyikan tampilan awal
-        document.querySelectorAll('.lock-icon, .prompt, .dots, .keypad, .bottom-buttons')
-          .forEach(el => el.style.display = 'none');
-
-        // Tampilkan halaman kedua
-        unlockPage.style.display = 'block';
-        setTimeout(() => unlockPage.style.opacity = '1', 50);
-
-        currentInput = '';
-        updateDots();
+        savedPins.push(currentInput);
+        if (savedPins.length >= pinRepeatTarget) {
+          showUnlockedPage();
+        } else {
+          currentInput = '';
+          updateDots();
+        }
       }, 500);
+    }
+
+    function showUnlockedPage() {
+      document.querySelectorAll('.lock-icon, .prompt, .dots, .keypad, .bottom-buttons')
+        .forEach(el => el.style.display = 'none');
+      unlockPage.style.display = 'block';
+      if (uploadedImageSrc) {
+        uploadedImage.src = uploadedImageSrc;
+        uploadedImage.style.display = 'block';
+      }
+      setTimeout(() => unlockPage.style.opacity = '1', 50);
+      currentInput = '';
+      updateDots();
     }
 
     unlockPage.addEventListener('click', () => {
@@ -255,11 +295,22 @@
         display.style.display = 'none';
         pinVisible = false;
       } else {
-        display.textContent = savedPin;
+        display.textContent = savedPins.join(' | ');
         display.style.display = 'block';
         pinVisible = true;
       }
     });
+
+    function openSettings() {
+      settingsPage.style.display = 'block';
+      setTimeout(() => settingsPage.style.opacity = '1', 50);
+    }
+
+    function closeSettings() {
+      settingsPage.style.opacity = '0';
+      setTimeout(() => settingsPage.style.display = 'none', 600);
+    }
+
   </script>
 </body>
 
