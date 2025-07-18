@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Clock</title>
+  <link rel="apple-touch-icon" href="./icon/icon-192x192.png">
+    <link rel="apple-touch-startup-image" href="./icon/icon-512x512.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Clock">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon/icon-192x192.png">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: black;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+
+    #bg, #bgNext {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background-size: cover;
+      background-position: center;
+      z-index: 0;
+      transition: transform 0.45s ease, opacity 0.45s ease, filter 0.45s ease;
+    }
+
+    #bgNext {
+      opacity: 0;
+      transform: scale(1.05);
+      filter: blur(8px);
+    }
+
+    #uploadForm {
+      display: none;
+      position: absolute;
+      top: 10vh;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.85);
+      padding: 20px;
+      border-radius: 10px;
+      z-index: 10;
+      color: white;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    input, button {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    input[type="file"] {
+      background-color: #444;
+      color: white;
+    }
+
+    input[type="number"] {
+      background-color: #222;
+      color: white;
+    }
+
+    button {
+      background-color: #28a745;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #555;
+      cursor: not-allowed;
+    }
+
+    #cropModal {
+      display: none;
+      position: fixed;
+      z-index: 99;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.85);
+      justify-content: center;
+      align-items: center;
+    }
+
+    #cropModal img {
+      max-width: 90vw;
+      max-height: 80vh;
+    }
+
+    #cropModal button {
+      margin-top: 10px;
+    }
+
+    @media (max-width: 500px) {
+      #uploadForm {
+        padding: 15px;
+      }
+
+      input, button {
+        font-size: 14px;
+      }
+    }
+
+    #dotIndicator {
+  position: fixed;
+  bottom: 6px;
+  right: 6px;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+  </style>
+</head>
+<body>
+
+<div id="bg"></div>
+<div id="bgNext"></div>
+
+<form id="uploadForm">
+  <label>Gambar Pertama:</label><br>
+  <input type="file" id="imageInput1" accept="image/*"><br>
+  <label>Gambar Kedua:</label><br>
+  <input type="file" id="imageInput2" accept="image/*"><br>
+  <label>Waktu delay sebelum ganti (detik):</label><br>
+  <input type="number" id="delayInput" min="1" value="3"><br>
+  <button type="button" id="runBtn" disabled>Jalankan</button>
+</form>
+
+<div id="cropModal">
+  <div style="text-align:center">
+    <img id="cropImage" />
+    <br>
+    <button onclick="applyCrop()">Simpan Gambar</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
+<script>
+  const bg = document.getElementById('bg');
+  const bgNext = document.getElementById('bgNext');
+  const uploadForm = document.getElementById('uploadForm');
+  const imageInput1 = document.getElementById('imageInput1');
+  const imageInput2 = document.getElementById('imageInput2');
+  const delayInput = document.getElementById('delayInput');
+  const runBtn = document.getElementById('runBtn');
+
+  const cropModal = document.getElementById('cropModal');
+  const cropImage = document.getElementById('cropImage');
+  let cropper;
+  let cropTargetIndex = null;
+  let backgrounds = [null, null];
+
+  let lastTap = 0;
+  document.addEventListener('click', () => {
+    const now = new Date().getTime();
+    if (now - lastTap < 400) {
+      uploadForm.style.display = 'block';
+    }
+    lastTap = now;
+  });
+
+  function checkReady() {
+    runBtn.disabled = !(backgrounds[0] && backgrounds[1]);
+  }
+
+  function openCropper(file, index) {
+    cropTargetIndex = index;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      cropImage.src = e.target.result;
+      cropModal.style.display = 'flex';
+      if (cropper) cropper.destroy();
+      cropper = new Cropper(cropImage, {
+  viewMode: 1,
+  autoCropArea: 1,
+  movable: true,
+  zoomable: true,
+  scalable: true,
+  cropBoxResizable: true,
+  cropBoxMovable: true
+});
+
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function applyCrop() {
+  const cropData = cropper.getData(true); // ambil ukuran crop asli
+  const canvas = cropper.getCroppedCanvas({
+    width: cropData.width,
+    height: cropData.height,
+    imageSmoothingEnabled: false,
+    imageSmoothingQuality: 'high'
+  });
+
+  const croppedDataUrl = canvas.toDataURL('image/png'); // bisa juga pakai 'image/jpeg'
+  backgrounds[cropTargetIndex] = croppedDataUrl;
+  cropper.destroy();
+  cropModal.style.display = 'none';
+  checkReady();
+}
+
+  imageInput1.addEventListener('change', () => {
+    if (imageInput1.files[0]) {
+      openCropper(imageInput1.files[0], 0);
+    }
+  });
+
+  imageInput2.addEventListener('change', () => {
+    if (imageInput2.files[0]) {
+      openCropper(imageInput2.files[0], 1);
+    }
+  });
+
+  runBtn.addEventListener('click', () => {
+  const delaySec = parseInt(delayInput.value) || 3;
+  uploadForm.style.display = 'none';
+
+  bg.style.backgroundImage = `url('${backgrounds[0]}')`;
+
+  const dot = document.getElementById('dotIndicator');
+
+  // Tampilkan titik 1 detik sebelum ganti gambar
+  setTimeout(() => {
+    dot.style.opacity = 1;
+  }, (delaySec - 1) * 1000);
+
+  setTimeout(() => {
+    // Mulai transisi gambar
+    bgNext.style.backgroundImage = `url('${backgrounds[1]}')`;
+    bgNext.style.zIndex = 1;
+    bg.style.zIndex = 0;
+
+    requestAnimationFrame(() => {
+      bgNext.style.opacity = 1;
+      bgNext.style.transform = 'scale(1)';
+      bgNext.style.filter = 'blur(0px)';
+    });
+
+    // Setelah transisi selesai, sembunyikan titik & atur ulang
+    setTimeout(() => {
+      bg.style.backgroundImage = `url('${backgrounds[1]}')`;
+      bgNext.style.opacity = 0;
+      bgNext.style.transform = 'scale(1.05)';
+      bgNext.style.filter = 'blur(8px)';
+      dot.style.opacity = 0;
+    }, 500);
+  }, delaySec * 1000);
+});
+
+</script>
+
+<div id="dotIndicator"></div>
+
+</body>
+</html>
