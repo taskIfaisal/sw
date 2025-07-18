@@ -144,7 +144,9 @@
   text-shadow: 1px 1px 5px black;
   z-index: 2;
   display: none;
+  white-space: pre-line; /* agar \n menjadi baris baru */
 }
+
 
 
 #uploadedImage {
@@ -158,6 +160,27 @@
   max-width: 100vw;
   max-height: 100vh;
 }
+
+#previewContainer {
+  width: 150px;
+  height: 250px;
+  border: 2px solid #ccc;
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 20px auto; /* Posisikan di tengah */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#fakeImagePreview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 
 
   </style>
@@ -195,8 +218,10 @@
   <div id="settingsPage">
     <h2>Settings</h2>
     <input type="number" id="pinRepeat" placeholder="Repeat Count" /><br><br>
-    <input type="file" id="fakeImageInput" accept="image/*" /><br><br>
-    <img id="fakeImagePreview" style="max-width: 80%; display: none;" /><br>
+    <input type="file" id="imageInput" accept="image/*">
+<div id="previewContainer">
+  <img id="fakeImagePreview" src="" alt="Preview">
+</div>
     <button onclick="closeSettings()">Close</button>
   </div>
 
@@ -248,15 +273,20 @@
       pinRepeatTarget = parseInt(e.target.value) || 1;
     });
 
-    document.getElementById('fakeImageInput').addEventListener('change', (e) => {
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        uploadedImageSrc = evt.target.result;
-        document.getElementById('fakeImagePreview').src = uploadedImageSrc;
-        document.getElementById('fakeImagePreview').style.display = 'block';
-      };
-      reader.readAsDataURL(e.target.files[0]);
-    });
+    document.getElementById('imageInput').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  const preview = document.getElementById('fakeImagePreview');
+  if (file) {
+    const imageURL = URL.createObjectURL(file);
+    preview.src = imageURL;
+    preview.style.display = 'block';
+    uploadedImageSrc = imageURL; // Tambahkan baris ini agar digunakan di halaman Intip PIN
+  } else {
+    preview.style.display = 'none';
+  }
+});
+
+
 
     function updateDots() {
       dots.forEach((dot, index) => {
@@ -297,7 +327,7 @@
         display.style.display = 'none';
         pinVisible = false;
       } else {
-        display.textContent = savedPins.join(' | ');
+        display.textContent = savedPins.join('\n');
         display.style.display = 'block';
         pinVisible = true;
       }
@@ -312,6 +342,7 @@
       settingsPage.style.opacity = '0';
       setTimeout(() => settingsPage.style.display = 'none', 600);
     }
+
 
   </script>
 </body>
