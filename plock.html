@@ -134,55 +134,54 @@
     }
 
     #displayPin {
-  position: absolute;
-  top: 40px;
-  width: 100%;
-  text-align: center;
-  font-size: 32px;
-  font-weight: bold;
-  color: white;
-  text-shadow: 1px 1px 5px black;
-  z-index: 2;
-  display: none;
-  white-space: pre-line; /* agar \n menjadi baris baru */
-}
+      position: absolute;
+      top: 40px;
+      width: 100%;
+      text-align: center;
+      font-size: 32px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 5px black;
+      z-index: 2;
+      display: none;
+      white-space: pre-line;
+    }
 
+    #uploadedImage {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      display: none;
+      max-width: 100vw;
+      max-height: 100vh;
+    }
 
+    #previewContainer {
+      width: 150px;
+      height: 250px;
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 20px auto;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-#uploadedImage {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 1;
-  display: none;
-  max-width: 100vw;
-  max-height: 100vh;
-}
+    #fakeImagePreview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
 
-#previewContainer {
-  width: 150px;
-  height: 250px;
-  border: 2px solid #ccc;
-  border-radius: 12px;
-  overflow: hidden;
-  margin: 20px auto; /* Posisikan di tengah */
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#fakeImagePreview {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-
-
+    #revealed-pin {
+      transition: opacity 0.3s ease;
+    }
   </style>
 </head>
 
@@ -296,18 +295,21 @@
     }
 
     function shakeDots() {
-      dotsContainer.classList.add('shake');
-      setTimeout(() => {
-        dotsContainer.classList.remove('shake');
-        savedPins.push(currentInput);
-        if (savedPins.length >= pinRepeatTarget) {
-          showUnlockedPage();
-        } else {
-          currentInput = '';
-          updateDots();
-        }
-      }, 500);
-    }
+  if (savedPins.length + 1 < pinRepeatTarget) {
+    dotsContainer.classList.add('shake');
+    setTimeout(() => {
+      dotsContainer.classList.remove('shake');
+      savedPins.push(currentInput);
+      currentInput = '';
+      updateDots();
+    }, 500);
+  } else {
+    // Masukan terakhir, tidak perlu efek shake
+    savedPins.push(currentInput);
+    showUnlockedPage();
+  }
+}
+
 
     function showUnlockedPage() {
       document.querySelectorAll('.lock-icon, .prompt, .dots, .keypad, .bottom-buttons')
