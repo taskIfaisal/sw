@@ -96,7 +96,14 @@
       font-weight: 300;
       cursor: pointer;
       user-select: none;
+      transition: background-color 0.1s ease;
     }
+
+    .key.pressed {
+  background-color: rgb(197, 193, 193) !important;
+  color: black !important;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
 
     .key small {
       font-size: 10px;
@@ -247,14 +254,18 @@
     let uploadedImageSrc = '';
 
     keys.forEach(key => {
-      key.addEventListener('click', () => {
-        if (currentInput.length < 6) {
-          currentInput += key.textContent.trim().charAt(0);
-          updateDots();
-          if (currentInput.length === 6) shakeDots();
-        }
-      });
-    });
+  key.addEventListener('click', () => {
+    if (currentInput.length < 6) {
+      currentInput += key.textContent.trim().charAt(0);
+      updateDots();
+      if (currentInput.length === 6) shakeDots();
+    }
+
+    // Tambahkan efek flash seperti iPhone
+    key.classList.add('pressed');
+    setTimeout(() => key.classList.remove('pressed'), 150); // efek singkat 150ms
+  });
+});
 
     cancelDeleteBtn.addEventListener('click', () => {
       if (currentInput.length > 0) {
@@ -367,6 +378,7 @@ document.body.addEventListener("touchcancel", () => {
   clearTimeout(pressTimer);
   displayPin.style.display = "none";
 });
+
 
   </script>
 </body>
