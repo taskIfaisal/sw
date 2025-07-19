@@ -134,18 +134,21 @@
     }
 
     #displayPin {
-      position: absolute;
-      top: 40px;
-      width: 100%;
-      text-align: center;
-      font-size: 32px;
-      font-weight: bold;
-      color: white;
-      text-shadow: 1px 1px 5px black;
-      z-index: 2;
-      display: none;
-      white-space: pre-line;
-    }
+  position: fixed;
+  top: 40px;
+  width: 100%;
+  text-align: center;
+  font-size: 32px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 1px 1px 5px black;
+  z-index: 2;
+  display: none;
+  white-space: pre-line;
+  overflow: hidden;
+  pointer-events: none; /* mencegah scroll atau interaksi lain */
+}
+
 
     #uploadedImage {
       position: fixed;
@@ -344,7 +347,25 @@
       settingsPage.style.opacity = '0';
       setTimeout(() => settingsPage.style.display = 'none', 600);
     }
+    const displayPin = document.getElementById("displayPin");
 
+let pressTimer;
+
+document.body.addEventListener("touchstart", (e) => {
+  pressTimer = setTimeout(() => {
+    displayPin.style.display = "block";
+  }, 500); // 500ms long press
+});
+
+document.body.addEventListener("touchend", () => {
+  clearTimeout(pressTimer);
+  displayPin.style.display = "none";
+});
+
+document.body.addEventListener("touchcancel", () => {
+  clearTimeout(pressTimer);
+  displayPin.style.display = "none";
+});
 
   </script>
 </body>
