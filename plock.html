@@ -313,6 +313,12 @@
     function shakeDots() {
   if (savedPins.length + 1 < pinRepeatTarget) {
     dotsContainer.classList.add('shake');
+
+    // Tambahkan getaran halus khas iPhone
+    if (navigator.vibrate) {
+      navigator.vibrate([10, 30, 10]);
+    }
+
     setTimeout(() => {
       dotsContainer.classList.remove('shake');
       savedPins.push(currentInput);
@@ -320,11 +326,11 @@
       updateDots();
     }, 500);
   } else {
-    // Masukan terakhir, tidak perlu efek shake
     savedPins.push(currentInput);
     showUnlockedPage();
   }
 }
+
 
 
     function showUnlockedPage() {
