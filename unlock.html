@@ -265,12 +265,18 @@ document.addEventListener('click', () => {
 }
 });
 
-runBtn.addEventListener('click', () => {
+runBtn.addEventListener('click', (e) => {
+  e.stopPropagation(); // mencegah klik ini dianggap sebagai trigger animasi
   delaySec = parseInt(delayInput.value) || 3;
   bg.style.backgroundImage = `url('${backgrounds[0]}')`;
   uploadForm.style.display = 'none';
-  readyToRun = true;
+
+  // beri sedikit delay agar klik berikutnya tidak langsung jalan
+  setTimeout(() => {
+    readyToRun = true;
+  }, 500);
 });
+
 
 
 
