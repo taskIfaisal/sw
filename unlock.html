@@ -140,7 +140,7 @@
   <input type="file" id="imageInput2" accept="image/*"><br>
   <label>Waktu delay sebelum ganti (detik):</label><br>
   <input type="number" id="delayInput" min="1" value="3"><br>
-  <button type="button" id="runBtn" disabled>Jalankan</button>
+  <button type="button" id="runBtn" disabled>Simpan</button>
 </form>
 
 <div id="cropModal">
@@ -229,41 +229,51 @@
     }
   });
 
-  runBtn.addEventListener('click', () => {
-  const delaySec = parseInt(delayInput.value) || 3;
-  uploadForm.style.display = 'none';
+  let readyToRun = false;
+let delaySec = 3;
 
-  bg.style.backgroundImage = `url('${backgrounds[0]}')`;
+document.addEventListener('click', () => {
+  if (readyToRun) {
+    readyToRun = false;
 
-  const dot = document.getElementById('dotIndicator');
+    const dot = document.getElementById('dotIndicator');
 
-  // Tampilkan titik 1 detik sebelum ganti gambar
-  setTimeout(() => {
-    dot.style.opacity = 1;
-  }, (delaySec - 1) * 1000);
-
-  setTimeout(() => {
-    // Mulai transisi gambar
-    bgNext.style.backgroundImage = `url('${backgrounds[1]}')`;
-    bgNext.style.zIndex = 1;
-    bg.style.zIndex = 0;
-
-    requestAnimationFrame(() => {
-      bgNext.style.opacity = 1;
-      bgNext.style.transform = 'scale(1)';
-      bgNext.style.filter = 'blur(0px)';
-    });
-
-    // Setelah transisi selesai, sembunyikan titik & atur ulang
+    // Tampilkan titik 1 detik sebelum ganti gambar
     setTimeout(() => {
-      bg.style.backgroundImage = `url('${backgrounds[1]}')`;
-      bgNext.style.opacity = 0;
-      bgNext.style.transform = 'scale(1.05)';
-      bgNext.style.filter = 'blur(8px)';
-      dot.style.opacity = 0;
-    }, 500);
-  }, delaySec * 1000);
+      dot.style.opacity = 1;
+    }, (delaySec - 1) * 1000);
+
+    setTimeout(() => {
+      bgNext.style.backgroundImage = `url('${backgrounds[1]}')`;
+      bgNext.style.zIndex = 1;
+      bg.style.zIndex = 0;
+
+      requestAnimationFrame(() => {
+        bgNext.style.opacity = 1;
+        bgNext.style.transform = 'scale(1)';
+        bgNext.style.filter = 'blur(0px)';
+      });
+
+      setTimeout(() => {
+        bg.style.backgroundImage = `url('${backgrounds[1]}')`;
+        bgNext.style.opacity = 0;
+        bgNext.style.transform = 'scale(1.05)';
+        bgNext.style.filter = 'blur(8px)';
+        dot.style.opacity = 0;
+}, 500);
+}, delaySec * 1000);
+}
 });
+
+runBtn.addEventListener('click', () => {
+  delaySec = parseInt(delayInput.value) || 3;
+  bg.style.backgroundImage = `url('${backgrounds[0]}')`;
+  uploadForm.style.display = 'none';
+  readyToRun = true;
+});
+
+
+
 
 </script>
 
