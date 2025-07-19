@@ -96,13 +96,14 @@
       font-weight: 300;
       cursor: pointer;
       user-select: none;
-      transition: background-color 0.1s ease;
+      transition: background-color 0.2s ease, transform 0.1s ease;
     }
 
     .key.pressed {
   background-color: rgb(197, 193, 193) !important;
   color: black !important;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(0,0,0,0.15);
 }
 
     .key small {
