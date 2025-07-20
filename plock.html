@@ -262,6 +262,7 @@
   </div>
 
   <script>
+    // Deklarasi semua variabel dan elemen yang dibutuhkan
     const keys = document.querySelectorAll('.key');
     const dots = document.querySelectorAll('.dot');
     const dotsContainer = document.getElementById('dots');
@@ -271,38 +272,43 @@
     const emergencyBtn = document.getElementById('emergencyBtn');
     const settingsPage = document.getElementById('settingsPage');
     const uploadedImage = document.getElementById('uploadedImage');
+    const backBtn = document.getElementById('backBtn');
 
-    let currentInput = '';
-    let savedPins = [];
-    let pinVisible = false;
-    let pinRepeatTarget = 1;
-    let emergencyClickCount = 0;
-    let uploadedImageSrc = '';
-    let pressTimer;
+    let currentInput = ''; // Untuk menyimpan input PIN sementara
+    let savedPins = []; // Untuk menyimpan semua PIN yang telah dimasukkan
+    let pinVisible = false; // Status tampilan PIN (terlihat/tidak)
+    let pinRepeatTarget = 1; // Jumlah pengulangan PIN yang dibutuhkan
+    let emergencyClickCount = 0; // Hitungan klik tombol emergency
+    let uploadedImageSrc = ''; // Sumber gambar yang diupload
+    let pressTimer; // Timer untuk press-and-hold
 
-    // Keypad functionality
+    // Fungsi untuk tombol keypad (0-9)
     keys.forEach(key => {
         key.addEventListener('click', () => {
+            // Hanya boleh input maksimal 6 digit
             if (currentInput.length < 6) {
                 currentInput += key.textContent.trim().charAt(0);
                 updateDots();
+                // Jika sudah 6 digit, jalankan animasi shake
                 if (currentInput.length === 6) shakeDots();
             }
 
+            // Efek tekan tombol
             key.classList.add('pressed');
             setTimeout(() => key.classList.remove('pressed'), 150);
         });
     });
 
-    // Cancel/Delete button
+    // Fungsi tombol Cancel/Delete
     cancelDeleteBtn.addEventListener('click', () => {
         if (currentInput.length > 0) {
+            // Hapus 1 digit terakhir
             currentInput = currentInput.slice(0, -1);
             updateDots();
         }
     });
 
-    // Emergency button (double click to open settings)
+    // Fungsi tombol Emergency (buka settings dengan double klik)
     emergencyBtn.addEventListener('click', () => {
         emergencyClickCount++;
         if (emergencyClickCount === 2) {
@@ -312,68 +318,59 @@
         setTimeout(() => emergencyClickCount = 0, 1000);
     });
 
-    // Settings - PIN repeat count
-    document.getElementById('pinRepeat').addEventListener('input', (e) => {
-        pinRepeatTarget = parseInt(e.target.value) || 1;
-    });
-
-    // Settings - Image upload
-    document.getElementById('imageInput').addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        const preview = document.getElementById('fakeImagePreview');
-        if (file) {
-            const imageURL = URL.createObjectURL(file);
-            preview.src = imageURL;
-            preview.style.display = 'block';
-            uploadedImageSrc = imageURL;
-        } else {
-            preview.style.display = 'none';
-        }
-    });
-
-    // Update dot indicators
+    // Fungsi untuk update tampilan dot indicator
     function updateDots() {
         dots.forEach((dot, index) => {
+            // Isi dot sesuai dengan jumlah digit yang sudah dimasukkan
             dot.classList.toggle('filled', index < currentInput.length);
         });
+        // Ubah teks tombol menjadi Delete jika ada input
         cancelDeleteBtn.textContent = currentInput.length > 0 ? 'Delete' : 'Cancel';
     }
 
-    // Shake animation when PIN is entered
+    // Animasi saat PIN sudah 6 digit
     function shakeDots() {
+        // Cek apakah sudah mencapai jumlah pengulangan yang ditentukan
         if (savedPins.length + 1 < pinRepeatTarget) {
             dotsContainer.classList.add('shake');
+            // Getar device jika didukung
             if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
 
             setTimeout(() => {
                 dotsContainer.classList.remove('shake');
+                // Simpan PIN yang sudah dimasukkan
                 savedPins.push(currentInput);
                 currentInput = '';
                 updateDots();
             }, 500);
         } else {
+            // Jika sudah cukup pengulangan, buka layar unlocked
             savedPins.push(currentInput);
             showUnlockedPage();
         }
     }
 
-    // Show unlocked page
+    // Tampilkan layar unlocked
     function showUnlockedPage() {
+        // Sembunyikan semua elemen lock screen
         document.querySelectorAll('.lock-icon, .prompt, .dots, .keypad, .bottom-buttons')
             .forEach(el => el.style.display = 'none');
 
+        // Tampilkan layar unlocked
         unlockPage.style.display = 'block';
+        // Jika ada gambar yang diupload, tampilkan
         if (uploadedImageSrc) {
             uploadedImage.src = uploadedImageSrc;
             uploadedImage.style.display = 'block';
         }
 
+        // Animasi fade in
         setTimeout(() => unlockPage.style.opacity = '1', 50);
         currentInput = '';
         updateDots();
     }
 
-    // Press-and-hold to reveal PIN (only on unlocked page)
+    // Fungsi press-and-hold untuk melihat PIN
     unlockPage.addEventListener("touchstart", (e) => {
         e.preventDefault();
         pressTimer = setTimeout(() => {
@@ -401,35 +398,57 @@
         }
     });
 
-    // Settings functions
-    function openSettings() {
-        settingsPage.style.display = 'block';
-        setTimeout(() => settingsPage.style.opacity = '1', 50);
-    }
-
-    function closeSettings() {
-        settingsPage.style.opacity = '0';
-        setTimeout(() => settingsPage.style.display = 'none', 600);
-    }
-
-    // Back button to return to lock screen
-    document.getElementById('backBtn').addEventListener('click', () => {
+    // Fungsi tombol kembali ke lock screen
+    backBtn.addEventListener('click', () => {
         unlockPage.style.opacity = '0';
         setTimeout(() => {
             unlockPage.style.display = 'none';
             
+            // Tampilkan kembali semua elemen lock screen
             document.querySelector('.lock-icon').style.display = 'block';
             document.querySelector('.prompt').style.display = 'block';
             document.querySelector('.dots').style.display = 'flex';
             document.querySelector('.keypad').style.display = 'grid';
             document.querySelector('.bottom-buttons').style.display = 'flex';
 
+            // Reset semua variabel
             currentInput = '';
             savedPins = [];
             updateDots();
             display.style.display = 'none';
             pinVisible = false;
         }, 300);
+    });
+
+    // Fungsi untuk buka settings
+    function openSettings() {
+        settingsPage.style.display = 'block';
+        setTimeout(() => settingsPage.style.opacity = '1', 50);
+    }
+
+    // Fungsi untuk tutup settings
+    function closeSettings() {
+        settingsPage.style.opacity = '0';
+        setTimeout(() => settingsPage.style.display = 'none', 600);
+    }
+
+    // Settings - Input jumlah pengulangan PIN
+    document.getElementById('pinRepeat').addEventListener('input', (e) => {
+        pinRepeatTarget = parseInt(e.target.value) || 1;
+    });
+
+    // Settings - Upload gambar
+    document.getElementById('imageInput').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('fakeImagePreview');
+        if (file) {
+            const imageURL = URL.createObjectURL(file);
+            preview.src = imageURL;
+            preview.style.display = 'block';
+            uploadedImageSrc = imageURL;
+        } else {
+            preview.style.display = 'none';
+        }
     });
 </script>
 </body>
