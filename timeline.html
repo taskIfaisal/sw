@@ -48,7 +48,7 @@
     }
 
     #date {
-      font-size: 3.3vh;
+      font-size: 3.4vh;
       text-align: center;
       margin-top: -1vh;
     }
@@ -130,9 +130,73 @@
     <div id="close-setting">✕</div>
     <h2>Ganti Background</h2>
     <input type="file" accept="image/*" id="bg-input">
+    <h2>Atur Menit Mundur</h2>
+<input type="number" id="extra-minutes" placeholder="Tambah menit (misal 7)" min="1" style="margin-top: 1vh;">
+<button id="apply-time-travel" style="margin-top: 2vh;">Simpan & Tutup</button>
   </div>
 
   <script>
+ let extraMinutes = 0;
+  let travelMode = false;
+  let targetTime = null;
+  let countdownInterval = null;
+
+  // Saat tombol "Simpan & Tutup" ditekan
+  document.getElementById('apply-time-travel').addEventListener('click', () => {
+    const inputMinutes = parseInt(document.getElementById('extra-minutes').value, 10);
+    if (!isNaN(inputMinutes) && inputMinutes > 0) {
+      extraMinutes = inputMinutes;
+      const now = new Date();
+      targetTime = new Date(now.getTime() + extraMinutes * 60000);
+      travelMode = true;
+      updateTimeDisplay(targetTime); // Tampilkan waktu awal "masa depan"
+    }
+    document.getElementById('setting-layer').style.display = 'none';
+  });
+
+  // Fungsi khusus untuk update tampilan jam
+  function updateTimeDisplay(dateObj) {
+    const jam = dateObj.getHours().toString().padStart(2, '0');
+    const menit = dateObj.getMinutes().toString().padStart(2, '0');
+    document.getElementById('time').textContent = `${jam}.${menit}`;
+
+    const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const tanggal = dateObj.getDate();
+    const hariIni = hari[dateObj.getDay()];
+    const bulanIni = bulan[dateObj.getMonth()];
+    document.getElementById('date').textContent = `${hariIni}, ${tanggal} ${bulanIni}`;
+  }
+
+  // Saat layar diklik satu kali, mulai mundur
+  document.body.addEventListener('click', () => {
+    if (travelMode && targetTime) {
+      clearInterval(countdownInterval);
+      countdownInterval = setInterval(() => {
+        const now = new Date();
+        if (targetTime <= now) {
+          clearInterval(countdownInterval);
+          travelMode = false;
+          updateTime(); // Kembali ke waktu real-time
+          return;
+        }
+        targetTime = new Date(targetTime.getTime() - 60000); // Kurangi 1 menit
+        updateTimeDisplay(targetTime);
+      }, 1000); // Mundur tiap detik (visual trick, bukan tiap menit)
+    }
+  });
+
+  // Fungsi update waktu normal
+  function updateTime() {
+    if (!travelMode) {
+      const now = new Date();
+      updateTimeDisplay(now);
+    }
+  }
+
+  updateTime();
+  setInterval(updateTime, 1000);
+
     function updateTime() {
       const now = new Date();
       const jam = now.getHours().toString().padStart(2, '0');
