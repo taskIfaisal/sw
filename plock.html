@@ -278,174 +278,160 @@
     let pinRepeatTarget = 1;
     let emergencyClickCount = 0;
     let uploadedImageSrc = '';
+    let pressTimer;
 
+    // Keypad functionality
     keys.forEach(key => {
-      key.addEventListener('click', () => {
-        if (currentInput.length < 6) {
-          currentInput += key.textContent.trim().charAt(0);
-          updateDots();
-          if (currentInput.length === 6) shakeDots();
+        key.addEventListener('click', () => {
+            if (currentInput.length < 6) {
+                currentInput += key.textContent.trim().charAt(0);
+                updateDots();
+                if (currentInput.length === 6) shakeDots();
+            }
+
+            key.classList.add('pressed');
+            setTimeout(() => key.classList.remove('pressed'), 150);
+        });
+    });
+
+    // Cancel/Delete button
+    cancelDeleteBtn.addEventListener('click', () => {
+        if (currentInput.length > 0) {
+            currentInput = currentInput.slice(0, -1);
+            updateDots();
+        }
+    });
+
+    // Emergency button (double click to open settings)
+    emergencyBtn.addEventListener('click', () => {
+        emergencyClickCount++;
+        if (emergencyClickCount === 2) {
+            openSettings();
+            emergencyClickCount = 0;
+        }
+        setTimeout(() => emergencyClickCount = 0, 1000);
+    });
+
+    // Settings - PIN repeat count
+    document.getElementById('pinRepeat').addEventListener('input', (e) => {
+        pinRepeatTarget = parseInt(e.target.value) || 1;
+    });
+
+    // Settings - Image upload
+    document.getElementById('imageInput').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('fakeImagePreview');
+        if (file) {
+            const imageURL = URL.createObjectURL(file);
+            preview.src = imageURL;
+            preview.style.display = 'block';
+            uploadedImageSrc = imageURL;
+        } else {
+            preview.style.display = 'none';
+        }
+    });
+
+    // Update dot indicators
+    function updateDots() {
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('filled', index < currentInput.length);
+        });
+        cancelDeleteBtn.textContent = currentInput.length > 0 ? 'Delete' : 'Cancel';
+    }
+
+    // Shake animation when PIN is entered
+    function shakeDots() {
+        if (savedPins.length + 1 < pinRepeatTarget) {
+            dotsContainer.classList.add('shake');
+            if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+
+            setTimeout(() => {
+                dotsContainer.classList.remove('shake');
+                savedPins.push(currentInput);
+                currentInput = '';
+                updateDots();
+            }, 500);
+        } else {
+            savedPins.push(currentInput);
+            showUnlockedPage();
+        }
+    }
+
+    // Show unlocked page
+    function showUnlockedPage() {
+        document.querySelectorAll('.lock-icon, .prompt, .dots, .keypad, .bottom-buttons')
+            .forEach(el => el.style.display = 'none');
+
+        unlockPage.style.display = 'block';
+        if (uploadedImageSrc) {
+            uploadedImage.src = uploadedImageSrc;
+            uploadedImage.style.display = 'block';
         }
 
-        key.classList.add('pressed');
-        setTimeout(() => key.classList.remove('pressed'), 150);
-      });
-    });
-
-    cancelDeleteBtn.addEventListener('click', () => {
-      if (currentInput.length > 0) {
-        currentInput = currentInput.slice(0, -1);
+        setTimeout(() => unlockPage.style.opacity = '1', 50);
+        currentInput = '';
         updateDots();
-      }
-    });
-
-    emergencyBtn.addEventListener('click', () => {
-      emergencyClickCount++;
-      if (emergencyClickCount === 2) {
-        openSettings();
-        emergencyClickCount = 0;
-      }
-      setTimeout(() => emergencyClickCount = 0, 1000);
-    });
-
-    document.getElementById('pinRepeat').addEventListener('input', (e) => {
-      pinRepeatTarget = parseInt(e.target.value) || 1;
-    });
-
-    document.getElementById('imageInput').addEventListener('change', function (e) {
-      const file = e.target.files[0];
-      const preview = document.getElementById('fakeImagePreview');
-      if (file) {
-        const imageURL = URL.createObjectURL(file);
-        preview.src = imageURL;
-        preview.style.display = 'block';
-        uploadedImageSrc = imageURL;
-      } else {
-        preview.style.display = 'none';
-      }
-    });
-
-    function updateDots() {
-      dots.forEach((dot, index) => {
-        dot.classList.toggle('filled', index < currentInput.length);
-      });
-      cancelDeleteBtn.textContent = currentInput.length > 0 ? 'Delete' : 'Cancel';
     }
 
-    function shakeDots() {
-      if (savedPins.length + 1 < pinRepeatTarget) {
-        dotsContainer.classList.add('shake');
-        if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
-
-        setTimeout(() => {
-          dotsContainer.classList.remove('shake');
-          savedPins.push(currentInput);
-          currentInput = '';
-          updateDots();
+    // Press-and-hold to reveal PIN (only on unlocked page)
+    unlockPage.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        pressTimer = setTimeout(() => {
+            display.textContent = savedPins.join('\n');
+            display.style.display = "block";
+            pinVisible = true;
         }, 500);
-      } else {
-        savedPins.push(currentInput);
-        showUnlockedPage();
-      }
-    }
+    });
 
-    function showUnlockedPage() {
-      document.querySelectorAll('.lock-icon, .prompt, .dots, .keypad, .bottom-buttons')
-        .forEach(el => el.style.display = 'none');
+    unlockPage.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        clearTimeout(pressTimer);
+        if (pinVisible) {
+            display.style.display = "none";
+            pinVisible = false;
+        }
+    });
 
-      unlockPage.style.display = 'block';
-      if (uploadedImageSrc) {
-        uploadedImage.src = uploadedImageSrc;
-        uploadedImage.style.display = 'block';
-      }
+    unlockPage.addEventListener("touchcancel", (e) => {
+        e.preventDefault();
+        clearTimeout(pressTimer);
+        if (pinVisible) {
+            display.style.display = "none";
+            pinVisible = false;
+        }
+    });
 
-      setTimeout(() => unlockPage.style.opacity = '1', 50);
-      currentInput = '';
-      updateDots();
-    }
-
-    // HAPUS BAGIAN INI:
-  // unlockPage.addEventListener('click', () => {
-  //   if (pinVisible) {
-  //     display.style.display = 'none';
-  //     pinVisible = false;
-  //   } else {
-  //     display.textContent = savedPins.join('\n');
-  //     display.style.display = 'block';
-  //     pinVisible = true;
-  //   }
-  // });
-
+    // Settings functions
     function openSettings() {
-      settingsPage.style.display = 'block';
-      setTimeout(() => settingsPage.style.opacity = '1', 50);
+        settingsPage.style.display = 'block';
+        setTimeout(() => settingsPage.style.opacity = '1', 50);
     }
 
     function closeSettings() {
-      settingsPage.style.opacity = '0';
-      setTimeout(() => settingsPage.style.display = 'none', 600);
+        settingsPage.style.opacity = '0';
+        setTimeout(() => settingsPage.style.display = 'none', 600);
     }
 
-   const displayPin = document.getElementById("displayPin");
-  let pressTimer;
-
-  unlockPage.addEventListener("touchstart", () => {
-    pressTimer = setTimeout(() => {
-      displayPin.textContent = savedPins.join('\n');
-      displayPin.style.display = "block";
-      pinVisible = true;
-    }, 500);
-  });
-
-  unlockPage.addEventListener("touchend", () => {
-    clearTimeout(pressTimer);
-    if (pinVisible) {
-      displayPin.style.display = "none";
-      pinVisible = false;
-    }
-  });
-
-  unlockPage.addEventListener("touchcancel", () => {
-    clearTimeout(pressTimer);
-    if (pinVisible) {
-      displayPin.style.display = "none";
-      pinVisible = false;
-    }
-  });
-
-    document.body.addEventListener("touchstart", () => {
-      pressTimer = setTimeout(() => {
-        displayPin.style.display = "block";
-      }, 500);
-    });
-
-    document.body.addEventListener("touchend", () => {
-      clearTimeout(pressTimer);
-      displayPin.style.display = "none";
-    });
-
-    document.body.addEventListener("touchcancel", () => {
-      clearTimeout(pressTimer);
-      displayPin.style.display = "none";
-    });
-
+    // Back button to return to lock screen
     document.getElementById('backBtn').addEventListener('click', () => {
-      unlockPage.style.opacity = '0';
-      setTimeout(() => unlockPage.style.display = 'none', 300);
+        unlockPage.style.opacity = '0';
+        setTimeout(() => {
+            unlockPage.style.display = 'none';
+            
+            document.querySelector('.lock-icon').style.display = 'block';
+            document.querySelector('.prompt').style.display = 'block';
+            document.querySelector('.dots').style.display = 'flex';
+            document.querySelector('.keypad').style.display = 'grid';
+            document.querySelector('.bottom-buttons').style.display = 'flex';
 
-      document.querySelector('.lock-icon').style.display = 'block';
-      document.querySelector('.prompt').style.display = 'block';
-      document.querySelector('.dots').style.display = 'flex';
-      document.querySelector('.keypad').style.display = 'grid';
-      document.querySelector('.bottom-buttons').style.display = 'flex';
-
-      currentInput = '';
-      savedPins = [];
-      updateDots();
-      display.style.display = 'none';
-      pinVisible = false;
+            currentInput = '';
+            savedPins = [];
+            updateDots();
+            display.style.display = 'none';
+            pinVisible = false;
+        }, 300);
     });
-  </script>
+</script>
 </body>
 
 </html>
