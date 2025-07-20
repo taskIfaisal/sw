@@ -136,25 +136,22 @@
   </div>
 
   <script>
- let extraMinutes = 0;
-  let travelMode = false;
-  let targetTime = null;
-  let countdownInterval = null;
+  let extraMinutes = 0;
+  let fakeOffset = 0; // jumlah menit dimajukan
+  let isRewinding = false;
+  let rewindInterval = null;
 
   // Saat tombol "Simpan & Tutup" ditekan
   document.getElementById('apply-time-travel').addEventListener('click', () => {
     const inputMinutes = parseInt(document.getElementById('extra-minutes').value, 10);
     if (!isNaN(inputMinutes) && inputMinutes > 0) {
       extraMinutes = inputMinutes;
-      const now = new Date();
-      targetTime = new Date(now.getTime() + extraMinutes * 60000);
-      travelMode = true;
-      updateTimeDisplay(targetTime); // Tampilkan waktu awal "masa depan"
+      fakeOffset = extraMinutes;
     }
     document.getElementById('setting-layer').style.display = 'none';
   });
 
-  // Fungsi khusus untuk update tampilan jam
+  // Fungsi untuk update tampilan waktu
   function updateTimeDisplay(dateObj) {
     const jam = dateObj.getHours().toString().padStart(2, '0');
     const menit = dateObj.getMinutes().toString().padStart(2, '0');
@@ -168,84 +165,67 @@
     document.getElementById('date').textContent = `${hariIni}, ${tanggal} ${bulanIni}`;
   }
 
-  // Saat layar diklik satu kali, mulai mundur
+  // Fungsi utama update waktu
+  function updateTime() {
+    const now = new Date();
+    let displayTime = new Date(now.getTime() + fakeOffset * 60000);
+
+    if (isRewinding) {
+      fakeOffset -= 0.3; // rewind cepat 0.3 menit (18 detik) per frame
+      if (fakeOffset <= 0) {
+        fakeOffset = 0;
+        isRewinding = false;
+        clearInterval(rewindInterval);
+      }
+      displayTime = new Date(now.getTime() + fakeOffset * 60000);
+    }
+
+    updateTimeDisplay(displayTime);
+  }
+
+  // Update waktu setiap 300ms agar rewind terlihat cepat dan halus
+  setInterval(updateTime, 300);
+
+  // Klik di layar mulai rewind cepat
   document.body.addEventListener('click', () => {
-    if (travelMode && targetTime) {
-      clearInterval(countdownInterval);
-      countdownInterval = setInterval(() => {
-        const now = new Date();
-        if (targetTime <= now) {
-          clearInterval(countdownInterval);
-          travelMode = false;
-          updateTime(); // Kembali ke waktu real-time
-          return;
-        }
-        targetTime = new Date(targetTime.getTime() - 60000); // Kurangi 1 menit
-        updateTimeDisplay(targetTime);
-      }, 1000); // Mundur tiap detik (visual trick, bukan tiap menit)
+    if (fakeOffset > 0 && !isRewinding) {
+      isRewinding = true;
     }
   });
 
-  // Fungsi update waktu normal
-  function updateTime() {
-    if (!travelMode) {
-      const now = new Date();
-      updateTimeDisplay(now);
+  // Gesture dua jari tarik ke bawah untuk membuka pengaturan
+  let startY = null;
+  document.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 2) {
+      startY = Math.min(e.touches[0].clientY, e.touches[1].clientY);
     }
-  }
+  });
 
-  updateTime();
-  setInterval(updateTime, 1000);
-
-    function updateTime() {
-      const now = new Date();
-      const jam = now.getHours().toString().padStart(2, '0');
-      const menit = now.getMinutes().toString().padStart(2, '0');
-      document.getElementById('time').textContent = `${jam}.${menit}`;
-
-      const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-      const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-      const tanggal = now.getDate();
-      const hariIni = hari[now.getDay()];
-      const bulanIni = bulan[now.getMonth()];
-      document.getElementById('date').textContent = `${hariIni}, ${tanggal} ${bulanIni}`;
+  document.addEventListener('touchmove', function(e) {
+    if (e.touches.length === 2 && startY !== null) {
+      const currentY = Math.min(e.touches[0].clientY, e.touches[1].clientY);
+      if (currentY - startY > 80) {
+        document.getElementById('setting-layer').style.display = 'flex';
+        startY = null;
+      }
     }
+  });
 
-    updateTime();
-    setInterval(updateTime, 1000);
+  document.getElementById('close-setting').addEventListener('click', () => {
+    document.getElementById('setting-layer').style.display = 'none';
+  });
 
-    // Gesture dua jari tarik ke bawah
-    let startY = null;
-    document.addEventListener('touchstart', function(e) {
-      if (e.touches.length === 2) {
-        startY = Math.min(e.touches[0].clientY, e.touches[1].clientY);
-      }
-    });
+  document.getElementById('bg-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        document.body.style.backgroundImage = `url('${evt.target.result}')`;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
 
-    document.addEventListener('touchmove', function(e) {
-      if (e.touches.length === 2 && startY !== null) {
-        const currentY = Math.min(e.touches[0].clientY, e.touches[1].clientY);
-        if (currentY - startY > 80) {
-          document.getElementById('setting-layer').style.display = 'flex';
-          startY = null;
-        }
-      }
-    });
-
-    document.getElementById('close-setting').addEventListener('click', () => {
-      document.getElementById('setting-layer').style.display = 'none';
-    });
-
-    document.getElementById('bg-input').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          document.body.style.backgroundImage = `url('${evt.target.result}')`;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-  </script>
 </body>
 </html>
