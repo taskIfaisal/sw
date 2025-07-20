@@ -364,16 +364,17 @@
       updateDots();
     }
 
-    unlockPage.addEventListener('click', () => {
-      if (pinVisible) {
-        display.style.display = 'none';
-        pinVisible = false;
-      } else {
-        display.textContent = savedPins.join('\n');
-        display.style.display = 'block';
-        pinVisible = true;
-      }
-    });
+    // HAPUS BAGIAN INI:
+  // unlockPage.addEventListener('click', () => {
+  //   if (pinVisible) {
+  //     display.style.display = 'none';
+  //     pinVisible = false;
+  //   } else {
+  //     display.textContent = savedPins.join('\n');
+  //     display.style.display = 'block';
+  //     pinVisible = true;
+  //   }
+  // });
 
     function openSettings() {
       settingsPage.style.display = 'block';
@@ -385,8 +386,32 @@
       setTimeout(() => settingsPage.style.display = 'none', 600);
     }
 
-    const displayPin = document.getElementById("displayPin");
-    let pressTimer;
+   const displayPin = document.getElementById("displayPin");
+  let pressTimer;
+
+  unlockPage.addEventListener("touchstart", () => {
+    pressTimer = setTimeout(() => {
+      displayPin.textContent = savedPins.join('\n');
+      displayPin.style.display = "block";
+      pinVisible = true;
+    }, 500);
+  });
+
+  unlockPage.addEventListener("touchend", () => {
+    clearTimeout(pressTimer);
+    if (pinVisible) {
+      displayPin.style.display = "none";
+      pinVisible = false;
+    }
+  });
+
+  unlockPage.addEventListener("touchcancel", () => {
+    clearTimeout(pressTimer);
+    if (pinVisible) {
+      displayPin.style.display = "none";
+      pinVisible = false;
+    }
+  });
 
     document.body.addEventListener("touchstart", () => {
       pressTimer = setTimeout(() => {
