@@ -139,29 +139,28 @@
   let extraMinutes = 0;
 let fakeOffset = 0; // jumlah menit dimajukan
 let isRewinding = false;
+let hasStartedRewind = false; // FLAG tambahan untuk kontrol rewind
 
-// Tombol "Simpan & Tutup"
+// Saat tombol "Simpan & Tutup" ditekan
 document.getElementById('apply-time-travel').addEventListener('click', () => {
   const inputMinutes = parseInt(document.getElementById('extra-minutes').value, 10);
   if (!isNaN(inputMinutes) && inputMinutes > 0) {
     extraMinutes = inputMinutes;
     fakeOffset = extraMinutes;
-    isRewinding = false; // ❗ JANGAN langsung rewind
+    isRewinding = false;
+    hasStartedRewind = false; // waktu belum rewind, hanya tampak dimajukan
   }
   document.getElementById('setting-layer').style.display = 'none';
 });
 
-// Fungsi update tampilan waktu di layar
+// Fungsi update tampilan waktu
 function updateTimeDisplay(dateObj) {
   const jam = dateObj.getHours().toString().padStart(2, '0');
   const menit = dateObj.getMinutes().toString().padStart(2, '0');
   document.getElementById('time').textContent = `${jam}.${menit}`;
 
   const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-  const bulan = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-  ];
+  const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
   const tanggal = dateObj.getDate();
   const hariIni = hari[dateObj.getDay()];
@@ -174,8 +173,8 @@ function updateTime() {
   const now = new Date();
   let displayTime = new Date(now.getTime() + fakeOffset * 60000);
 
-  if (isRewinding && fakeOffset > 0) {
-    fakeOffset -= 0.3; // rewind cepat: 0.3 menit = 18 detik setiap 300ms
+  if (isRewinding && hasStartedRewind) {
+    fakeOffset -= 0.3; // rewind cepat
     if (fakeOffset <= 0) {
       fakeOffset = 0;
       isRewinding = false;
@@ -186,13 +185,14 @@ function updateTime() {
   updateTimeDisplay(displayTime);
 }
 
-// Jalankan update waktu setiap 300ms agar rewind halus
+// Update waktu setiap 300ms
 setInterval(updateTime, 300);
 
-// Ketuk layar untuk mulai rewind
+// Ketuk layar: mulai rewind
 document.body.addEventListener('click', () => {
   if (fakeOffset > 0 && !isRewinding) {
     isRewinding = true;
+    hasStartedRewind = true;
   }
 });
 
@@ -213,6 +213,7 @@ document.addEventListener('touchmove', function (e) {
     }
   }
 });
+
 
 </script>
 
