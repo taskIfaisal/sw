@@ -256,10 +256,14 @@ tapZone.addEventListener('click', () => {
   if (document.getElementById('setting-layer').style.display === 'flex') return;
 
   if (fakeOffset > 0 && !isRewinding) {
-    isRewinding = true;
-    hasStartedRewind = true;
+    // Tunggu 3 detik sebelum mulai rewind
+    setTimeout(() => {
+      isRewinding = true;
+      hasStartedRewind = true;
+    }, 3000); // 3000 milidetik = 3 detik
   }
 });
+
 
 </script>
 
