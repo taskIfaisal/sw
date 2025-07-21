@@ -187,22 +187,23 @@
   setInterval(updateTime, 300);
 
   // Klik di layar mulai rewind cepat
-  let lastTap = 0;
+  // Satu kali ketuk di area jam atau tanggal untuk mulai rewind
+const clockArea = document.getElementById('time');
+const dateArea = document.getElementById('date');
 
-document.body.addEventListener('touchend', () => {
-  const currentTime = new Date().getTime();
-  const tapLength = currentTime - lastTap;
+[clockArea, dateArea].forEach(el => {
+  el.addEventListener('touchend', (e) => {
+    // Jangan aktifkan rewind jika setting layer masih terbuka
+    if (document.getElementById('setting-layer').style.display === 'flex') return;
 
-  if (tapLength < 300 && tapLength > 0) {
-    // Double tap terdeteksi
     if (fakeOffset > 0 && !isRewinding) {
       isRewinding = true;
       hasStartedRewind = true;
     }
-  }
-
-  lastTap = currentTime;
+  });
 });
+
+
 
 
   // Gesture dua jari tarik ke bawah untuk membuka pengaturan
