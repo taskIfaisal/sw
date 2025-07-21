@@ -145,9 +145,10 @@
   document.getElementById('apply-time-travel').addEventListener('click', () => {
     const inputMinutes = parseInt(document.getElementById('extra-minutes').value, 10);
     if (!isNaN(inputMinutes) && inputMinutes > 0) {
-      extraMinutes = inputMinutes;
-      fakeOffset = extraMinutes;
-    }
+  extraMinutes = inputMinutes;
+  fakeOffset = extraMinutes;
+  isRewinding = false; // Pastikan rewind belum aktif
+}
     document.getElementById('setting-layer').style.display = 'none';
   });
 
@@ -170,15 +171,14 @@
     const now = new Date();
     let displayTime = new Date(now.getTime() + fakeOffset * 60000);
 
-    if (isRewinding) {
-      fakeOffset -= 0.3; // rewind cepat 0.3 menit (18 detik) per frame
-      if (fakeOffset <= 0) {
-        fakeOffset = 0;
-        isRewinding = false;
-        clearInterval(rewindInterval);
-      }
-      displayTime = new Date(now.getTime() + fakeOffset * 60000);
-    }
+    if (isRewinding && fakeOffset > 0) {
+  fakeOffset -= 0.3;
+  if (fakeOffset <= 0) {
+    fakeOffset = 0;
+    isRewinding = false;
+    clearInterval(rewindInterval);
+  }
+}
 
     updateTimeDisplay(displayTime);
   }
