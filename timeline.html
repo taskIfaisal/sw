@@ -135,12 +135,11 @@
 <button id="apply-time-travel" style="margin-top: 2vh;">Simpan & Tutup</button>
   </div>
 
- <script>
+  <script>
   let extraMinutes = 0;
   let fakeOffset = 0; // jumlah menit dimajukan
   let isRewinding = false;
   let rewindInterval = null;
-  let isTimeTravelSet = false; // Flag baru untuk menandai apakah time travel sudah di-set
 
   // Saat tombol "Simpan & Tutup" ditekan
   document.getElementById('apply-time-travel').addEventListener('click', () => {
@@ -148,8 +147,6 @@
     if (!isNaN(inputMinutes) && inputMinutes > 0) {
       extraMinutes = inputMinutes;
       fakeOffset = extraMinutes;
-      isTimeTravelSet = true; // Set flag bahwa time travel sudah di-set
-      isRewinding = false; // Pastikan tidak langsung rewind
     }
     document.getElementById('setting-layer').style.display = 'none';
   });
@@ -178,7 +175,6 @@
       if (fakeOffset <= 0) {
         fakeOffset = 0;
         isRewinding = false;
-        isTimeTravelSet = false; // Reset flag setelah rewind selesai
         clearInterval(rewindInterval);
       }
       displayTime = new Date(now.getTime() + fakeOffset * 60000);
@@ -192,7 +188,7 @@
 
   // Klik di layar mulai rewind cepat
   document.body.addEventListener('click', () => {
-    if (fakeOffset > 0 && !isRewinding && isTimeTravelSet) {
+    if (fakeOffset > 0 && !isRewinding) {
       isRewinding = true;
     }
   });
