@@ -4,166 +4,158 @@
   <meta charset="UTF-8">
   <title>Fake Call</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAACMWIEfAAAA..."> <!-- Ganti jika kamu punya ikon asli -->
+  <link rel="manifest" href="data:application/manifest+json,{
+    &quot;name&quot;: &quot;Fake Call&quot;,
+    &quot;short_name&quot;: &quot;FakeCall&quot;,
+    &quot;start_url&quot;: &quot;.&quot;,
+    &quot;display&quot;: &quot;standalone&quot;,
+    &quot;background_color&quot;: &quot;#000000&quot;,
+    &quot;theme_color&quot;: &quot;#000000&quot;,
+    &quot;icons&quot;: [{
+      &quot;src&quot;: &quot;icon.png&quot;,
+      &quot;sizes&quot;: &quot;192x192&quot;,
+      &quot;type&quot;: &quot;image/png&quot;
+    }]
+  }">
+
   <style>
     * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
     }
 
-    html, body {
-      height: 100%;
-      background-color: rgb(0, 0, 0);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    body {
+      background-color: black;
       color: white;
-      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .container {
+      width: 100%;
+      max-width: 375px;
+      height: 100%;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      align-items: center;
-      height: 100%;
-      padding: 20px 20px;
-      position: relative;
+      padding: 40px 20px;
     }
 
     .top-info {
       text-align: center;
-      margin-top: 50px;
+      margin-top: 60px;
     }
 
     .number {
-      font-size: 30px;
+      font-size: 28px;
       font-weight: 500;
-      margin-bottom: 5px;
     }
 
     .location {
-      font-size: 18px;
-      color: #aaa;
+      font-size: 16px;
+      color: gray;
+      margin-top: 6px;
     }
 
     .options {
       display: flex;
       justify-content: space-around;
-      width: 100%;
-      margin-bottom: -200px;
+      margin-bottom: auto;
+      margin-top: 50px;
     }
 
     .option {
       display: flex;
       flex-direction: column;
       align-items: center;
-      font-size: 13px;
-      color: white;
     }
 
     .option img {
-      width: 32px;
-      height: 32px;
-      margin-bottom: 5px;
-      filter: invert(1);
+      width: 30px;
+      height: 30px;
+      margin-bottom: 6px;
+    }
+
+    .option span {
+      font-size: 14px;
+      color: white;
     }
 
     .slider-container {
-  position: relative;
-  bottom: 30px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 35px;
-  width: 60%;
-  max-width: 350px;
-  height: 57px;
-  display: flex;
-  align-items: center;
-  padding: 0 30px;
-  user-select: none;
-  overflow: hidden; /* ✅ tambahkan ini */
-}
-
-
-
-    .slider-handle {
-      background-color: white;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
+      position: relative;
+      height: 60px;
+      border-radius: 40px;
+      background-color: #454545;
+      margin-bottom: 30px;
       display: flex;
       align-items: center;
-      justify-content: center;
+      padding-left: 10px;
+      overflow: hidden;
+    }
+
+    .slider-handle {
       position: absolute;
+      width: 50px;
+      height: 50px;
+      background-color: #63d161;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       left: 0;
-      z-index: 2;
-      cursor: pointer;
-      transition: left 0.2s;
-      touch-action: none;
+      z-index: 3;
+      transition: background-color 0.3s ease;
     }
 
     .slider-handle img {
-      width: px;
+      width: 24px;
       height: 24px;
+      filter: brightness(0) invert(1);
     }
 
     .slide-text {
-      color: rgb(255, 255, 255);
       font-size: 18px;
       margin-left: 60px;
       white-space: nowrap;
       pointer-events: none;
+      position: relative;
+      z-index: 2;
+
+      background: linear-gradient(
+        to left,
+        black 0%,
+        white 50%,
+        black 100%
+      );
+      background-size: 200% auto;
+      background-clip: text;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+
+      animation: shimmer 3s infinite linear;
     }
 
-    .green-filter {
-  filter: brightness(0) saturate(100%) invert(59%) sepia(99%) saturate(541%) hue-rotate(80deg) brightness(90%) contrast(90%);
-}
-
-.slider-background {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 35px;
-    background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
-    animation: shimmer 2s infinite;
-    z-index: 1;
-  }
-
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%);
+    @keyframes shimmer {
+      0% {
+        background-position: 200% center;
+      }
+      90% {
+        background-position: -200% center;
+      }
+      100% {
+        background-position: -200% center;
+      }
     }
-    100% {
-      transform: translateX(100%);
-    }
-  }
-
-  /* Geser slider text ke atas sedikit */
-  .slide-text {
-    color: rgb(255, 255, 255);
-    font-size: 18px;
-    margin-left: 60px;
-    white-space: nowrap;
-    pointer-events: none;
-    position: relative;
-    z-index: 2;
-  }
-
-  /* Atur agar handle selalu di atas shimmer */
-  .slider-handle {
-    background-color: white;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    left: 0;
-    z-index: 3; /* lebih tinggi dari background & teks */
-    cursor: pointer;
-    transition: left 0.2s;
-    touch-action: none;
-  }
   </style>
 </head>
 <body>
@@ -185,9 +177,8 @@
     </div>
 
     <div class="slider-container" id="slider">
-      <div class="slider-background"></div>
       <div class="slider-handle" id="handle">
-        <img src="./icon/phone.png" alt="phone" class="green-filter">
+        <img src="./icon/phone.png" alt="phone">
       </div>
       <div class="slide-text">slide to answer</div>
     </div>
@@ -252,6 +243,30 @@
         handle.style.left = "0px";
       }
     });
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      const sw = `
+        self.addEventListener('install', e => {
+          e.waitUntil(
+            caches.open('pwa-cache').then(cache => {
+              return cache.addAll(['.']);
+            })
+          );
+        });
+
+        self.addEventListener('fetch', e => {
+          e.respondWith(
+            caches.match(e.request).then(response => {
+              return response || fetch(e.request);
+            })
+          );
+        });
+      `;
+      const blob = new Blob([sw], { type: 'application/javascript' });
+      const swUrl = URL.createObjectURL(blob);
+      navigator.serviceWorker.register(swUrl);
+    }
   </script>
 </body>
 </html>
