@@ -4,27 +4,28 @@
   <meta charset="UTF-8">
   <title>Fake Call</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
- <link rel="apple-touch-icon" href="./icon/phone-icon-512x512.png">
-    <link rel="apple-touch-startup-image" href="./icon/icon-512x512.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Stopwatch">
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon/phone-icon-512x512.png">
-
+  <link rel="apple-touch-icon" href="./icon/icon-192x192.png">
+  <link rel="apple-touch-startup-image" href="./icon/icon-512x512.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Stopwatch">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon/icon-192x192.png">
   <style>
-       html, body {
+    html, body {
       margin: 0;
       padding: 0;
       width: 100vw;
       height: 100vh;
       font-family: 'SF Pro Display', sans-serif;
       background-color: black;
+      background-image: url('./icon/dark.png');
       background-size: cover;
       background-position: center;
       color: white;
       overflow: hidden;
       touch-action: none;
       position: relative;
+      transition: background-image 0.5s ease;
     }
 
     * {
@@ -34,10 +35,6 @@
     }
 
     body {
-      background-color: black;
-      color: white;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -55,8 +52,8 @@
 
     .top-info {
       text-align: center;
-      margin-top: 0px; /* naikkan dari atas */
-      margin-bottom: 0px; /* beri jarak dengan ikon bawahnya */
+      margin-top: 0px;
+      margin-bottom: 0px;
     }
 
     .number {
@@ -71,13 +68,12 @@
     }
 
     .options {
-  display: flex;
-  justify-content: space-around;
-  gap: 50px; /* tambahkan ini untuk memberi jarak */
-  margin-top: auto;
-  margin-bottom: 60px; /* Dekatkan dengan slider */
-}
-
+      display: flex;
+      justify-content: space-around;
+      gap: 50px;
+      margin-top: auto;
+      margin-bottom: 60px;
+    }
 
     .option {
       display: flex;
@@ -97,18 +93,18 @@
     }
 
     .slider-container {
-  position: relative;
-  width: 80%; /* ← ubah panjang di sini */
-  height: 78px;
-  border-radius: 40px;
-  background-color: #454545;
-  margin: 0 auto 20px auto; /* tengahin slider */
-  display: flex;
-  align-items: center;
-  padding-left: 10px;
-  overflow: hidden;
-  transform: translateY(-20px);
-}
+      position: relative;
+      width: 80%;
+      height: 78px;
+      border-radius: 40px;
+      background-color: #454545;
+      margin: 0 auto 20px auto;
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      overflow: hidden;
+      transform: translateY(-20px);
+    }
 
     .slider-handle {
       position: absolute;
@@ -119,7 +115,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      left: 5px;
+      left: 7px;
       z-index: 3;
       transition: background-color 0.3s ease;
     }
@@ -127,35 +123,28 @@
     .slider-handle img {
       width: 24px;
       height: 24px;
-      /* filter: brightness(0) invert(1); */
     }
 
     .slide-text {
-  font-size: 18px;
-  margin-left: 95px;
-  white-space: nowrap;
-  pointer-events: none;
-  position: relative;
-  z-index: 2;
+      font-size: 18px;
+      margin-left: 95px;
+      white-space: nowrap;
+      pointer-events: none;
+      position: relative;
+      z-index: 2;
+      color: white;
+      background: linear-gradient(120deg, white 0%, black 50%, white 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer-text 3s ease-in-out infinite;
+      animation-delay: 1s;
+    }
 
-  color: white;
-  background: linear-gradient(120deg, white 0%, black 50%, white 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmer-text 3s ease-in-out infinite;
-  animation-delay: 1s;
-}
-
-@keyframes shimmer-text {
-  0% {
-    background-position: 200% center;
-  }
-  100% {
-    background-position: -200% center;
-  }
-}
-
+    @keyframes shimmer-text {
+      0% { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
   </style>
 </head>
 <body>
@@ -244,7 +233,36 @@
       }
     });
 
-    // Register service worker
+    // Gesture dua jari untuk ganti background
+    let lastTouch = 0;
+    document.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 2) {
+        document.body.style.backgroundImage =
+          document.body.style.backgroundImage.includes('white.png')
+            ? "url('./icon/dark.png')"
+            : "url('./icon/white.png')";
+        lastTouch = new Date().getTime();
+      }
+    });
+
+    // Fungsi untuk kapitalisasi tiap huruf awal kata
+    function capitalizeWords(str) {
+      return str.replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+    fetch("https://11z.co/_w/6804/selection")
+      .then(response => response.json())
+      .then(data => {
+        if (data.value) {
+          const capitalized = capitalizeWords(data.value);
+          document.querySelector(".number").textContent = capitalized;
+        }
+      })
+      .catch(error => {
+        console.error("Gagal mengambil data:", error);
+      });
+
+    // Service worker
     if ('serviceWorker' in navigator) {
       const sw = `
         self.addEventListener('install', e => {
@@ -267,29 +285,6 @@
       const swUrl = URL.createObjectURL(blob);
       navigator.serviceWorker.register(swUrl);
     }
-
-    // Fungsi untuk kapitalisasi tiap huruf awal kata
-function capitalizeWords(str) {
-  return str.replace(/\b\w/g, char => char.toUpperCase());
-}
-
-// Ambil data dari API dan masukkan ke .number
-fetch("https://11z.co/_w/6804/selection")
-  .then(response => response.json())
-  .then(data => {
-    if (data.value) {
-      const capitalized = capitalizeWords(data.value);
-      document.querySelector(".number").textContent = capitalized;
-    }
-  })
-  .catch(error => {
-    console.error("Gagal mengambil data:", error);
-  });
-
-
   </script>
 </body>
 </html>
-
-
-
