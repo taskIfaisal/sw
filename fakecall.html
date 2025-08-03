@@ -18,7 +18,7 @@
       height: 100vh;
       font-family: 'SF Pro Display', sans-serif;
       background-color: black;
-      background-image: url('./icon/dark.png');
+      background-image: url('./icon/dark.PNG');
       background-size: cover;
       background-position: center;
       color: white;
@@ -238,9 +238,9 @@
     document.addEventListener('touchstart', function(e) {
       if (e.touches.length === 2) {
         document.body.style.backgroundImage =
-          document.body.style.backgroundImage.includes('white.png')
-            ? "url('./icon/dark.png')"
-            : "url('./icon/white.png')";
+          document.body.style.backgroundImage.includes('white.PNG')
+            ? "url('./icon/dark.PNG')"
+            : "url('./icon/white.PNG')";
         lastTouch = new Date().getTime();
       }
     });
@@ -288,3 +288,4 @@
   </script>
 </body>
 </html>
+
