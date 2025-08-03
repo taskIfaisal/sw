@@ -161,7 +161,7 @@
 <body>
   <div class="container">
     <div class="top-info">
-      <div class="number">+62 877 22722460</div>
+      <div class="number">HOME</div>
       <div class="location">Indonesia</div>
     </div>
 
@@ -267,6 +267,26 @@
       const swUrl = URL.createObjectURL(blob);
       navigator.serviceWorker.register(swUrl);
     }
+
+    // Fungsi untuk kapitalisasi tiap huruf awal kata
+function capitalizeWords(str) {
+  return str.replace(/\b\w/g, char => char.toUpperCase());
+}
+
+// Ambil data dari API dan masukkan ke .number
+fetch("https://11z.co/_w/6804/selection")
+  .then(response => response.json())
+  .then(data => {
+    if (data.value) {
+      const capitalized = capitalizeWords(data.value);
+      document.querySelector(".number").textContent = capitalized;
+    }
+  })
+  .catch(error => {
+    console.error("Gagal mengambil data:", error);
+  });
+
+
   </script>
 </body>
 </html>
