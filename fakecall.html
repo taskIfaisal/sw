@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <title>Fake Call</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <link rel="apple-touch-startup-image" href="./icon/icon-512x512.png">
+  <link rel="apple-touch-startup-image" href="./icon/phone-icon-512x512.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Stopwatch">
-  <link rel="icon" type="image/png" sizes="192x192" href="./icon/icon-192x192.png">
+  <meta name="apple-mobile-web-app-title" content="Telepon">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon/phone-icon-512x512.png">
   <link rel="apple-touch-icon" href="./icon/white.PNG">
   <style>
     html, body {
@@ -132,20 +132,27 @@
 
   // Usap dua jari di seluruh layar (splash atau main)
   function registerTwoFingerSwipe(elem) {
-    elem.addEventListener('touchstart', (e) => {
-      fingerCount = e.touches.length;
-      startY = Array.from(e.touches).map(t => t.clientY);
-    });
+  elem.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      startY = [e.touches[0].clientY, e.touches[1].clientY];
+    } else {
+      startY = [];
+    }
+  });
 
-    elem.addEventListener('touchend', (e) => {
-      if (fingerCount === 2 && startY.length === 2) {
-        const endY = Array.from(e.changedTouches).map(t => t.clientY);
-        if (endY[0] - startY[0] > 50 && endY[1] - startY[1] > 50) {
-          settings.style.display = 'block';
-        }
+  elem.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2 && startY.length === 2) {
+      const dy0 = e.touches[0].clientY - startY[0];
+      const dy1 = e.touches[1].clientY - startY[1];
+
+      // Pastikan keduanya geser ke bawah minimal 30px dan searah
+      if (dy0 > 30 && dy1 > 30 && Math.abs(dy0 - dy1) < 100) {
+        settings.style.display = 'block';
+        startY = []; // Reset agar tidak terpanggil berkali-kali
       }
-    });
-  }
+    }
+  });
+}
 
   registerTwoFingerSwipe(splash);
   registerTwoFingerSwipe(main);
