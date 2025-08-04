@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <title>Fake Call</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <link rel="apple-touch-startup-image" href="./icon/phone-icon-512x512.png">
+  <link rel="apple-touch-startup-image" href="./icon/icon-512x512.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Stopwatch">
-  <link rel="icon" type="image/png" sizes="192x192" href="./icon/phone-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon/icon-192x192.png">
   <link rel="apple-touch-icon" href="./icon/white.PNG">
   <style>
     html, body {
@@ -111,32 +111,33 @@
   </div>
 
   <script>
-    const splash = document.getElementById('splash');
-    const settings = document.getElementById('settings');
-    const main = document.getElementById('main');
-    const bgOptions = document.querySelectorAll('.option-img img');
+  const splash = document.getElementById('splash');
+  const settings = document.getElementById('settings');
+  const main = document.getElementById('main');
+  const bgOptions = document.querySelectorAll('.option-img img');
 
-    let fingerCount = 0;
-    let startY = [];
+  let fingerCount = 0;
+  let startY = [];
 
-    function applyBackground() {
-      const saved = localStorage.getItem('bg') || 'white';
-      splash.style.backgroundImage = `url('./icon/${saved}.PNG')`;
-      main.style.backgroundImage = `url('./icon/${saved}.PNG')`;
-      document.body.style.backgroundImage = `url('./icon/${saved}.PNG')`;
-      bgOptions.forEach(img => {
-        img.classList.toggle('selected', img.id === saved);
-      });
-    }
+  function applyBackground() {
+    const saved = localStorage.getItem('bg') || 'white';
+    splash.style.backgroundImage = `url('./icon/${saved}.PNG')`;
+    main.style.backgroundImage = `url('./icon/${saved}.PNG')`;
+    bgOptions.forEach(img => {
+      img.classList.toggle('selected', img.id === saved);
+    });
+  }
 
-    applyBackground();
+  applyBackground();
 
-    splash.addEventListener('touchstart', (e) => {
+  // Usap dua jari di seluruh layar (splash atau main)
+  function registerTwoFingerSwipe(elem) {
+    elem.addEventListener('touchstart', (e) => {
       fingerCount = e.touches.length;
       startY = Array.from(e.touches).map(t => t.clientY);
     });
 
-    splash.addEventListener('touchend', (e) => {
+    elem.addEventListener('touchend', (e) => {
       if (fingerCount === 2 && startY.length === 2) {
         const endY = Array.from(e.changedTouches).map(t => t.clientY);
         if (endY[0] - startY[0] > 50 && endY[1] - startY[1] > 50) {
@@ -144,52 +145,34 @@
         }
       }
     });
+  }
 
-    // Swipe dua jari ke atas di seluruh layar untuk ganti gambar
-    let swipeStart = [];
+  registerTwoFingerSwipe(splash);
+  registerTwoFingerSwipe(main);
 
-    document.body.addEventListener('touchstart', e => {
-      if (e.touches.length === 2) {
-        swipeStart = Array.from(e.touches).map(t => t.clientY);
-      }
+  // Klik gambar opsi
+  bgOptions.forEach(img => {
+    img.addEventListener('click', () => {
+      const selected = img.id;
+      localStorage.setItem('bg', selected);
+      applyBackground();
+      settings.style.display = 'none';
+      splash.style.display = 'none';
+      main.style.display = 'block';
     });
+  });
 
-    document.body.addEventListener('touchend', e => {
-      if (e.changedTouches.length === 2) {
-        const swipeEnd = Array.from(e.changedTouches).map(t => t.clientY);
-        const diff0 = swipeStart[0] - swipeEnd[0];
-        const diff1 = swipeStart[1] - swipeEnd[1];
-
-        if (diff0 < -50 && diff1 < -50) {
-          // Swipe dua jari ke bawah
-          const current = localStorage.getItem('bg') || 'white';
-          const next = current === 'white' ? 'dark' : 'white';
-          localStorage.setItem('bg', next);
-          applyBackground();
-        }
-      }
-    });
-
-    bgOptions.forEach(img => {
-      img.addEventListener('click', () => {
-        const selected = img.id;
-        localStorage.setItem('bg', selected);
-        applyBackground();
-        settings.style.display = 'none';
+  // Saat pertama kali jalan
+  window.onload = () => {
+    if (localStorage.getItem('bg')) {
+      setTimeout(() => {
         splash.style.display = 'none';
         main.style.display = 'block';
-      });
-    });
+      }, 2000);
+    }
+  };
+</script>
 
-    window.onload = () => {
-      if (localStorage.getItem('bg')) {
-        setTimeout(() => {
-          splash.style.display = 'none';
-          main.style.display = 'block';
-        }, 2000);
-      }
-    };
-  </script>
 
 </body>
 </html>
