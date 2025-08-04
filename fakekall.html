@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fake Call</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+ <link rel="apple-touch-icon" href="./icon/icon-192x192.png">
+    <link rel="apple-touch-startup-image" href="./icon/icon-512x512.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Stopwatch">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon/icon-192x192.png">
+
+  <style>
+       html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      font-family: 'SF Pro Display', sans-serif;
+      background-color: black;
+      background-size: cover;
+      background-position: center;
+      color: white;
+      overflow: hidden;
+      touch-action: none;
+      position: relative;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: black;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 375px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 40px 20px;
+    }
+
+    .top-info {
+      text-align: center;
+      margin-top: 0px; /* naikkan dari atas */
+      margin-bottom: 0px; /* beri jarak dengan ikon bawahnya */
+    }
+
+    .number {
+      font-size: 34px;
+      font-weight: 500;
+    }
+
+    .location {
+      font-size: 21px;
+      color: gray;
+      margin-top: 6px;
+    }
+
+    .options {
+  display: flex;
+  justify-content: space-around;
+  gap: 50px; /* tambahkan ini untuk memberi jarak */
+  margin-top: auto;
+  margin-bottom: 60px; /* Dekatkan dengan slider */
+}
+
+
+    .option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .option img {
+      width: 25px;
+      height: 25px;
+      margin-bottom: 7px;
+    }
+
+    .option span {
+      font-size: 16px;
+      color: white;
+    }
+
+    .slider-container {
+  position: relative;
+  width: 80%; /* ← ubah panjang di sini */
+  height: 78px;
+  border-radius: 40px;
+  background-color: #454545;
+  margin: 0 auto 20px auto; /* tengahin slider */
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  overflow: hidden;
+  transform: translateY(-20px);
+}
+
+    .slider-handle {
+      position: absolute;
+      width: 70px;
+      height: 70px;
+      background-color: #ffffff;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      left: 7px;
+      z-index: 3;
+      transition: background-color 0.3s ease;
+    }
+
+    .slider-handle img {
+      width: 24px;
+      height: 24px;
+      /* filter: brightness(0) invert(1); */
+    }
+
+    .slide-text {
+  font-size: 18px;
+  margin-left: 95px;
+  white-space: nowrap;
+  pointer-events: none;
+  position: relative;
+  z-index: 2;
+
+  color: white;
+  background: linear-gradient(120deg, white 0%, black 50%, white 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-text 3s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+@keyframes shimmer-text {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-info">
+      <div class="number">HOME</div>
+      <div class="location">Indonesia</div>
+    </div>
+
+    <div class="options">
+      <div class="option">
+        <img src="./icon/alaram.png" alt="remind">
+        <span>Remind Me</span>
+      </div>
+      <div class="option">
+        <img src="./icon/pesan.png" alt="message">
+        <span>Message</span>
+      </div>
+    </div>
+
+    <div class="slider-container" id="slider">
+      <div class="slider-handle" id="handle">
+        <img src="./icon/phone.png" alt="phone">
+      </div>
+      <div class="slide-text">slide to answer</div>
+    </div>
+  </div>
+
+  <script>
+    const handle = document.getElementById("handle");
+    const slider = document.getElementById("slider");
+
+    let isDragging = false;
+    let startX = 0;
+    let currentLeft = 0;
+    let maxSlide = 0;
+
+    function setMaxSlide() {
+      maxSlide = slider.offsetWidth - handle.offsetWidth - 10;
+    }
+
+    handle.addEventListener("touchstart", (e) => {
+      isDragging = true;
+      startX = e.touches[0].clientX;
+      setMaxSlide();
+    });
+
+    handle.addEventListener("touchmove", (e) => {
+      if (!isDragging) return;
+      const deltaX = e.touches[0].clientX - startX;
+      currentLeft = Math.max(0, Math.min(deltaX, maxSlide));
+      handle.style.left = `${currentLeft}px`;
+    });
+
+    handle.addEventListener("touchend", () => {
+      if (!isDragging) return;
+      isDragging = false;
+      if (currentLeft >= maxSlide - 10) {
+        alert("Panggilan dijawab!");
+      } else {
+        handle.style.left = "0px";
+      }
+    });
+
+    handle.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      startX = e.clientX;
+      setMaxSlide();
+      e.preventDefault();
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - startX;
+      currentLeft = Math.max(0, Math.min(deltaX, maxSlide));
+      handle.style.left = `${currentLeft}px`;
+    });
+
+    document.addEventListener("mouseup", () => {
+      if (!isDragging) return;
+      isDragging = false;
+      if (currentLeft >= maxSlide - 10) {
+        alert("Panggilan dijawab!");
+      } else {
+        handle.style.left = "0px";
+      }
+    });
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      const sw = `
+        self.addEventListener('install', e => {
+          e.waitUntil(
+            caches.open('pwa-cache').then(cache => {
+              return cache.addAll(['.']);
+            })
+          );
+        });
+
+        self.addEventListener('fetch', e => {
+          e.respondWith(
+            caches.match(e.request).then(response => {
+              return response || fetch(e.request);
+            })
+          );
+        });
+      `;
+      const blob = new Blob([sw], { type: 'application/javascript' });
+      const swUrl = URL.createObjectURL(blob);
+      navigator.serviceWorker.register(swUrl);
+    }
+
+    // Fungsi untuk kapitalisasi tiap huruf awal kata
+function capitalizeWords(str) {
+  return str.replace(/\b\w/g, char => char.toUpperCase());
+}
+
+// Ambil data dari API dan masukkan ke .number
+fetch("https://11z.co/_w/6804/selection")
+  .then(response => response.json())
+  .then(data => {
+    if (data.value) {
+      const capitalized = capitalizeWords(data.value);
+      document.querySelector(".number").textContent = capitalized;
+    }
+  })
+  .catch(error => {
+    console.error("Gagal mengambil data:", error);
+  });
+
+
+  </script>
+</body>
+</html>
