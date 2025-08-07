@@ -182,46 +182,15 @@
 
   <script>
     // Audio ringtone from icon folder
-  const ringtone = new Audio('./icon/ringtone.mp3');
-  ringtone.loop = true;
-  
-  // Auto-play ringtone when page loads (with fallback)
-  window.addEventListener('DOMContentLoaded', () => {
-    // Try to play immediately (may be blocked by browser)
-    const playPromise = ringtone.play();
+    const ringtone = new Audio('./icon/ringtone.mp3');
+    ringtone.loop = true;
     
-    // Handle autoplay restrictions
-    if (playPromise !== undefined) {
-      playPromise.catch(error => {
-        // Fallback: Show a hidden play button if autoplay fails
-        const playButton = document.createElement('button');
-        playButton.style.position = 'fixed';
-        playButton.style.opacity = '0';
-        playButton.style.width = '100%';
-        playButton.style.height = '100%';
-        playButton.style.top = '0';
-        playButton.style.left = '0';
-        playButton.style.zIndex = '9999';
-        playButton.onclick = () => {
-          ringtone.play();
-          playButton.remove();
-        };
-        document.body.appendChild(playButton);
-        
-        // Auto-click the invisible button after a short delay
-        setTimeout(() => {
-          playButton.click();
-        }, 300);
-      });
+    // Function to handle call answering
+    function answerCall() {
+      ringtone.pause();
+      ringtone.currentTime = 0;
+      alert("Panggilan tak dijawab!");
     }
-  });
-
-  // Function to handle call answering
-  function answerCall() {
-    ringtone.pause();
-    ringtone.currentTime = 0;
-    alert("Panggilan tak dijawab!");
-  }
 
     // Play ringtone after user interaction
     function startRingtone() {
