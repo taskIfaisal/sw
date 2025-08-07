@@ -1,1 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Panggilan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="apple-touch-startup-image" href="./icon/phone-icon-512x512.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Telepon">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon/phone-icon-512x512.png">
+  <link rel="apple-touch-icon" href="./icon/white.PNG">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    #callFrame {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: none; /* Sembunyikan iframe awal */
+    }
+  </style>
+</head>
+<body>
+  <iframe id="callFrame"></iframe>
 
+  <script>
+    const frame = document.getElementById('callFrame');
+    let callTimer;
+
+    // Auto fullscreen saat load
+    function enterFullscreen() {
+      if (frame.requestFullscreen) {
+        frame.requestFullscreen().catch(err => {
+          console.log("Fullscreen error:", err);
+        });
+      }
+    }
+
+    // Fungsi untuk memulai panggilan
+    function startCall() {
+      frame.style.display = 'block';
+      frame.src = "fakecall.html";
+      
+      frame.addEventListener('load', function() {
+        enterFullscreen();
+        
+        const iframeDoc = frame.contentDocument || frame.contentWindow.document;
+        
+        // Mulai timer 10 detik setelah tap
+        iframeDoc.body.addEventListener('click', function() {
+          clearTimeout(callTimer);
+          callTimer = setTimeout(function() {
+            frame.src = "fakekall.html";
+          }, 10000);
+        });
+        
+        iframeDoc.body.addEventListener('touchstart', function() {
+          clearTimeout(callTimer);
+          callTimer = setTimeout(function() {
+            frame.src = "fakekall.html";
+          }, 10000);
+        });
+      });
+    }
+
+    // Mulai proses saat halaman siap
+    window.addEventListener('DOMContentLoaded', startCall);
+  </script>
+</body>
+</html>
