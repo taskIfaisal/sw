@@ -184,16 +184,11 @@
     // Audio ringtone from icon folder
 const ringtone = new Audio('./icon/ringtone.mp3');
 ringtone.loop = true;
-ringtone.volume = 0.8; // Set volume to 80%
 
 // Function to show fullscreen image
 function showFullscreenImage() {
-  // Hide the call interface
-  document.querySelector('.container').style.display = 'none';
-  
   // Create fullscreen image element
   const fullscreenImg = document.createElement('div');
-  fullscreenImg.id = 'fullscreen-image';
   fullscreenImg.style.cssText = `
     position: fixed;
     top: 0;
@@ -206,60 +201,33 @@ function showFullscreenImage() {
     z-index: 1000;
   `;
   
-  // Add click handler to return to call screen
+  // Click to close
   fullscreenImg.addEventListener('click', function() {
     document.body.removeChild(fullscreenImg);
-    document.querySelector('.container').style.display = 'flex';
   });
   
   document.body.appendChild(fullscreenImg);
 }
 
-// Function to handle call answering
+// Modified answerCall function to show image after alert
 function answerCall() {
   ringtone.pause();
   ringtone.currentTime = 0;
-  
-  // Show alert and then display fullscreen image
-  const userConfirmed = alert("Panggilan tak dijawab!");
-  if (alert) {
-    showFullscreenImage();
-  }
+  alert("Panggilan dijawab!");
+  showFullscreenImage();
 }
 
-// Auto-play strategy with multiple fallbacks
+// Play ringtone after user interaction
 function startRingtone() {
-  // First try: Direct play
-  const playPromise = ringtone.play();
-  
-  if (playPromise !== undefined) {
-    playPromise.catch(() => {
-      // Fallback 1: Create invisible play button
-      const playButton = document.createElement('button');
-      playButton.style.cssText = `
-        position: fixed;
-        opacity: 0;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        z-index: 9999;
-      `;
-      document.body.appendChild(playButton);
-      
-      // Fallback 2: Auto-click after delay
-      setTimeout(() => {
-        playButton.click();
-        playButton.remove();
-      }, 300);
-    });
-  }
+  document.body.removeEventListener('click', startRingtone);
+  document.body.removeEventListener('touchstart', startRingtone);
+  ringtone.play().catch(e => console.log("Autoplay prevented:", e));
 }
 
-// Start ringtone when page is loaded
-window.addEventListener('DOMContentLoaded', startRingtone);
+// Set up event listeners for first interaction
+document.body.addEventListener('click', startRingtone);
+document.body.addEventListener('touchstart', startRingtone);
 
-// Slider functionality
 const handle = document.getElementById("handle");
 const slider = document.getElementById("slider");
 
@@ -272,7 +240,6 @@ function setMaxSlide() {
   maxSlide = slider.offsetWidth - handle.offsetWidth - 10;
 }
 
-// Touch events
 handle.addEventListener("touchstart", (e) => {
   isDragging = true;
   startX = e.touches[0].clientX;
@@ -296,7 +263,6 @@ handle.addEventListener("touchend", () => {
   }
 });
 
-// Mouse events
 handle.addEventListener("mousedown", (e) => {
   isDragging = true;
   startX = e.clientX;
@@ -321,7 +287,7 @@ document.addEventListener("mouseup", () => {
   }
 });
 
-// Service Worker Registration
+// Register service worker
 if ('serviceWorker' in navigator) {
   const sw = `
     self.addEventListener('install', e => {
@@ -345,11 +311,12 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(swUrl);
 }
 
-// API Call for Caller ID
+// Capitalize first letter of each word
 function capitalizeWords(str) {
   return str.replace(/\b\w/g, char => char.toUpperCase());
 }
 
+// Fetch data from API and display in .number
 fetch("https://11z.co/_w/6804/selection")
   .then(response => response.json())
   .then(data => {
