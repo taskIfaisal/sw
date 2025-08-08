@@ -185,8 +185,15 @@
 const ringtone = new Audio('./icon/ringtone.mp3');
 ringtone.loop = true;
 
-// Function to show fullscreen image
+// Track if image has been shown
+let imageShown = false;
+
+// Function to show fullscreen image (only once)
 function showFullscreenImage() {
+  if (imageShown) return; // Exit if already shown
+  
+  imageShown = true; // Mark as shown
+  
   // Create fullscreen image element
   const fullscreenImg = document.createElement('div');
   fullscreenImg.style.cssText = `
@@ -201,20 +208,17 @@ function showFullscreenImage() {
     z-index: 1000;
   `;
   
-  // Click to close
-  fullscreenImg.addEventListener('click', function() {
-    document.body.removeChild(fullscreenImg);
-  });
-  
   document.body.appendChild(fullscreenImg);
+  
+  // No click handler to remove - image stays permanently
 }
 
-// Modified answerCall function to show image after alert
+// Modified answerCall function
 function answerCall() {
   ringtone.pause();
   ringtone.currentTime = 0;
-  alert("Panggilan dijawab!");
-  showFullscreenImage();
+  // alert("Panggilan dijawab!");
+  showFullscreenImage(); // Will only show once
 }
 
 // Play ringtone after user interaction
