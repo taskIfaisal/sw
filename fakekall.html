@@ -185,53 +185,40 @@
 const ringtone = new Audio('./icon/ringtone.mp3');
 ringtone.loop = true;
 
-// Variable to track if call has been cancelled
-let callCancelled = false;
+// Track if image has been shown
+let imageShown = false;
 
-// Function to show home.PNG fullscreen and stop everything
-function showHomeScreen() {
-  // Hide the call interface completely
-  document.querySelector('.container').style.display = 'none';
+// Function to show fullscreen image (only once)
+function showFullscreenImage() {
+  if (imageShown) return; // Exit if already shown
+  
+  imageShown = true; // Mark as shown
   
   // Create fullscreen image element
-  const homeScreen = document.createElement('div');
-  homeScreen.style.cssText = `
+  const fullscreenImg = document.createElement('div');
+  fullscreenImg.style.cssText = `
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: url('./icon/home.PNG') no-repeat center center;
+    background: url('./icon/dark.PNG') no-repeat center center;
     background-size: contain;
     background-color: black;
     z-index: 1000;
   `;
   
-  document.body.appendChild(homeScreen);
+  document.body.appendChild(fullscreenImg);
+  
+  // No click handler to remove - image stays permanently
 }
 
 // Modified answerCall function
 function answerCall() {
-  if (callCancelled) return; // If already cancelled, do nothing
-  
   ringtone.pause();
   ringtone.currentTime = 0;
-  callCancelled = true; // Mark call as cancelled
-  
   alert("Panggilan dibatalkan!");
-  showHomeScreen(); // Show home.png
-  
-  // Completely disable all slider functionality
-  handle.onmousedown = null;
-  handle.ontouchstart = null;
-  document.onmousemove = null;
-  document.ontouchmove = null;
-  document.onmouseup = null;
-  document.ontouchend = null;
-  
-  // Also remove any remaining event listeners
-  document.body.removeEventListener('click', startRingtone);
-  document.body.removeEventListener('touchstart', startRingtone);
+  showFullscreenImage(); // Will only show once
 }
 
 // Play ringtone after user interaction
@@ -257,23 +244,21 @@ function setMaxSlide() {
   maxSlide = slider.offsetWidth - handle.offsetWidth - 10;
 }
 
-// Touch events
 handle.addEventListener("touchstart", (e) => {
-  if (callCancelled) return;
   isDragging = true;
   startX = e.touches[0].clientX;
   setMaxSlide();
 });
 
 handle.addEventListener("touchmove", (e) => {
-  if (!isDragging || callCancelled) return;
+  if (!isDragging) return;
   const deltaX = e.touches[0].clientX - startX;
   currentLeft = Math.max(0, Math.min(deltaX, maxSlide));
   handle.style.left = `${currentLeft}px`;
 });
 
 handle.addEventListener("touchend", () => {
-  if (!isDragging || callCancelled) return;
+  if (!isDragging) return;
   isDragging = false;
   if (currentLeft >= maxSlide - 10) {
     answerCall();
@@ -282,9 +267,7 @@ handle.addEventListener("touchend", () => {
   }
 });
 
-// Mouse events
 handle.addEventListener("mousedown", (e) => {
-  if (callCancelled) return;
   isDragging = true;
   startX = e.clientX;
   setMaxSlide();
@@ -292,14 +275,14 @@ handle.addEventListener("mousedown", (e) => {
 });
 
 document.addEventListener("mousemove", (e) => {
-  if (!isDragging || callCancelled) return;
+  if (!isDragging) return;
   const deltaX = e.clientX - startX;
   currentLeft = Math.max(0, Math.min(deltaX, maxSlide));
   handle.style.left = `${currentLeft}px`;
 });
 
 document.addEventListener("mouseup", () => {
-  if (!isDragging || callCancelled) return;
+  if (!isDragging) return;
   isDragging = false;
   if (currentLeft >= maxSlide - 10) {
     answerCall();
