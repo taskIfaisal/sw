@@ -180,129 +180,187 @@
     </div>
   </div>
 
-  <script>
+   <script>
     // Audio ringtone from icon folder
-    const ringtone = new Audio('./icon/ringtone.mp3');
-    ringtone.loop = true;
-    
-    // Function to handle call answering
-    function answerCall() {
-      ringtone.pause();
-      ringtone.currentTime = 0;
-      alert("Panggilan tak dijawab!");
-    }
+const ringtone = new Audio('./icon/ringtone.mp3');
+ringtone.loop = true;
+ringtone.volume = 0.8; // Set volume to 80%
 
-    // Play ringtone after user interaction
-    function startRingtone() {
-      document.body.removeEventListener('click', startRingtone);
-      document.body.removeEventListener('touchstart', startRingtone);
-      ringtone.play().catch(e => console.log("Autoplay prevented:", e));
-    }
-    
-    // Set up event listeners for first interaction
-    document.body.addEventListener('click', startRingtone);
-    document.body.addEventListener('touchstart', startRingtone);
+// Function to show fullscreen image
+function showFullscreenImage() {
+  // Hide the call interface
+  document.querySelector('.container').style.display = 'none';
+  
+  // Create fullscreen image element
+  const fullscreenImg = document.createElement('div');
+  fullscreenImg.id = 'fullscreen-image';
+  fullscreenImg.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('./icon/dark.png') no-repeat center center;
+    background-size: contain;
+    background-color: black;
+    z-index: 1000;
+  `;
+  
+  // Add click handler to return to call screen
+  fullscreenImg.addEventListener('click', function() {
+    document.body.removeChild(fullscreenImg);
+    document.querySelector('.container').style.display = 'flex';
+  });
+  
+  document.body.appendChild(fullscreenImg);
+}
 
-    const handle = document.getElementById("handle");
-    const slider = document.getElementById("slider");
+// Function to handle call answering
+function answerCall() {
+  ringtone.pause();
+  ringtone.currentTime = 0;
+  
+  // Show alert and then display fullscreen image
+  const userConfirmed = confirm("Panggilan tak dijawab!");
+  if (userConfirmed) {
+    showFullscreenImage();
+  }
+}
 
-    let isDragging = false;
-    let startX = 0;
-    let currentLeft = 0;
-    let maxSlide = 0;
-
-    function setMaxSlide() {
-      maxSlide = slider.offsetWidth - handle.offsetWidth - 10;
-    }
-
-    handle.addEventListener("touchstart", (e) => {
-      isDragging = true;
-      startX = e.touches[0].clientX;
-      setMaxSlide();
-    });
-
-    handle.addEventListener("touchmove", (e) => {
-      if (!isDragging) return;
-      const deltaX = e.touches[0].clientX - startX;
-      currentLeft = Math.max(0, Math.min(deltaX, maxSlide));
-      handle.style.left = `${currentLeft}px`;
-    });
-
-    handle.addEventListener("touchend", () => {
-      if (!isDragging) return;
-      isDragging = false;
-      if (currentLeft >= maxSlide - 10) {
-        answerCall();
-      } else {
-        handle.style.left = "0px";
-      }
-    });
-
-    handle.addEventListener("mousedown", (e) => {
-      isDragging = true;
-      startX = e.clientX;
-      setMaxSlide();
-      e.preventDefault();
-    });
-
-    document.addEventListener("mousemove", (e) => {
-      if (!isDragging) return;
-      const deltaX = e.clientX - startX;
-      currentLeft = Math.max(0, Math.min(deltaX, maxSlide));
-      handle.style.left = `${currentLeft}px`;
-    });
-
-    document.addEventListener("mouseup", () => {
-      if (!isDragging) return;
-      isDragging = false;
-      if (currentLeft >= maxSlide - 10) {
-        answerCall();
-      } else {
-        handle.style.left = "0px";
-      }
-    });
-
-    // Register service worker
-    if ('serviceWorker' in navigator) {
-      const sw = `
-        self.addEventListener('install', e => {
-          e.waitUntil(
-            caches.open('pwa-cache').then(cache => {
-              return cache.addAll(['.']);
-            })
-          );
-        });
-
-        self.addEventListener('fetch', e => {
-          e.respondWith(
-            caches.match(e.request).then(response => {
-              return response || fetch(e.request);
-            })
-          );
-        });
+// Auto-play strategy with multiple fallbacks
+function startRingtone() {
+  // First try: Direct play
+  const playPromise = ringtone.play();
+  
+  if (playPromise !== undefined) {
+    playPromise.catch(() => {
+      // Fallback 1: Create invisible play button
+      const playButton = document.createElement('button');
+      playButton.style.cssText = `
+        position: fixed;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: 9999;
       `;
-      const blob = new Blob([sw], { type: 'application/javascript' });
-      const swUrl = URL.createObjectURL(blob);
-      navigator.serviceWorker.register(swUrl);
-    }
+      document.body.appendChild(playButton);
+      
+      // Fallback 2: Auto-click after delay
+      setTimeout(() => {
+        playButton.click();
+        playButton.remove();
+      }, 300);
+    });
+  }
+}
 
-    // Capitalize first letter of each word
-    function capitalizeWords(str) {
-      return str.replace(/\b\w/g, char => char.toUpperCase());
-    }
+// Start ringtone when page is loaded
+window.addEventListener('DOMContentLoaded', startRingtone);
 
-    // Fetch data from API and display in .number
-    fetch("https://11z.co/_w/6804/selection")
-      .then(response => response.json())
-      .then(data => {
-        if (data.value) {
-          const capitalized = capitalizeWords(data.value);
-          document.querySelector(".number").textContent = capitalized;
-        }
-      })
-      .catch(error => {
-        console.error("Gagal mengambil data:", error);
-      });
+// Slider functionality
+const handle = document.getElementById("handle");
+const slider = document.getElementById("slider");
+
+let isDragging = false;
+let startX = 0;
+let currentLeft = 0;
+let maxSlide = 0;
+
+function setMaxSlide() {
+  maxSlide = slider.offsetWidth - handle.offsetWidth - 10;
+}
+
+// Touch events
+handle.addEventListener("touchstart", (e) => {
+  isDragging = true;
+  startX = e.touches[0].clientX;
+  setMaxSlide();
+});
+
+handle.addEventListener("touchmove", (e) => {
+  if (!isDragging) return;
+  const deltaX = e.touches[0].clientX - startX;
+  currentLeft = Math.max(0, Math.min(deltaX, maxSlide));
+  handle.style.left = `${currentLeft}px`;
+});
+
+handle.addEventListener("touchend", () => {
+  if (!isDragging) return;
+  isDragging = false;
+  if (currentLeft >= maxSlide - 10) {
+    answerCall();
+  } else {
+    handle.style.left = "0px";
+  }
+});
+
+// Mouse events
+handle.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  startX = e.clientX;
+  setMaxSlide();
+  e.preventDefault();
+});
+
+document.addEventListener("mousemove", (e) => {
+  if (!isDragging) return;
+  const deltaX = e.clientX - startX;
+  currentLeft = Math.max(0, Math.min(deltaX, maxSlide));
+  handle.style.left = `${currentLeft}px`;
+});
+
+document.addEventListener("mouseup", () => {
+  if (!isDragging) return;
+  isDragging = false;
+  if (currentLeft >= maxSlide - 10) {
+    answerCall();
+  } else {
+    handle.style.left = "0px";
+  }
+});
+
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+  const sw = `
+    self.addEventListener('install', e => {
+      e.waitUntil(
+        caches.open('pwa-cache').then(cache => {
+          return cache.addAll(['.']);
+        })
+      );
+    });
+
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        caches.match(e.request).then(response => {
+          return response || fetch(e.request);
+        })
+      );
+    });
+  `;
+  const blob = new Blob([sw], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl);
+}
+
+// API Call for Caller ID
+function capitalizeWords(str) {
+  return str.replace(/\b\w/g, char => char.toUpperCase());
+}
+
+fetch("https://11z.co/_w/6804/selection")
+  .then(response => response.json())
+  .then(data => {
+    if (data.value) {
+      const capitalized = capitalizeWords(data.value);
+      document.querySelector(".number").textContent = capitalized;
+    }
+  })
+  .catch(error => {
+    console.error("Gagal mengambil data:", error);
+  });
   </script>
 </body>
 </html>
