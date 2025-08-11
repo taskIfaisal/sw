@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magic Card Trick</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            touch-action: none;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+        }
+        
+        #card {
+            position: absolute;
+            width: 30%;
+            max-width: 200px;
+            z-index: 2;
+            user-select: none;
+            -webkit-user-drag: none;
+            touch-action: none;
+        }
+        
+        #settings {
+            position: fixed;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 3;
+            transition: top 0.5s ease;
+            color: white;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        
+        .setting-section {
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .file-upload {
+            background: #2196F3;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            display: inline-block;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="background"></div>
+    <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
+    <div id="settings">
+        <h2>Magic Card Settings</h2>
+        
+        <div class="setting-section">
+            <h3>Background Image</h3>
+            <label class="file-upload">
+                Choose Background
+                <input type="file" id="bg-upload" accept="image/*">
+            </label>
+        </div>
+        
+        <div class="setting-section">
+            <h3>Card Image</h3>
+            <label class="file-upload">
+                Choose Card
+                <input type="file" id="card-upload" accept="image/*">
+            </label>
+            <button id="default-card">Use Default Card</button>
+        </div>
+        
+        <div class="setting-section">
+            <h3>Card Size</h3>
+            <button id="size-small">Small</button>
+            <button id="size-medium">Medium</button>
+            <button id="size-large">Large</button>
+        </div>
+        
+        <div class="setting-section">
+            <button id="close-settings">Save & Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Elements
+        const background = document.getElementById('background');
+        const card = document.getElementById('card');
+        const settings = document.getElementById('settings');
+        const bgUpload = document.getElementById('bg-upload');
+        const cardUpload = document.getElementById('card-upload');
+        const defaultCardBtn = document.getElementById('default-card');
+        const closeSettingsBtn = document.getElementById('close-settings');
+        
+        // Initialize card position
+        let posX = window.innerWidth / 2 - card.offsetWidth / 2;
+        let posY = window.innerHeight / 2 - card.offsetHeight / 2;
+        let isDragging = false;
+        let startX, startY;
+        
+        // Set initial positions
+        updateCardPosition();
+        
+        // Touch events for swipe down to open settings
+        let startYPos = 0;
+        document.addEventListener('touchstart', (e) => {
+            startYPos = e.touches[0].clientY;
+        }, {passive: false});
+        
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                const currentY = e.touches[0].clientY;
+                if (startYPos - currentY > 100) { // Swipe down with two fingers
+                    e.preventDefault();
+                    settings.style.top = '0';
+                }
+            }
+        }, {passive: false});
+        
+        // Double click to show card
+        let lastTap = 0;
+        document.addEventListener('touchend', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            if (tapLength < 300 && tapLength > 0) {
+                // Double tap detected
+                showCard();
+            }
+            lastTap = currentTime;
+        });
+        
+        // Card dragging functionality
+        card.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            startX = e.touches[0].clientX - posX;
+            startY = e.touches[0].clientY - posY;
+            e.preventDefault();
+        }, {passive: false});
+        
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                posX = e.touches[0].clientX - startX;
+                posY = e.touches[0].clientY - startY;
+                updateCardPosition();
+                e.preventDefault();
+            }
+        }, {passive: false});
+        
+        document.addEventListener('touchend', (e) => {
+            if (isDragging) {
+                isDragging = false;
+                
+                // Check if card is off screen
+                if (posX < -card.offsetWidth * 0.7 || 
+                    posX > window.innerWidth - card.offsetWidth * 0.3 ||
+                    posY < -card.offsetHeight * 0.7 || 
+                    posY > window.innerHeight - card.offsetHeight * 0.3) {
+                    hideCard();
+                }
+            }
+        });
+        
+        // Settings functionality
+        bgUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    background.style.backgroundImage = `url(${event.target.result})`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        cardUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    card.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        defaultCardBtn.addEventListener('click', () => {
+            card.src = "https://deckofcardsapi.com/static/img/AS.png";
+        });
+        
+        document.getElementById('size-small').addEventListener('click', () => {
+            card.style.width = '20%';
+        });
+        
+        document.getElementById('size-medium').addEventListener('click', () => {
+            card.style.width = '30%';
+        });
+        
+        document.getElementById('size-large').addEventListener('click', () => {
+            card.style.width = '40%';
+        });
+        
+        closeSettingsBtn.addEventListener('click', () => {
+            settings.style.top = '-100%';
+        });
+        
+        // Helper functions
+        function updateCardPosition() {
+            card.style.left = `${posX}px`;
+            card.style.top = `${posY}px`;
+        }
+        
+        function hideCard() {
+            card.style.display = 'none';
+        }
+        
+        function showCard() {
+            // Reset to center position
+            posX = window.innerWidth / 2 - card.offsetWidth / 2;
+            posY = window.innerHeight / 2 - card.offsetHeight / 2;
+            updateCardPosition();
+            card.style.display = 'block';
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            posX = window.innerWidth / 2 - card.offsetWidth / 2;
+            posY = window.innerHeight / 2 - card.offsetHeight / 2;
+            updateCardPosition();
+        });
+    </script>
+</body>
+</html>
