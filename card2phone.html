@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="Card2Phone">
     <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
-    <style>
+   <style>
         html, body {
             margin: 0;
             padding: 0;
@@ -44,13 +44,17 @@
         
         #card {
             position: absolute;
-            width: 30%;
-            max-width: 200px;
+            /* Hapus batasan width dan height */
             z-index: 2;
             user-select: none;
             -webkit-user-drag: none;
             touch-action: none;
             transform-origin: center center;
+            /* Atur ukuran awal */
+            width: auto;
+            height: auto;
+            max-width: none;
+            max-height: none;
         }
         
         #settings {
@@ -115,16 +119,19 @@
             width: 90%;
             height: 70%;
             margin: 20px;
+            overflow: hidden;
         }
 
         #editing-card {
-            max-width: 100%;
-            max-height: 100%;
+            max-width: none;
+            max-height: none;
             display: block;
             margin: 0 auto;
             touch-action: none;
             transform-origin: center center;
             transition: transform 0.1s ease;
+            width: auto;
+            height: auto;
         }
 
         .editor-controls {
@@ -150,53 +157,35 @@
         #cancel-edit {
             background: #f44336;
         }
-        
-        #permission-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #FF9800;
-            z-index: 4;
-            display: none;
-        }
     </style>
 </head>
 <body>
     <div id="background"></div>
     <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
     <div id="settings">
-        <h2>Magic Card Settings</h2>
+        <h2>Pengaturan Kartu Ajaib</h2>
         
         <div class="setting-section">
-            <h3>Background Image</h3>
+            <h3>Gambar Latar Belakang</h3>
             <label class="file-upload">
-                Choose Background
+                Pilih Background
                 <input type="file" id="bg-upload" accept="image/*">
             </label>
         </div>
         
         <div class="setting-section">
-            <h3>Card Image</h3>
+            <h3>Gambar Kartu</h3>
             <label class="file-upload">
-                Choose Card
+                Pilih Kartu
                 <input type="file" id="card-upload" accept="image/*">
             </label>
-            <button id="default-card">Use Default Card</button>
+            <button id="default-card">Gunakan Kartu Default</button>
         </div>
         
         <div class="setting-section">
-            <h3>Motion Sensitivity</h3>
-            <input type="range" id="motion-sensitivity" min="0.1" max="2" step="0.1" value="1">
-            <span id="sensitivity-value">1.0</span>
-        </div>
-        
-        <div class="setting-section">
-            <button id="close-settings">Save & Close</button>
+            <button id="close-settings">Simpan & Tutup</button>
         </div>
     </div>
-    
-    <button id="permission-btn">Enable Tilt Motion</button>
 
     <script>
         // Elements
@@ -207,82 +196,31 @@
         const cardUpload = document.getElementById('card-upload');
         const defaultCardBtn = document.getElementById('default-card');
         const closeSettingsBtn = document.getElementById('close-settings');
-        const permissionBtn = document.getElementById('permission-btn');
-        const motionSensitivity = document.getElementById('motion-sensitivity');
-        const sensitivityValue = document.getElementById('sensitivity-value');
         
-        // Initialize card properties
-        let posX = window.innerWidth / 2 - card.offsetWidth / 2;
-        let posY = window.innerHeight / 2 - card.offsetHeight / 2;
+        // Inisialisasi properti kartu
+        let posX = window.innerWidth / 2;
+        let posY = window.innerHeight / 2;
         let scale = 1;
         let isDragging = false;
         let startX, startY;
-        let velocityX = 0;
-        let velocityY = 0;
-        let lastPosX = 0;
-        let lastPosY = 0;
-        let lastTime = 0;
-        let motionEnabled = false;
-        let sensitivity = 1.0;
         
-        // Device orientation variables
-        let beta = 0;
-        let gamma = 0;
-        let centerX = 0;
-        let centerY = 0;
+        // Set posisi awal
+        updateCardTransform();
         
-        // Set initial positions
-        updateCardPosition();
-        
-        // Update sensitivity display
-        motionSensitivity.addEventListener('input', (e) => {
-            sensitivity = parseFloat(e.target.value);
-            sensitivityValue.textContent = sensitivity.toFixed(1);
-        });
-        
-        // Check if we need to request permission for device motion
-        function checkPermission() {
-            if (typeof DeviceOrientationEvent !== 'undefined' && 
-                typeof DeviceOrientationEvent.requestPermission === 'function') {
-                permissionBtn.style.display = 'block';
-            }
+        // Fungsi untuk mengupdate transformasi kartu
+        function updateCardTransform() {
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
         }
         
-        // Request permission for iOS 13+
-        permissionBtn.addEventListener('click', () => {
-            DeviceOrientationEvent.requestPermission()
-                .then(response => {
-                    if (response === 'granted') {
-                        setupDeviceOrientation();
-                        permissionBtn.style.display = 'none';
-                    }
-                })
-                .catch(console.error);
-        });
-        
-        // Setup device orientation listener
-        function setupDeviceOrientation() {
-            window.addEventListener('deviceorientation', handleOrientation);
-            motionEnabled = true;
-            centerX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            centerY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+        // Fungsi untuk mendapatkan ukuran kartu yang discale
+        function getScaledDimensions() {
+            return {
+                width: card.naturalWidth * scale,
+                height: card.naturalHeight * scale
+            };
         }
         
-        // Handle device orientation changes
-        function handleOrientation(e) {
-            if (!isDragging && motionEnabled) {
-                beta = e.beta;  // -180 to 180 (front-back tilt)
-                gamma = e.gamma; // -90 to 90 (left-right tilt)
-                
-                // Update position based on tilt
-                posX = centerX + (gamma / 90) * (window.innerWidth / 2 - (card.offsetWidth * scale) / 2) * sensitivity;
-                posY = centerY + (beta / 180) * (window.innerHeight / 2 - (card.offsetHeight * scale) / 2) * sensitivity;
-                
-                updateCardPosition();
-            }
-        }
-        
-        // Touch events for swipe up to open settings
+        // Event untuk swipe up buka settings
         let startYPos = 0;
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
@@ -293,14 +231,14 @@
         document.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2) {
                 const currentY = e.touches[0].clientY;
-                if (currentY - startYPos > 100) { // Swipe UP with two fingers
+                if (currentY - startYPos > 100) { // Swipe UP dengan dua jari
                     e.preventDefault();
                     settings.style.top = '0';
                 }
             }
         }, {passive: false});
         
-        // Double tap to show card
+        // Double tap untuk show card
         let lastTap = 0;
         document.addEventListener('touchend', (e) => {
             const currentTime = new Date().getTime();
@@ -311,84 +249,61 @@
             lastTap = currentTime;
         });
         
-        // Card dragging functionality with velocity tracking
+        // Fungsi drag kartu
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 isDragging = true;
                 startX = e.touches[0].clientX - posX;
                 startY = e.touches[0].clientY - posY;
-                velocityX = 0;
-                velocityY = 0;
-                lastPosX = posX;
-                lastPosY = posY;
-                lastTime = Date.now();
                 e.preventDefault();
             }
         }, {passive: false});
         
         document.addEventListener('touchmove', (e) => {
             if (isDragging && e.touches.length === 1) {
-                const now = Date.now();
-                const deltaTime = now - lastTime;
-                
-                if (deltaTime > 0) {
-                    const newPosX = e.touches[0].clientX - startX;
-                    const newPosY = e.touches[0].clientY - startY;
-                    
-                    velocityX = (newPosX - lastPosX) / deltaTime * 1000;
-                    velocityY = (newPosY - lastPosY) / deltaTime * 1000;
-                    
-                    lastPosX = newPosX;
-                    lastPosY = newPosY;
-                    lastTime = now;
-                    
-                    posX = newPosX;
-                    posY = newPosY;
-                    updateCardPosition();
-                }
+                posX = e.touches[0].clientX - startX;
+                posY = e.touches[0].clientY - startY;
+                updateCardTransform();
                 e.preventDefault();
             }
         }, {passive: false});
         
         document.addEventListener('touchend', (e) => {
-            if (isDragging) {
-                isDragging = false;
-                
-                // Calculate scaled dimensions
-                const scaledWidth = card.offsetWidth * scale;
-                const scaledHeight = card.offsetHeight * scale;
-                
-                // Check if card is flicked quickly or out of bounds
-                const speedThreshold = 1000; // pixels per second
-                const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
-                
-                if (currentSpeed > speedThreshold || 
-                    posX < -scaledWidth * 0.5 || 
-                    posX > window.innerWidth - scaledWidth * 0.5 ||
-                    posY < -scaledHeight * 0.5 || 
-                    posY > window.innerHeight - scaledHeight * 0.5) {
-                    
-                    // Add momentum to the flick
-                    const momentumDuration = 300; // ms
-                    const startMomentum = Date.now();
-                    
-                    const animateMomentum = () => {
-                        const elapsed = Date.now() - startMomentum;
-                        if (elapsed < momentumDuration) {
-                            const progress = 1 - (elapsed / momentumDuration);
-                            posX += velocityX * 0.01 * progress;
-                            posY += velocityY * 0.01 * progress;
-                            updateCardPosition();
-                            requestAnimationFrame(animateMomentum);
-                        } else {
-                            hideCard();
-                        }
-                    };
-                    
-                    animateMomentum();
-                }
-            }
+            isDragging = false;
         });
+        
+        // Zoom dengan pinch gesture
+        let initialDistance = 0;
+        let initialScale = 1;
+        
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                // Hitung jarak awal antara dua jari
+                initialDistance = Math.hypot(
+                    e.touches[1].clientX - e.touches[0].clientX,
+                    e.touches[1].clientY - e.touches[0].clientY
+                );
+                initialScale = scale;
+                e.preventDefault();
+            }
+        }, {passive: false});
+        
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                // Hitung jarak saat ini
+                const currentDistance = Math.hypot(
+                    e.touches[1].clientX - e.touches[0].clientX,
+                    e.touches[1].clientY - e.touches[0].clientY
+                );
+                
+                // Hitung scale baru
+                if (initialDistance > 0) {
+                    scale = initialScale * (currentDistance / initialDistance);
+                    updateCardTransform();
+                }
+                e.preventDefault();
+            }
+        }, {passive: false});
         
         // Settings functionality
         bgUpload.addEventListener('change', (e) => {
@@ -402,18 +317,19 @@
             }
         });
         
-        // Card upload with image editor
         cardUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    showImageEditor(event.target.result, (editedImage) => {
-                        card.src = editedImage;
-                        // Reset scale when new image is loaded
+                    card.src = event.target.result;
+                    // Reset scale dan posisi saat gambar baru dimuat
+                    card.onload = function() {
                         scale = 1;
-                        updateCardPosition();
-                    });
+                        posX = window.innerWidth / 2;
+                        posY = window.innerHeight / 2;
+                        updateCardTransform();
+                    };
                 };
                 reader.readAsDataURL(file);
             }
@@ -421,182 +337,38 @@
         
         defaultCardBtn.addEventListener('click', () => {
             card.src = "https://deckofcardsapi.com/static/img/AS.png";
-            // Reset scale when default image is loaded
-            scale = 1;
-            updateCardPosition();
+            // Reset scale dan posisi saat gambar default dimuat
+            card.onload = function() {
+                scale = 1;
+                posX = window.innerWidth / 2;
+                posY = window.innerHeight / 2;
+                updateCardTransform();
+            };
         });
         
         closeSettingsBtn.addEventListener('click', () => {
             settings.style.top = '-100%';
-            // Update center position for tilt motion
-            centerX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            centerY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
         });
-        
-        // Image Editor Function
-        function showImageEditor(imageSrc, callback) {
-            // Create editor modal
-            const editor = document.createElement('div');
-            editor.className = 'image-editor';
-            editor.innerHTML = `
-                <div class="editor-container">
-                    <img id="editing-card" src="${imageSrc}" alt="Card being edited">
-                    <div class="editor-controls">
-                        <div style="color:white; margin-bottom:10px;">Pinch to zoom, drag to move</div>
-                        <div class="editor-buttons">
-                            <button id="save-edit">Save</button>
-                            <button id="cancel-edit">Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(editor);
-            
-            const editingCard = document.getElementById('editing-card');
-            const saveBtn = document.getElementById('save-edit');
-            const cancelBtn = document.getElementById('cancel-edit');
-            
-            let currentScale = 1;
-            let startDistance = 0;
-            let editPosX = 0;
-            let editPosY = 0;
-            let isEditing = false;
-            let editStartX, editStartY;
-            
-            // Wait for image to load
-            editingCard.onload = function() {
-                // Set initial position to center
-                editPosX = (editor.querySelector('.editor-container').offsetWidth - editingCard.offsetWidth) / 2;
-                editPosY = (editor.querySelector('.editor-container').offsetHeight - editingCard.offsetHeight) / 2;
-                updateEditorTransform();
-            };
-            
-            // Zoom with pinch gesture
-            editingCard.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) {
-                    // Pinch to zoom
-                    e.preventDefault();
-                    startDistance = getDistance(
-                        e.touches[0].clientX, e.touches[0].clientY,
-                        e.touches[1].clientX, e.touches[1].clientY
-                    );
-                } else if (e.touches.length === 1) {
-                    // Drag to move
-                    isEditing = true;
-                    editStartX = e.touches[0].clientX - editPosX;
-                    editStartY = e.touches[0].clientY - editPosY;
-                    e.preventDefault();
-                }
-            }, {passive: false});
-            
-            editingCard.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 2) {
-                    // Pinch zoom in progress
-                    e.preventDefault();
-                    const currentDistance = getDistance(
-                        e.touches[0].clientX, e.touches[0].clientY,
-                        e.touches[1].clientX, e.touches[1].clientY
-                    );
-                    
-                    if (startDistance > 0) {
-                        currentScale = Math.max(0.3, Math.min(3, currentDistance / startDistance));
-                        updateEditorTransform();
-                    }
-                } else if (isEditing && e.touches.length === 1) {
-                    // Dragging in progress
-                    e.preventDefault();
-                    editPosX = e.touches[0].clientX - editStartX;
-                    editPosY = e.touches[0].clientY - editStartY;
-                    updateEditorTransform();
-                }
-            }, {passive: false});
-            
-            editingCard.addEventListener('touchend', () => {
-                startDistance = 0;
-                isEditing = false;
-            }, {passive: false});
-            
-            function updateEditorTransform() {
-                editingCard.style.transform = `translate(${editPosX}px, ${editPosY}px) scale(${currentScale})`;
-            }
-            
-            // Save/cancel buttons
-            saveBtn.addEventListener('click', () => {
-                // Create canvas to capture edited image
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                // Set canvas size to original image size
-                canvas.width = editingCard.naturalWidth;
-                canvas.height = editingCard.naturalHeight;
-                
-                // Calculate crop area
-                const scaleFactor = 1 / currentScale;
-                const cropX = -editPosX * scaleFactor;
-                const cropY = -editPosY * scaleFactor;
-                const cropWidth = editingCard.naturalWidth * scaleFactor;
-                const cropHeight = editingCard.naturalHeight * scaleFactor;
-                
-                // Draw cropped and scaled image
-                ctx.drawImage(editingCard, 
-                    cropX, cropY, cropWidth, cropHeight,
-                    0, 0, canvas.width, canvas.height);
-                
-                // Convert to data URL
-                const editedImage = canvas.toDataURL('image/png');
-                
-                document.body.removeChild(editor);
-                callback(editedImage);
-            });
-            
-            cancelBtn.addEventListener('click', () => {
-                document.body.removeChild(editor);
-            });
-        }
-        
-        // Helper function to calculate distance between two points
-        function getDistance(x1, y1, x2, y2) {
-            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-        }
-        
-        // Update card position with proper scaling
-        function updateCardPosition() {
-            // Calculate scaled dimensions
-            const scaledWidth = card.offsetWidth * scale;
-            const scaledHeight = card.offsetHeight * scale;
-            
-            // Keep card within bounds
-            posX = Math.max(-scaledWidth * 0.5, Math.min(posX, window.innerWidth - scaledWidth * 0.5));
-            posY = Math.max(-scaledHeight * 0.5, Math.min(posY, window.innerHeight - scaledHeight * 0.5));
-            
-            // Apply transform
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
         
         function hideCard() {
             card.style.display = 'none';
         }
         
         function showCard() {
-            // Reset to center position
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-            updateCardPosition();
+            // Reset ke posisi tengah
+            posX = window.innerWidth / 2;
+            posY = window.innerHeight / 2;
+            scale = 1;
+            updateCardTransform();
             card.style.display = 'block';
         }
         
         // Handle window resize
         window.addEventListener('resize', () => {
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-            updateCardPosition();
-            centerX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            centerY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+            posX = window.innerWidth / 2;
+            posY = window.innerHeight / 2;
+            updateCardTransform();
         });
-        
-        // Check for permission requirements on load
-        window.addEventListener('load', checkPermission);
     </script>
 </body>
 </html>
