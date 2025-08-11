@@ -52,6 +52,7 @@
             touch-action: none;
             transition: transform 0.2s ease-out;
             will-change: transform;
+            transform-origin: center center;
         }
         
         #settings {
@@ -95,6 +96,18 @@
             display: inline-block;
             cursor: pointer;
         }
+
+        #resize-notice {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            z-index: 4;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -118,19 +131,15 @@
                 <input type="file" id="card-upload" accept="image/*">
             </label>
             <button id="default-card">Use Default Card</button>
-        </div>
-        
-        <div class="setting-section">
-            <h3>Card Size</h3>
-            <button id="size-small">Small</button>
-            <button id="size-medium">Medium</button>
-            <button id="size-large">Large</button>
+            <p>Pinch with two fingers to resize card</p>
         </div>
         
         <div class="setting-section">
             <button id="close-settings">Save & Close</button>
         </div>
     </div>
+
+    <div id="resize-notice">Pinch to resize card</div>
 
     <script>
         // Elements
@@ -141,46 +150,81 @@
         const cardUpload = document.getElementById('card-upload');
         const defaultCardBtn = document.getElementById('default-card');
         const closeSettingsBtn = document.getElementById('close-settings');
+        const resizeNotice = document.getElementById('resize-notice');
         
-        // Initialize card position
+        // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
         let posY = window.innerHeight / 2 - card.offsetHeight / 2;
+        let scale = 1;
         let isDragging = false;
+        let isResizing = false;
         let startX, startY;
         let velocityX = 0;
         let velocityY = 0;
         let lastPosX = 0;
         let lastPosY = 0;
         let lastTime = 0;
+        let initialDistance = 0;
+        let initialScale = 1;
         
         // Set initial positions
-        updateCardPosition();
+        updateCardTransform();
         
         // Touch events for swipe up to open settings
         let startYPos = 0;
+        let twoFingerStartY = 0;
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
+                twoFingerStartY = e.touches[0].clientY;
                 startYPos = e.touches[0].clientY;
+                
+                // Check if we're starting a resize
+                if (!isDragging) {
+                    isResizing = true;
+                    initialDistance = getDistance(
+                        {x: e.touches[0].clientX, y: e.touches[0].clientY},
+                        {x: e.touches[1].clientX, y: e.touches[1].clientY}
+                    );
+                    initialScale = scale;
+                    resizeNotice.style.display = 'block';
+                    setTimeout(() => {
+                        resizeNotice.style.display = 'none';
+                    }, 2000);
+                }
             }
         }, {passive: false});
         
         document.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2) {
                 const currentY = e.touches[0].clientY;
-                if (currentY - startYPos > 100) { // Swipe UP with two fingers
+                
+                // Handle resizing
+                if (isResizing) {
+                    const currentDistance = getDistance(
+                        {x: e.touches[0].clientX, y: e.touches[0].clientY},
+                        {x: e.touches[1].clientX, y: e.touches[1].clientY}
+                    );
+                    
+                    scale = initialScale * (currentDistance / initialDistance);
+                    scale = Math.max(0.3, Math.min(scale, 3)); // Limit scale range
+                    updateCardTransform();
+                    e.preventDefault();
+                } 
+                // Handle settings swipe up (only when not resizing)
+                else if (currentY - twoFingerStartY > 100) {
                     e.preventDefault();
                     settings.style.top = '0';
                 }
             }
         }, {passive: false});
         
-        // Double click to show card
-        let lastTap = 0;
         document.addEventListener('touchend', (e) => {
+            isResizing = false;
+            
+            // Double click to show card
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTap;
-            if (tapLength < 300 && tapLength > 0) {
-                // Double tap detected
+            if (tapLength < 300 && tapLength > 0 && e.touches.length === 0) {
                 showCard();
             }
             lastTap = currentTime;
@@ -188,19 +232,21 @@
         
         // Card dragging functionality with velocity tracking
         card.addEventListener('touchstart', (e) => {
-            isDragging = true;
-            startX = e.touches[0].clientX - posX;
-            startY = e.touches[0].clientY - posY;
-            velocityX = 0;
-            velocityY = 0;
-            lastPosX = posX;
-            lastPosY = posY;
-            lastTime = Date.now();
-            e.preventDefault();
+            if (e.touches.length === 1) {
+                isDragging = true;
+                startX = e.touches[0].clientX - posX;
+                startY = e.touches[0].clientY - posY;
+                velocityX = 0;
+                velocityY = 0;
+                lastPosX = posX;
+                lastPosY = posY;
+                lastTime = Date.now();
+                e.preventDefault();
+            }
         }, {passive: false});
         
         document.addEventListener('touchmove', (e) => {
-            if (isDragging) {
+            if (isDragging && e.touches.length === 1) {
                 const now = Date.now();
                 const deltaTime = now - lastTime;
                 
@@ -217,7 +263,7 @@
                     
                     posX = newPosX;
                     posY = newPosY;
-                    updateCardPosition();
+                    updateCardTransform();
                 }
                 e.preventDefault();
             }
@@ -232,10 +278,10 @@
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
                 
                 if (currentSpeed > speedThreshold || 
-                    posX < -card.offsetWidth * 0.5 || 
-                    posX > window.innerWidth - card.offsetWidth * 0.5 ||
-                    posY < -card.offsetHeight * 0.5 || 
-                    posY > window.innerHeight - card.offsetHeight * 0.5) {
+                    posX < -card.offsetWidth * scale * 0.5 || 
+                    posX > window.innerWidth - card.offsetWidth * scale * 0.5 ||
+                    posY < -card.offsetHeight * scale * 0.5 || 
+                    posY > window.innerHeight - card.offsetHeight * scale * 0.5) {
                     
                     // Add momentum to the flick
                     const momentumDuration = 300; // ms
@@ -247,7 +293,7 @@
                             const progress = 1 - (elapsed / momentumDuration);
                             posX += velocityX * 0.01 * progress;
                             posY += velocityY * 0.01 * progress;
-                            updateCardPosition();
+                            updateCardTransform();
                             requestAnimationFrame(animateMomentum);
                         } else {
                             hideCard();
@@ -277,6 +323,9 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     card.src = event.target.result;
+                    // Reset scale when new image is loaded
+                    scale = 1;
+                    updateCardTransform();
                 };
                 reader.readAsDataURL(file);
             }
@@ -284,18 +333,9 @@
         
         defaultCardBtn.addEventListener('click', () => {
             card.src = "https://deckofcardsapi.com/static/img/AS.png";
-        });
-        
-        document.getElementById('size-small').addEventListener('click', () => {
-            card.style.width = '20%';
-        });
-        
-        document.getElementById('size-medium').addEventListener('click', () => {
-            card.style.width = '30%';
-        });
-        
-        document.getElementById('size-large').addEventListener('click', () => {
-            card.style.width = '40%';
+            // Reset scale when default image is loaded
+            scale = 1;
+            updateCardTransform();
         });
         
         closeSettingsBtn.addEventListener('click', () => {
@@ -303,8 +343,15 @@
         });
         
         // Helper functions
-        function updateCardPosition() {
-            card.style.transform = `translate(${posX}px, ${posY}px)`;
+        function getDistance(touch1, touch2) {
+            return Math.sqrt(
+                Math.pow(touch2.x - touch1.x, 2) + 
+                Math.pow(touch2.y - touch1.y, 2)
+            );
+        }
+        
+        function updateCardTransform() {
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
         }
         
         function hideCard() {
@@ -313,17 +360,17 @@
         
         function showCard() {
             // Reset to center position
-            posX = window.innerWidth / 2 - card.offsetWidth / 2;
-            posY = window.innerHeight / 2 - card.offsetHeight / 2;
-            updateCardPosition();
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+            updateCardTransform();
             card.style.display = 'block';
         }
         
         // Handle window resize
         window.addEventListener('resize', () => {
-            posX = window.innerWidth / 2 - card.offsetWidth / 2;
-            posY = window.innerHeight / 2 - card.offsetHeight / 2;
-            updateCardPosition();
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+            updateCardTransform();
         });
     </script>
 </body>
