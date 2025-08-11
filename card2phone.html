@@ -50,6 +50,9 @@
             user-select: none;
             -webkit-user-drag: none;
             touch-action: none;
+            transition: transform 0.2s ease-out;
+            will-change: transform;
+            transform-origin: center center;
         }
         
         #settings {
@@ -94,16 +97,41 @@
             cursor: pointer;
         }
 
-        #resize-notice {
-            position: fixed;
-            bottom: 20px;
-            left: 0;
+        .slider-container {
             width: 100%;
-            text-align: center;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            z-index: 4;
-            display: none;
+            margin: 15px 0;
+        }
+
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .slider-container input[type="range"] {
+            width: 100%;
+            height: 10px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4CAF50;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        #card-preview {
+            width: 100%;
+            max-width: 200px;
+            margin: 10px auto;
+            display: block;
+            border: 2px solid white;
+            transition: transform 0.3s ease;
         }
     </style>
 </head>
@@ -128,15 +156,19 @@
                 <input type="file" id="card-upload" accept="image/*">
             </label>
             <button id="default-card">Use Default Card</button>
-            <p>Pinch with two fingers to resize card</p>
+            
+            <div class="slider-container">
+                <label for="card-scale">Card Size: <span id="scale-value">100%</span></label>
+                <input type="range" id="card-scale" min="30" max="200" value="100">
+            </div>
+            
+            <img id="card-preview" src="https://deckofcardsapi.com/static/img/AS.png" alt="Card Preview">
         </div>
         
         <div class="setting-section">
             <button id="close-settings">Save & Close</button>
         </div>
     </div>
-
-    <div id="resize-notice">Pinch to resize card</div>
 
     <script>
         // Elements
@@ -147,81 +179,61 @@
         const cardUpload = document.getElementById('card-upload');
         const defaultCardBtn = document.getElementById('default-card');
         const closeSettingsBtn = document.getElementById('close-settings');
-        const resizeNotice = document.getElementById('resize-notice');
+        const cardScale = document.getElementById('card-scale');
+        const scaleValue = document.getElementById('scale-value');
+        const cardPreview = document.getElementById('card-preview');
         
         // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
         let posY = window.innerHeight / 2 - card.offsetHeight / 2;
         let scale = 1;
         let isDragging = false;
-        let isResizing = false;
         let startX, startY;
         let velocityX = 0;
         let velocityY = 0;
         let lastPosX = 0;
         let lastPosY = 0;
         let lastTime = 0;
-        let initialDistance = 0;
-        let initialScale = 1;
         
         // Set initial positions
         updateCardTransform();
         
+        // Card scale in settings
+        cardScale.addEventListener('input', (e) => {
+            scale = parseInt(e.target.value) / 100;
+            scaleValue.textContent = `${e.target.value}%`;
+            cardPreview.style.transform = `scale(${scale})`;
+        });
+        
         // Touch events for swipe up to open settings
         let startYPos = 0;
-        let twoFingerStartY = 0;
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
-                twoFingerStartY = e.touches[0].clientY;
                 startYPos = e.touches[0].clientY;
-                
-                // Check if we're starting a resize
-                if (!isDragging) {
-                    isResizing = true;
-                    initialDistance = getDistance(
-                        {x: e.touches[0].clientX, y: e.touches[0].clientY},
-                        {x: e.touches[1].clientX, y: e.touches[1].clientY}
-                    );
-                    initialScale = scale;
-                    resizeNotice.style.display = 'block';
-                    setTimeout(() => {
-                        resizeNotice.style.display = 'none';
-                    }, 2000);
-                }
             }
         }, {passive: false});
         
         document.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2) {
                 const currentY = e.touches[0].clientY;
-                
-                // Handle resizing
-                if (isResizing) {
-                    const currentDistance = getDistance(
-                        {x: e.touches[0].clientX, y: e.touches[0].clientY},
-                        {x: e.touches[1].clientX, y: e.touches[1].clientY}
-                    );
-                    
-                    scale = initialScale * (currentDistance / initialDistance);
-                    scale = Math.max(0.3, Math.min(scale, 3)); // Limit scale range
-                    updateCardTransform();
-                    e.preventDefault();
-                } 
-                // Handle settings swipe up (only when not resizing)
-                else if (currentY - twoFingerStartY > 100) {
+                if (currentY - startYPos > 100) { // Swipe UP with two fingers
                     e.preventDefault();
                     settings.style.top = '0';
+                    // Sync preview with current card
+                    cardPreview.src = card.src;
+                    cardScale.value = scale * 100;
+                    scaleValue.textContent = `${Math.round(scale * 100)}%`;
+                    cardPreview.style.transform = `scale(${scale})`;
                 }
             }
         }, {passive: false});
         
+        // Double click to show card
+        let lastTap = 0;
         document.addEventListener('touchend', (e) => {
-            isResizing = false;
-            
-            // Double click to show card
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTap;
-            if (tapLength < 300 && tapLength > 0 && e.touches.length === 0) {
+            if (tapLength < 300 && tapLength > 0) {
                 showCard();
             }
             lastTap = currentTime;
@@ -320,9 +332,7 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     card.src = event.target.result;
-                    // Reset scale when new image is loaded
-                    scale = 1;
-                    updateCardTransform();
+                    cardPreview.src = event.target.result;
                 };
                 reader.readAsDataURL(file);
             }
@@ -330,9 +340,7 @@
         
         defaultCardBtn.addEventListener('click', () => {
             card.src = "https://deckofcardsapi.com/static/img/AS.png";
-            // Reset scale when default image is loaded
-            scale = 1;
-            updateCardTransform();
+            cardPreview.src = "https://deckofcardsapi.com/static/img/AS.png";
         });
         
         closeSettingsBtn.addEventListener('click', () => {
@@ -340,13 +348,6 @@
         });
         
         // Helper functions
-        function getDistance(touch1, touch2) {
-            return Math.sqrt(
-                Math.pow(touch2.x - touch1.x, 2) + 
-                Math.pow(touch2.y - touch1.y, 2)
-            );
-        }
-        
         function updateCardTransform() {
             card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
         }
