@@ -232,18 +232,19 @@
         
         // Card dragging functionality with velocity tracking
         card.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                isDragging = true;
-                startX = e.touches[0].clientX - posX;
-                startY = e.touches[0].clientY - posY;
-                velocityX = 0;
-                velocityY = 0;
-                lastPosX = posX;
-                lastPosY = posY;
-                lastTime = Date.now();
-                e.preventDefault();
-            }
-        }, {passive: false});
+    if (e.touches.length === 1) {
+        isDragging = true;
+        // Perhitungkan scale dalam perhitungan posisi awal
+        startX = e.touches[0].clientX - posX;
+        startY = e.touches[0].clientY - posY;
+        velocityX = 0;
+        velocityY = 0;
+        lastPosX = posX;
+        lastPosY = posY;
+        lastTime = Date.now();
+        e.preventDefault();
+    }
+}, {passive: false});
         
         document.addEventListener('touchmove', (e) => {
             if (isDragging && e.touches.length === 1) {
@@ -420,8 +421,16 @@
         
         // Helper functions
         function updateCardTransform() {
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
+    // Hitung offset dengan memperhitungkan scale
+    const scaledWidth = card.offsetWidth * scale;
+    const scaledHeight = card.offsetHeight * scale;
+    
+    // Pastikan posisi tidak keluar dari layar
+    posX = Math.max(-scaledWidth * 0.5, Math.min(posX, window.innerWidth - scaledWidth * 0.5));
+    posY = Math.max(-scaledHeight * 0.5, Math.min(posY, window.innerHeight - scaledHeight * 0.5));
+    
+    card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+}
         
         function hideCard() {
             card.style.display = 'none';
@@ -441,6 +450,46 @@
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
         });
+
+        // Tambahkan di bagian inisialisasi
+let beta = 0;  // Rotasi depan-belakang
+let gamma = 0; // Rotasi kiri-kanan
+
+// Event listener untuk device orientation
+window.addEventListener('deviceorientation', (e) => {
+    beta = e.beta;  // -180 sampai 180
+    gamma = e.gamma; // -90 sampai 90
+    
+    // Update posisi card berdasarkan kemiringan
+    if (!isDragging) {
+        const centerX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+        const centerY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+        
+        // Map nilai accelerometer ke posisi layar
+        posX = centerX + (gamma / 90) * (window.innerWidth / 2 - (card.offsetWidth * scale) / 2);
+        posY = centerY + (beta / 180) * (window.innerHeight / 2 - (card.offsetHeight * scale) / 2);
+        
+        updateCardTransform();
+    }
+});
+
+// Pastikan meminta izin gyroscope di iOS 13+
+function requestPermission() {
+    if (typeof DeviceOrientationEvent !== 'undefined' && 
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+            .then(response => {
+                if (response === 'granted') {
+                    console.log("Orientation permission granted");
+                }
+            })
+            .catch(console.error);
+    }
+}
+
+// Panggil saat ada interaksi pengguna
+document.addEventListener('click', requestPermission, {once: true});
+        
     </script>
 </body>
 </html>
