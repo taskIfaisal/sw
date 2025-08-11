@@ -5,31 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Magic Card Trick</title>
     <link rel="apple-touch-icon" href="./icon/timeline-192x192.png">
-  <link rel="apple-touch-startup-image" href="./icon/timeline-512x512.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Timeline">
-  <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
-  <link rel="icon" type="image/png" sizes="192x192" href="./icon/timeline-192x192.png">
+    <link rel="apple-touch-startup-image" href="./icon/timeline-512x512.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Timeline">
+    <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon/timeline-192x192.png">
     <style>
-         html, body {
-      margin: 0;
-      padding: 0;
-      width: 100vw;
-      height: 100vh;
-      font-family: 'SF Pro Display', sans-serif;
-      background-color: black;
-      background-size: cover;
-      background-position: center;
-      color: white;
-      overflow: hidden;
-      touch-action: none;
-      position: relative;
-    }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            font-family: 'SF Pro Display', sans-serif;
+            background-color: black;
+            background-size: cover;
+            background-position: center;
+            color: white;
+            overflow: hidden;
+            touch-action: none;
+            position: relative;
+        }
 
-    * {
-      box-sizing: border-box;
-    }
+        * {
+            box-sizing: border-box;
+        }
         
         #background {
             position: fixed;
@@ -50,6 +50,8 @@
             user-select: none;
             -webkit-user-drag: none;
             touch-action: none;
+            transition: transform 0.2s ease-out;
+            will-change: transform;
         }
         
         #settings {
@@ -145,20 +147,27 @@
         let posY = window.innerHeight / 2 - card.offsetHeight / 2;
         let isDragging = false;
         let startX, startY;
+        let velocityX = 0;
+        let velocityY = 0;
+        let lastPosX = 0;
+        let lastPosY = 0;
+        let lastTime = 0;
         
         // Set initial positions
         updateCardPosition();
         
-        // Touch events for swipe down to open settings
+        // Touch events for swipe up to open settings
         let startYPos = 0;
         document.addEventListener('touchstart', (e) => {
-            startYPos = e.touches[0].clientY;
+            if (e.touches.length === 2) {
+                startYPos = e.touches[0].clientY;
+            }
         }, {passive: false});
         
         document.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2) {
                 const currentY = e.touches[0].clientY;
-                if (startYPos - currentY > 100) { // Swipe down with two fingers
+                if (currentY - startYPos > 100) { // Swipe UP with two fingers
                     e.preventDefault();
                     settings.style.top = '0';
                 }
@@ -177,19 +186,39 @@
             lastTap = currentTime;
         });
         
-        // Card dragging functionality
+        // Card dragging functionality with velocity tracking
         card.addEventListener('touchstart', (e) => {
             isDragging = true;
             startX = e.touches[0].clientX - posX;
             startY = e.touches[0].clientY - posY;
+            velocityX = 0;
+            velocityY = 0;
+            lastPosX = posX;
+            lastPosY = posY;
+            lastTime = Date.now();
             e.preventDefault();
         }, {passive: false});
         
         document.addEventListener('touchmove', (e) => {
             if (isDragging) {
-                posX = e.touches[0].clientX - startX;
-                posY = e.touches[0].clientY - startY;
-                updateCardPosition();
+                const now = Date.now();
+                const deltaTime = now - lastTime;
+                
+                if (deltaTime > 0) {
+                    const newPosX = e.touches[0].clientX - startX;
+                    const newPosY = e.touches[0].clientY - startY;
+                    
+                    velocityX = (newPosX - lastPosX) / deltaTime * 1000;
+                    velocityY = (newPosY - lastPosY) / deltaTime * 1000;
+                    
+                    lastPosX = newPosX;
+                    lastPosY = newPosY;
+                    lastTime = now;
+                    
+                    posX = newPosX;
+                    posY = newPosY;
+                    updateCardPosition();
+                }
                 e.preventDefault();
             }
         }, {passive: false});
@@ -198,12 +227,34 @@
             if (isDragging) {
                 isDragging = false;
                 
-                // Check if card is off screen
-                if (posX < -card.offsetWidth * 0.7 || 
-                    posX > window.innerWidth - card.offsetWidth * 0.3 ||
-                    posY < -card.offsetHeight * 0.7 || 
-                    posY > window.innerHeight - card.offsetHeight * 0.3) {
-                    hideCard();
+                // Check if card is flicked quickly
+                const speedThreshold = 1000; // pixels per second
+                const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+                
+                if (currentSpeed > speedThreshold || 
+                    posX < -card.offsetWidth * 0.5 || 
+                    posX > window.innerWidth - card.offsetWidth * 0.5 ||
+                    posY < -card.offsetHeight * 0.5 || 
+                    posY > window.innerHeight - card.offsetHeight * 0.5) {
+                    
+                    // Add momentum to the flick
+                    const momentumDuration = 300; // ms
+                    const startMomentum = Date.now();
+                    
+                    const animateMomentum = () => {
+                        const elapsed = Date.now() - startMomentum;
+                        if (elapsed < momentumDuration) {
+                            const progress = 1 - (elapsed / momentumDuration);
+                            posX += velocityX * 0.01 * progress;
+                            posY += velocityY * 0.01 * progress;
+                            updateCardPosition();
+                            requestAnimationFrame(animateMomentum);
+                        } else {
+                            hideCard();
+                        }
+                    };
+                    
+                    animateMomentum();
                 }
             }
         });
@@ -253,8 +304,7 @@
         
         // Helper functions
         function updateCardPosition() {
-            card.style.left = `${posX}px`;
-            card.style.top = `${posY}px`;
+            card.style.transform = `translate(${posX}px, ${posY}px)`;
         }
         
         function hideCard() {
