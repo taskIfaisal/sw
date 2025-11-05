@@ -23,6 +23,9 @@
       position: relative;
       font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
+     * {
+      box-sizing: border-box;
+    }
     #uploadMenu {
       display: none;
       position: fixed;
@@ -88,23 +91,25 @@
       }
     });
 
-    // Ambil hanya nilai 'value' dari API
+    // Ambil hanya 'value' dari API dan tampilkan di overlay
     async function updateTextFromAPI() {
       try {
-        const response = await fetch('https://11z.co/_w/6804/selection');
+        const response = await fetch('https://11z.co/_w/6804/selection?_t=' + Date.now());
         if (!response.ok) throw new Error('Gagal ambil data');
         const data = await response.json();
-        // hanya ambil data.value
-        textOverlay.textContent = data.value ?? 'Facebook';
+        if (data.value) {
+          textOverlay.textContent = data.value;
+        }
       } catch (err) {
         console.error('Error mengambil data:', err);
-        textOverlay.textContent = 'Facebook';
       }
     }
 
-    // Jalankan saat halaman dibuka
+    // Jalankan langsung saat halaman dibuka
     updateTextFromAPI();
+
+    // Update otomatis setiap 2 detik
+    setInterval(updateTextFromAPI, 2000);
   </script>
 </body>
 </html>
-
