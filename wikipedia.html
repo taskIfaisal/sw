@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Wikipedia Indonesia</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: #f8f9fa;
+      color: #202122;
+      display: flex;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      width: 240px;
+      background: #fff;
+      border-right: 1px solid #ccc;
+      padding: 15px;
+      height: 100vh;
+      overflow-y: auto;
+      position: fixed;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    #sidebar.hidden {
+      transform: translateX(-100%);
+    }
+
+    #logoRow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+      gap: 10px;
+    }
+
+    #logoRow img {
+      width: 40px;
+      height: 40px;
+    }
+
+    #logoRow h2 {
+      font-size: 18px;
+      color: #3366cc;
+      margin: 0;
+      font-weight: 600;
+    }
+
+    #sidebar a {
+      display: block;
+      color: #0645ad;
+      text-decoration: none;
+      margin: 6px 0;
+      font-size: 14px;
+    }
+
+    #sidebar a:hover {
+      text-decoration: underline;
+    }
+
+    /* Main content */
+    #main {
+      flex: 1;
+      margin-left: 240px;
+      padding: 20px;
+      transition: margin-left 0.3s ease;
+      width: 100%;
+    }
+
+    #main.full {
+      margin-left: 0;
+    }
+
+    header {
+      background: #fff;
+      padding: 10px 20px;
+      border-bottom: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    #menuToggle {
+      font-size: 22px;
+      cursor: pointer;
+      margin-right: 10px;
+      color: #3366cc;
+    }
+
+    #siteTitle {
+      font-size: 22px;
+      color: #3366cc;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    #searchBar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    #searchInput {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 250px;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 6px 12px;
+      background: #3366cc;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #254d99;
+    }
+
+    article {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #aaa;
+    }
+
+    /* Responsif */
+    @media (max-width: 768px) {
+      #sidebar {
+        transform: translateX(-100%);
+      }
+      #sidebar.show {
+        transform: translateX(0);
+      }
+      #main {
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div id="sidebar" class="hidden">
+    <div id="logoRow">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/6/63/Wikipedia-logo.png" alt="Wikipedia Logo">
+      <h2>Mini Wikipedia</h2>
+    </div>
+    <a href="#" onclick="loadPage('Indonesia')">Indonesia</a>
+    <a href="#" onclick="loadPage('Teknologi')">Teknologi</a>
+    <a href="#" onclick="loadPage('Sejarah')">Sejarah</a>
+    <a href="#" onclick="loadPage('Sains')">Sains</a>
+    <a href="#" onclick="loadPage('Matematika')">Matematika</a>
+    <a href="#" onclick="loadPage('Filsafat')">Filsafat</a>
+    <a href="#" onclick="loadPage('Seni')">Seni</a>
+    <a href="#" onclick="loadPage('Musik')">Musik</a>
+    <a href="#" onclick="loadPage('Film')">Film</a>
+  </div>
+
+  <!-- Konten utama -->
+  <div id="main" class="full">
+    <header>
+      <div style="display:flex; align-items:center;">
+        <span id="menuToggle">☰</span>
+        <h1 id="siteTitle" onclick="home()">Mini Wikipedia</h1>
+      </div>
+      <div id="searchBar">
+        <input type="text" id="searchInput" placeholder="Cari artikel..." onkeydown="if(event.key==='Enter') searchWiki()">
+        <button onclick="searchWiki()">Cari</button>
+      </div>
+    </header>
+
+    <article id="content">
+      <p>Sedang memuat halaman utama Wikipedia...</p>
+    </article>
+  </div>
+
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const main = document.getElementById('main');
+    const content = document.getElementById('content');
+    const toggle = document.getElementById('menuToggle');
+
+    toggle.addEventListener('click', () => {
+      const isHidden = sidebar.classList.toggle('hidden');
+      main.classList.toggle('full', isHidden);
+    });
+
+    async function loadPage(title) {
+      content.innerHTML = `<p>Mengambil artikel "<b>${title}</b>"...</p>`;
+      sidebar.classList.add('hidden');
+      main.classList.add('full');
+      try {
+        const url = `https://id.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title)}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Artikel tidak ditemukan");
+        const html = await response.text();
+        content.innerHTML = html;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (e) {
+        content.innerHTML = `<p style="color:red;">Gagal memuat artikel: ${e.message}</p>`;
+      }
+    }
+
+    function searchWiki() {
+      const query = document.getElementById('searchInput').value.trim();
+      if (query) loadPage(query);
+    }
+
+    function home() {
+      loadPage('Halaman_Utama');
+    }
+
+    // Saat pertama kali dibuka, langsung tampilkan halaman utama Wikipedia
+    window.onload = () => {
+      loadPage('Halaman_Utama');
+    };
+  </script>
+</body>
+</html>
