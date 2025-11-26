@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magic Card Trick with Tilt</title>
+    <title>Magic Money Trick</title>
     <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
     <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Timeline">
-    <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
+    <meta name="apple-mobile-web-app-title" content="Magic Money">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
     <style>
         html, body {
@@ -42,17 +41,18 @@
             z-index: 1;
         }
         
-        #card {
+        #money {
             position: absolute;
             width: 100%;
-            max-width: 200px;
+            max-width: 250px;
             z-index: 2;
             user-select: none;
             -webkit-user-drag: none;
             touch-action: none;
             transform-origin: center center;
             height: auto;
-            transition: transform 0.1s ease-out; /* Smooth transition untuk pergerakan natural */
+            transition: transform 0.15s ease-out;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
         }
 
         #settings {
@@ -61,7 +61,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             z-index: 3;
             transition: top 0.5s ease;
             color: white;
@@ -71,17 +71,26 @@
         }
         
         .setting-section {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
         }
         
         button {
             background: #4CAF50;
             color: white;
             border: none;
-            padding: 10px 15px;
-            margin: 5px;
-            border-radius: 5px;
+            padding: 12px 20px;
+            margin: 8px 5px;
+            border-radius: 8px;
             cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: scale(1.05);
         }
         
         input[type="file"] {
@@ -91,259 +100,286 @@
         .file-upload {
             background: #2196F3;
             color: white;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 12px 20px;
+            border-radius: 8px;
             display: inline-block;
             cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload:hover {
+            background: #1976D2;
         }
 
         .tilt-indicator {
             position: fixed;
             bottom: 20px;
             left: 20px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 12px 15px;
             border-radius: 10px;
             font-size: 12px;
             z-index: 10;
+            border: 1px solid rgba(255,255,255,0.2);
+            display: none;
         }
 
-        /* Editor Modal Styles */
-        .image-editor {
+        .sensitivity-control {
+            margin: 15px 0;
+        }
+
+        .sensitivity-control input {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .mode-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(76, 175, 80, 0.9);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 10;
+            display: none;
+        }
+
+        .pull-effect {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .editor-container {
-            position: relative;
-            width: 90%;
-            height: 70%;
-            margin: 20px;
-        }
-
-        #editing-card {
-            max-width: 100%;
-            max-height: 100%;
-            display: block;
-            margin: 0 auto;
-            touch-action: none;
-            transform-origin: center center;
-        }
-
-        .editor-controls {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            text-align: center;
-            padding: 15px 0;
-            background: rgba(0,0,0,0.7);
-        }
-
-        .editor-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .editor-buttons button {
-            min-width: 100px;
-        }
-
-        #cancel-edit {
-            background: #f44336;
+            background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.7) 100%);
+            z-index: 4;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
     </style>
 </head>
 <body>
     <div id="background"></div>
-    <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
+    <img id="money" src="https://i.ibb.co/0Q8LzZy/money-100k.png" alt="Magic Money">
     <div class="tilt-indicator" id="tiltIndicator">
         Tilt: X:0, Y:0
     </div>
+    <div class="mode-indicator" id="modeIndicator">
+        Tilt Mode: ON
+    </div>
+    <div class="pull-effect" id="pullEffect"></div>
     <div id="settings">
-        <h2>Magic Card Settings</h2>
+        <h2>💰 Magic Money Settings</h2>
         
         <div class="setting-section">
             <h3>Background Image</h3>
             <label class="file-upload">
-                Choose Background
+                📷 Choose Background
                 <input type="file" id="bg-upload" accept="image/*">
             </label>
         </div>
         
         <div class="setting-section">
-            <h3>Card Image</h3>
+            <h3>Money Image</h3>
             <label class="file-upload">
-                Choose Card
-                <input type="file" id="card-upload" accept="image/*">
+                💵 Choose Money
+                <input type="file" id="money-upload" accept="image/*">
             </label>
-            <button id="default-card">Use Default Card</button>
+            <button id="default-money">💰 Use Default Money</button>
         </div>
 
         <div class="setting-section">
-            <h3>Tilt Sensitivity</h3>
-            <input type="range" id="tiltSensitivity" min="1" max="10" value="5">
-            <span id="sensitivityValue">5</span>
+            <h3>🎮 Tilt Control Settings</h3>
+            <div class="sensitivity-control">
+                <label>Tilt Sensitivity: <span id="sensitivityValue">3</span></label>
+                <input type="range" id="tiltSensitivity" min="1" max="10" value="3" step="0.5">
+            </div>
+            <button id="tiltMode">🎯 Enable Tilt Control</button>
         </div>
 
         <div class="setting-section">
-            <h3>Tilt Mode</h3>
-            <button id="tiltMode">Enable Tilt Control</button>
+            <h3>📱 Instructions</h3>
+            <p>• Enable Tilt Control to move money by tilting phone</p>
+            <p>• Drag money to edges to pull it out of phone</p>
+            <p>• Double tap to bring money back</p>
+            <p>• Swipe up with two fingers for settings</p>
         </div>
         
         <div class="setting-section">
-            <button id="close-settings">Save & Close</button>
+            <button id="close-settings">💾 Save & Close</button>
         </div>
     </div>
 
     <script>
         // Elements
         const background = document.getElementById('background');
-        const card = document.getElementById('card');
+        const money = document.getElementById('money');
         const settings = document.getElementById('settings');
         const bgUpload = document.getElementById('bg-upload');
-        const cardUpload = document.getElementById('card-upload');
-        const defaultCardBtn = document.getElementById('default-card');
+        const moneyUpload = document.getElementById('money-upload');
+        const defaultMoneyBtn = document.getElementById('default-money');
         const closeSettingsBtn = document.getElementById('close-settings');
         const tiltIndicator = document.getElementById('tiltIndicator');
+        const modeIndicator = document.getElementById('modeIndicator');
         const tiltSensitivity = document.getElementById('tiltSensitivity');
         const sensitivityValue = document.getElementById('sensitivityValue');
         const tiltModeBtn = document.getElementById('tiltMode');
-        
-        // Tilt control variables
+        const pullEffect = document.getElementById('pullEffect');
+
+        // Tilt control variables - IMPROVED STABILITY
         let isTiltMode = false;
         let tiltX = 0;
         let tiltY = 0;
         let filteredTiltX = 0;
         let filteredTiltY = 0;
-        let alpha = 0.2; // Low-pass filter factor (0.1-0.3 untuk smoothing)
-        let sensitivity = 5;
-        
-        // Initialize card properties
-        let posX = window.innerWidth / 2 - card.offsetWidth / 2;
-        let posY = window.innerHeight / 2 - card.offsetHeight / 2;
+        let alpha = 0.15; // Lower alpha for more smoothing
+        let betaFilter = 0; // Additional filter for beta axis
+        let gammaFilter = 0; // Additional filter for gamma axis
+        let sensitivity = 3;
+
+        // Initialize money properties
+        let posX = window.innerWidth / 2 - money.offsetWidth / 2;
+        let posY = window.innerHeight / 2 - money.offsetHeight / 2;
         let scale = 1;
         let isDragging = false;
         let startX, startY;
-        let velocityX = 0;
-        let velocityY = 0;
-        let lastPosX = 0;
-        let lastPosY = 0;
-        let lastTime = 0;
         
+        // Boundary limits - money can go slightly beyond screen edges
+        const boundaryMargin = 50;
+
         // Set initial positions
-        updateCardTransform();
-        
-        // Tilt Sensitivity Control
+        updateMoneyTransform();
+
+        // Improved Tilt Sensitivity Control
         tiltSensitivity.addEventListener('input', (e) => {
-            sensitivity = parseInt(e.target.value);
+            sensitivity = parseFloat(e.target.value);
             sensitivityValue.textContent = sensitivity;
+            
+            // Reset filters when sensitivity changes to prevent instability
+            filteredTiltX = 0;
+            filteredTiltY = 0;
+            betaFilter = 0;
+            gammaFilter = 0;
         });
-        
+
         // Tilt Mode Toggle
         tiltModeBtn.addEventListener('click', () => {
             isTiltMode = !isTiltMode;
-            tiltModeBtn.textContent = isTiltMode ? 'Disable Tilt Control' : 'Enable Tilt Control';
+            tiltModeBtn.textContent = isTiltMode ? '❌ Disable Tilt Control' : '🎯 Enable Tilt Control';
             tiltModeBtn.style.background = isTiltMode ? '#4CAF50' : '#f44336';
+            modeIndicator.style.display = isTiltMode ? 'block' : 'none';
+            tiltIndicator.style.display = isTiltMode ? 'block' : 'none';
             
             if (isTiltMode) {
                 startTiltControl();
+                resetMoneyToCenter();
             } else {
                 stopTiltControl();
             }
         });
-        
-        // Device Orientation Handler dengan Filter
+
+        // IMPROVED Device Orientation Handler dengan Double Filter
         function handleDeviceOrientation(event) {
-            if (!isTiltMode) return;
-            
-            // Dapatkan nilai accelerometer
-            const beta = event.beta;  // -180 to 180 (depan-belakang)
-            const gamma = event.gamma; // -90 to 90 (kiri-kanan)
-            
-            // Normalisasi nilai (-1 to 1)
-            const normalizedX = Math.max(-1, Math.min(1, gamma / 45)); // Lebih sensitif
-            const normalizedY = Math.max(-1, Math.min(1, beta / 45));
-            
-            // Apply low-pass filter untuk smoothing
-            filteredTiltX = alpha * normalizedX + (1 - alpha) * filteredTiltX;
-            filteredTiltY = alpha * normalizedY + (1 - alpha) * filteredTiltY;
-            
-            // Update tilt values dengan sensitivity
-            tiltX = filteredTiltX * sensitivity * 30; // Multiply factor untuk pergerakan lebih besar
-            tiltY = filteredTiltY * sensitivity * 30;
-            
-            // Update indicator
-            tiltIndicator.textContent = `Tilt: X:${tiltX.toFixed(1)}, Y:${tiltY.toFixed(1)}`;
-            
-            // Update card position berdasarkan tilt
-            updateCardPositionFromTilt();
-        }
-        
-        function updateCardPositionFromTilt() {
             if (!isTiltMode || isDragging) return;
             
-            // Hitung posisi baru berdasarkan tilt
-            const newX = (window.innerWidth - card.offsetWidth * scale) / 2 + tiltX;
-            const newY = (window.innerHeight - card.offsetHeight * scale) / 2 + tiltY;
-            
-            // Boundary checking dengan easing
-            const boundedX = Math.max(-card.offsetWidth * scale * 0.3, 
-                                    Math.min(window.innerWidth - card.offsetWidth * scale * 0.7, newX));
-            const boundedY = Math.max(-card.offsetHeight * scale * 0.3, 
-                                    Math.min(window.innerHeight - card.offsetHeight * scale * 0.7, newY));
-            
-            // Smooth transition ke posisi baru
-            posX = boundedX;
-            posY = boundedY;
-            
-            updateCardTransform();
+            const beta = event.beta || 0;   // Front-back tilt (-180 to 180)
+            const gamma = event.gamma || 0; // Left-right tilt (-90 to 90)
+
+            // Double filtering untuk stability yang lebih baik
+            const filterStrength = 0.8;
+            betaFilter = beta * filterStrength + betaFilter * (1 - filterStrength);
+            gammaFilter = gamma * filterStrength + gammaFilter * (1 - filterStrength);
+
+            // Normalize values dengan dead zone untuk mengurangi getaran
+            const deadZone = 2; // Degrees dead zone
+            const normalizedX = Math.abs(gammaFilter) > deadZone ? 
+                Math.max(-1, Math.min(1, (gammaFilter - Math.sign(gammaFilter) * deadZone) / (45 - deadZone))) : 0;
+            const normalizedY = Math.abs(betaFilter) > deadZone ? 
+                Math.max(-1, Math.min(1, (betaFilter - Math.sign(betaFilter) * deadZone) / (45 - deadZone))) : 0;
+
+            // Apply low-pass filter
+            filteredTiltX = alpha * normalizedX + (1 - alpha) * filteredTiltX;
+            filteredTiltY = alpha * normalizedY + (1 - alpha) * filteredTiltY;
+
+            // Smooth movement dengan easing
+            const easeFactor = 0.3;
+            tiltX += (filteredTiltX * sensitivity * 40 - tiltX) * easeFactor;
+            tiltY += (filteredTiltY * sensitivity * 40 - tiltY) * easeFactor;
+
+            // Update indicator
+            tiltIndicator.textContent = `Tilt: X:${tiltX.toFixed(1)}, Y:${tiltY.toFixed(1)}`;
+
+            // Update money position
+            updateMoneyPositionFromTilt();
         }
-        
+
+        function updateMoneyPositionFromTilt() {
+            if (!isTiltMode || isDragging) return;
+
+            // Calculate movement boundaries
+            const maxMoveX = (window.innerWidth + money.offsetWidth * scale) / 2;
+            const maxMoveY = (window.innerHeight + money.offsetHeight * scale) / 2;
+
+            // Calculate new position with boundaries
+            const centerX = window.innerWidth / 2 - (money.offsetWidth * scale) / 2;
+            const centerY = window.innerHeight / 2 - (money.offsetHeight * scale) / 2;
+            
+            const newX = centerX + tiltX;
+            const newY = centerY + tiltY;
+
+            // Apply boundaries
+            posX = Math.max(-money.offsetWidth * scale + boundaryMargin, 
+                          Math.min(window.innerWidth - boundaryMargin, newX));
+            posY = Math.max(-money.offsetHeight * scale + boundaryMargin, 
+                          Math.min(window.innerHeight - boundaryMargin, newY));
+
+            updateMoneyTransform();
+        }
+
         function startTiltControl() {
             if (typeof DeviceOrientationEvent !== 'undefined' && 
                 typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // iOS 13+ perlu permission
                 DeviceOrientationEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') {
                             window.addEventListener('deviceorientation', handleDeviceOrientation);
-                            tiltIndicator.style.display = 'block';
                         }
                     })
                     .catch(console.error);
             } else {
-                // Android dan browser lain
                 window.addEventListener('deviceorientation', handleDeviceOrientation);
-                tiltIndicator.style.display = 'block';
             }
         }
-        
+
         function stopTiltControl() {
             window.removeEventListener('deviceorientation', handleDeviceOrientation);
-            tiltIndicator.style.display = 'none';
+            resetMoneyToCenter();
+        }
+
+        function resetMoneyToCenter() {
+            const targetX = window.innerWidth / 2 - (money.offsetWidth * scale) / 2;
+            const targetY = window.innerHeight / 2 - (money.offsetHeight * scale) / 2;
             
-            // Kembalikan kartu ke tengah secara smooth
-            resetCardToCenter();
+            // Smooth animation to center
+            const animateToCenter = () => {
+                const dx = targetX - posX;
+                const dy = targetY - posY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 1) {
+                    posX += dx * 0.1;
+                    posY += dy * 0.1;
+                    updateMoneyTransform();
+                    requestAnimationFrame(animateToCenter);
+                }
+            };
+            animateToCenter();
         }
-        
-        function resetCardToCenter() {
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-            updateCardTransform();
-        }
-        
-        // Touch events untuk swipe up ke settings
+
+        // Touch events untuk settings
         let startYPos = 0;
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
@@ -354,59 +390,55 @@
         document.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2) {
                 const currentY = e.touches[0].clientY;
-                if (currentY - startYPos > 100) { // Swipe UP dengan dua jari
+                if (startYPos - currentY > 100) { // Swipe UP dengan dua jari
                     e.preventDefault();
                     settings.style.top = '0';
                 }
             }
         }, {passive: false});
-        
-        // Double click untuk show card
+
+        // Double tap to show money
         let lastTap = 0;
         document.addEventListener('touchend', (e) => {
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTap;
             if (tapLength < 300 && tapLength > 0) {
-                showCard();
+                showMoney();
             }
             lastTap = currentTime;
         });
-        
-        // Card dragging functionality dengan priority atas tilt control
-        card.addEventListener('touchstart', (e) => {
+
+        // Improved dragging dengan pull-out effect
+        money.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 isDragging = true;
                 startX = e.touches[0].clientX - posX;
                 startY = e.touches[0].clientY - posY;
-                velocityX = 0;
-                velocityY = 0;
-                lastPosX = posX;
-                lastPosY = posY;
-                lastTime = Date.now();
+                pullEffect.style.opacity = '0';
                 e.preventDefault();
             }
         }, {passive: false});
         
         document.addEventListener('touchmove', (e) => {
             if (isDragging && e.touches.length === 1) {
-                const now = Date.now();
-                const deltaTime = now - lastTime;
+                posX = e.touches[0].clientX - startX;
+                posY = e.touches[0].clientY - startY;
                 
-                if (deltaTime > 0) {
-                    const newPosX = e.touches[0].clientX - startX;
-                    const newPosY = e.touches[0].clientY - startY;
-                    
-                    velocityX = (newPosX - lastPosX) / deltaTime * 1000;
-                    velocityY = (newPosY - lastPosY) / deltaTime * 1000;
-                    
-                    lastPosX = newPosX;
-                    lastPosY = newPosY;
-                    lastTime = now;
-                    
-                    posX = newPosX;
-                    posY = newPosY;
-                    updateCardTransform();
-                }
+                // Calculate pull effect intensity based on distance from center
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                const currentX = posX + money.offsetWidth / 2;
+                const currentY = posY + money.offsetHeight / 2;
+                
+                const distanceFromCenter = Math.sqrt(
+                    Math.pow(currentX - centerX, 2) + Math.pow(currentY - centerY, 2)
+                );
+                const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+                const pullIntensity = Math.min(1, distanceFromCenter / (maxDistance * 0.7));
+                
+                pullEffect.style.opacity = pullIntensity.toString();
+                
+                updateMoneyTransform();
                 e.preventDefault();
             }
         }, {passive: false});
@@ -415,28 +447,36 @@
             if (isDragging) {
                 isDragging = false;
                 
-                // Jika dalam tilt mode, kembali ke kontrol tilt setelah drag
-                if (isTiltMode) {
-                    // Reset filtered values untuk menghindari jump
-                    filteredTiltX = 0;
-                    filteredTiltY = 0;
-                } else {
-                    // Check jika card di-flick cepat
-                    const speedThreshold = 1000;
-                    const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+                // Check if money is pulled out of screen
+                const isPulledOut = 
+                    posX < -money.offsetWidth * 0.8 || 
+                    posX > window.innerWidth - money.offsetWidth * 0.2 ||
+                    posY < -money.offsetHeight * 0.8 || 
+                    posY > window.innerHeight - money.offsetHeight * 0.2;
+                
+                if (isPulledOut) {
+                    // Animate money disappearing
+                    money.style.transition = 'all 0.5s ease-out';
+                    money.style.transform += ' scale(0.8) rotate(15deg)';
+                    money.style.opacity = '0';
                     
-                    if (currentSpeed > speedThreshold || 
-                        posX < -card.offsetWidth * scale * 0.5 || 
-                        posX > window.innerWidth - card.offsetWidth * scale * 0.5 ||
-                        posY < -card.offsetHeight * scale * 0.5 || 
-                        posY > window.innerHeight - card.offsetHeight * scale * 0.5) {
-                        
-                        hideCard();
-                    }
+                    setTimeout(() => {
+                        money.style.display = 'none';
+                        money.style.transition = '';
+                        money.style.opacity = '1';
+                        money.style.transform = '';
+                    }, 500);
+                }
+                
+                pullEffect.style.opacity = '0';
+                
+                // Return to tilt control if enabled
+                if (isTiltMode && !isPulledOut) {
+                    resetMoneyToCenter();
                 }
             }
         });
-        
+
         // Settings functionality
         bgUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -449,119 +489,52 @@
             }
         });
         
-        // Modified card upload dengan image editor
-        cardUpload.addEventListener('change', (e) => {
+        moneyUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    showImageEditor(event.target.result, (editedImage) => {
-                        card.src = editedImage;
-                        scale = 1;
-                        updateCardTransform();
-                    });
+                    money.src = event.target.result;
+                    scale = 1;
+                    updateMoneyTransform();
                 };
                 reader.readAsDataURL(file);
             }
         });
         
-        defaultCardBtn.addEventListener('click', () => {
-            card.src = "https://deckofcardsapi.com/static/img/AS.png";
+        defaultMoneyBtn.addEventListener('click', () => {
+            money.src = "https://i.ibb.co/0Q8LzZy/money-100k.png";
             scale = 1;
-            updateCardTransform();
+            updateMoneyTransform();
         });
         
         closeSettingsBtn.addEventListener('click', () => {
             settings.style.top = '-100%';
         });
-        
-        // Image Editor Function
-        function showImageEditor(imageSrc, callback) {
-            const editor = document.createElement('div');
-            editor.className = 'image-editor';
-            editor.innerHTML = `
-                <div class="editor-container">
-                    <img id="editing-card" src="${imageSrc}" alt="Card being edited">
-                    <div class="editor-controls">
-                        <div style="color:white; margin-bottom:10px;">Pinch to zoom</div>
-                        <div class="editor-buttons">
-                            <button id="save-edit">Save</button>
-                            <button id="cancel-edit">Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(editor);
-            
-            const editingCard = document.getElementById('editing-card');
-            const saveBtn = document.getElementById('save-edit');
-            const cancelBtn = document.getElementById('cancel-edit');
-            
-            let currentScale = 1;
-            let startDistance = 0;
-            
-            editingCard.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) {
-                    e.preventDefault();
-                    startDistance = getDistance(
-                        e.touches[0].clientX, e.touches[0].clientY,
-                        e.touches[1].clientX, e.touches[1].clientY
-                    );
-                }
-            }, {passive: false});
-            
-            editingCard.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 2) {
-                    e.preventDefault();
-                    const currentDistance = getDistance(
-                        e.touches[0].clientX, e.touches[0].clientY,
-                        e.touches[1].clientX, e.touches[1].clientY
-                    );
-                    
-                    if (startDistance > 0) {
-                        currentScale = Math.max(0.3, Math.min(3, currentDistance / startDistance));
-                        editingCard.style.transform = `scale(${currentScale})`;
-                    }
-                }
-            }, {passive: false});
-            
-            editingCard.addEventListener('touchend', () => {
-                startDistance = 0;
-            }, {passive: false});
-            
-            saveBtn.addEventListener('click', () => {
-                document.body.removeChild(editor);
-                callback(imageSrc);
-            });
-            
-            cancelBtn.addEventListener('click', () => {
-                document.body.removeChild(editor);
-            });
-        }
-        
+
         // Helper functions
-        function getDistance(x1, y1, x2, y2) {
-            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        function updateMoneyTransform() {
+            money.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
         }
         
-        function updateCardTransform() {
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        function hideMoney() {
+            money.style.display = 'none';
         }
         
-        function hideCard() {
-            card.style.display = 'none';
-        }
-        
-        function showCard() {
-            resetCardToCenter();
-            card.style.display = 'block';
+        function showMoney() {
+            money.style.display = 'block';
+            resetMoneyToCenter();
         }
         
         // Handle window resize
         window.addEventListener('resize', () => {
-            resetCardToCenter();
+            if (!isDragging) {
+                resetMoneyToCenter();
+            }
         });
+
+        // Initialize
+        resetMoneyToCenter();
     </script>
 </body>
 </html>
