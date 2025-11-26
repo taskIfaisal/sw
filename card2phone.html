@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magic Card Trick</title>
+    <title>Magic Card Trick with Tilt</title>
     <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
     <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -50,10 +50,11 @@
             user-select: none;
             -webkit-user-drag: none;
             touch-action: none;
-            /* Tambahkan ini untuk zoom yang lebih baik */
             transform-origin: center center;
-            height: auto; /* Biarkan tinggi menyesuaikan */
+            height: auto;
+            transition: transform 0.1s ease-out; /* Smooth transition untuk pergerakan natural */
         }
+
         #settings {
             position: fixed;
             top: -100%;
@@ -96,6 +97,17 @@
             cursor: pointer;
         }
 
+        .tilt-indicator {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            z-index: 10;
+        }
+
         /* Editor Modal Styles */
         .image-editor {
             position: fixed;
@@ -124,7 +136,6 @@
             display: block;
             margin: 0 auto;
             touch-action: none;
-            /* Tambahkan ini untuk zoom yang lebih baik */
             transform-origin: center center;
         }
 
@@ -156,6 +167,9 @@
 <body>
     <div id="background"></div>
     <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
+    <div class="tilt-indicator" id="tiltIndicator">
+        Tilt: X:0, Y:0
+    </div>
     <div id="settings">
         <h2>Magic Card Settings</h2>
         
@@ -175,6 +189,17 @@
             </label>
             <button id="default-card">Use Default Card</button>
         </div>
+
+        <div class="setting-section">
+            <h3>Tilt Sensitivity</h3>
+            <input type="range" id="tiltSensitivity" min="1" max="10" value="5">
+            <span id="sensitivityValue">5</span>
+        </div>
+
+        <div class="setting-section">
+            <h3>Tilt Mode</h3>
+            <button id="tiltMode">Enable Tilt Control</button>
+        </div>
         
         <div class="setting-section">
             <button id="close-settings">Save & Close</button>
@@ -190,6 +215,19 @@
         const cardUpload = document.getElementById('card-upload');
         const defaultCardBtn = document.getElementById('default-card');
         const closeSettingsBtn = document.getElementById('close-settings');
+        const tiltIndicator = document.getElementById('tiltIndicator');
+        const tiltSensitivity = document.getElementById('tiltSensitivity');
+        const sensitivityValue = document.getElementById('sensitivityValue');
+        const tiltModeBtn = document.getElementById('tiltMode');
+        
+        // Tilt control variables
+        let isTiltMode = false;
+        let tiltX = 0;
+        let tiltY = 0;
+        let filteredTiltX = 0;
+        let filteredTiltY = 0;
+        let alpha = 0.2; // Low-pass filter factor (0.1-0.3 untuk smoothing)
+        let sensitivity = 5;
         
         // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
@@ -206,7 +244,106 @@
         // Set initial positions
         updateCardTransform();
         
-        // Touch events for swipe up to open settings
+        // Tilt Sensitivity Control
+        tiltSensitivity.addEventListener('input', (e) => {
+            sensitivity = parseInt(e.target.value);
+            sensitivityValue.textContent = sensitivity;
+        });
+        
+        // Tilt Mode Toggle
+        tiltModeBtn.addEventListener('click', () => {
+            isTiltMode = !isTiltMode;
+            tiltModeBtn.textContent = isTiltMode ? 'Disable Tilt Control' : 'Enable Tilt Control';
+            tiltModeBtn.style.background = isTiltMode ? '#4CAF50' : '#f44336';
+            
+            if (isTiltMode) {
+                startTiltControl();
+            } else {
+                stopTiltControl();
+            }
+        });
+        
+        // Device Orientation Handler dengan Filter
+        function handleDeviceOrientation(event) {
+            if (!isTiltMode) return;
+            
+            // Dapatkan nilai accelerometer
+            const beta = event.beta;  // -180 to 180 (depan-belakang)
+            const gamma = event.gamma; // -90 to 90 (kiri-kanan)
+            
+            // Normalisasi nilai (-1 to 1)
+            const normalizedX = Math.max(-1, Math.min(1, gamma / 45)); // Lebih sensitif
+            const normalizedY = Math.max(-1, Math.min(1, beta / 45));
+            
+            // Apply low-pass filter untuk smoothing
+            filteredTiltX = alpha * normalizedX + (1 - alpha) * filteredTiltX;
+            filteredTiltY = alpha * normalizedY + (1 - alpha) * filteredTiltY;
+            
+            // Update tilt values dengan sensitivity
+            tiltX = filteredTiltX * sensitivity * 30; // Multiply factor untuk pergerakan lebih besar
+            tiltY = filteredTiltY * sensitivity * 30;
+            
+            // Update indicator
+            tiltIndicator.textContent = `Tilt: X:${tiltX.toFixed(1)}, Y:${tiltY.toFixed(1)}`;
+            
+            // Update card position berdasarkan tilt
+            updateCardPositionFromTilt();
+        }
+        
+        function updateCardPositionFromTilt() {
+            if (!isTiltMode || isDragging) return;
+            
+            // Hitung posisi baru berdasarkan tilt
+            const newX = (window.innerWidth - card.offsetWidth * scale) / 2 + tiltX;
+            const newY = (window.innerHeight - card.offsetHeight * scale) / 2 + tiltY;
+            
+            // Boundary checking dengan easing
+            const boundedX = Math.max(-card.offsetWidth * scale * 0.3, 
+                                    Math.min(window.innerWidth - card.offsetWidth * scale * 0.7, newX));
+            const boundedY = Math.max(-card.offsetHeight * scale * 0.3, 
+                                    Math.min(window.innerHeight - card.offsetHeight * scale * 0.7, newY));
+            
+            // Smooth transition ke posisi baru
+            posX = boundedX;
+            posY = boundedY;
+            
+            updateCardTransform();
+        }
+        
+        function startTiltControl() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && 
+                typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // iOS 13+ perlu permission
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleDeviceOrientation);
+                            tiltIndicator.style.display = 'block';
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Android dan browser lain
+                window.addEventListener('deviceorientation', handleDeviceOrientation);
+                tiltIndicator.style.display = 'block';
+            }
+        }
+        
+        function stopTiltControl() {
+            window.removeEventListener('deviceorientation', handleDeviceOrientation);
+            tiltIndicator.style.display = 'none';
+            
+            // Kembalikan kartu ke tengah secara smooth
+            resetCardToCenter();
+        }
+        
+        function resetCardToCenter() {
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+            updateCardTransform();
+        }
+        
+        // Touch events untuk swipe up ke settings
         let startYPos = 0;
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
@@ -217,14 +354,14 @@
         document.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2) {
                 const currentY = e.touches[0].clientY;
-                if (currentY - startYPos > 100) { // Swipe UP with two fingers
+                if (currentY - startYPos > 100) { // Swipe UP dengan dua jari
                     e.preventDefault();
                     settings.style.top = '0';
                 }
             }
         }, {passive: false});
         
-        // Double click to show card
+        // Double click untuk show card
         let lastTap = 0;
         document.addEventListener('touchend', (e) => {
             const currentTime = new Date().getTime();
@@ -235,7 +372,7 @@
             lastTap = currentTime;
         });
         
-        // Card dragging functionality with velocity tracking
+        // Card dragging functionality dengan priority atas tilt control
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 isDragging = true;
@@ -278,34 +415,24 @@
             if (isDragging) {
                 isDragging = false;
                 
-                // Check if card is flicked quickly
-                const speedThreshold = 1000; // pixels per second
-                const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
-                
-                if (currentSpeed > speedThreshold || 
-                    posX < -card.offsetWidth * scale * 0.5 || 
-                    posX > window.innerWidth - card.offsetWidth * scale * 0.5 ||
-                    posY < -card.offsetHeight * scale * 0.5 || 
-                    posY > window.innerHeight - card.offsetHeight * scale * 0.5) {
+                // Jika dalam tilt mode, kembali ke kontrol tilt setelah drag
+                if (isTiltMode) {
+                    // Reset filtered values untuk menghindari jump
+                    filteredTiltX = 0;
+                    filteredTiltY = 0;
+                } else {
+                    // Check jika card di-flick cepat
+                    const speedThreshold = 1000;
+                    const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
                     
-                    // Add momentum to the flick
-                    const momentumDuration = 300; // ms
-                    const startMomentum = Date.now();
-                    
-                    const animateMomentum = () => {
-                        const elapsed = Date.now() - startMomentum;
-                        if (elapsed < momentumDuration) {
-                            const progress = 1 - (elapsed / momentumDuration);
-                            posX += velocityX * 0.01 * progress;
-                            posY += velocityY * 0.01 * progress;
-                            updateCardTransform();
-                            requestAnimationFrame(animateMomentum);
-                        } else {
-                            hideCard();
-                        }
-                    };
-                    
-                    animateMomentum();
+                    if (currentSpeed > speedThreshold || 
+                        posX < -card.offsetWidth * scale * 0.5 || 
+                        posX > window.innerWidth - card.offsetWidth * scale * 0.5 ||
+                        posY < -card.offsetHeight * scale * 0.5 || 
+                        posY > window.innerHeight - card.offsetHeight * scale * 0.5) {
+                        
+                        hideCard();
+                    }
                 }
             }
         });
@@ -322,7 +449,7 @@
             }
         });
         
-        // Modified card upload with image editor
+        // Modified card upload dengan image editor
         cardUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -330,7 +457,6 @@
                 reader.onload = (event) => {
                     showImageEditor(event.target.result, (editedImage) => {
                         card.src = editedImage;
-                        // Reset scale when new image is loaded
                         scale = 1;
                         updateCardTransform();
                     });
@@ -341,7 +467,6 @@
         
         defaultCardBtn.addEventListener('click', () => {
             card.src = "https://deckofcardsapi.com/static/img/AS.png";
-            // Reset scale when default image is loaded
             scale = 1;
             updateCardTransform();
         });
@@ -352,7 +477,6 @@
         
         // Image Editor Function
         function showImageEditor(imageSrc, callback) {
-            // Create editor modal
             const editor = document.createElement('div');
             editor.className = 'image-editor';
             editor.innerHTML = `
@@ -377,7 +501,6 @@
             let currentScale = 1;
             let startDistance = 0;
             
-            // Zoom with pinch gesture
             editingCard.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 2) {
                     e.preventDefault();
@@ -407,10 +530,9 @@
                 startDistance = 0;
             }, {passive: false});
             
-            // Save/cancel buttons
             saveBtn.addEventListener('click', () => {
                 document.body.removeChild(editor);
-                callback(imageSrc); // Return the original image (scaling is handled by CSS)
+                callback(imageSrc);
             });
             
             cancelBtn.addEventListener('click', () => {
@@ -418,12 +540,11 @@
             });
         }
         
-        // Helper function to calculate distance between two points
+        // Helper functions
         function getDistance(x1, y1, x2, y2) {
             return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
         }
         
-        // Helper functions
         function updateCardTransform() {
             card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
         }
@@ -433,18 +554,13 @@
         }
         
         function showCard() {
-            // Reset to center position
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-            updateCardTransform();
+            resetCardToCenter();
             card.style.display = 'block';
         }
         
         // Handle window resize
         window.addEventListener('resize', () => {
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-            updateCardTransform();
+            resetCardToCenter();
         });
     </script>
 </body>
