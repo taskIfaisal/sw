@@ -102,7 +102,7 @@
       width: 75px;
       height: 75px;
       border-radius: 50%;
-      background-color: rgba(48, 48, 48, 0.8);
+      background-color: rgba(255, 255, 255, 0.1);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -112,11 +112,12 @@
       cursor: pointer;
       user-select: none;
       transition: background-color 0.2s ease, transform 0.1s ease;
-      backdrop-filter: blur(5px);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
     }
 
     .key.pressed {
-      background-color: rgba(197, 193, 193, 0.9) !important;
+      background-color: rgba(255, 255, 255, 0.8) !important;
       color: black !important;
       transform: scale(1.1);
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
@@ -127,6 +128,7 @@
       font-weight: normal;
       margin-top: -3px;
       letter-spacing: 2px;
+      opacity: 0.7;
     }
 
     .bottom-buttons {
@@ -210,25 +212,6 @@
       transition: opacity 0.3s ease;
     }
 
-    /* Swipe Hint
-    .swipe-hint {
-      position: absolute;
-      bottom: 20px;
-      left: 0;
-      width: 100%;
-      text-align: center;
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.7);
-      opacity: 0;
-      animation: fadeInOut 3s infinite;
-      pointer-events: none;
-    } */
-
-    @keyframes fadeInOut {
-      0%, 100% { opacity: 0; }
-      50% { opacity: 1; }
-    }
-
     /* Settings Modal Styling */
     .settings-modal {
       position: fixed;
@@ -294,9 +277,6 @@
 <body>
   <!-- Background Overlay -->
   <div class="background-overlay" id="backgroundOverlay"></div>
-
-  <!-- Swipe Hint
-  <div class="swipe-hint" id="swipeHint">Swipe down with two fingers for settings</div> -->
 
   <div class="lock-icon">
     <svg width="28" height="13" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
@@ -381,7 +361,6 @@
     const uploadedImage = document.getElementById('uploadedImage');
     const backgroundOverlay = document.getElementById('backgroundOverlay');
     const settingsModal = document.getElementById('settingsModal');
-    const swipeHint = document.getElementById('swipeHint');
 
     let currentInput = '';
     let savedPins = [];
@@ -489,11 +468,6 @@
       setTimeout(() => {
         settingsModal.style.opacity = '1';
       }, 10);
-      
-      // Show hint when settings opened
-      if (swipeHint) {
-        swipeHint.style.display = 'none';
-      }
     }
 
     function closeBackgroundSettings() {
@@ -540,16 +514,6 @@
         backgroundOverlay.style.backgroundImage = `url(${savedBackground})`;
         backgroundOverlay.style.display = 'block';
       }
-      
-      // Show hint for a few seconds on first load
-      setTimeout(() => {
-        if (swipeHint && !savedBackground) {
-          swipeHint.style.display = 'block';
-          setTimeout(() => {
-            if (swipeHint) swipeHint.style.display = 'none';
-          }, 5000);
-        }
-      }, 1000);
     }
 
     // ============================================
