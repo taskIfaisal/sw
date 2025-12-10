@@ -361,6 +361,8 @@
     const uploadedImage = document.getElementById('uploadedImage');
     const backgroundOverlay = document.getElementById('backgroundOverlay');
     const settingsModal = document.getElementById('settingsModal');
+    const imageInput = document.getElementById('imageInput');
+    const fakeImagePreview = document.getElementById('fakeImagePreview');
 
     let currentInput = '';
     let savedPins = [];
@@ -506,13 +508,51 @@
     });
 
     // ============================================
-    // LOAD SAVED BACKGROUND ON STARTUP
+    // UPLOADED IMAGE HANDLING - DENGAN LOCALSTORAGE
     // ============================================
-    function loadSavedBackground() {
+    document.getElementById('imageInput').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const imageURL = event.target.result;
+          
+          // Update preview
+          fakeImagePreview.src = imageURL;
+          fakeImagePreview.style.display = 'block';
+          
+          // Update uploaded image
+          uploadedImageSrc = imageURL;
+          
+          // Save to localStorage
+          localStorage.setItem('unlockedImage', imageURL);
+          
+          console.log("Image saved to localStorage");
+        };
+        reader.readAsDataURL(file);
+      } else {
+        fakeImagePreview.style.display = 'none';
+      }
+    });
+
+    // ============================================
+    // LOAD SAVED IMAGES ON STARTUP
+    // ============================================
+    function loadSavedImages() {
+      // Load background
       const savedBackground = localStorage.getItem('lockScreenBackground');
       if (savedBackground) {
         backgroundOverlay.style.backgroundImage = `url(${savedBackground})`;
         backgroundOverlay.style.display = 'block';
+      }
+      
+      // Load unlocked page image
+      const savedUnlockedImage = localStorage.getItem('unlockedImage');
+      if (savedUnlockedImage) {
+        fakeImagePreview.src = savedUnlockedImage;
+        fakeImagePreview.style.display = 'block';
+        uploadedImageSrc = savedUnlockedImage;
+        console.log("Loaded unlocked image from localStorage");
       }
     }
 
@@ -594,6 +634,8 @@
             .forEach(el => el.style.display = 'none');
 
         unlockPage.style.display = 'block';
+        
+        // Load saved image if exists
         if (uploadedImageSrc) {
             uploadedImage.src = uploadedImageSrc;
             uploadedImage.style.display = 'block';
@@ -644,24 +686,13 @@
 
     function closeSettings() {
         settingsPage.style.opacity = '0';
-        setTimeout(() => settingsPage.style.display = 'none', 600);
+        setTimeout(() => {
+            settingsPage.style.display = 'none';
+        }, 600);
     }
 
     document.getElementById('pinRepeat').addEventListener('input', (e) => {
         pinRepeatTarget = parseInt(e.target.value) || 1;
-    });
-
-    document.getElementById('imageInput').addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        const preview = document.getElementById('fakeImagePreview');
-        if (file) {
-            const imageURL = URL.createObjectURL(file);
-            preview.src = imageURL;
-            preview.style.display = 'block';
-            uploadedImageSrc = imageURL;
-        } else {
-            preview.style.display = 'none';
-        }
     });
 
     // ============================================
@@ -691,13 +722,14 @@
     // ============================================
     function initApp() {
       initDots();
-      loadSavedBackground();
+      loadSavedImages(); // Load both background and uploaded image
       
       promptText.addEventListener('dblclick', togglePinLength);
       
       console.log('iPhone Lock Screen initialized');
       console.log('Swipe down with two fingers to change background');
       console.log('Double-click "Touch ID or Enter Passcode" to toggle PIN length');
+      console.log('Uploaded images are saved in localStorage');
     }
 
     // Start the app
