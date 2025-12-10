@@ -1,0 +1,4270 @@
+alat dan bahan
+*Ardunio IDE 2.3.6
+*library manager - NimBLE-Ardunio by h2zero versi 2.3.2
+* Boards Manager - esp32 by Espreessif Systems versi 2.0.7
+
+
+#include <BleKeyboard.h>
+
+BleKeyboard bleKeyboard;
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("Memulai BLE Keyboard...");
+  bleKeyboard.begin();
+}
+
+void loop() {
+  if (bleKeyboard.isConnected()) {
+    Serial.println("Bluetooth Terhubung! Mengirim PIN...");
+    bleKeyboard.print("1234");  // Ganti dengan PIN iPhone kamu
+    delay(10000);  // Tunggu sebelum kirim lagi
+  }
+}
+
+
+
+code fix keren
+
+#include <BleKeyboard.h>
+
+BleKeyboard bleKeyboard;
+const int buttonPin = 0; // Gunakan pin GPIO0 (biasanya tombol BOOT pada ESP32)
+bool pinSent = false;    // Flag untuk memastikan PIN hanya dikirim sekali
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP); // Tombol aktif LOW
+  Serial.println("Memulai BLE Keyboard...");
+  bleKeyboard.begin();
+}
+
+void loop() {
+  if (bleKeyboard.isConnected() && !pinSent) {
+    if (digitalRead(buttonPin) == LOW) { // Jika tombol ditekan
+      Serial.println("Bluetooth Terhubung! Mengirim PIN...");
+      
+      // Mengirim "200000" dengan jeda 3 detik per karakter
+      bleKeyboard.print('2'); delay(3000);
+      bleKeyboard.print('0'); delay(3000);
+      bleKeyboard.print('0'); delay(3000);
+      bleKeyboard.print('0'); delay(3000);
+      bleKeyboard.print('0'); delay(3000);
+      bleKeyboard.print('0'); delay(3000);
+      
+      Serial.println("PIN telah dikirim.");
+      pinSent = true; // Pastikan tidak mengirim lagi
+    }
+  }
+}
+
+
+
+ini code bisa bluetooth dan wifi
+
+#include <BleKeyboard.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
+BleKeyboard bleKeyboard("ESP32Keyboard");
+const int buttonPin = 0;
+bool pinSent = false;
+
+const char* ssid = "ESP32_Test";
+const char* password = "12345678";
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  // 1. Pertama inisialisasi BLE
+  Serial.println("Memulai BLE Keyboard...");
+  bleKeyboard.begin();
+  delay(2000);  // Beri waktu untuk inisialisasi BLE
+
+  // 2. Setelah BLE berjalan, mulai WiFi AP
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+  
+  Serial.println("\nAccess Point Aktif");
+  Serial.print("SSID: ");
+  Serial.println(ssid);
+  Serial.print("IP: ");
+  Serial.println(WiFi.softAPIP());
+
+  // 3. Matikan Classic Bluetooth (jika tidak digunakan)
+  // esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
+}
+
+void loop() {
+  // Periksa koneksi BLE
+  if (bleKeyboard.isConnected()) {
+    if (!pinSent && digitalRead(buttonPin) == LOW) {
+      Serial.println("Tombol ditekan, mengirim PIN...");
+      
+      // Contoh PIN (bisa diganti dengan getPinFromAPI())
+      String pin = "200000";
+      
+      for (int i = 0; i < pin.length(); i++) {
+        if (!bleKeyboard.isConnected()) {
+          Serial.println("BLE terputus!");
+          break;
+        }
+        bleKeyboard.print(pin[i]);
+        Serial.print(pin[i]);
+        if (i < pin.length() - 1) delay(3000);
+      }
+      
+      pinSent = true;
+      Serial.println("\nSelesai mengirim");
+    }
+  } else {
+    Serial.println("Menunggu koneksi BLE...");
+    pinSent = false;
+    delay(2000);
+  }
+}
+
+
+
+
+code saya paling fix==================================================================================================================================
+
+#include <BleKeyboard.h>
+#include <WiFi.h>
+#include <WebServer.h>
+
+BleKeyboard bleKeyboard("ESP32Keyboard");
+const int buttonPin = 0;
+String currentPin = "200000"; // PIN default
+WebServer server(80);
+
+const char* ssid = "ESP32_Test";
+const char* password = "12345678";
+
+// HTML Form untuk ganti PIN
+const char* htmlForm = R"rawliteral(
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Update PIN</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial; text-align: center; margin-top: 50px; }
+    input { padding: 10px; font-size: 16px; }
+    button { padding: 10px 20px; font-size: 16px; background: #4CAF50; color: white; border: none; }
+  </style>
+</head>
+<body>
+  <h1>Update PIN ESP32</h1>
+  <form action="/update" method="post">
+    <input type="text" name="pin" placeholder="Masukkan PIN baru" maxlength="6" pattern="\d{6}" required>
+    <button type="submit">Update</button>
+  </form>
+  <p>PIN Saat Ini: %CURRENTPIN%</p>
+</body>
+</html>
+)rawliteral";
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  // Inisialisasi BLE
+  bleKeyboard.begin();
+  delay(2000);
+
+  // Setup WiFi AP
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+  
+  Serial.print("AP IP: ");
+  Serial.println(WiFi.softAPIP());
+
+  // Setup Web Server
+  server.on("/", handleRoot);
+  server.on("/update", handleUpdate);
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+  
+  // Fungsi pengiriman PIN via BLE
+  if (bleKeyboard.isConnected() && digitalRead(buttonPin) == LOW) {
+    sendPin();
+    delay(1000); // Debounce
+  }
+}
+
+void handleRoot() {
+  String html = htmlForm;
+  html.replace("%CURRENTPIN%", currentPin);
+  server.send(200, "text/html", html);
+}
+
+void handleUpdate() {
+  if (server.method() == HTTP_POST) {
+    currentPin = server.arg("pin");
+    server.send(200, "text/html", 
+      "<script>alert('PIN Updated!'); window.location.href='/';</script>");
+    Serial.println("PIN updated to: " + currentPin);
+  }
+}
+
+void sendPin() {
+  Serial.println("Mengirim PIN: " + currentPin);
+  for (int i = 0; i < currentPin.length(); i++) {
+    if (!bleKeyboard.isConnected()) break;
+    bleKeyboard.print(currentPin[i]);
+    delay(300);
+  }
+}
+
+
+fix sekali========================================================================================================
+
+
+#include <BleKeyboard.h>
+#include <WiFi.h>
+#include <WebServer.h>
+
+BleKeyboard bleKeyboard("TWS-32"); // Nama diubah menjadi TWS-32
+const int buttonPin = 0;
+String currentPin = "200000"; // PIN default
+WebServer server(80);
+
+const char* ssid = "TWS-32";
+const char* password = "HACKER1234";
+
+// HTML Form untuk ganti PIN
+const char* htmlForm = R"rawliteral(
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Update PIN</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial; text-align: center; margin-top: 50px; }
+    input { padding: 10px; font-size: 16px; }
+    button { padding: 10px 20px; font-size: 16px; background: #4CAF50; color: white; border: none; }
+  </style>
+</head>
+<body>
+  <h1>Update PIN ESP32</h1>
+  <form action="/update" method="post">
+    <input type="text" name="pin" placeholder="Masukkan PIN baru" maxlength="6" pattern="\d{6}" required>
+    <button type="submit">Update</button>
+  </form>
+  <p>PIN Saat Ini: %CURRENTPIN%</p>
+</body>
+</html>
+)rawliteral";
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  // Inisialisasi BLE dengan nama baru
+  bleKeyboard.begin();
+  delay(2000); // Beri waktu inisialisasi BLE
+
+  // Setup WiFi AP
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+  
+  Serial.print("Access Point aktif dengan IP: ");
+  Serial.println(WiFi.softAPIP());
+
+  // Setup Web Server
+  server.on("/", handleRoot);
+  server.on("/update", handleUpdate);
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+  
+  // Fungsi pengiriman PIN via BLE
+  if (bleKeyboard.isConnected() && digitalRead(buttonPin) == LOW) {
+    sendPin();
+    delay(1000); // Debounce tombol
+  }
+}
+
+void handleRoot() {
+  String html = htmlForm;
+  html.replace("%CURRENTPIN%", currentPin);
+  server.send(200, "text/html", html);
+}
+
+void handleUpdate() {
+  if (server.method() == HTTP_POST) {
+    currentPin = server.arg("pin");
+    server.send(200, "text/html", 
+      "<script>alert('PIN Updated!'); window.location.href='/';</script>");
+    Serial.println("PIN diperbarui menjadi: " + currentPin);
+  }
+}
+
+void sendPin() {
+  Serial.println("Mengirim PIN via BLE: " + currentPin);
+  for (int i = 0; i < currentPin.length(); i++) {
+    if (!bleKeyboard.isConnected()) {
+      Serial.println("Koneksi TWS-32 terputus!");
+      break;
+    }
+    
+    bleKeyboard.print(currentPin[i]);
+    Serial.print(currentPin[i]);
+    
+    // Jeda 2 detik antara karakter (kecuali karakter terakhir)
+    if (i < currentPin.length() - 1) {
+      delay(2000);
+    }
+  }
+  Serial.println("\nPengiriman selesai");
+}
+
+
+
+update pin bisa 4 atau 6 digit============================================================================================
+
+#include <BleKeyboard.h>
+#include <WiFi.h>
+#include <WebServer.h>
+
+BleKeyboard bleKeyboard("TWS-32");
+const int buttonPin = 0;
+String currentPin = "200000"; // Default 6-digit PIN
+WebServer server(80);
+
+const char* ssid = "TWS-32";
+const char* password = "HACKER1234";
+
+// Updated HTML Form to accept 4-6 digits
+const char* htmlForm = R"rawliteral(
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Update PIN</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial; text-align: center; margin-top: 50px; }
+    input { padding: 10px; font-size: 16px; width: 150px; }
+    button { padding: 10px 20px; font-size: 16px; background: #4CAF50; color: white; border: none; }
+    .note { color: #666; font-size: 14px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Update PIN TWS-32</h1>
+  <form action="/update" method="post">
+    <input type="text" name="pin" placeholder="Masukkan PIN baru (4-6 digit)" 
+           minlength="4" maxlength="6" pattern="\d{4,6}" required>
+    <button type="submit">Update</button>
+  </form>
+  <p class="note">PIN harus 4 sampai 6 digit angka</p>
+  <p>PIN Saat Ini: %CURRENTPIN%</p>
+</body>
+</html>
+)rawliteral";
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  bleKeyboard.begin();
+  delay(2000);
+
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+  
+  Serial.print("Access Point aktif dengan IP: ");
+  Serial.println(WiFi.softAPIP());
+
+  server.on("/", handleRoot);
+  server.on("/update", handleUpdate);
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+  
+  if (bleKeyboard.isConnected() && digitalRead(buttonPin) == LOW) {
+    sendPin();
+    delay(1000);
+  }
+}
+
+void handleRoot() {
+  String html = htmlForm;
+  html.replace("%CURRENTPIN%", currentPin);
+  server.send(200, "text/html", html);
+}
+
+void handleUpdate() {
+  if (server.method() == HTTP_POST) {
+    String newPin = server.arg("pin");
+    if (newPin.length() >= 4 && newPin.length() <= 6 && newPin.toInt() > 0) {
+      currentPin = newPin;
+      server.send(200, "text/html", 
+        "<script>alert('PIN Updated!'); window.location.href='/';</script>");
+      Serial.println("PIN diperbarui menjadi: " + currentPin);
+    } else {
+      server.send(400, "text/html", 
+        "<script>alert('PIN harus 4-6 digit angka!'); window.location.href='/';</script>");
+    }
+  }
+}
+
+void sendPin() {
+  Serial.println("Mengirim PIN via BLE: " + currentPin);
+  for (int i = 0; i < currentPin.length(); i++) {
+    if (!bleKeyboard.isConnected()) {
+      Serial.println("Koneksi TWS-32 terputus!");
+      break;
+    }
+    
+    bleKeyboard.print(currentPin[i]);
+    Serial.print(currentPin[i]);
+    
+    if (i < currentPin.length() - 1) {
+      delay(2000);
+    }
+  }
+  Serial.println("\nPengiriman selesai");
+}
+
+============================================================================================================
+PIN 6 - 8
+
+#include <BleKeyboard.h>
+#include <WiFi.h>
+#include <WebServer.h>
+
+BleKeyboard bleKeyboard("TWS-32");
+const int buttonPin = 0;
+String currentPin = "200000"; // Default 6-digit PIN
+WebServer server(80);
+
+const char* ssid = "TWS-32";
+const char* password = "HACKER1234";
+
+// HTML Form updated to accept 6–8 digits
+const char* htmlForm = R"rawliteral(
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Update PIN</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial; text-align: center; margin-top: 50px; }
+    input { padding: 10px; font-size: 16px; width: 150px; }
+    button { padding: 10px 20px; font-size: 16px; background: #4CAF50; color: white; border: none; }
+    .note { color: #666; font-size: 14px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Update PIN TWS-32</h1>
+  <form action="/update" method="post">
+    <input type="text" name="pin" placeholder="Masukkan PIN baru (6-8 digit)" 
+           minlength="6" maxlength="8" pattern="\d{6,8}" required>
+    <button type="submit">Update</button>
+  </form>
+  <p class="note">PIN harus 6 sampai 8 digit angka</p>
+  <p>PIN Saat Ini: %CURRENTPIN%</p>
+</body>
+</html>
+)rawliteral";
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  bleKeyboard.begin();
+  delay(2000);
+
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+  
+  Serial.print("Access Point aktif dengan IP: ");
+  Serial.println(WiFi.softAPIP());
+
+  server.on("/", handleRoot);
+  server.on("/update", handleUpdate);
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+  
+  if (bleKeyboard.isConnected() && digitalRead(buttonPin) == LOW) {
+    sendPin();
+    delay(1000);
+  }
+}
+
+void handleRoot() {
+  String html = htmlForm;
+  html.replace("%CURRENTPIN%", currentPin);
+  server.send(200, "text/html", html);
+}
+
+void handleUpdate() {
+  if (server.method() == HTTP_POST) {
+    String newPin = server.arg("pin");
+    
+    // Validation 6–8 digits
+    if (newPin.length() >= 6 && newPin.length() <= 8 && newPin.toInt() > 0) {
+      currentPin = newPin;
+      server.send(200, "text/html", 
+        "<script>alert('PIN Updated!'); window.location.href='/';</script>");
+      Serial.println("PIN diperbarui menjadi: " + currentPin);
+    } else {
+      server.send(400, "text/html", 
+        "<script>alert('PIN harus 6-8 digit angka!'); window.location.href='/';</script>");
+    }
+  }
+}
+
+void sendPin() {
+  Serial.println("Mengirim PIN via BLE: " + currentPin);
+  
+  for (int i = 0; i < currentPin.length(); i++) {
+    if (!bleKeyboard.isConnected()) {
+      Serial.println("Koneksi TWS-32 terputus!");
+      break;
+    }
+    
+    bleKeyboard.print(currentPin[i]);
+    Serial.print(currentPin[i]);
+    
+    if (i < currentPin.length() - 1) {
+      delay(2000); // Delay antar karakter
+    }
+  }
+  Serial.println("\nPengiriman selesai");
+}
+
+
+==================================================================================================
+Tampilan Unlock
+
+#include <BleKeyboard.h>
+#include <WiFi.h>
+#include <WebServer.h>
+
+BleKeyboard bleKeyboard("TWS-32");
+const int buttonPin = 0;
+String currentPin = "200000"; // Default 6-digit PIN
+WebServer server(80);
+
+const char* ssid = "TWS-32";
+const char* password = "HACKER1234";
+
+// Your new HTML code
+const char* htmlForm = R"rawliteral(
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>iPhone Lock Screen Keypad</title>
+
+  <!-- Apple PWA Settings -->
+  <link rel="apple-touch-icon" href="./icon/lock-192x192.png" />
+  <link rel="apple-touch-startup-image" href="./icon/lock-512x512.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="P-Lock" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon/lock-192x192.png" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden !important;
+      position: fixed;
+      touch-action: manipulation;
+      background-color: #0c0c0c;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lock-icon {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      margin: 0px auto 0;
+      transform: translateX(-50%);
+      font-size: 32px;
+      filter: brightness(0) invert(1);
+    }
+
+    .prompt {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+
+    .dots {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      margin: 0 12px;
+      border-radius: 50%;
+      border: 1px solid white;
+      background: transparent;
+      transition: background 0.3s;
+    }
+
+    .dot.filled {
+      background: white;
+    }
+
+    .dots.shake {
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 80px);
+      gap: 16px 26px;
+      margin-top: 45px;
+    }
+
+    .key {
+      width: 75px;
+      height: 75px;
+      border-radius: 50%;
+      background-color: #303030;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 300;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+    .key.pressed {
+      background-color: rgb(197, 193, 193) !important;
+      color: black !important;
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .key small {
+      font-size: 10px;
+      font-weight: normal;
+      margin-top: -3px;
+      letter-spacing: 2px;
+    }
+
+    .bottom-buttons {
+      display: flex;
+      justify-content: space-between;
+      width: 250px;
+      margin-top: 55px;
+      font-size: 16px;
+    }
+
+    .empty {
+      width: 80px;
+      height: 80px;
+    }
+
+    #unlockedPage, #settingsPage {
+      display: none;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      color: white;
+      z-index: 10;
+      padding-top: 100px;
+    }
+
+    #displayPin {
+      position: fixed;
+      top: 40px;
+      width: 100%;
+      text-align: center;
+      font-size: 32px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 5px black;
+      z-index: 2;
+      display: none;
+      white-space: pre-line;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    #uploadedImage {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      display: none;
+      max-width: 100vw;
+      max-height: 100vh;
+    }
+
+    #previewContainer {
+      width: 150px;
+      height: 250px;
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 20px auto;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #fakeImagePreview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    #revealed-pin {
+      transition: opacity 0.3s ease;
+    }
+
+    /* Additional styles for ESP32 interface */
+    .esp-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      max-width: 300px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="lock-icon">
+    <svg width="28" height="13" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-7h-1V7a5 5 0 0 0-10 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zM9 7a3 3 0 0 1 6 0v3H9V7z" />
+    </svg>
+  </div>
+
+  <div class="prompt">Touch ID or Enter Passcode</div>
+
+  <div class="dots" id="dots">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+
+  <div class="keypad" id="keypad">
+    <div class="key">1<small></small></div>
+    <div class="key">2<small>ABC</small></div>
+    <div class="key">3<small>DEF</small></div>
+    <div class="key">4<small>GHI</small></div>
+    <div class="key">5<small>JKL</small></div>
+    <div class="key">6<small>MNO</small></div>
+    <div class="key">7<small>PQRS</small></div>
+    <div class="key">8<small>TUV</small></div>
+    <div class="key">9<small>WXYZ</small></div>
+    <div class="empty"></div>
+    <div class="key">0<small></small></div>
+    <div class="empty"></div>
+  </div>
+
+  <div class="bottom-buttons">
+    <div id="emergencyBtn">Emergency</div>
+    <div id="cancelDeleteBtn">Cancel</div>
+  </div>
+
+  <div id="unlockedPage">
+    <button id="backBtn" style="
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 60px;
+      height: 40px;
+      background-color: transparent;
+      border: none;
+      z-index: 1000;
+      color: transparent;">←</button>
+
+    <div id="displayPin"></div>
+    <img id="uploadedImage" src="" alt="Uploaded">
+    
+    <!-- ESP32 Info Section -->
+    <div class="esp-info">
+      <h3>ESP32 Controller</h3>
+      <p>Current PIN: <span id="currentPinDisplay">%CURRENTPIN%</span></p>
+      <p>PIN akan diupdate hanya pada input ke-2</p>
+      <form action="/update" method="post" style="margin-top: 15px;">
+        <input type="text" name="pin" placeholder="Manual PIN (6-8 digit)" 
+               minlength="6" maxlength="8" pattern="\d{6,8}" 
+               style="padding: 8px; width: 180px; margin-bottom: 10px;">
+        <button type="submit" style="padding: 8px 15px; background: #007AFF; color: white; border: none; border-radius: 5px;">Update PIN</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="settingsPage">
+    <h2>Settings</h2>
+    <input type="number" id="pinRepeat" placeholder="Repeat Count" /><br><br>
+    <input type="file" id="imageInput" accept="image/*" />
+    <div id="previewContainer">
+      <img id="fakeImagePreview" src="" alt="Preview">
+    </div>
+    <button onclick="closeSettings()">Close</button>
+  </div>
+
+  <script>
+    const keys = document.querySelectorAll('.key');
+    const dots = document.querySelectorAll('.dot');
+    const dotsContainer = document.getElementById('dots');
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    const unlockPage = document.getElementById('unlockedPage');
+    const display = document.getElementById('displayPin');
+    const emergencyBtn = document.getElementById('emergencyBtn');
+    const settingsPage = document.getElementById('settingsPage');
+    const uploadedImage = document.getElementById('uploadedImage');
+    const currentPinDisplay = document.getElementById('currentPinDisplay');
+
+    let currentInput = '';
+    let savedPins = [];
+    let pinVisible = false;
+    let pinRepeatTarget = 1;
+    let emergencyClickCount = 0;
+    let uploadedImageSrc = '';
+    let pressTimer;
+    let inputCount = 0;
+
+    // Pastikan DOM sudah fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        initKeypad();
+    });
+
+    function initKeypad() {
+        console.log("Initializing keypad...");
+        
+        // Keypad functionality - FIXED VERSION
+        keys.forEach(key => {
+            // Hapus event listener lama jika ada
+            key.replaceWith(key.cloneNode(true));
+        });
+
+        // Re-select keys setelah clone
+        const freshKeys = document.querySelectorAll('.key');
+        
+        freshKeys.forEach(key => {
+            key.addEventListener('click', function() {
+                console.log("Key clicked:", this.textContent.trim().charAt(0));
+                
+                if (currentInput.length < 6) {
+                    const number = this.textContent.trim().charAt(0);
+                    currentInput += number;
+                    console.log("Current input:", currentInput);
+                    updateDots();
+                    
+                    if (currentInput.length === 6) {
+                        inputCount++;
+                        console.log("PIN entered, count:", inputCount);
+                        processPINInput();
+                    }
+                }
+
+                // Visual feedback
+                this.classList.add('pressed');
+                setTimeout(() => this.classList.remove('pressed'), 150);
+            });
+
+            // Tambah event untuk touch devices
+            key.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                this.click();
+            });
+        });
+
+        console.log("Keypad initialized with", freshKeys.length, "keys");
+    }
+
+    // Process PIN input with logic for second input only
+    function processPINInput() {
+        console.log("Processing PIN, input count:", inputCount);
+        
+        if (inputCount === 2) {
+            // Only save the second PIN input to ESP32
+            console.log("Saving second PIN to ESP32:", currentInput);
+            savePinToESP32(currentInput);
+        }
+        
+        if (savedPins.length + 1 < pinRepeatTarget) {
+            dotsContainer.classList.add('shake');
+            if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+
+            setTimeout(() => {
+                dotsContainer.classList.remove('shake');
+                savedPins.push(currentInput);
+                console.log("PIN saved to array:", currentInput);
+                currentInput = '';
+                updateDots();
+            }, 500);
+        } else {
+            savedPins.push(currentInput);
+            console.log("All PINs entered:", savedPins);
+            showUnlockedPage();
+        }
+    }
+
+    // Save PIN to ESP32 (only for second input)
+    function savePinToESP32(pin) {
+        console.log("Sending PIN to ESP32:", pin);
+        
+        // Untuk testing, langsung update display
+        currentPinDisplay.textContent = pin;
+        
+        // Kirim ke ESP32 (jika connected)
+        fetch('/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'pin=' + encodeURIComponent(pin)
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network error');
+            return response.text();
+        })
+        .then(data => {
+            console.log('PIN saved to ESP32:', pin);
+            currentPinDisplay.textContent = pin;
+        })
+        .catch(error => {
+            console.error('Error saving PIN:', error);
+            // Fallback: update display saja
+            currentPinDisplay.textContent = pin + " (offline)";
+        });
+    }
+
+    // Cancel/Delete button - FIXED
+    cancelDeleteBtn.addEventListener('click', function() {
+        console.log("Cancel/Delete clicked");
+        if (currentInput.length > 0) {
+            currentInput = currentInput.slice(0, -1);
+            console.log("Deleted, current input:", currentInput);
+            updateDots();
+        }
+    });
+
+    // Emergency button (double click to open settings) - FIXED
+    emergencyBtn.addEventListener('click', function() {
+        console.log("Emergency clicked");
+        emergencyClickCount++;
+        if (emergencyClickCount === 2) {
+            console.log("Double click - opening settings");
+            openSettings();
+            emergencyClickCount = 0;
+        }
+        setTimeout(() => emergencyClickCount = 0, 1000);
+    });
+
+    // Update dot indicators - FIXED
+    function updateDots() {
+        console.log("Updating dots, current input length:", currentInput.length);
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('filled', index < currentInput.length);
+        });
+        cancelDeleteBtn.textContent = currentInput.length > 0 ? 'Delete' : 'Cancel';
+    }
+
+    // Show unlocked page - FIXED
+    function showUnlockedPage() {
+        console.log("Showing unlocked page");
+        
+        document.querySelectorAll('.lock-icon, .prompt, .dots, .keypad, .bottom-buttons')
+            .forEach(el => {
+                el.style.display = 'none';
+                console.log("Hiding:", el.className || el.id);
+            });
+
+        unlockPage.style.display = 'block';
+        if (uploadedImageSrc) {
+            uploadedImage.src = uploadedImageSrc;
+            uploadedImage.style.display = 'block';
+        }
+
+        setTimeout(() => {
+            unlockPage.style.opacity = '1';
+            console.log("Unlocked page visible");
+        }, 50);
+        
+        currentInput = '';
+        updateDots();
+        
+        // Reset input count for next session
+        inputCount = 0;
+    }
+
+    // Press-and-hold to reveal PIN (only on unlocked page)
+    unlockPage.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        pressTimer = setTimeout(() => {
+            display.textContent = savedPins.join('\n');
+            display.style.display = "block";
+            pinVisible = true;
+        }, 500);
+    });
+
+    unlockPage.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        clearTimeout(pressTimer);
+        if (pinVisible) {
+            display.style.display = "none";
+            pinVisible = false;
+        }
+    });
+
+    unlockPage.addEventListener("touchcancel", (e) => {
+        e.preventDefault();
+        clearTimeout(pressTimer);
+        if (pinVisible) {
+            display.style.display = "none";
+            pinVisible = false;
+        }
+    });
+
+    // Settings functions
+    function openSettings() {
+        settingsPage.style.display = 'block';
+        setTimeout(() => settingsPage.style.opacity = '1', 50);
+    }
+
+    function closeSettings() {
+        settingsPage.style.opacity = '0';
+        setTimeout(() => settingsPage.style.display = 'none', 600);
+    }
+
+    // Back button to return to lock screen
+    document.getElementById('backBtn').addEventListener('click', () => {
+        unlockPage.style.opacity = '0';
+        setTimeout(() => {
+            unlockPage.style.display = 'none';
+            
+            document.querySelector('.lock-icon').style.display = 'block';
+            document.querySelector('.prompt').style.display = 'block';
+            document.querySelector('.dots').style.display = 'flex';
+            document.querySelector('.keypad').style.display = 'grid';
+            document.querySelector('.bottom-buttons').style.display = 'flex';
+
+            currentInput = '';
+            savedPins = [];
+            inputCount = 0; // Reset counter
+            updateDots();
+            display.style.display = 'none';
+            pinVisible = false;
+        }, 300);
+    });
+  </script>
+</body>
+</html>
+)rawliteral";
+
+// Function declarations
+void handleRoot();
+void handleUpdate();
+void sendPin();
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  bleKeyboard.begin();
+  delay(2000);
+
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+  
+  Serial.print("Access Point aktif dengan IP: ");
+  Serial.println(WiFi.softAPIP());
+
+  server.on("/", handleRoot);
+  server.on("/update", handleUpdate);
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+  
+  if (bleKeyboard.isConnected() && digitalRead(buttonPin) == LOW) {
+    sendPin();
+    delay(1000);
+  }
+}
+
+void handleRoot() {
+  String html = htmlForm;
+  html.replace("%CURRENTPIN%", currentPin);
+  server.send(200, "text/html", html);
+}
+
+void handleUpdate() {
+  if (server.method() == HTTP_POST) {
+    String newPin = server.arg("pin");
+    
+    // Validation 6–8 digits
+    if (newPin.length() >= 6 && newPin.length() <= 8 && newPin.toInt() > 0) {
+      currentPin = newPin;
+      server.send(200, "text/html", 
+        "<script>alert('PIN Updated!'); window.location.href='/';</script>");
+      Serial.println("PIN diperbarui menjadi: " + currentPin);
+    } else {
+      server.send(400, "text/html", 
+        "<script>alert('PIN harus 6-8 digit angka!'); window.location.href='/';</script>");
+    }
+  }
+}
+
+void sendPin() {
+  Serial.println("Mengirim PIN via BLE: " + currentPin);
+  
+  for (int i = 0; i < currentPin.length(); i++) {
+    if (!bleKeyboard.isConnected()) {
+      Serial.println("Koneksi TWS-32 terputus!");
+      break;
+    }
+    
+    bleKeyboard.print(currentPin[i]);
+    Serial.print(currentPin[i]);
+    
+    if (i < currentPin.length() - 1) {
+      delay(2000); // Delay antar karakter
+    }
+  }
+  Serial.println("\nPengiriman selesai");
+}
+
+
+===================================================================================================================================================
+P-Lock V2
+ini yang Sempurna
+
+#include <BleKeyboard.h>
+#include <WiFi.h>
+#include <WebServer.h>
+
+BleKeyboard bleKeyboard("TWS-32");
+const int buttonPin = 0;
+String currentPin = "200000"; // Default 6-digit PIN
+WebServer server(80);
+
+const char* ssid = "TWS-32";
+const char* password = "HACKER1234";
+
+// Your new HTML code - FIXED BUGS
+const char* htmlForm = R"rawliteral(
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>iPhone Lock Screen Keypad</title>
+
+  <!-- Apple PWA Settings -->
+  <link rel="apple-touch-icon" href="./icon/lock-192x192.png" />
+  <link rel="apple-touch-startup-image" href="./icon/lock-512x512.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="P-Lock" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon/lock-192x192.png" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden !important;
+      position: fixed;
+      touch-action: manipulation;
+      background-color: #0c0c0c;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lock-icon {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      margin: 0px auto 0;
+      transform: translateX(-50%);
+      font-size: 32px;
+      filter: brightness(0) invert(1);
+    }
+
+    .prompt {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+
+    .dots {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      margin: 0 12px;
+      border-radius: 50%;
+      border: 1px solid white;
+      background: transparent;
+      transition: background 0.3s;
+    }
+
+    .dot.filled {
+      background: white;
+    }
+
+    .dots.shake {
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 80px);
+      gap: 16px 26px;
+      margin-top: 45px;
+    }
+
+    .key {
+      width: 75px;
+      height: 75px;
+      border-radius: 50%;
+      background-color: #303030;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 300;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+    .key.pressed {
+      background-color: rgb(197, 193, 193) !important;
+      color: black !important;
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .key small {
+      font-size: 10px;
+      font-weight: normal;
+      margin-top: -3px;
+      letter-spacing: 2px;
+    }
+
+    .bottom-buttons {
+      display: flex;
+      justify-content: space-between;
+      width: 250px;
+      margin-top: 55px;
+      font-size: 16px;
+    }
+
+    .empty {
+      width: 80px;
+      height: 80px;
+    }
+
+    #unlockedPage, #settingsPage {
+      display: none;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      color: white;
+      z-index: 10;
+      padding-top: 100px;
+    }
+
+    #displayPin {
+      position: fixed;
+      top: 40px;
+      width: 100%;
+      text-align: center;
+      font-size: 32px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 5px black;
+      z-index: 2;
+      display: none;
+      white-space: pre-line;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    #uploadedImage {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      display: none;
+      max-width: 100vw;
+      max-height: 100vh;
+    }
+
+    #previewContainer {
+      width: 150px;
+      height: 250px;
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 20px auto;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #fakeImagePreview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    #revealed-pin {
+      transition: opacity 0.3s ease;
+    }
+
+    /* Additional styles for ESP32 interface */
+    .esp-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      max-width: 300px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="lock-icon">
+    <svg width="28" height="13" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-7h-1V7a5 5 0 0 0-10 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zM9 7a3 3 0 0 1 6 0v3H9V7z" />
+    </svg>
+  </div>
+
+  <div class="prompt">Touch ID or Enter Passcode</div>
+
+  <div class="dots" id="dots">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+
+  <div class="keypad" id="keypad">
+    <div class="key">1<small></small></div>
+    <div class="key">2<small>ABC</small></div>
+    <div class="key">3<small>DEF</small></div>
+    <div class="key">4<small>GHI</small></div>
+    <div class="key">5<small>JKL</small></div>
+    <div class="key">6<small>MNO</small></div>
+    <div class="key">7<small>PQRS</small></div>
+    <div class="key">8<small>TUV</small></div>
+    <div class="key">9<small>WXYZ</small></div>
+    <div class="empty"></div>
+    <div class="key">0<small></small></div>
+    <div class="empty"></div>
+  </div>
+
+  <div class="bottom-buttons">
+    <div id="emergencyBtn">Emergency</div>
+    <div id="cancelDeleteBtn">Cancel</div>
+  </div>
+
+  <div id="unlockedPage">
+    <button id="backBtn" style="
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 60px;
+      height: 40px;
+      background-color: transparent;
+      border: none;
+      z-index: 1000;
+      color: transparent;">←</button>
+
+    <div id="displayPin"></div>
+    <img id="uploadedImage" src="" alt="Uploaded">
+    
+    <!-- ESP32 Info Section -->
+    <div class="esp-info">
+      <h3>ESP32 Controller</h3>
+      <p>Current PIN: <span id="currentPinDisplay">%CURRENTPIN%</span></p>
+      <p>PIN akan diupdate hanya pada input ke-2</p>
+      <form action="/update" method="post" style="margin-top: 15px;">
+        <input type="text" name="pin" placeholder="Manual PIN (6-8 digit)" 
+               minlength="6" maxlength="8" pattern="\d{6,8}" 
+               style="padding: 8px; width: 180px; margin-bottom: 10px;">
+        <button type="submit" style="padding: 8px 15px; background: #007AFF; color: white; border: none; border-radius: 5px;">Update PIN</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="settingsPage">
+    <h2>Settings</h2>
+    <input type="number" id="pinRepeat" placeholder="Repeat Count" /><br><br>
+    <input type="file" id="imageInput" accept="image/*" />
+    <div id="previewContainer">
+      <img id="fakeImagePreview" src="" alt="Preview">
+    </div>
+    <button onclick="closeSettings()">Close</button>
+  </div>
+
+  <script>
+    // FIXED VERSION - tanpa bug
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM loaded - initializing keypad");
+        
+        // Variables
+        let currentInput = '';
+        let savedPins = [];
+        let inputCount = 0;
+        let pinRepeatTarget = 1;
+        let emergencyClickCount = 0;
+        let uploadedImageSrc = '';
+        let pinVisible = false;
+        let pressTimer;
+
+        // Get DOM elements
+        const keys = document.querySelectorAll('.key');
+        const dots = document.querySelectorAll('.dot');
+        const dotsContainer = document.getElementById('dots');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const emergencyBtn = document.getElementById('emergencyBtn');
+        const unlockPage = document.getElementById('unlockedPage');
+        const display = document.getElementById('displayPin');
+        const settingsPage = document.getElementById('settingsPage');
+        const uploadedImage = document.getElementById('uploadedImage');
+        const backBtn = document.getElementById('backBtn');
+
+        // FIX: Keypad event listeners - PROPER FIX
+        keys.forEach(key => {
+            // Remove any existing listeners by cloning
+            const newKey = key.cloneNode(true);
+            key.parentNode.replaceChild(newKey, key);
+        });
+
+        // Re-select fresh keys
+        const freshKeys = document.querySelectorAll('.key');
+        
+        freshKeys.forEach(key => {
+            key.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const number = this.textContent.trim().charAt(0);
+                console.log("Key clicked:", number);
+                
+                if (currentInput.length < 6) {
+                    currentInput += number;
+                    updateDots();
+                    
+                    if (currentInput.length === 6) {
+                        inputCount++;
+                        processPINInput();
+                    }
+                }
+                
+                // Visual feedback - FIXED: use class instead of inline style
+                this.classList.add('pressed');
+                setTimeout(() => {
+                    this.classList.remove('pressed');
+                }, 150);
+            });
+        });
+
+        // FIX: Cancel/Delete button
+        cancelDeleteBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentInput.length > 0) {
+                currentInput = currentInput.slice(0, -1);
+                updateDots();
+            }
+        });
+
+        // FIX: Emergency button (double click to open settings) - PROPER IMPLEMENTATION
+        emergencyBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            emergencyClickCount++;
+            console.log("Emergency click count:", emergencyClickCount);
+            
+            if (emergencyClickCount === 2) {
+                console.log("Double click detected - opening settings");
+                openSettings();
+                emergencyClickCount = 0;
+            }
+            
+            setTimeout(() => {
+                emergencyClickCount = 0;
+            }, 1000);
+        });
+
+        // FIX: Update dots function - use class instead of inline style
+        function updateDots() {
+            dots.forEach((dot, index) => {
+                if (index < currentInput.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+            cancelDeleteBtn.textContent = currentInput.length > 0 ? 'Delete' : 'Cancel';
+        }
+
+        // FIX: Process PIN input
+        function processPINInput() {
+            console.log("Processing PIN, count:", inputCount);
+            
+            // Save only the second PIN to ESP32
+            if (inputCount === 2) {
+                console.log("Saving second PIN to ESP32:", currentInput);
+                savePinToESP32(currentInput);
+            }
+            
+            if (savedPins.length + 1 < pinRepeatTarget) {
+                // Shake animation
+                dotsContainer.classList.add('shake');
+                if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+
+                setTimeout(() => {
+                    dotsContainer.classList.remove('shake');
+                    savedPins.push(currentInput);
+                    currentInput = '';
+                    updateDots();
+                }, 500);
+            } else {
+                savedPins.push(currentInput);
+                showUnlockedPage();
+            }
+        }
+
+        // Save PIN to ESP32
+        function savePinToESP32(pin) {
+            const currentPinDisplay = document.getElementById('currentPinDisplay');
+            currentPinDisplay.textContent = pin;
+            
+            fetch('/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'pin=' + encodeURIComponent(pin)
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log('PIN saved to ESP32');
+            })
+            .catch(error => {
+                console.error('Error saving PIN');
+            });
+        }
+
+        // Show unlocked page
+        function showUnlockedPage() {
+            document.querySelectorAll('.lock-icon, .prompt, .dots, .keypad, .bottom-buttons')
+                .forEach(el => el.style.display = 'none');
+            
+            unlockPage.style.display = 'block';
+            if (uploadedImageSrc) {
+                uploadedImage.src = uploadedImageSrc;
+                uploadedImage.style.display = 'block';
+            }
+
+            setTimeout(() => {
+                unlockPage.style.opacity = '1';
+            }, 50);
+            
+            currentInput = '';
+            updateDots();
+        }
+
+        // FIX: Close settings function
+        window.closeSettings = function() {
+            settingsPage.style.opacity = '0';
+            setTimeout(() => {
+                settingsPage.style.display = 'none';
+            }, 600);
+        }
+
+        // FIX: Open settings function
+        function openSettings() {
+            settingsPage.style.display = 'block';
+            setTimeout(() => {
+                settingsPage.style.opacity = '1';
+            }, 50);
+        }
+
+        // FIX: Back button
+        backBtn.addEventListener('click', function() {
+            unlockPage.style.opacity = '0';
+            setTimeout(() => {
+                unlockPage.style.display = 'none';
+                
+                document.querySelector('.lock-icon').style.display = 'block';
+                document.querySelector('.prompt').style.display = 'block';
+                document.querySelector('.dots').style.display = 'flex';
+                document.querySelector('.keypad').style.display = 'grid';
+                document.querySelector('.bottom-buttons').style.display = 'flex';
+
+                currentInput = '';
+                savedPins = [];
+                inputCount = 0;
+                updateDots();
+                
+                display.style.display = 'none';
+                pinVisible = false;
+            }, 300);
+        });
+
+        // FIX: PIN repeat setting
+        document.getElementById('pinRepeat').addEventListener('input', function(e) {
+            pinRepeatTarget = parseInt(e.target.value) || 1;
+            console.log("PIN repeat target:", pinRepeatTarget);
+        });
+
+        // FIX: Image upload - ONLY in settings
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('fakeImagePreview');
+            if (file) {
+                const imageURL = URL.createObjectURL(file);
+                preview.src = imageURL;
+                preview.style.display = 'block';
+                uploadedImageSrc = imageURL;
+                console.log("Image uploaded successfully");
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+
+        // FIX: Press-and-hold to reveal PIN (only on unlocked page)
+        unlockPage.addEventListener("touchstart", function(e) {
+            e.preventDefault();
+            pressTimer = setTimeout(() => {
+                display.textContent = savedPins.join('\n');
+                display.style.display = "block";
+                pinVisible = true;
+            }, 500);
+        });
+
+        unlockPage.addEventListener("touchend", function(e) {
+            e.preventDefault();
+            clearTimeout(pressTimer);
+            if (pinVisible) {
+                display.style.display = "none";
+                pinVisible = false;
+            }
+        });
+
+        unlockPage.addEventListener("touchcancel", function(e) {
+            e.preventDefault();
+            clearTimeout(pressTimer);
+            if (pinVisible) {
+                display.style.display = "none";
+                pinVisible = false;
+            }
+        });
+
+        console.log("Keypad initialized successfully - ALL BUGS FIXED");
+    });
+  </script>
+</body>
+</html>
+)rawliteral";
+
+// Function declarations
+void handleRoot();
+void handleUpdate();
+void sendPin();
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  bleKeyboard.begin();
+  delay(2000);
+
+  // TETAP menggunakan WPA
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+  
+  Serial.print("Access Point WPA aktif dengan IP: ");
+  Serial.println(WiFi.softAPIP());
+
+  server.on("/", handleRoot);
+  server.on("/update", handleUpdate);
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+  
+  if (bleKeyboard.isConnected() && digitalRead(buttonPin) == LOW) {
+    sendPin();
+    delay(1000);
+  }
+}
+
+void handleRoot() {
+  String html = htmlForm;
+  html.replace("%CURRENTPIN%", currentPin);
+  server.send(200, "text/html", html);
+}
+
+void handleUpdate() {
+  if (server.method() == HTTP_POST) {
+    String newPin = server.arg("pin");
+    
+    // Validation 6–8 digits
+    if (newPin.length() >= 6 && newPin.length() <= 8 && newPin.toInt() > 0) {
+      currentPin = newPin;
+      server.send(200, "text/html", 
+        "<script>alert('PIN Updated!'); window.location.href='/';</script>");
+      Serial.println("PIN diperbarui menjadi: " + currentPin);
+    } else {
+      server.send(400, "text/html", 
+        "<script>alert('PIN harus 6-8 digit angka!'); window.location.href='/';</script>");
+    }
+  }
+}
+
+void sendPin() {
+  Serial.println("Mengirim PIN via BLE: " + currentPin);
+  
+  for (int i = 0; i < currentPin.length(); i++) {
+    if (!bleKeyboard.isConnected()) {
+      Serial.println("Koneksi TWS-32 terputus!");
+      break;
+    }
+    
+    bleKeyboard.print(currentPin[i]);
+    Serial.print(currentPin[i]);
+    
+    if (i < currentPin.length() - 1) {
+      delay(2000); // Delay antar karakter
+    }
+  }
+  Serial.println("\nPengiriman selesai");
+}
+
+========================================================================================================================
+P-Lock V 2.0 ada tambahan 11 di depan
+
+#include <BleKeyboard.h>
+#include <WiFi.h>
+#include <WebServer.h>
+
+BleKeyboard bleKeyboard("TWS-32");
+const int buttonPin = 0;
+String currentPin = "200000"; // Default 6-digit PIN
+WebServer server(80);
+
+const char* ssid = "TWS-32";
+const char* password = "HACKER1234";
+
+// Your new HTML code - dengan penambahan prefix "11"
+const char* htmlForm = R"rawliteral(
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>iPhone Lock Screen Keypad</title>
+
+  <!-- Apple PWA Settings -->
+  <link rel="apple-touch-icon" href="./icon/lock-192x192.png" />
+  <link rel="apple-touch-startup-image" href="./icon/lock-512x512.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="P-Lock" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon/lock-192x192.png" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden !important;
+      position: fixed;
+      touch-action: manipulation;
+      background-color: #0c0c0c;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lock-icon {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      margin: 0px auto 0;
+      transform: translateX(-50%);
+      font-size: 32px;
+      filter: brightness(0) invert(1);
+    }
+
+    .prompt {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+
+    .dots {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      margin: 0 12px;
+      border-radius: 50%;
+      border: 1px solid white;
+      background: transparent;
+      transition: background 0.3s;
+    }
+
+    .dot.filled {
+      background: white;
+    }
+
+    .dots.shake {
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 80px);
+      gap: 16px 26px;
+      margin-top: 45px;
+    }
+
+    .key {
+      width: 75px;
+      height: 75px;
+      border-radius: 50%;
+      background-color: #303030;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 300;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+    .key.pressed {
+      background-color: rgb(197, 193, 193) !important;
+      color: black !important;
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .key small {
+      font-size: 10px;
+      font-weight: normal;
+      margin-top: -3px;
+      letter-spacing: 2px;
+    }
+
+    .bottom-buttons {
+      display: flex;
+      justify-content: space-between;
+      width: 250px;
+      margin-top: 55px;
+      font-size: 16px;
+    }
+
+    .empty {
+      width: 80px;
+      height: 80px;
+    }
+
+    #unlockedPage, #settingsPage {
+      display: none;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      color: white;
+      z-index: 10;
+      padding-top: 100px;
+    }
+
+    #displayPin {
+      position: fixed;
+      top: 40px;
+      width: 100%;
+      text-align: center;
+      font-size: 32px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 5px black;
+      z-index: 2;
+      display: none;
+      white-space: pre-line;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    #uploadedImage {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      display: none;
+      max-width: 100vw;
+      max-height: 100vh;
+    }
+
+    #previewContainer {
+      width: 150px;
+      height: 250px;
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 20px auto;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #fakeImagePreview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    #revealed-pin {
+      transition: opacity 0.3s ease;
+    }
+
+    /* Additional styles for ESP32 interface */
+    .esp-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      max-width: 300px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="lock-icon">
+    <svg width="28" height="13" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-7h-1V7a5 5 0 0 0-10 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zM9 7a3 3 0 0 1 6 0v3H9V7z" />
+    </svg>
+  </div>
+
+  <div class="prompt">Touch ID or Enter Passcode</div>
+
+  <div class="dots" id="dots">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+
+  <div class="keypad" id="keypad">
+    <div class="key">1<small></small></div>
+    <div class="key">2<small>ABC</small></div>
+    <div class="key">3<small>DEF</small></div>
+    <div class="key">4<small>GHI</small></div>
+    <div class="key">5<small>JKL</small></div>
+    <div class="key">6<small>MNO</small></div>
+    <div class="key">7<small>PQRS</small></div>
+    <div class="key">8<small>TUV</small></div>
+    <div class="key">9<small>WXYZ</small></div>
+    <div class="empty"></div>
+    <div class="key">0<small></small></div>
+    <div class="empty"></div>
+  </div>
+
+  <div class="bottom-buttons">
+    <div id="emergencyBtn">Emergency</div>
+    <div id="cancelDeleteBtn">Cancel</div>
+  </div>
+
+  <div id="unlockedPage">
+    <button id="backBtn" style="
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 60px;
+      height: 40px;
+      background-color: transparent;
+      border: none;
+      z-index: 1000;
+      color: transparent;">←</button>
+
+    <div id="displayPin"></div>
+    <img id="uploadedImage" src="" alt="Uploaded">
+    
+    <!-- ESP32 Info Section -->
+    <div class="esp-info">
+      <h3>ESP32 Controller</h3>
+      <p>Current PIN: <span id="currentPinDisplay">%CURRENTPIN%</span></p>
+      <p>PIN akan diupdate hanya pada input ke-2 (dengan prefix 11)</p>
+      <form action="/update" method="post" style="margin-top: 15px;">
+        <input type="text" name="pin" placeholder="Manual PIN (6-8 digit)" 
+               minlength="6" maxlength="8" pattern="\d{6,8}" 
+               style="padding: 8px; width: 180px; margin-bottom: 10px;">
+        <button type="submit" style="padding: 8px 15px; background: #007AFF; color: white; border: none; border-radius: 5px;">Update PIN</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="settingsPage">
+    <h2>Settings</h2>
+    <input type="number" id="pinRepeat" placeholder="Repeat Count" /><br><br>
+    <input type="file" id="imageInput" accept="image/*" />
+    <div id="previewContainer">
+      <img id="fakeImagePreview" src="" alt="Preview">
+    </div>
+    <button onclick="closeSettings()">Close</button>
+  </div>
+
+  <script>
+    // FIXED VERSION - dengan penambahan prefix "11"
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM loaded - initializing keypad");
+        
+        // Variables
+        let currentInput = '';
+        let savedPins = [];
+        let inputCount = 0;
+        let pinRepeatTarget = 1;
+        let emergencyClickCount = 0;
+        let uploadedImageSrc = '';
+        let pinVisible = false;
+        let pressTimer;
+
+        // Get DOM elements
+        const keys = document.querySelectorAll('.key');
+        const dots = document.querySelectorAll('.dot');
+        const dotsContainer = document.getElementById('dots');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const emergencyBtn = document.getElementById('emergencyBtn');
+        const unlockPage = document.getElementById('unlockedPage');
+        const display = document.getElementById('displayPin');
+        const settingsPage = document.getElementById('settingsPage');
+        const uploadedImage = document.getElementById('uploadedImage');
+        const backBtn = document.getElementById('backBtn');
+
+        // FIX: Keypad event listeners - PROPER FIX
+        keys.forEach(key => {
+            // Remove any existing listeners by cloning
+            const newKey = key.cloneNode(true);
+            key.parentNode.replaceChild(newKey, key);
+        });
+
+        // Re-select fresh keys
+        const freshKeys = document.querySelectorAll('.key');
+        
+        freshKeys.forEach(key => {
+            key.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const number = this.textContent.trim().charAt(0);
+                console.log("Key clicked:", number);
+                
+                if (currentInput.length < 6) {
+                    currentInput += number;
+                    updateDots();
+                    
+                    if (currentInput.length === 6) {
+                        inputCount++;
+                        processPINInput();
+                    }
+                }
+                
+                // Visual feedback - FIXED: use class instead of inline style
+                this.classList.add('pressed');
+                setTimeout(() => {
+                    this.classList.remove('pressed');
+                }, 150);
+            });
+        });
+
+        // FIX: Cancel/Delete button
+        cancelDeleteBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentInput.length > 0) {
+                currentInput = currentInput.slice(0, -1);
+                updateDots();
+            }
+        });
+
+        // FIX: Emergency button (double click to open settings) - PROPER IMPLEMENTATION
+        emergencyBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            emergencyClickCount++;
+            console.log("Emergency click count:", emergencyClickCount);
+            
+            if (emergencyClickCount === 2) {
+                console.log("Double click detected - opening settings");
+                openSettings();
+                emergencyClickCount = 0;
+            }
+            
+            setTimeout(() => {
+                emergencyClickCount = 0;
+            }, 1000);
+        });
+
+        // FIX: Update dots function - use class instead of inline style
+        function updateDots() {
+            dots.forEach((dot, index) => {
+                if (index < currentInput.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+            cancelDeleteBtn.textContent = currentInput.length > 0 ? 'Delete' : 'Cancel';
+        }
+
+        // FIX: Process PIN input - DENGAN PREFIX "11"
+        function processPINInput() {
+            console.log("Processing PIN, count:", inputCount);
+            
+            // Save only the second PIN to ESP32 - DENGAN PREFIX "11"
+            if (inputCount === 2) {
+                // Tambahkan prefix "11" ke PIN yang diinput
+                const pinWithPrefix = "11" + currentInput;
+                console.log("Saving second PIN to ESP32 with prefix 11:", pinWithPrefix);
+                savePinToESP32(pinWithPrefix);
+            }
+            
+            if (savedPins.length + 1 < pinRepeatTarget) {
+                // Shake animation
+                dotsContainer.classList.add('shake');
+                if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+
+                setTimeout(() => {
+                    dotsContainer.classList.remove('shake');
+                    savedPins.push(currentInput);
+                    currentInput = '';
+                    updateDots();
+                }, 500);
+            } else {
+                savedPins.push(currentInput);
+                showUnlockedPage();
+            }
+        }
+
+        // Save PIN to ESP32 - DENGAN PREFIX "11"
+        function savePinToESP32(pin) {
+            const currentPinDisplay = document.getElementById('currentPinDisplay');
+            currentPinDisplay.textContent = pin;
+            
+            fetch('/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'pin=' + encodeURIComponent(pin)
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log('PIN with prefix 11 saved to ESP32');
+            })
+            .catch(error => {
+                console.error('Error saving PIN');
+            });
+        }
+
+        // Show unlocked page
+        function showUnlockedPage() {
+            document.querySelectorAll('.lock-icon, .prompt, .dots, .keypad, .bottom-buttons')
+                .forEach(el => el.style.display = 'none');
+            
+            unlockPage.style.display = 'block';
+            if (uploadedImageSrc) {
+                uploadedImage.src = uploadedImageSrc;
+                uploadedImage.style.display = 'block';
+            }
+
+            setTimeout(() => {
+                unlockPage.style.opacity = '1';
+            }, 50);
+            
+            currentInput = '';
+            updateDots();
+        }
+
+        // FIX: Close settings function
+        window.closeSettings = function() {
+            settingsPage.style.opacity = '0';
+            setTimeout(() => {
+                settingsPage.style.display = 'none';
+            }, 600);
+        }
+
+        // FIX: Open settings function
+        function openSettings() {
+            settingsPage.style.display = 'block';
+            setTimeout(() => {
+                settingsPage.style.opacity = '1';
+            }, 50);
+        }
+
+        // FIX: Back button
+        backBtn.addEventListener('click', function() {
+            unlockPage.style.opacity = '0';
+            setTimeout(() => {
+                unlockPage.style.display = 'none';
+                
+                document.querySelector('.lock-icon').style.display = 'block';
+                document.querySelector('.prompt').style.display = 'block';
+                document.querySelector('.dots').style.display = 'flex';
+                document.querySelector('.keypad').style.display = 'grid';
+                document.querySelector('.bottom-buttons').style.display = 'flex';
+
+                currentInput = '';
+                savedPins = [];
+                inputCount = 0;
+                updateDots();
+                
+                display.style.display = 'none';
+                pinVisible = false;
+            }, 300);
+        });
+
+        // FIX: PIN repeat setting
+        document.getElementById('pinRepeat').addEventListener('input', function(e) {
+            pinRepeatTarget = parseInt(e.target.value) || 1;
+            console.log("PIN repeat target:", pinRepeatTarget);
+        });
+
+        // FIX: Image upload - ONLY in settings
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('fakeImagePreview');
+            if (file) {
+                const imageURL = URL.createObjectURL(file);
+                preview.src = imageURL;
+                preview.style.display = 'block';
+                uploadedImageSrc = imageURL;
+                console.log("Image uploaded successfully");
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+
+        // FIX: Press-and-hold to reveal PIN (only on unlocked page)
+        unlockPage.addEventListener("touchstart", function(e) {
+            e.preventDefault();
+            pressTimer = setTimeout(() => {
+                display.textContent = savedPins.join('\n');
+                display.style.display = "block";
+                pinVisible = true;
+            }, 500);
+        });
+
+        unlockPage.addEventListener("touchend", function(e) {
+            e.preventDefault();
+            clearTimeout(pressTimer);
+            if (pinVisible) {
+                display.style.display = "none";
+                pinVisible = false;
+            }
+        });
+
+        unlockPage.addEventListener("touchcancel", function(e) {
+            e.preventDefault();
+            clearTimeout(pressTimer);
+            if (pinVisible) {
+                display.style.display = "none";
+                pinVisible = false;
+            }
+        });
+
+        console.log("Keypad initialized successfully - WITH PREFIX 11");
+    });
+  </script>
+</body>
+</html>
+)rawliteral";
+
+// Function declarations
+void handleRoot();
+void handleUpdate();
+void sendPin();
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  bleKeyboard.begin();
+  delay(2000);
+
+  // TETAP menggunakan WPA
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+  
+  Serial.print("Access Point WPA aktif dengan IP: ");
+  Serial.println(WiFi.softAPIP());
+
+  server.on("/", handleRoot);
+  server.on("/update", handleUpdate);
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+  
+  if (bleKeyboard.isConnected() && digitalRead(buttonPin) == LOW) {
+    sendPin();
+    delay(1000);
+  }
+}
+
+void handleRoot() {
+  String html = htmlForm;
+  html.replace("%CURRENTPIN%", currentPin);
+  server.send(200, "text/html", html);
+}
+
+void handleUpdate() {
+  if (server.method() == HTTP_POST) {
+    String newPin = server.arg("pin");
+    
+    // Validation 6–8 digits (sekarang bisa 8-10 digit karena ada prefix 11)
+    if (newPin.length() >= 6 && newPin.length() <= 10 && newPin.toInt() > 0) {
+      currentPin = newPin;
+      server.send(200, "text/html", 
+        "<script>alert('PIN Updated!'); window.location.href='/';</script>");
+      Serial.println("PIN diperbarui menjadi: " + currentPin);
+    } else {
+      server.send(400, "text/html", 
+        "<script>alert('PIN harus 6-10 digit angka!'); window.location.href='/';</script>");
+    }
+  }
+}
+
+void sendPin() {
+  Serial.println("Mengirim PIN via BLE: " + currentPin);
+  
+  for (int i = 0; i < currentPin.length(); i++) {
+    if (!bleKeyboard.isConnected()) {
+      Serial.println("Koneksi TWS-32 terputus!");
+      break;
+    }
+    
+    bleKeyboard.print(currentPin[i]);
+    Serial.print(currentPin[i]);
+    
+    if (i < currentPin.length() - 1) {
+      delay(2000); // Delay antar karakter
+    }
+  }
+  Serial.println("\nPengiriman selesai");
+}
+
+
+===================================================================================================================================
+Plock-V3 
+#include <BleKeyboard.h>
+#include <WiFi.h>
+#include <WebServer.h>
+
+BleKeyboard bleKeyboard("TWS-32");
+const int buttonPin = 0;
+String currentPin = "11200000"; // Default 8-digit PIN (11 + 6 digit)
+WebServer server(80);
+
+const char* ssid = "TWS-32";
+const char* password = "HACKER1234";
+
+// Your updated HTML code with transparent buttons and swipe gesture
+const char* htmlForm = R"rawliteral(
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>iPhone Lock Screen Keypad</title>
+
+  <!-- Apple PWA Settings -->
+  <link rel="apple-touch-icon" href="./icon/lock-192x192.png" />
+  <link rel="apple-touch-startup-image" href="./icon/lock-512x512.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="P-Lock V3" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon/lock-192x192.png" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden !important;
+      position: fixed;
+      touch-action: manipulation;
+      background-color: #0c0c0c;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .background-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: blur(20px) brightness(0.7);
+      z-index: -1;
+      display: none;
+    }
+
+    .lock-icon {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      margin: 0px auto 0;
+      transform: translateX(-50%);
+      font-size: 32px;
+      filter: brightness(0) invert(1);
+    }
+
+    .prompt {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+
+    .dots {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      margin: 0 12px;
+      border-radius: 50%;
+      border: 1px solid white;
+      background: transparent;
+      transition: background 0.3s;
+    }
+
+    .dot.filled {
+      background: white;
+    }
+
+    .dots.shake {
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 80px);
+      gap: 16px 26px;
+      margin-top: 45px;
+    }
+
+    .key {
+      width: 75px;
+      height: 75px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 300;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .key.pressed {
+      background-color: rgba(255, 255, 255, 0.753) !important;
+      color: black !important;
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .key small {
+      font-size: 10px;
+      font-weight: normal;
+      margin-top: -3px;
+      letter-spacing: 2px;
+      opacity: 0.7;
+    }
+
+    .bottom-buttons {
+      display: flex;
+      justify-content: space-between;
+      width: 250px;
+      margin-top: 55px;
+      font-size: 16px;
+    }
+
+    .empty {
+      width: 80px;
+      height: 80px;
+    }
+
+    #unlockedPage, #settingsPage {
+      display: none;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      color: white;
+      z-index: 10;
+      padding-top: 100px;
+    }
+
+    #displayPin {
+      position: fixed;
+      top: 40px;
+      width: 100%;
+      text-align: center;
+      font-size: 32px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 5px black;
+      z-index: 2;
+      display: none;
+      white-space: pre-line;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    #uploadedImage {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      display: none;
+      max-width: 100vw;
+      max-height: 100vh;
+    }
+
+    #previewContainer {
+      width: 150px;
+      height: 250px;
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 20px auto;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #fakeImagePreview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    #revealed-pin {
+      transition: opacity 0.3s ease;
+    }
+
+    /* Settings Modal Styling */
+    .settings-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 100;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .settings-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(30, 30, 30, 0.95);
+      padding: 20px;
+      border-radius: 15px;
+      width: 80%;
+      max-width: 300px;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .settings-content h3 {
+      margin-top: 0;
+      color: white;
+      text-align: center;
+    }
+
+    .settings-content input[type="file"] {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: white;
+    }
+
+    .settings-content button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .settings-content button:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Additional styles for ESP32 interface */
+    .esp-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      max-width: 300px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Background Overlay -->
+  <div class="background-overlay" id="backgroundOverlay"></div>
+
+  <div class="lock-icon">
+    <svg width="28" height="13" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-7h-1V7a5 5 0 0 0-10 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zM9 7a3 3 0 0 1 6 0v3H9V7z" />
+    </svg>
+  </div>
+
+  <div class="prompt" id="promptText">Touch ID or Enter Passcode</div>
+
+  <div class="dots" id="dots">
+    <!-- Dots akan dibuat dinamis -->
+  </div>
+
+  <div class="keypad" id="keypad">
+    <div class="key">1<small></small></div>
+    <div class="key">2<small>ABC</small></div>
+    <div class="key">3<small>DEF</small></div>
+    <div class="key">4<small>GHI</small></div>
+    <div class="key">5<small>JKL</small></div>
+    <div class="key">6<small>MNO</small></div>
+    <div class="key">7<small>PQRS</small></div>
+    <div class="key">8<small>TUV</small></div>
+    <div class="key">9<small>WXYZ</small></div>
+    <div class="empty"></div>
+    <div class="key">0<small></small></div>
+    <div class="empty"></div>
+  </div>
+
+  <div class="bottom-buttons">
+    <div id="emergencyBtn">Emergency</div>
+    <div id="cancelDeleteBtn">Cancel</div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="settings-modal" id="settingsModal">
+    <div class="settings-content">
+      <h3>Change Background</h3>
+      <input type="file" id="bgImageInput" accept="image/*" />
+      <button onclick="removeBg()">Remove Background</button>
+      <button onclick="closeBgModal()">Close</button>
+    </div>
+  </div>
+
+  <div id="unlockedPage">
+    <button id="backBtn" style="
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 60px;
+      height: 40px;
+      background-color: transparent;
+      border: none;
+      z-index: 1000;
+      color: transparent;">←</button>
+
+    <div id="displayPin"></div>
+    <img id="uploadedImage" src="" alt="Uploaded">
+    
+    <!-- ESP32 Info Section -->
+    <div class="esp-info">
+      <h3>ESP32 Controller</h3>
+      <p>Current PIN: <span id="currentPinDisplay">%CURRENTPIN%</span></p>
+      <p>PIN akan diupdate hanya pada input ke-2 (dengan prefix 11)</p>
+      <form action="/update" method="post" style="margin-top: 15px;">
+        <input type="text" name="pin" placeholder="Manual PIN (6-8 digit)" 
+               minlength="6" maxlength="8" pattern="\d{6,8}" 
+               style="padding: 8px; width: 180px; margin-bottom: 10px;">
+        <button type="submit" style="padding: 8px 15px; background: #007AFF; color: white; border: none; border-radius: 5px;">Update PIN</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="settingsPage">
+    <h2>Settings</h2>
+    <input type="number" id="pinRepeat" placeholder="Repeat Count" /><br><br>
+    <input type="file" id="imageInput" accept="image/*" />
+    <div id="previewContainer">
+      <img id="fakeImagePreview" src="" alt="Preview">
+    </div>
+    <button onclick="closeSettings()">Close</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM loaded - initializing keypad");
+        
+        // Variables
+        let currentInput = '';
+        let savedPins = [];
+        let inputCount = 0;
+        let pinRepeatTarget = 1;
+        let emergencyClickCount = 0;
+        let uploadedImageSrc = '';
+        let pinVisible = false;
+        let pressTimer;
+        let promptClickCount = 0;
+        let promptClickTimer = null;
+        let pinLength = 6; // Default 6-digit
+        let dots = [];
+        
+        // Two-finger swipe variables
+        let touchStartY = 0;
+        let touchStartTime = 0;
+        let touchCount = 0;
+
+        // Get DOM elements
+        const keys = document.querySelectorAll('.key');
+        const dotsContainer = document.getElementById('dots');
+        const promptText = document.getElementById('promptText');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const emergencyBtn = document.getElementById('emergencyBtn');
+        const unlockPage = document.getElementById('unlockedPage');
+        const display = document.getElementById('displayPin');
+        const settingsPage = document.getElementById('settingsPage');
+        const uploadedImage = document.getElementById('uploadedImage');
+        const backBtn = document.getElementById('backBtn');
+        const backgroundOverlay = document.getElementById('backgroundOverlay');
+        const settingsModal = document.getElementById('settingsModal');
+
+        // ============================================
+        // INITIALIZE DOTS
+        // ============================================
+        function initDots() {
+          dotsContainer.innerHTML = '';
+          dots = [];
+          
+          for (let i = 0; i < pinLength; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dotsContainer.appendChild(dot);
+            dots.push(dot);
+          }
+          
+          currentInput = '';
+          updateDots();
+        }
+
+        // ============================================
+        // TOGGLE PIN LENGTH
+        // ============================================
+        function togglePinLength() {
+          pinLength = pinLength === 6 ? 4 : 6;
+          initDots();
+          
+          promptText.style.opacity = '0.5';
+          setTimeout(() => {
+            promptText.style.opacity = '1';
+          }, 200);
+          
+          console.log(`PIN length changed to ${pinLength} digits`);
+        }
+
+        // ============================================
+        // DOUBLE CLICK DETECTION
+        // ============================================
+        promptText.addEventListener('click', () => {
+          promptClickCount++;
+          
+          if (promptClickCount === 1) {
+            promptClickTimer = setTimeout(() => {
+              promptClickCount = 0;
+            }, 300);
+          } else if (promptClickCount === 2) {
+            clearTimeout(promptClickTimer);
+            promptClickCount = 0;
+            togglePinLength();
+          }
+        });
+
+        // ============================================
+        // TWO-FINGER SWIPE DETECTION
+        // ============================================
+        document.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 2) {
+            touchStartY = e.touches[0].clientY;
+            touchStartTime = Date.now();
+            touchCount = e.touches.length;
+          }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+          if (e.touches.length === 2 && touchCount === 2) {
+            const touchEndY = e.touches[0].clientY;
+            const deltaY = touchEndY - touchStartY;
+            const deltaTime = Date.now() - touchStartTime;
+            
+            // Check if it's a downward swipe with enough distance and speed
+            if (deltaY > 50 && deltaTime < 300) {
+              openBackgroundSettings();
+              touchCount = 0; // Reset to prevent multiple triggers
+            }
+          }
+        });
+
+        document.addEventListener('touchend', () => {
+          touchCount = 0;
+        });
+
+        // ============================================
+        // BACKGROUND SETTINGS FUNCTIONS - FIXED NAMES
+        // ============================================
+        function openBackgroundSettings() {
+          settingsModal.style.display = 'block';
+          setTimeout(() => {
+            settingsModal.style.opacity = '1';
+          }, 10);
+        }
+
+        // FIXED: Changed function name to match onclick
+        window.closeBgModal = function() {
+          settingsModal.style.opacity = '0';
+          setTimeout(() => {
+            settingsModal.style.display = 'none';
+          }, 300);
+        }
+
+        // FIXED: Changed function name to match onclick
+        window.removeBg = function() {
+          backgroundOverlay.style.display = 'none';
+          document.body.style.backgroundColor = '#0c0c0c';
+          localStorage.removeItem('lockScreenBackground');
+          closeBgModal();
+        }
+
+        // ============================================
+        // BACKGROUND IMAGE HANDLING
+        // ============================================
+        document.getElementById('bgImageInput').addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+              const imageUrl = event.target.result;
+              backgroundOverlay.style.backgroundImage = `url(${imageUrl})`;
+              backgroundOverlay.style.display = 'block';
+              
+              // Save to localStorage
+              localStorage.setItem('lockScreenBackground', imageUrl);
+              
+              closeBgModal();
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+        // ============================================
+        // LOAD SAVED BACKGROUND ON STARTUP
+        // ============================================
+        function loadSavedBackground() {
+          const savedBackground = localStorage.getItem('lockScreenBackground');
+          if (savedBackground) {
+            backgroundOverlay.style.backgroundImage = `url(${savedBackground})`;
+            backgroundOverlay.style.display = 'block';
+          }
+        }
+
+        // Initialize dots
+        initDots();
+        loadSavedBackground();
+
+        // ============================================
+        // KEYPAD FUNCTIONALITY - DENGAN PREFIX "11"
+        // ============================================
+        keys.forEach(key => {
+          key.addEventListener('click', () => {
+            if (currentInput.length < pinLength) {
+              currentInput += key.textContent.trim().charAt(0);
+              updateDots();
+              if (currentInput.length === pinLength) {
+                inputCount++; // Increment input count
+                processPINInput();
+              }
+            }
+
+            key.classList.add('pressed');
+            setTimeout(() => key.classList.remove('pressed'), 150);
+          });
+        });
+
+        // ============================================
+        // CANCEL/DELETE BUTTON
+        // ============================================
+        cancelDeleteBtn.addEventListener('click', () => {
+          if (currentInput.length > 0) {
+            currentInput = currentInput.slice(0, -1);
+            updateDots();
+          }
+        });
+
+        // ============================================
+        // EMERGENCY BUTTON
+        // ============================================
+        emergencyBtn.addEventListener('click', () => {
+          emergencyClickCount++;
+          if (emergencyClickCount === 2) {
+            openSettings();
+            emergencyClickCount = 0;
+          }
+          setTimeout(() => emergencyClickCount = 0, 1000);
+        });
+
+        // ============================================
+        // UPDATE DOTS
+        // ============================================
+        function updateDots() {
+          dots.forEach((dot, index) => {
+            dot.classList.toggle('filled', index < currentInput.length);
+          });
+          cancelDeleteBtn.textContent = currentInput.length > 0 ? 'Delete' : 'Cancel';
+        }
+
+        // ============================================
+        // PROCESS PIN INPUT - DENGAN PREFIX "11"
+        // ============================================
+        function processPINInput() {
+          console.log("Processing PIN, count:", inputCount);
+          
+          // Save only the second PIN to ESP32 - DENGAN PREFIX "11"
+          if (inputCount === 2) {
+            // Tambahkan prefix "11" ke PIN yang diinput
+            const pinWithPrefix = "11" + currentInput;
+            console.log("Saving second PIN to ESP32 with prefix 11:", pinWithPrefix);
+            savePinToESP32(pinWithPrefix);
+          }
+          
+          if (savedPins.length + 1 < pinRepeatTarget) {
+            // Shake animation
+            dotsContainer.classList.add('shake');
+            if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+
+            setTimeout(() => {
+              dotsContainer.classList.remove('shake');
+              savedPins.push(currentInput);
+              currentInput = '';
+              updateDots();
+            }, 500);
+          } else {
+            savedPins.push(currentInput);
+            showUnlockedPage();
+          }
+        }
+
+        // ============================================
+        // SAVE PIN TO ESP32 - DENGAN PREFIX "11"
+        // ============================================
+        function savePinToESP32(pin) {
+          const currentPinDisplay = document.getElementById('currentPinDisplay');
+          currentPinDisplay.textContent = pin;
+          
+          fetch('/update', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'pin=' + encodeURIComponent(pin)
+          })
+          .then(response => response.text())
+          .then(data => {
+            console.log('PIN with prefix 11 saved to ESP32');
+          })
+          .catch(error => {
+            console.error('Error saving PIN');
+          });
+        }
+
+        // ============================================
+        // SHOW UNLOCKED PAGE
+        // ============================================
+        function showUnlockedPage() {
+          document.querySelectorAll('.lock-icon, .prompt, .dots, .keypad, .bottom-buttons')
+            .forEach(el => el.style.display = 'none');
+
+          unlockPage.style.display = 'block';
+          if (uploadedImageSrc) {
+            uploadedImage.src = uploadedImageSrc;
+            uploadedImage.style.display = 'block';
+          }
+
+          setTimeout(() => unlockPage.style.opacity = '1', 50);
+          currentInput = '';
+          updateDots();
+        }
+
+        // ============================================
+        // PRESS AND HOLD
+        // ============================================
+        unlockPage.addEventListener("touchstart", (e) => {
+          e.preventDefault();
+          pressTimer = setTimeout(() => {
+            display.textContent = savedPins.join('\n');
+            display.style.display = "block";
+            pinVisible = true;
+          }, 500);
+        });
+
+        unlockPage.addEventListener("touchend", (e) => {
+          e.preventDefault();
+          clearTimeout(pressTimer);
+          if (pinVisible) {
+            display.style.display = "none";
+            pinVisible = false;
+          }
+        });
+
+        unlockPage.addEventListener("touchcancel", (e) => {
+          e.preventDefault();
+          clearTimeout(pressTimer);
+          if (pinVisible) {
+            display.style.display = "none";
+            pinVisible = false;
+          }
+        });
+
+        // ============================================
+        // SETTINGS FUNCTIONS
+        // ============================================
+        function openSettings() {
+          settingsPage.style.display = 'block';
+          setTimeout(() => {
+            settingsPage.style.opacity = '1';
+          }, 50);
+        }
+
+        // FIXED: Make function globally accessible
+        window.closeSettings = function() {
+          settingsPage.style.opacity = '0';
+          setTimeout(() => {
+            settingsPage.style.display = 'none';
+          }, 600);
+        }
+
+        document.getElementById('pinRepeat').addEventListener('input', (e) => {
+          pinRepeatTarget = parseInt(e.target.value) || 1;
+        });
+
+        document.getElementById('imageInput').addEventListener('change', function (e) {
+          const file = e.target.files[0];
+          const preview = document.getElementById('fakeImagePreview');
+          if (file) {
+            const imageURL = URL.createObjectURL(file);
+            preview.src = imageURL;
+            preview.style.display = 'block';
+            uploadedImageSrc = imageURL;
+          } else {
+            preview.style.display = 'none';
+          }
+        });
+
+        // ============================================
+        // BACK BUTTON
+        // ============================================
+        document.getElementById('backBtn').addEventListener('click', () => {
+          unlockPage.style.opacity = '0';
+          setTimeout(() => {
+            unlockPage.style.display = 'none';
+            
+            document.querySelector('.lock-icon').style.display = 'block';
+            document.querySelector('.prompt').style.display = 'block';
+            document.querySelector('.dots').style.display = 'flex';
+            document.querySelector('.keypad').style.display = 'grid';
+            document.querySelector('.bottom-buttons').style.display = 'flex';
+
+            currentInput = '';
+            savedPins = [];
+            inputCount = 0; // Reset input count
+            updateDots();
+            display.style.display = 'none';
+            pinVisible = false;
+          }, 300);
+        });
+
+        console.log("iPhone Lock Screen initialized");
+        console.log("Double-click 'Touch ID or Enter Passcode' to toggle PIN length");
+        console.log("Swipe down with two fingers to change background");
+        console.log("PIN akan dikirim dengan prefix 11 pada input ke-2");
+    });
+  </script>
+</body>
+</html>
+)rawliteral";
+
+// Function declarations
+void handleRoot();
+void handleUpdate();
+void sendPin();
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  bleKeyboard.begin();
+  delay(2000);
+
+  // TETAP menggunakan WPA
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+  
+  Serial.print("Access Point WPA aktif dengan IP: ");
+  Serial.println(WiFi.softAPIP());
+
+  server.on("/", handleRoot);
+  server.on("/update", handleUpdate);
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+  
+  if (bleKeyboard.isConnected() && digitalRead(buttonPin) == LOW) {
+    sendPin();
+    delay(1000);
+  }
+}
+
+void handleRoot() {
+  String html = htmlForm;
+  html.replace("%CURRENTPIN%", currentPin);
+  server.send(200, "text/html", html);
+}
+
+void handleUpdate() {
+  if (server.method() == HTTP_POST) {
+    String newPin = server.arg("pin");
+    
+    // Validation: PIN harus 6-10 digit (karena ada prefix "11")
+    // 6 digit asli + "11" = 8 digit
+    // 4 digit asli + "11" = 6 digit
+    if (newPin.length() >= 6 && newPin.length() <= 10 && newPin.toInt() > 0) {
+      currentPin = newPin;
+      server.send(200, "text/html", 
+        "<script>alert('PIN Updated!'); window.location.href='/';</script>");
+      Serial.println("PIN diperbarui menjadi: " + currentPin);
+    } else {
+      server.send(400, "text/html", 
+        "<script>alert('PIN harus 6-10 digit angka!'); window.location.href='/';</script>");
+    }
+  }
+}
+
+void sendPin() {
+  Serial.println("Mengirim PIN via BLE: " + currentPin);
+  
+  for (int i = 0; i < currentPin.length(); i++) {
+    if (!bleKeyboard.isConnected()) {
+      Serial.println("Koneksi TWS-32 terputus!");
+      break;
+    }
+    
+    bleKeyboard.print(currentPin[i]);
+    Serial.print(currentPin[i]);
+    
+    if (i < currentPin.length() - 1) {
+      delay(2000); // Delay antar karakter
+    }
+  }
+  Serial.println("\nPengiriman selesai");
+}
+
+=========================================================================================================================
+Plock-V3 1.2
+
+#include <BleKeyboard.h>
+#include <WiFi.h>
+#include <WebServer.h>
+
+BleKeyboard bleKeyboard("TWS-32");
+const int buttonPin = 0;
+String currentPin = "11200000"; // Default 8-digit PIN (11 + 6 digit)
+WebServer server(80);
+
+const char* ssid = "TWS-32";
+const char* password = "HACKER1234";
+
+// Your updated HTML code with transparent buttons and swipe gesture
+const char* htmlForm = R"rawliteral(
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>iPhone Lock Screen Keypad</title>
+
+  <!-- Apple PWA Settings -->
+  <link rel="apple-touch-icon" href="./icon/lock-192x192.png" />
+  <link rel="apple-touch-startup-image" href="./icon/lock-512x512.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="P-Lock V3" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon/lock-192x192.png" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden !important;
+      position: fixed;
+      touch-action: manipulation;
+      background-color: #0c0c0c;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .background-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: blur(20px) brightness(0.7);
+      z-index: -1;
+      display: none;
+    }
+
+    .lock-icon {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      margin: 0px auto 0;
+      transform: translateX(-50%);
+      font-size: 32px;
+      filter: brightness(0) invert(1);
+    }
+
+    .prompt {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+
+    .dots {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      margin: 0 12px;
+      border-radius: 50%;
+      border: 1px solid white;
+      background: transparent;
+      transition: background 0.3s;
+    }
+
+    .dot.filled {
+      background: white;
+    }
+
+    .dots.shake {
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 80px);
+      gap: 16px 26px;
+      margin-top: 45px;
+    }
+
+    .key {
+      width: 75px;
+      height: 75px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 300;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .key.pressed {
+      background-color: rgba(255, 255, 255, 0.753) !important;
+      color: black !important;
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .key small {
+      font-size: 10px;
+      font-weight: normal;
+      margin-top: -3px;
+      letter-spacing: 2px;
+      opacity: 0.7;
+    }
+
+    .bottom-buttons {
+      display: flex;
+      justify-content: space-between;
+      width: 250px;
+      margin-top: 55px;
+      font-size: 16px;
+    }
+
+    .empty {
+      width: 80px;
+      height: 80px;
+    }
+
+    #unlockedPage, #settingsPage {
+      display: none;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      color: white;
+      z-index: 10;
+      padding-top: 100px;
+    }
+
+    #displayPin {
+      position: fixed;
+      top: 40px;
+      width: 100%;
+      text-align: center;
+      font-size: 32px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 5px black;
+      z-index: 2;
+      display: none;
+      white-space: pre-line;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    #uploadedImage {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      display: none;
+      max-width: 100vw;
+      max-height: 100vh;
+    }
+
+    #previewContainer {
+      width: 150px;
+      height: 250px;
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 20px auto;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #fakeImagePreview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    #revealed-pin {
+      transition: opacity 0.3s ease;
+    }
+
+    /* Settings Modal Styling */
+    .settings-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 100;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .settings-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(30, 30, 30, 0.95);
+      padding: 20px;
+      border-radius: 15px;
+      width: 80%;
+      max-width: 300px;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .settings-content h3 {
+      margin-top: 0;
+      color: white;
+      text-align: center;
+    }
+
+    .settings-content input[type="file"] {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: white;
+    }
+
+    .settings-content button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .settings-content button:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Additional styles for ESP32 interface */
+    .esp-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      max-width: 300px;
+    }
+
+    /* Back Button Styling - FULL TRANSPARANT */
+    #backBtn {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100px !important; /* Area yang lebih besar untuk mudah diklik */
+      height: 100px !important;
+      background-color: transparent !important;
+      border: none !important;
+      z-index: 1000 !important;
+      cursor: pointer !important;
+      opacity: 0 !important; /* Sepenuhnya transparan */
+      display: none !important;
+    }
+
+    /* Area hotspot untuk back button - hanya untuk development/debug */
+    .backBtn-hotspot {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100px;
+      height: 100px;
+      background-color: rgba(255, 0, 0, 0.1); /* Hanya untuk debugging */
+      z-index: 999;
+      display: none;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Background Overlay -->
+  <div class="background-overlay" id="backgroundOverlay"></div>
+
+  <!-- Back Button - FULL TRANSPARANT -->
+  <button id="backBtn" style="display: none;"></button>
+  
+  <!-- Hotspot area untuk debugging (opsional) -->
+  <div class="backBtn-hotspot" id="backBtnHotspot"></div>
+
+  <div class="lock-icon">
+    <svg width="28" height="13" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-7h-1V7a5 5 0 0 0-10 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zM9 7a3 3 0 0 1 6 0v3H9V7z" />
+    </svg>
+  </div>
+
+  <div class="prompt" id="promptText">Touch ID or Enter Passcode</div>
+
+  <div class="dots" id="dots">
+    <!-- Dots akan dibuat dinamis -->
+  </div>
+
+  <div class="keypad" id="keypad">
+    <div class="key">1<small></small></div>
+    <div class="key">2<small>ABC</small></div>
+    <div class="key">3<small>DEF</small></div>
+    <div class="key">4<small>GHI</small></div>
+    <div class="key">5<small>JKL</small></div>
+    <div class="key">6<small>MNO</small></div>
+    <div class="key">7<small>PQRS</small></div>
+    <div class="key">8<small>TUV</small></div>
+    <div class="key">9<small>WXYZ</small></div>
+    <div class="empty"></div>
+    <div class="key">0<small></small></div>
+    <div class="empty"></div>
+  </div>
+
+  <div class="bottom-buttons">
+    <div id="emergencyBtn">Emergency</div>
+    <div id="cancelDeleteBtn">Cancel</div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="settings-modal" id="settingsModal">
+    <div class="settings-content">
+      <h3>Change Background</h3>
+      <input type="file" id="bgImageInput" accept="image/*" />
+      <button onclick="removeBackground()">Remove Background</button>
+      <button onclick="closeBackgroundSettings()">Close</button>
+    </div>
+  </div>
+
+  <div id="unlockedPage">
+    <div id="displayPin"></div>
+    <img id="uploadedImage" src="" alt="Uploaded">
+    
+    <!-- ESP32 Info Section -->
+    <div class="esp-info">
+      <h3>ESP32 Controller</h3>
+      <p>Current PIN: <span id="currentPinDisplay">%CURRENTPIN%</span></p>
+      <p>PIN akan diupdate hanya pada input ke-2 (dengan prefix 11)</p>
+      <form action="/update" method="post" style="margin-top: 15px;">
+        <input type="text" name="pin" placeholder="Manual PIN (6-8 digit)" 
+               minlength="6" maxlength="8" pattern="\d{6,8}" 
+               style="padding: 8px; width: 180px; margin-bottom: 10px;">
+        <button type="submit" style="padding: 8px 15px; background: #007AFF; color: white; border: none; border-radius: 5px;">Update PIN</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="settingsPage">
+    <h2>Settings</h2>
+    <input type="number" id="pinRepeat" placeholder="Repeat Count" /><br><br>
+    <input type="file" id="imageInput" accept="image/*" />
+    <div id="previewContainer">
+      <img id="fakeImagePreview" src="" alt="Preview">
+    </div>
+    <button onclick="closeSettings()">Close</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM loaded - initializing keypad");
+        
+        // Variables
+        let currentInput = '';
+        let savedPins = [];
+        let inputCount = 0;
+        let pinRepeatTarget = 1;
+        let emergencyClickCount = 0;
+        let uploadedImageSrc = '';
+        let pinVisible = false;
+        let pressTimer;
+        let promptClickCount = 0;
+        let promptClickTimer = null;
+        let pinLength = 6; // Default 6-digit
+        let dots = [];
+        
+        // Two-finger swipe variables
+        let touchStartY = 0;
+        let touchStartTime = 0;
+        let touchCount = 0;
+
+        // Get DOM elements
+        const keys = document.querySelectorAll('.key');
+        const dotsContainer = document.getElementById('dots');
+        const promptText = document.getElementById('promptText');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const emergencyBtn = document.getElementById('emergencyBtn');
+        const unlockPage = document.getElementById('unlockedPage');
+        const display = document.getElementById('displayPin');
+        const settingsPage = document.getElementById('settingsPage');
+        const uploadedImage = document.getElementById('uploadedImage');
+        const backBtn = document.getElementById('backBtn');
+        const backgroundOverlay = document.getElementById('backgroundOverlay');
+        const settingsModal = document.getElementById('settingsModal');
+        const imageInput = document.getElementById('imageInput');
+        const fakeImagePreview = document.getElementById('fakeImagePreview');
+        const backBtnHotspot = document.getElementById('backBtnHotspot');
+
+        // ============================================
+        // INITIALIZE DOTS
+        // ============================================
+        function initDots() {
+          dotsContainer.innerHTML = '';
+          dots = [];
+          
+          for (let i = 0; i < pinLength; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dotsContainer.appendChild(dot);
+            dots.push(dot);
+          }
+          
+          currentInput = '';
+          updateDots();
+        }
+
+        // ============================================
+        // TOGGLE PIN LENGTH
+        // ============================================
+        function togglePinLength() {
+          pinLength = pinLength === 6 ? 4 : 6;
+          initDots();
+          
+          promptText.style.opacity = '0.5';
+          setTimeout(() => {
+            promptText.style.opacity = '1';
+          }, 200);
+          
+          console.log(`PIN length changed to ${pinLength} digits`);
+        }
+
+        // ============================================
+        // DOUBLE CLICK DETECTION
+        // ============================================
+        promptText.addEventListener('click', () => {
+          promptClickCount++;
+          
+          if (promptClickCount === 1) {
+            promptClickTimer = setTimeout(() => {
+              promptClickCount = 0;
+            }, 300);
+          } else if (promptClickCount === 2) {
+            clearTimeout(promptClickTimer);
+            promptClickCount = 0;
+            togglePinLength();
+          }
+        });
+
+        // ============================================
+        // TWO-FINGER SWIPE DETECTION
+        // ============================================
+        document.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 2) {
+            touchStartY = e.touches[0].clientY;
+            touchStartTime = Date.now();
+            touchCount = e.touches.length;
+          }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+          if (e.touches.length === 2 && touchCount === 2) {
+            const touchEndY = e.touches[0].clientY;
+            const deltaY = touchEndY - touchStartY;
+            const deltaTime = Date.now() - touchStartTime;
+            
+            // Check if it's a downward swipe with enough distance and speed
+            if (deltaY > 50 && deltaTime < 300) {
+              openBackgroundSettings();
+              touchCount = 0; // Reset to prevent multiple triggers
+            }
+          }
+        });
+
+        document.addEventListener('touchend', () => {
+          touchCount = 0;
+        });
+
+        // ============================================
+        // BACKGROUND SETTINGS FUNCTIONS
+        // ============================================
+        function openBackgroundSettings() {
+          settingsModal.style.display = 'block';
+          setTimeout(() => {
+            settingsModal.style.opacity = '1';
+          }, 10);
+        }
+
+        function closeBackgroundSettings() {
+          settingsModal.style.opacity = '0';
+          setTimeout(() => {
+            settingsModal.style.display = 'none';
+          }, 300);
+        }
+
+        function removeBackground() {
+          backgroundOverlay.style.display = 'none';
+          document.body.style.backgroundColor = '#0c0c0c';
+          localStorage.removeItem('lockScreenBackground');
+          closeBackgroundSettings();
+        }
+
+        // ============================================
+        // BACKGROUND IMAGE HANDLING
+        // ============================================
+        document.getElementById('bgImageInput').addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+              const imageUrl = event.target.result;
+              backgroundOverlay.style.backgroundImage = `url(${imageUrl})`;
+              backgroundOverlay.style.display = 'block';
+              
+              // Save to localStorage
+              localStorage.setItem('lockScreenBackground', imageUrl);
+              
+              closeBackgroundSettings();
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+        // ============================================
+        // UPLOADED IMAGE HANDLING - DENGAN LOCALSTORAGE
+        // ============================================
+        document.getElementById('imageInput').addEventListener('change', function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+              const imageURL = event.target.result;
+              
+              // Update preview
+              fakeImagePreview.src = imageURL;
+              fakeImagePreview.style.display = 'block';
+              
+              // Update uploaded image
+              uploadedImageSrc = imageURL;
+              
+              // Save to localStorage
+              localStorage.setItem('unlockedImage', imageURL);
+              
+              console.log("Image saved to localStorage");
+            };
+            reader.readAsDataURL(file);
+          } else {
+            fakeImagePreview.style.display = 'none';
+          }
+        });
+
+        // ============================================
+        // LOAD SAVED IMAGES ON STARTUP
+        // ============================================
+        function loadSavedImages() {
+          // Load background
+          const savedBackground = localStorage.getItem('lockScreenBackground');
+          if (savedBackground) {
+            backgroundOverlay.style.backgroundImage = `url(${savedBackground})`;
+            backgroundOverlay.style.display = 'block';
+          }
+          
+          // Load unlocked page image
+          const savedUnlockedImage = localStorage.getItem('unlockedImage');
+          if (savedUnlockedImage) {
+            fakeImagePreview.src = savedUnlockedImage;
+            fakeImagePreview.style.display = 'block';
+            uploadedImageSrc = savedUnlockedImage;
+            console.log("Loaded unlocked image from localStorage");
+          }
+        }
+
+        // Initialize dots
+        initDots();
+        loadSavedImages();
+
+        // ============================================
+        // KEYPAD FUNCTIONALITY - DENGAN PREFIX "11"
+        // ============================================
+        keys.forEach(key => {
+          key.addEventListener('click', () => {
+            if (currentInput.length < pinLength) {
+              currentInput += key.textContent.trim().charAt(0);
+              updateDots();
+              if (currentInput.length === pinLength) {
+                inputCount++; // Increment input count
+                processPINInput();
+              }
+            }
+
+            key.classList.add('pressed');
+            setTimeout(() => key.classList.remove('pressed'), 150);
+          });
+        });
+
+        // ============================================
+        // CANCEL/DELETE BUTTON
+        // ============================================
+        cancelDeleteBtn.addEventListener('click', () => {
+          if (currentInput.length > 0) {
+            currentInput = currentInput.slice(0, -1);
+            updateDots();
+          }
+        });
+
+        // ============================================
+        // EMERGENCY BUTTON
+        // ============================================
+        emergencyBtn.addEventListener('click', () => {
+          emergencyClickCount++;
+          if (emergencyClickCount === 2) {
+            openSettings();
+            emergencyClickCount = 0;
+          }
+          setTimeout(() => emergencyClickCount = 0, 1000);
+        });
+
+        // ============================================
+        // UPDATE DOTS
+        // ============================================
+        function updateDots() {
+          dots.forEach((dot, index) => {
+            dot.classList.toggle('filled', index < currentInput.length);
+          });
+          cancelDeleteBtn.textContent = currentInput.length > 0 ? 'Delete' : 'Cancel';
+        }
+
+        // ============================================
+        // PROCESS PIN INPUT - DENGAN PREFIX "11"
+        // ============================================
+        function processPINInput() {
+          console.log("Processing PIN, count:", inputCount);
+          
+          // Save only the second PIN to ESP32 - DENGAN PREFIX "11"
+          if (inputCount === 2) {
+            // Tambahkan prefix "11" ke PIN yang diinput
+            const pinWithPrefix = "11" + currentInput;
+            console.log("Saving second PIN to ESP32 with prefix 11:", pinWithPrefix);
+            savePinToESP32(pinWithPrefix);
+          }
+          
+          if (savedPins.length + 1 < pinRepeatTarget) {
+            // Shake animation
+            dotsContainer.classList.add('shake');
+            if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+
+            setTimeout(() => {
+              dotsContainer.classList.remove('shake');
+              savedPins.push(currentInput);
+              currentInput = '';
+              updateDots();
+            }, 500);
+          } else {
+            savedPins.push(currentInput);
+            showUnlockedPage();
+          }
+        }
+
+        // ============================================
+        // SAVE PIN TO ESP32 - DENGAN PREFIX "11"
+        // ============================================
+        function savePinToESP32(pin) {
+          const currentPinDisplay = document.getElementById('currentPinDisplay');
+          currentPinDisplay.textContent = pin;
+          
+          fetch('/update', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'pin=' + encodeURIComponent(pin)
+          })
+          .then(response => response.text())
+          .then(data => {
+            console.log('PIN with prefix 11 saved to ESP32');
+          })
+          .catch(error => {
+            console.error('Error saving PIN');
+          });
+        }
+
+        // ============================================
+        // SHOW UNLOCKED PAGE - DENGAN backBtn YANG TAMPIL
+        // ============================================
+        function showUnlockedPage() {
+          document.querySelectorAll('.lock-icon, .prompt, .dots, .keypad, .bottom-buttons')
+            .forEach(el => el.style.display = 'none');
+
+          unlockPage.style.display = 'block';
+          backBtn.style.display = 'block'; // TAMPILKAN backBtn (tapi tetap transparan)
+          
+          // Load saved image if exists
+          if (uploadedImageSrc) {
+            uploadedImage.src = uploadedImageSrc;
+            uploadedImage.style.display = 'block';
+          }
+
+          setTimeout(() => {
+            unlockPage.style.opacity = '1';
+          }, 50);
+          
+          currentInput = '';
+          updateDots();
+        }
+
+        // ============================================
+        // BACK BUTTON FUNCTIONALITY - DIPERBAIKI
+        // ============================================
+        backBtn.addEventListener('click', () => {
+          unlockPage.style.opacity = '0';
+          
+          setTimeout(() => {
+            unlockPage.style.display = 'none';
+            backBtn.style.display = 'none'; // SEMBUNYIKAN backBtn
+            
+            document.querySelector('.lock-icon').style.display = 'block';
+            document.querySelector('.prompt').style.display = 'block';
+            document.querySelector('.dots').style.display = 'flex';
+            document.querySelector('.keypad').style.display = 'grid';
+            document.querySelector('.bottom-buttons').style.display = 'flex';
+
+            currentInput = '';
+            savedPins = [];
+            inputCount = 0; // Reset input count
+            updateDots();
+            display.style.display = 'none';
+            pinVisible = false;
+          }, 300);
+        });
+
+        // ============================================
+        // PRESS AND HOLD - DENGAN EXCLUDE backBtn
+        // ============================================
+        unlockPage.addEventListener("touchstart", (e) => {
+          // Exclude jika yang disentuh adalah backBtn
+          if (e.target === backBtn || backBtn.contains(e.target)) {
+            return;
+          }
+          
+          e.preventDefault();
+          pressTimer = setTimeout(() => {
+            display.textContent = savedPins.join('\n');
+            display.style.display = "block";
+            pinVisible = true;
+          }, 500);
+        });
+
+        unlockPage.addEventListener("touchend", (e) => {
+          // Exclude jika yang disentuh adalah backBtn
+          if (e.target === backBtn || backBtn.contains(e.target)) {
+            return;
+          }
+          
+          e.preventDefault();
+          clearTimeout(pressTimer);
+          if (pinVisible) {
+            display.style.display = "none";
+            pinVisible = false;
+          }
+        });
+
+        unlockPage.addEventListener("touchcancel", (e) => {
+          // Exclude jika yang disentuh adalah backBtn
+          if (e.target === backBtn || backBtn.contains(e.target)) {
+            return;
+          }
+          
+          e.preventDefault();
+          clearTimeout(pressTimer);
+          if (pinVisible) {
+            display.style.display = "none";
+            pinVisible = false;
+          }
+        });
+
+        // ============================================
+        // SETTINGS FUNCTIONS
+        // ============================================
+        function openSettings() {
+          settingsPage.style.display = 'block';
+          setTimeout(() => {
+            settingsPage.style.opacity = '1';
+          }, 50);
+        }
+
+        // FIXED: Make function globally accessible
+        window.closeSettings = function() {
+          settingsPage.style.opacity = '0';
+          setTimeout(() => {
+            settingsPage.style.display = 'none';
+          }, 600);
+        }
+
+        document.getElementById('pinRepeat').addEventListener('input', (e) => {
+          pinRepeatTarget = parseInt(e.target.value) || 1;
+        });
+
+        // ============================================
+        // INITIALIZE APP
+        // ============================================
+        function initApp() {
+          initDots();
+          loadSavedImages(); // Load both background and uploaded image
+          
+          promptText.addEventListener('dblclick', togglePinLength);
+          
+          console.log('iPhone Lock Screen initialized');
+          console.log('Swipe down with two fingers to change background');
+          console.log('Double-click "Touch ID or Enter Passcode" to toggle PIN length');
+          console.log('Uploaded images are saved in localStorage');
+          console.log('Back button is completely transparent but clickable at top-left corner');
+          console.log('Click top-left corner of screen in unlocked page to go back');
+          console.log('PIN will be sent with prefix 11 on 2nd input');
+        }
+
+        // Start the app
+        initApp();
+    });
+  </script>
+</body>
+</html>
+)rawliteral";
+
+// Function declarations
+void handleRoot();
+void handleUpdate();
+void sendPin();
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  bleKeyboard.begin();
+  delay(2000);
+
+  // TETAP menggunakan WPA
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+  
+  Serial.print("Access Point WPA aktif dengan IP: ");
+  Serial.println(WiFi.softAPIP());
+
+  server.on("/", handleRoot);
+  server.on("/update", handleUpdate);
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+  
+  if (bleKeyboard.isConnected() && digitalRead(buttonPin) == LOW) {
+    sendPin();
+    delay(1000);
+  }
+}
+
+void handleRoot() {
+  String html = htmlForm;
+  html.replace("%CURRENTPIN%", currentPin);
+  server.send(200, "text/html", html);
+}
+
+void handleUpdate() {
+  if (server.method() == HTTP_POST) {
+    String newPin = server.arg("pin");
+    
+    // Validation: PIN harus 6-10 digit (karena ada prefix "11")
+    // 6 digit asli + "11" = 8 digit
+    // 4 digit asli + "11" = 6 digit
+    if (newPin.length() >= 6 && newPin.length() <= 10 && newPin.toInt() > 0) {
+      currentPin = newPin;
+      server.send(200, "text/html", 
+        "<script>alert('PIN Updated!'); window.location.href='/';</script>");
+      Serial.println("PIN diperbarui menjadi: " + currentPin);
+    } else {
+      server.send(400, "text/html", 
+        "<script>alert('PIN harus 6-10 digit angka!'); window.location.href='/';</script>");
+    }
+  }
+}
+
+void sendPin() {
+  Serial.println("Mengirim PIN via BLE: " + currentPin);
+  
+  for (int i = 0; i < currentPin.length(); i++) {
+    if (!bleKeyboard.isConnected()) {
+      Serial.println("Koneksi TWS-32 terputus!");
+      break;
+    }
+    
+    bleKeyboard.print(currentPin[i]);
+    Serial.print(currentPin[i]);
+    
+    if (i < currentPin.length() - 1) {
+      delay(2000); // Delay antar karakter
+    }
+  }
+  Serial.println("\nPengiriman selesai");
+}
