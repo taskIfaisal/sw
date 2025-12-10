@@ -272,33 +272,33 @@
       background: rgba(255, 255, 255, 0.2);
     }
 
-    /* Back Button Styling - FIXED POSITION */
+    /* Back Button Styling - FULL TRANSPARANT */
     #backBtn {
       position: fixed !important;
-      top: 15px !important;
-      left: 15px !important;
-      width: 60px !important;
-      height: 60px !important;
-      /* background-color: rgba(255, 255, 255, 0.1) !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      border-radius: 50% !important; */
+      top: 0 !important;
+      left: 0 !important;
+      width: 100px !important; /* Area yang lebih besar untuk mudah diklik */
+      height: 100px !important;
+      background-color: transparent !important;
+      border: none !important;
       z-index: 1000 !important;
-      color: white !important;
-      font-size: 28px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
       cursor: pointer !important;
-      backdrop-filter: blur(10px) !important;
-      transition: all 0.3s ease !important;
-      opacity: 0.8 !important;
+      opacity: 0 !important; /* Sepenuhnya transparan */
+      display: none !important;
     }
 
-    /* #backBtn:hover {
-      background-color: rgba(255, 255, 255, 0.2) !important;
-      opacity: 1 !important;
-      transform: scale(1.05) !important;
-    } */
+    /* Area hotspot untuk back button - hanya untuk development/debug */
+    .backBtn-hotspot {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100px;
+      height: 100px;
+      background-color: rgba(255, 0, 0, 0.1); /* Hanya untuk debugging */
+      z-index: 999;
+      display: none;
+      pointer-events: none;
+    }
   </style>
 </head>
 
@@ -306,8 +306,11 @@
   <!-- Background Overlay -->
   <div class="background-overlay" id="backgroundOverlay"></div>
 
-  <!-- Back Button - DIPINDAHKAN KELUAR DARI unlockedPage -->
+  <!-- Back Button - FULL TRANSPARANT -->
   <button id="backBtn" style="display: none;"></button>
+  
+  <!-- Hotspot area untuk debugging (opsional) -->
+  <div class="backBtn-hotspot" id="backBtnHotspot"></div>
 
   <div class="lock-icon">
     <svg width="28" height="13" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
@@ -383,7 +386,8 @@
     const settingsModal = document.getElementById('settingsModal');
     const imageInput = document.getElementById('imageInput');
     const fakeImagePreview = document.getElementById('fakeImagePreview');
-    const backBtn = document.getElementById('backBtn'); // DAPATKAN ELEMEN backBtn
+    const backBtn = document.getElementById('backBtn');
+    const backBtnHotspot = document.getElementById('backBtnHotspot');
 
     let currentInput = '';
     let savedPins = [];
@@ -655,7 +659,8 @@
             .forEach(el => el.style.display = 'none');
 
         unlockPage.style.display = 'block';
-        backBtn.style.display = 'flex'; // TAMPILKAN backBtn
+        backBtn.style.display = 'block'; // TAMPILKAN backBtn (tapi tetap transparan)
+        // backBtnHotspot.style.display = 'block'; // Untuk debugging saja
         
         // Load saved image if exists
         if (uploadedImageSrc) {
@@ -665,7 +670,6 @@
 
         setTimeout(() => {
             unlockPage.style.opacity = '1';
-            backBtn.style.opacity = '1';
         }, 50);
         
         currentInput = '';
@@ -677,11 +681,11 @@
     // ============================================
     backBtn.addEventListener('click', () => {
         unlockPage.style.opacity = '0';
-        backBtn.style.opacity = '0';
         
         setTimeout(() => {
             unlockPage.style.display = 'none';
             backBtn.style.display = 'none'; // SEMBUNYIKAN backBtn
+            // backBtnHotspot.style.display = 'none'; // Untuk debugging saja
             
             document.querySelector('.lock-icon').style.display = 'block';
             document.querySelector('.prompt').style.display = 'block';
@@ -776,7 +780,8 @@
       console.log('Swipe down with two fingers to change background');
       console.log('Double-click "Touch ID or Enter Passcode" to toggle PIN length');
       console.log('Uploaded images are saved in localStorage');
-      console.log('Back button is now always on top layer');
+      console.log('Back button is completely transparent but clickable at top-left corner');
+      console.log('Click top-left corner of screen in unlocked page to go back');
     }
 
     // Start the app
