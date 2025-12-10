@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>iPhone Lock Screen Keypad</title>
+
+  <!-- Apple PWA Settings -->
+  <link rel="apple-touch-icon" href="./icon/lock-192x192.png" />
+  <link rel="apple-touch-startup-image" href="./icon/lock-512x512.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="P-Lock" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon/lock-192x192.png" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden !important;
+      position: fixed;
+      touch-action: manipulation;
+      background-color: #0c0c0c;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .lock-icon {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      margin: 0px auto 0;
+      transform: translateX(-50%);
+      font-size: 32px;
+      filter: brightness(0) invert(1);
+    }
+
+    .prompt {
+      margin: 10px 0;
+      font-size: 18px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.9);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      padding: 8px 16px;
+      border-radius: 8px;
+    }
+
+    /* .prompt:hover {
+      background: rgba(255, 255, 255, 0.1);
+    } */
+
+    .prompt.active {
+      color: #007AFF;
+      transform: scale(1.05);
+    }
+
+    .pin-length-indicator {
+      margin: 5px 0 15px 0;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .pin-length-indicator.show {
+      opacity: 1;
+    }
+
+    .dots {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0;
+      gap: 16px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      background: transparent;
+      transition: all 0.3s ease;
+    }
+
+    .dot.filled {
+      background: white;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    }
+
+    .dots.shake {
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 80px);
+      gap: 16px 26px;
+      margin-top: 45px;
+    }
+
+    .key {
+      width: 75px;
+      height: 75px;
+      border-radius: 50%;
+      background-color: rgba(48, 48, 48, 0.8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 300;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .key.pressed {
+      background-color: rgba(255, 255, 255, 0.9) !important;
+      color: black !important;
+      transform: scale(1.1);
+      box-shadow: 0 0 20px rgba(0, 122, 255, 0.4);
+    }
+
+    .key small {
+      font-size: 10px;
+      font-weight: normal;
+      margin-top: -3px;
+      letter-spacing: 2px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .bottom-buttons {
+      display: flex;
+      justify-content: space-between;
+      width: 250px;
+      margin-top: 55px;
+      font-size: 16px;
+    }
+
+    .bottom-btn {
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .bottom-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .empty {
+      width: 80px;
+      height: 80px;
+      visibility: hidden;
+    }
+
+    #unlockedPage, #settingsPage {
+      display: none;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      color: white;
+      z-index: 10;
+      padding-top: 100px;
+    }
+
+    #displayPin {
+      position: fixed;
+      top: 40px;
+      width: 100%;
+      text-align: center;
+      font-size: 32px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 5px black;
+      z-index: 2;
+      display: none;
+      white-space: pre-line;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    #uploadedImage {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      display: none;
+      max-width: 100vw;
+      max-height: 100vh;
+    }
+
+    #previewContainer {
+      width: 150px;
+      height: 250px;
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 20px auto;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #fakeImagePreview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    #revealed-pin {
+      transition: opacity 0.3s ease;
+    }
+
+    .mode-badge {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(0, 122, 255, 0.2);
+      color: #007AFF;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      display: none;
+    }
+
+    /* Animation for mode change */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .pulse-animation {
+      animation: pulse 0.5s ease;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="lock-icon">
+    <svg width="28" height="13" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-7h-1V7a5 5 0 0 0-10 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zM9 7a3 3 0 0 1 6 0v3H9V7z" />
+    </svg>
+  </div>
+
+  <!-- <div class="mode-badge" id="modeBadge">6-Digit</div> -->
+
+  <div class="prompt" id="promptText">Touch ID or Enter Passcode</div>
+  <!-- <div class="pin-length-indicator" id="pinLengthIndicator">6-digit PIN</div> -->
+
+  <div class="dots" id="dots">
+    <!-- Dots will be dynamically generated -->
+  </div>
+
+  <div class="keypad" id="keypad">
+    <div class="key">1<small></small></div>
+    <div class="key">2<small>ABC</small></div>
+    <div class="key">3<small>DEF</small></div>
+    <div class="key">4<small>GHI</small></div>
+    <div class="key">5<small>JKL</small></div>
+    <div class="key">6<small>MNO</small></div>
+    <div class="key">7<small>PQRS</small></div>
+    <div class="key">8<small>TUV</small></div>
+    <div class="key">9<small>WXYZ</small></div>
+    <div class="empty"></div>
+    <div class="key">0<small></small></div>
+    <div class="empty"></div>
+  </div>
+
+  <div class="bottom-buttons">
+    <div class="bottom-btn" id="emergencyBtn">Emergency</div>
+    <div class="bottom-btn" id="cancelDeleteBtn">Cancel</div>
+  </div>
+
+  <div id="unlockedPage">
+    <button id="backBtn" style="
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 60px;
+      height: 40px;
+      background-color: transparent;
+      border: none;
+      z-index: 1000;
+      color: transparent;">←</button>
+
+    <div id="displayPin"></div>
+    <img id="uploadedImage" src="" alt="Uploaded">
+  </div>
+
+  <div id="settingsPage">
+    <h2>Settings</h2>
+    <input type="number" id="pinRepeat" placeholder="Repeat Count" /><br><br>
+    <input type="file" id="imageInput" accept="image/*" />
+    <div id="previewContainer">
+      <img id="fakeImagePreview" src="" alt="Preview">
+    </div>
+    <button onclick="closeSettings()">Close</button>
+  </div>
+
+  <script>
+    // ============================================
+    // GLOBAL VARIABLES
+    // ============================================
+    const keys = document.querySelectorAll('.key');
+    const dotsContainer = document.getElementById('dots');
+    const promptText = document.getElementById('promptText');
+    const pinLengthIndicator = document.getElementById('pinLengthIndicator');
+    const modeBadge = document.getElementById('modeBadge');
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    const unlockPage = document.getElementById('unlockedPage');
+    const display = document.getElementById('displayPin');
+    const emergencyBtn = document.getElementById('emergencyBtn');
+    const settingsPage = document.getElementById('settingsPage');
+    const uploadedImage = document.getElementById('uploadedImage');
+
+    let currentInput = '';
+    let savedPins = [];
+    let pinVisible = false;
+    let pinRepeatTarget = 1;
+    let emergencyClickCount = 0;
+    let uploadedImageSrc = '';
+    let pressTimer;
+    let promptClickCount = 0;
+    let promptClickTimer = null;
+    
+    // PIN length settings
+    let pinLength = 6; // Default 6-digit
+    let dots = [];
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+    function initDots() {
+      dotsContainer.innerHTML = '';
+      dots = [];
+      
+      for (let i = 0; i < pinLength; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        dotsContainer.appendChild(dot);
+        dots.push(dot);
+      }
+      
+      // Update indicator
+      updatePinLengthIndicator();
+      updateModeBadge();
+    }
+
+    function updatePinLengthIndicator() {
+      pinLengthIndicator.textContent = `${pinLength}-digit PIN`;
+      pinLengthIndicator.classList.add('show');
+      
+      // Auto hide after 2 seconds
+      setTimeout(() => {
+        pinLengthIndicator.classList.remove('show');
+      }, 2000);
+    }
+
+    function updateModeBadge() {
+      modeBadge.textContent = `${pinLength}-Digit`;
+      modeBadge.style.display = 'block';
+      modeBadge.classList.add('pulse-animation');
+      
+      // Remove animation class after animation completes
+      setTimeout(() => {
+        modeBadge.classList.remove('pulse-animation');
+      }, 500);
+    }
+
+    // ============================================
+    // TOGGLE PIN LENGTH FUNCTION
+    // ============================================
+    function togglePinLength() {
+      // Toggle between 4 and 6 digits
+      pinLength = pinLength === 6 ? 4 : 6;
+      
+      // Reset current input
+      currentInput = '';
+      
+      // Reinitialize dots
+      initDots();
+      
+      // Visual feedback
+      promptText.classList.add('active');
+      setTimeout(() => {
+        promptText.classList.remove('active');
+      }, 300);
+      
+      // Haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+      
+      console.log(`PIN length changed to ${pinLength} digits`);
+    }
+
+    // ============================================
+    // DOUBLE CLICK DETECTION ON PROMPT
+    // ============================================
+    promptText.addEventListener('click', () => {
+      promptClickCount++;
+      
+      if (promptClickCount === 1) {
+        // Start timer for double click
+        promptClickTimer = setTimeout(() => {
+          promptClickCount = 0; // Reset if single click
+        }, 300);
+      } else if (promptClickCount === 2) {
+        // Double click detected
+        clearTimeout(promptClickTimer);
+        promptClickCount = 0;
+        
+        togglePinLength();
+      }
+    });
+
+    // ============================================
+    // KEYPAD FUNCTIONALITY
+    // ============================================
+    keys.forEach(key => {
+      key.addEventListener('click', () => {
+        if (currentInput.length < pinLength) {
+          currentInput += key.textContent.trim().charAt(0);
+          updateDots();
+          
+          // Check if PIN is complete
+          if (currentInput.length === pinLength) {
+            shakeDots();
+          }
+        }
+
+        // Press effect
+        key.classList.add('pressed');
+        setTimeout(() => key.classList.remove('pressed'), 150);
+        
+        // Haptic feedback
+        if (navigator.vibrate) {
+          navigator.vibrate(10);
+        }
+      });
+    });
+
+    // ============================================
+    // CANCEL/DELETE BUTTON
+    // ============================================
+    cancelDeleteBtn.addEventListener('click', () => {
+      if (currentInput.length > 0) {
+        currentInput = currentInput.slice(0, -1);
+        updateDots();
+        
+        // Haptic feedback
+        if (navigator.vibrate) {
+          navigator.vibrate([10, 20, 10]);
+        }
+      }
+    });
+
+    // ============================================
+    // EMERGENCY BUTTON (double click for settings)
+    // ============================================
+    emergencyBtn.addEventListener('click', () => {
+      emergencyClickCount++;
+      
+      if (emergencyClickCount === 1) {
+        setTimeout(() => {
+          emergencyClickCount = 0;
+        }, 1000);
+      } else if (emergencyClickCount === 2) {
+        emergencyClickCount = 0;
+        openSettings();
+      }
+    });
+
+    // ============================================
+    // UPDATE DOT INDICATORS
+    // ============================================
+    function updateDots() {
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('filled', index < currentInput.length);
+      });
+      
+      // Update button text
+      cancelDeleteBtn.textContent = currentInput.length > 0 ? 'Delete' : 'Cancel';
+    }
+
+    // ============================================
+    // SHAKE ANIMATION WHEN PIN COMPLETE
+    // ============================================
+    function shakeDots() {
+      if (savedPins.length + 1 < pinRepeatTarget) {
+        dotsContainer.classList.add('shake');
+        
+        // Haptic feedback
+        if (navigator.vibrate) {
+          navigator.vibrate([10, 30, 10]);
+        }
+
+        setTimeout(() => {
+          dotsContainer.classList.remove('shake');
+          savedPins.push(currentInput);
+          currentInput = '';
+          updateDots();
+        }, 500);
+      } else {
+        savedPins.push(currentInput);
+        showUnlockedPage();
+      }
+    }
+
+    // ============================================
+    // SHOW UNLOCKED PAGE
+    // ============================================
+    function showUnlockedPage() {
+      // Hide lock screen elements
+      document.querySelectorAll('.lock-icon, .prompt, .pin-length-indicator, .dots, .keypad, .bottom-buttons, .mode-badge')
+        .forEach(el => el.style.display = 'none');
+
+      // Show unlocked page
+      unlockPage.style.display = 'block';
+      
+      // Show uploaded image if available
+      if (uploadedImageSrc) {
+        uploadedImage.src = uploadedImageSrc;
+        uploadedImage.style.display = 'block';
+      }
+
+      // Fade in
+      setTimeout(() => {
+        unlockPage.style.opacity = '1';
+      }, 50);
+      
+      // Reset for next time
+      currentInput = '';
+      savedPins = [];
+      updateDots();
+    }
+
+    // ============================================
+    // PRESS AND HOLD TO REVEAL PIN
+    // ============================================
+    unlockPage.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      pressTimer = setTimeout(() => {
+        display.textContent = savedPins.join('\n');
+        display.style.display = "block";
+        pinVisible = true;
+      }, 500);
+    });
+
+    unlockPage.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      clearTimeout(pressTimer);
+      if (pinVisible) {
+        display.style.display = "none";
+        pinVisible = false;
+      }
+    });
+
+    unlockPage.addEventListener("touchcancel", (e) => {
+      e.preventDefault();
+      clearTimeout(pressTimer);
+      if (pinVisible) {
+        display.style.display = "none";
+        pinVisible = false;
+      }
+    });
+
+    // ============================================
+    // SETTINGS FUNCTIONS
+    // ============================================
+    function openSettings() {
+      settingsPage.style.display = 'block';
+      setTimeout(() => {
+        settingsPage.style.opacity = '1';
+      }, 50);
+    }
+
+    function closeSettings() {
+      settingsPage.style.opacity = '0';
+      setTimeout(() => {
+        settingsPage.style.display = 'none';
+      }, 600);
+    }
+
+    // Settings - PIN repeat count
+    document.getElementById('pinRepeat').addEventListener('input', (e) => {
+      pinRepeatTarget = parseInt(e.target.value) || 1;
+    });
+
+    // Settings - Image upload
+    document.getElementById('imageInput').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      const preview = document.getElementById('fakeImagePreview');
+      if (file) {
+        const imageURL = URL.createObjectURL(file);
+        preview.src = imageURL;
+        preview.style.display = 'block';
+        uploadedImageSrc = imageURL;
+      } else {
+        preview.style.display = 'none';
+      }
+    });
+
+    // ============================================
+    // BACK BUTTON TO RETURN TO LOCK SCREEN
+    // ============================================
+    document.getElementById('backBtn').addEventListener('click', () => {
+      unlockPage.style.opacity = '0';
+      setTimeout(() => {
+        unlockPage.style.display = 'none';
+        
+        // Show all lock screen elements
+        document.querySelector('.lock-icon').style.display = 'block';
+        document.querySelector('.prompt').style.display = 'block';
+        document.querySelector('.dots').style.display = 'flex';
+        document.querySelector('.keypad').style.display = 'grid';
+        document.querySelector('.bottom-buttons').style.display = 'flex';
+        modeBadge.style.display = 'block';
+
+        // Reset
+        currentInput = '';
+        savedPins = [];
+        updateDots();
+        display.style.display = 'none';
+        pinVisible = false;
+      }, 300);
+    });
+
+    // ============================================
+    // INITIALIZE APP
+    // ============================================
+    function initApp() {
+      // Create initial dots
+      initDots();
+      
+      // Add event listener for mouse clicks (for desktop testing)
+      promptText.addEventListener('dblclick', togglePinLength);
+      
+      // Prevent context menu on long press
+      document.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+      });
+      
+      console.log('iPhone Lock Screen initialized');
+      console.log('Double-click "Touch ID or Enter Passcode" to toggle between 4/6 digit PIN');
+    }
+
+    // Start the app
+    initApp();
+  </script>
+</body>
+</html>
