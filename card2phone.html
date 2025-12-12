@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magic Card - Natural Physics</title>
+    <title>Magic Ball - Real Physics</title>
     <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
     <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Magic Card">
+    <meta name="apple-mobile-web-app-title" content="Magic Ball">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
     <style>
         html, body {
@@ -17,7 +17,7 @@
             width: 100vw;
             height: 100vh;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a2980 0%, #26d0ce 100%);
             overflow: hidden;
             position: fixed;
             top: 0;
@@ -39,19 +39,20 @@
             width: 100%;
             height: 100%;
             z-index: 1;
-            opacity: 0.9;
+            background-size: cover;
+            background-position: center;
         }
         
-        #card {
+        #ball {
             position: absolute;
-            width: 180px;
-            height: 250px;
-            border-radius: 12px;
-            background: white;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0);
             box-shadow: 
-                0 20px 40px rgba(0,0,0,0.3),
-                0 0 0 1px rgba(255,255,255,0.1),
-                0 0 30px rgba(255,255,255,0.1);
+                inset -10px -10px 20px rgba(0,0,0,0.2),
+                inset 10px 10px 20px rgba(255,255,255,0.5),
+                0 20px 40px rgba(0,0,0,0.3);
             z-index: 2;
             transform-origin: center center;
             overflow: hidden;
@@ -59,76 +60,74 @@
             -webkit-backface-visibility: hidden;
         }
 
-        #card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
+        .ball-inner {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, #ffffff, #e8e8e8);
+            box-shadow: 
+                inset 5px 5px 10px rgba(255,255,255,0.8),
+                inset -5px -5px 10px rgba(0,0,0,0.1);
         }
 
-        #card::after {
-            content: '';
+        .ball-reflection {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(
-                135deg,
-                rgba(255,255,255,0.3) 0%,
-                rgba(255,255,255,0.1) 50%,
-                transparent 100%
-            );
-            border-radius: 12px;
-            pointer-events: none;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), transparent 70%);
+            z-index: 3;
         }
 
-        .card-shadow {
+        .ball-shadow {
             position: absolute;
-            width: 150px;
-            height: 20px;
+            width: 120px;
+            height: 30px;
             background: radial-gradient(ellipse at center, 
-                rgba(0,0,0,0.4) 0%,
+                rgba(0,0,0,0.3) 0%,
                 rgba(0,0,0,0) 80%);
             border-radius: 50%;
             z-index: 1;
-            transition: all 0.2s ease;
+            transition: all 0.15s ease;
         }
 
-        /* Simple touch hint */
-        .touch-hint {
+        /* Ground effect */
+        .ground {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: rgba(255,255,255,0.8);
-            font-size: 18px;
-            text-align: center;
-            z-index: 3;
-            animation: fadeOut 3s forwards;
-            pointer-events: none;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to top, rgba(0,0,0,0.1), transparent);
+            z-index: 0;
         }
 
-        @keyframes fadeOut {
-            0% { opacity: 1; }
-            70% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-
-        /* Simple settings */
-        #settings-btn {
+        /* Simple UI */
+        .ui-container {
             position: fixed;
             top: 20px;
             right: 20px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .ui-btn {
             width: 50px;
             height: 50px;
             border-radius: 50%;
             background: rgba(255,255,255,0.2);
             border: 2px solid rgba(255,255,255,0.3);
             color: white;
-            font-size: 24px;
+            font-size: 20px;
             cursor: pointer;
-            z-index: 10;
             backdrop-filter: blur(10px);
             transition: all 0.3s ease;
             display: flex;
@@ -136,226 +135,395 @@
             justify-content: center;
         }
 
-        #settings-btn:hover {
+        .ui-btn:hover {
             background: rgba(255,255,255,0.3);
             transform: scale(1.1);
         }
 
-        .settings-panel {
-            position: fixed;
-            top: 80px;
-            right: 20px;
+        .ui-panel {
             background: rgba(255,255,255,0.95);
             border-radius: 12px;
             padding: 15px;
-            z-index: 10;
             backdrop-filter: blur(20px);
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             transform: scale(0.9);
             opacity: 0;
             transition: all 0.3s ease;
             pointer-events: none;
+            margin-top: 10px;
         }
 
-        .settings-panel.show {
+        .ui-panel.show {
             transform: scale(1);
             opacity: 1;
             pointer-events: all;
         }
 
-        .settings-panel button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 5px 0;
-            width: 100%;
-            font-size: 16px;
-        }
-
-        .settings-panel label {
+        .ui-panel button, .ui-panel label {
             display: block;
-            padding: 10px;
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 8px;
+            width: 100%;
+            padding: 12px;
             margin: 5px 0;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, #1a2980 0%, #26d0ce 100%);
+            color: white;
             cursor: pointer;
             text-align: center;
-            color: #667eea;
+            font-size: 16px;
         }
 
         input[type="file"] {
             display: none;
         }
+
+        /* Speed indicator */
+        .speed-indicator {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Trail effect */
+        .trail-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Physics lines (for visual feedback) */
+        .physics-line {
+            position: absolute;
+            height: 2px;
+            background: rgba(255,255,255,0.2);
+            transform-origin: 0 0;
+            z-index: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
     <div id="background"></div>
-    <div id="card">
-        <img src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
+    <div class="ground"></div>
+    
+    <div id="ball">
+        <div class="ball-inner"></div>
+        <div class="ball-reflection"></div>
     </div>
-    <div class="card-shadow"></div>
+    <div class="ball-shadow"></div>
     
-    <div class="touch-hint">
-        ⚡ Miringkan HP untuk menggerakkan kartu<br>
-        👆 Sentuh untuk mendorong
+    <!-- Trail container -->
+    <div id="trail-container"></div>
+    
+    <!-- Physics visualization -->
+    <div id="physics-lines"></div>
+    
+    <!-- UI -->
+    <div class="ui-container">
+        <button class="ui-btn" id="menu-btn">⚙️</button>
+        <div class="ui-panel" id="menu-panel">
+            <label>
+                🎨 Custom Ball
+                <input type="file" id="ball-upload" accept="image/*">
+            </label>
+            <label>
+                🌄 Background
+                <input type="file" id="bg-upload" accept="image/*">
+            </label>
+            <button id="reset-btn">📍 Reset Ball</button>
+            <button id="trail-toggle">✨ Trail: ON</button>
+            <button id="close-menu">✕ Close</button>
+        </div>
     </div>
     
-    <button id="settings-btn">⚙️</button>
-    
-    <div class="settings-panel">
-        <h3 style="margin: 0 0 15px 0; color: #333;">Magic Card</h3>
-        <label>
-            📁 Pilih Kartu
-            <input type="file" id="card-upload" accept="image/*">
-        </label>
-        <label>
-            🎨 Pilih Background
-            <input type="file" id="bg-upload" accept="image/*">
-        </label>
-        <button id="default-card">🔄 Kartu Default</button>
-        <button id="reset-position">📍 Tengahkan</button>
-        <button id="close-settings">✕ Tutup</button>
+    <div class="speed-indicator">
+        Speed: <span id="speed-text">0</span> | 
+        Tilt: <span id="tilt-text">0°</span>
     </div>
 
     <script>
         // ============================
-        // SIMPLE PHYSICS ENGINE
+        // ADVANCED BALL PHYSICS ENGINE
         // ============================
-        class SimplePhysics {
+        class BallPhysics {
             constructor() {
                 // Position and velocity
-                this.x = window.innerWidth / 2 - 90;
-                this.y = window.innerHeight / 2 - 125;
+                this.x = window.innerWidth / 2 - 70;
+                this.y = window.innerHeight / 2 - 70;
                 this.vx = 0;
                 this.vy = 0;
                 
-                // Fixed physics properties (simple and natural)
-                this.gravity = 0.5;
-                this.friction = 0.96;
-                this.bounce = 0.7;
-                this.responsiveness = 0.8;
+                // Angular velocity (for rolling effect)
+                this.angularVelocity = 0;
+                this.rotation = 0;
                 
-                // Card size
-                this.width = 180;
-                this.height = 250;
+                // Advanced physics properties
+                this.gravity = 0.8;           // Gravity strength
+                this.friction = 0.985;        // Surface friction
+                this.airResistance = 0.995;   // Air friction
+                this.bounce = 0.82;           // Energy retention on bounce
+                this.rollResistance = 0.99;   // Rolling resistance
                 
-                // Gyro data
-                this.beta = 0;
-                this.gamma = 0;
-                this.gyroAvailable = false;
+                // Ball properties
+                this.radius = 70;
+                this.mass = 1;
                 
-                // Touch
-                this.isDragging = false;
-                this.lastTouchTime = 0;
+                // Gyro/accelerometer data
+                this.accelX = 0;
+                this.accelY = 0;
+                this.accelZ = 0;
+                this.beta = 0;    // Front-back tilt (-180 to 180)
+                this.gamma = 0;   // Left-right tilt (-90 to 90)
                 
-                // Initialize
+                // Smoothing filters
+                this.accelFilter = { x: 0, y: 0, z: 0 };
+                this.tiltFilter = { beta: 0, gamma: 0 };
+                this.filterStrength = 0.3;
+                
+                // Boundaries
                 this.updateBoundaries();
-                this.initGyro();
+                
+                // State
+                this.isDragging = false;
+                this.trailEnabled = true;
+                this.lastTrailTime = 0;
+                
+                // Initialize sensors
+                this.initSensors();
             }
             
             updateBoundaries() {
-                this.minX = 10;
-                this.minY = 10;
-                this.maxX = window.innerWidth - this.width - 10;
-                this.maxY = window.innerHeight - this.height - 10;
+                this.minX = this.radius;
+                this.minY = this.radius;
+                this.maxX = window.innerWidth - this.radius;
+                this.maxY = window.innerHeight - this.radius;
             }
             
-            initGyro() {
+            initSensors() {
+                // Device orientation (gyroscope)
                 if (window.DeviceOrientationEvent) {
                     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                        // iOS 13+ - request permission on first interaction
-                        setTimeout(() => {
-                            this.requestGyroPermission();
-                        }, 1000);
+                        // iOS - request on first touch
+                        this.requestPermission();
                     } else {
-                        this.gyroAvailable = true;
                         window.addEventListener('deviceorientation', (e) => {
-                            this.beta = (e.beta || 0) / 90;  // Normalize to -1 to 1
-                            this.gamma = (e.gamma || 0) / 45; // Normalize to -1 to 1
+                            this.beta = e.beta || 0;   // Front-back tilt
+                            this.gamma = e.gamma || 0; // Left-right tilt
+                            
+                            // Smooth the tilt data
+                            this.tiltFilter.beta = this.tiltFilter.beta * (1 - this.filterStrength) + 
+                                                  this.beta * this.filterStrength;
+                            this.tiltFilter.gamma = this.tiltFilter.gamma * (1 - this.filterStrength) + 
+                                                   this.gamma * this.filterStrength;
                         });
                     }
                 }
+                
+                // Device motion (accelerometer)
+                if (window.DeviceMotionEvent) {
+                    window.addEventListener('devicemotion', (e) => {
+                        const accel = e.accelerationIncludingGravity;
+                        if (accel) {
+                            this.accelX = accel.x || 0;
+                            this.accelY = accel.y || 0;
+                            this.accelZ = accel.z || 0;
+                            
+                            // Smooth the acceleration data
+                            this.accelFilter.x = this.accelFilter.x * (1 - this.filterStrength) + 
+                                                this.accelX * this.filterStrength;
+                            this.accelFilter.y = this.accelFilter.y * (1 - this.filterStrength) + 
+                                                this.accelY * this.filterStrength;
+                            this.accelFilter.z = this.accelFilter.z * (1 - this.filterStrength) + 
+                                                this.accelZ * this.filterStrength;
+                        }
+                    });
+                }
             }
             
-            async requestGyroPermission() {
+            async requestPermission() {
                 try {
                     const permission = await DeviceOrientationEvent.requestPermission();
                     if (permission === 'granted') {
-                        this.gyroAvailable = true;
                         window.addEventListener('deviceorientation', (e) => {
-                            this.beta = (e.beta || 0) / 90;
-                            this.gamma = (e.gamma || 0) / 45;
+                            this.beta = e.beta || 0;
+                            this.gamma = e.gamma || 0;
                         });
                     }
                 } catch (e) {
-                    console.log('Gyro not available');
+                    console.log('Motion permission denied');
                 }
             }
             
-            update() {
-                // Apply gyro movement if available
-                if (this.gyroAvailable && !this.isDragging) {
-                    this.vx += this.gamma * this.responsiveness * 0.1;
-                    this.vy += this.beta * this.responsiveness * 0.1;
-                }
+            update(deltaTime) {
+                // Convert deltaTime to factor (60fps = 1.0)
+                const deltaFactor = deltaTime / 16.67;
                 
-                // Always apply gravity
-                this.vy += this.gravity * 0.05;
+                // Calculate forces from device motion
+                this.calculateForces(deltaFactor);
                 
-                // Apply friction
-                this.vx *= this.friction;
-                this.vy *= this.friction;
+                // Update velocity with forces
+                this.vx += this.accelX * 0.02 * deltaFactor;
+                this.vy += this.accelY * 0.02 * deltaFactor;
+                
+                // Add gravity (always pulling down)
+                this.vy += this.gravity * 0.05 * deltaFactor;
+                
+                // Apply air resistance
+                this.vx *= this.airResistance;
+                this.vy *= this.airResistance;
+                
+                // Calculate rolling effect
+                this.calculateRolling(deltaFactor);
                 
                 // Update position
-                this.x += this.vx;
-                this.y += this.vy;
+                this.x += this.vx * deltaFactor;
+                this.y += this.vy * deltaFactor;
                 
-                // Handle screen boundaries with bounce
-                this.handleCollisions();
+                // Handle collisions with realistic physics
+                this.handleCollisions(deltaFactor);
                 
-                // Keep within screen
+                // Apply boundary constraints
+                this.applyBoundaries();
+                
+                // Return state for rendering
+                return this.getState();
+            }
+            
+            calculateForces(deltaFactor) {
+                // Convert tilt to acceleration (like a ball on inclined plane)
+                const tiltX = this.tiltFilter.gamma / 90;  // -1 to 1
+                const tiltY = this.tiltFilter.beta / 180;  // -1 to 1
+                
+                // Calculate acceleration from tilt (physics: a = g * sin(theta))
+                const tiltAccelX = this.gravity * Math.sin(tiltX * Math.PI/2) * 0.3;
+                const tiltAccelY = this.gravity * Math.sin(tiltY * Math.PI/2) * 0.3;
+                
+                // Add device shake/acceleration
+                const shakeAccelX = this.accelFilter.x * 0.01;
+                const shakeAccelY = this.accelFilter.y * 0.01;
+                
+                // Combine all forces
+                this.accelX = tiltAccelX + shakeAccelX;
+                this.accelY = tiltAccelY + shakeAccelY;
+            }
+            
+            calculateRolling(deltaFactor) {
+                // Calculate angular velocity from linear velocity (v = ω * r)
+                const circumference = 2 * Math.PI * this.radius;
+                const linearSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                
+                if (linearSpeed > 0.1) {
+                    // Direction of motion affects rotation direction
+                    const direction = Math.atan2(this.vy, this.vx);
+                    this.angularVelocity = linearSpeed / this.radius;
+                    
+                    // Update rotation based on angular velocity and direction
+                    this.rotation += this.angularVelocity * deltaFactor * 180 / Math.PI;
+                    
+                    // Apply rolling resistance
+                    this.angularVelocity *= this.rollResistance;
+                } else {
+                    // Slow down rotation when ball stops
+                    this.angularVelocity *= 0.95;
+                    this.rotation += this.angularVelocity * deltaFactor;
+                }
+                
+                // Keep rotation within 0-360 degrees
+                this.rotation %= 360;
+            }
+            
+            handleCollisions(deltaFactor) {
+                let collision = false;
+                
+                // Check each boundary with proper collision response
+                if (this.x < this.minX) {
+                    collision = true;
+                    const overlap = this.minX - this.x;
+                    this.x = this.minX + overlap * this.bounce;
+                    
+                    // Reverse x velocity with energy loss
+                    this.vx = Math.abs(this.vx) * this.bounce;
+                    
+                    // Add some angular effect from collision
+                    this.angularVelocity -= this.vy * 0.01;
+                }
+                
+                if (this.x > this.maxX) {
+                    collision = true;
+                    const overlap = this.x - this.maxX;
+                    this.x = this.maxX - overlap * this.bounce;
+                    this.vx = -Math.abs(this.vx) * this.bounce;
+                    this.angularVelocity += this.vy * 0.01;
+                }
+                
+                if (this.y < this.minY) {
+                    collision = true;
+                    const overlap = this.minY - this.y;
+                    this.y = this.minY + overlap * this.bounce;
+                    this.vy = Math.abs(this.vy) * this.bounce;
+                    this.angularVelocity += this.vx * 0.01;
+                }
+                
+                if (this.y > this.maxY) {
+                    collision = true;
+                    const overlap = this.y - this.maxY;
+                    this.y = this.maxY - overlap * this.bounce;
+                    this.vy = -Math.abs(this.vy) * this.bounce;
+                    
+                    // Add floor friction when hitting bottom
+                    this.vx *= this.friction;
+                    this.angularVelocity *= this.friction;
+                }
+                
+                // If collision occurred, add some visual feedback
+                if (collision) {
+                    // Slight velocity reduction from impact
+                    this.vx *= 0.95;
+                    this.vy *= 0.95;
+                }
+            }
+            
+            applyBoundaries() {
                 this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
                 this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
-                
-                // Return position for rendering
-                return { x: this.x, y: this.y, vx: this.vx, vy: this.vy };
             }
             
-            handleCollisions() {
-                // Left wall
-                if (this.x < this.minX) {
-                    this.x = this.minX;
-                    this.vx = Math.abs(this.vx) * this.bounce;
-                }
+            getState() {
+                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                const tilt = Math.sqrt(this.tiltFilter.beta * this.tiltFilter.beta + 
+                                     this.tiltFilter.gamma * this.tiltFilter.gamma);
                 
-                // Right wall
-                if (this.x > this.maxX) {
-                    this.x = this.maxX;
-                    this.vx = -Math.abs(this.vx) * this.bounce;
-                }
-                
-                // Top wall
-                if (this.y < this.minY) {
-                    this.y = this.minY;
-                    this.vy = Math.abs(this.vy) * this.bounce;
-                }
-                
-                // Bottom wall
-                if (this.y > this.maxY) {
-                    this.y = this.maxY;
-                    this.vy = -Math.abs(this.vy) * this.bounce;
-                }
+                return {
+                    x: this.x,
+                    y: this.y,
+                    vx: this.vx,
+                    vy: this.vy,
+                    rotation: this.rotation,
+                    speed: speed,
+                    tilt: tilt,
+                    angularVelocity: this.angularVelocity
+                };
             }
             
+            // Touch interaction
             startDrag(x, y) {
                 this.isDragging = true;
                 this.dragOffsetX = x - this.x;
                 this.dragOffsetY = y - this.y;
                 this.vx = 0;
                 this.vy = 0;
+                this.angularVelocity = 0;
             }
             
             updateDrag(x, y) {
@@ -364,9 +532,18 @@
                 const newX = x - this.dragOffsetX;
                 const newY = y - this.dragOffsetY;
                 
-                // Calculate velocity based on movement
-                this.vx = (newX - this.x) * 0.5;
-                this.vy = (newY - this.y) * 0.5;
+                // Calculate velocity from drag movement
+                this.vx = (newX - this.x) * 0.8;
+                this.vy = (newY - this.y) * 0.8;
+                
+                // Calculate angular velocity from drag direction
+                const dx = newX - this.x;
+                const dy = newY - this.y;
+                const dragSpeed = Math.sqrt(dx * dx + dy * dy);
+                if (dragSpeed > 0) {
+                    const dragAngle = Math.atan2(dy, dx);
+                    this.angularVelocity = dragSpeed / this.radius * Math.cos(dragAngle);
+                }
                 
                 this.x = newX;
                 this.y = newY;
@@ -376,90 +553,112 @@
                 if (!this.isDragging) return;
                 this.isDragging = false;
                 
-                // Give it a little extra push when released
-                this.vx *= 1.5;
-                this.vy *= 1.5;
+                // Boost the throw
+                this.vx *= 1.8;
+                this.vy *= 1.8;
+                this.angularVelocity *= 1.5;
             }
             
-            tap(x, y) {
-                // Calculate direction from tap point to card center
-                const cardCenterX = this.x + this.width / 2;
-                const cardCenterY = this.y + this.height / 2;
-                const dx = cardCenterX - x;
-                const dy = cardCenterY - y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
+            // Add impulse (for tapping)
+            addImpulse(impulseX, impulseY) {
+                this.vx += impulseX;
+                this.vy += impulseY;
                 
-                // Apply impulse away from tap point
-                if (distance > 0) {
-                    const force = 3000 / (distance * distance);
-                    this.vx += (dx / distance) * force;
-                    this.vy += (dy / distance) * force;
-                }
+                // Add angular impulse based on direction
+                const impulseAngle = Math.atan2(impulseY, impulseX);
+                this.angularVelocity += Math.sqrt(impulseX * impulseX + impulseY * impulseY) / this.radius * 0.5;
             }
             
+            // Reset to center
             reset() {
-                this.x = window.innerWidth / 2 - this.width / 2;
-                this.y = window.innerHeight / 2 - this.height / 2;
+                this.x = window.innerWidth / 2 - this.radius;
+                this.y = window.innerHeight / 2 - this.radius;
                 this.vx = 0;
                 this.vy = 0;
+                this.angularVelocity = 0;
+                this.rotation = 0;
             }
         }
 
         // ============================
         // MAIN APPLICATION
         // ============================
-        const physics = new SimplePhysics();
-        const card = document.getElementById('card');
-        const shadow = document.querySelector('.card-shadow');
-        const settingsBtn = document.getElementById('settings-btn');
-        const settingsPanel = document.querySelector('.settings-panel');
-        const touchHint = document.querySelector('.touch-hint');
+        const physics = new BallPhysics();
+        const ball = document.getElementById('ball');
+        const shadow = document.querySelector('.ball-shadow');
+        const trailContainer = document.getElementById('trail-container');
+        const physicsLines = document.getElementById('physics-lines');
         
-        let lastFrameTime = 0;
-        let isAnimating = true;
+        const menuBtn = document.getElementById('menu-btn');
+        const menuPanel = document.getElementById('menu-panel');
+        const speedText = document.getElementById('speed-text');
+        const tiltText = document.getElementById('tilt-text');
+        const trailToggle = document.getElementById('trail-toggle');
+        
+        let lastTime = 0;
+        let trailDots = [];
+        let maxTrailDots = 20;
 
         // Initialize
         function init() {
             setupEventListeners();
             startAnimation();
+            createPhysicsLines();
+        }
+
+        // Create physics visualization lines
+        function createPhysicsLines() {
+            // Create lines for visual reference
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
             
-            // Auto-hide hint after 5 seconds
-            setTimeout(() => {
-                touchHint.style.display = 'none';
-            }, 5000);
+            // Center cross
+            createLine(centerX - 100, centerY, centerX + 100, centerY, 'center-x');
+            createLine(centerX, centerY - 100, centerX, centerY + 100, 'center-y');
+            
+            // Boundary lines
+            createLine(0, 0, window.innerWidth, 0, 'boundary-top');
+            createLine(0, window.innerHeight, window.innerWidth, window.innerHeight, 'boundary-bottom');
+            createLine(0, 0, 0, window.innerHeight, 'boundary-left');
+            createLine(window.innerWidth, 0, window.innerWidth, window.innerHeight, 'boundary-right');
+        }
+        
+        function createLine(x1, y1, x2, y2, className) {
+            const line = document.createElement('div');
+            line.className = `physics-line ${className}`;
+            
+            const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+            const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+            
+            line.style.width = `${length}px`;
+            line.style.left = `${x1}px`;
+            line.style.top = `${y1}px`;
+            line.style.transform = `rotate(${angle}deg)`;
+            
+            physicsLines.appendChild(line);
         }
 
         // Animation loop
         function startAnimation() {
-            function animate(timestamp) {
-                if (!isAnimating) return;
-                
-                // Calculate delta time for consistent physics
-                const deltaTime = lastFrameTime ? (timestamp - lastFrameTime) / 16.67 : 1;
-                lastFrameTime = timestamp;
+            function animate(currentTime) {
+                // Calculate delta time
+                const deltaTime = lastTime ? currentTime - lastTime : 16.67;
+                lastTime = currentTime;
                 
                 // Update physics
-                const state = physics.update();
+                const state = physics.update(deltaTime);
                 
-                // Calculate rotation based on velocity (like a rolling ball)
-                const rotation = state.vx * 0.5;
-                
-                // Calculate shadow properties
-                const speed = Math.sqrt(state.vx * state.vx + state.vy * state.vy);
-                const shadowSize = 0.8 + speed * 0.01;
-                const shadowOpacity = 0.5 - speed * 0.01;
-                
-                // Apply transformations
-                card.style.transform = `
-                    translate3d(${state.x}px, ${state.y}px, 0)
-                    rotate(${rotation}deg)
-                `;
+                // Update ball position and rotation
+                updateBall(state);
                 
                 // Update shadow
-                shadow.style.width = `${150 * shadowSize}px`;
-                shadow.style.opacity = Math.max(0.2, Math.min(0.6, shadowOpacity));
-                shadow.style.left = `${state.x + 15}px`;
-                shadow.style.top = `${state.y + 230}px`;
+                updateShadow(state);
+                
+                // Update trail
+                updateTrail(state);
+                
+                // Update UI
+                updateUI(state);
                 
                 // Continue animation
                 requestAnimationFrame(animate);
@@ -468,21 +667,123 @@
             requestAnimationFrame(animate);
         }
 
+        function updateBall(state) {
+            // Calculate 3D tilt effect based on device orientation
+            const tiltX = physics.tiltFilter.gamma * 0.5;
+            const tiltY = physics.tiltFilter.beta * 0.3;
+            
+            // Apply transformations with 3D effect
+            ball.style.transform = `
+                translate3d(${state.x - 70}px, ${state.y - 70}px, 0)
+                rotate(${state.rotation}deg)
+                rotateX(${tiltY}deg)
+                rotateY(${tiltX}deg)
+                scale(${1 + Math.abs(state.vx) * 0.0005})
+            `;
+            
+            // Add squash/stretch effect based on velocity
+            const stretchX = 1 + Math.abs(state.vx) * 0.002;
+            const stretchY = 1 - Math.abs(state.vx) * 0.001;
+            ball.style.transform += ` scaleX(${stretchX}) scaleY(${stretchY})`;
+        }
+
+        function updateShadow(state) {
+            // Shadow size and opacity based on height and speed
+            const speed = state.speed;
+            const heightFactor = (state.y - physics.minY) / (physics.maxY - physics.minY);
+            
+            const shadowSize = 0.7 + (1 - heightFactor) * 0.3;
+            const shadowOpacity = 0.4 - heightFactor * 0.2;
+            const shadowBlur = 5 + speed * 0.5;
+            
+            shadow.style.width = `${120 * shadowSize}px`;
+            shadow.style.height = `${30 * (0.3 + shadowSize * 0.7)}px`;
+            shadow.style.opacity = Math.max(0.1, Math.min(0.6, shadowOpacity));
+            shadow.style.filter = `blur(${shadowBlur}px)`;
+            shadow.style.left = `${state.x - 60}px`;
+            shadow.style.top = `${state.y + 40}px`;
+        }
+
+        function updateTrail(state) {
+            if (!physics.trailEnabled || state.speed < 0.5) return;
+            
+            const currentTime = performance.now();
+            if (currentTime - physics.lastTrailTime > 50) { // Add trail every 50ms
+                physics.lastTrailTime = currentTime;
+                
+                // Create trail dot
+                const dot = document.createElement('div');
+                dot.className = 'trail-dot';
+                dot.style.left = `${state.x - 4}px`;
+                dot.style.top = `${state.y - 4}px`;
+                dot.style.opacity = Math.min(0.6, state.speed * 0.1);
+                
+                trailContainer.appendChild(dot);
+                trailDots.push({ element: dot, createdAt: currentTime });
+                
+                // Limit number of trail dots
+                if (trailDots.length > maxTrailDots) {
+                    const oldDot = trailDots.shift();
+                    if (oldDot.element.parentNode) {
+                        oldDot.element.parentNode.removeChild(oldDot.element);
+                    }
+                }
+            }
+            
+            // Fade out old dots
+            trailDots.forEach((dot, index) => {
+                const age = currentTime - dot.createdAt;
+                if (age > 1000) { // Remove after 1 second
+                    if (dot.element.parentNode) {
+                        dot.element.parentNode.removeChild(dot.element);
+                        trailDots.splice(index, 1);
+                    }
+                } else {
+                    dot.element.style.opacity = 0.3 * (1 - age / 1000);
+                }
+            });
+        }
+
+        function updateUI(state) {
+            // Update speed display
+            speedText.textContent = Math.round(state.speed * 10) / 10;
+            
+            // Update tilt display
+            tiltText.textContent = Math.round(state.tilt);
+            
+            // Color code based on speed
+            if (state.speed > 15) {
+                speedText.style.color = '#ff4444';
+            } else if (state.speed > 8) {
+                speedText.style.color = '#ffaa00';
+            } else {
+                speedText.style.color = '#ffffff';
+            }
+        }
+
         // Event listeners
         function setupEventListeners() {
             // Window resize
             window.addEventListener('resize', () => {
                 physics.updateBoundaries();
+                physicsLines.innerHTML = '';
+                createPhysicsLines();
             });
 
-            // Touch events for card
-            card.addEventListener('touchstart', (e) => {
+            // Ball interaction
+            ball.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 const touch = e.touches[0];
                 physics.startDrag(touch.clientX, touch.clientY);
+                
+                // Visual feedback
+                ball.style.boxShadow = 
+                    'inset -5px -5px 15px rgba(0,0,0,0.3), ' +
+                    'inset 5px 5px 15px rgba(255,255,255,0.6), ' +
+                    '0 25px 50px rgba(0,0,0,0.4)';
             });
 
-            card.addEventListener('touchmove', (e) => {
+            ball.addEventListener('touchmove', (e) => {
                 e.preventDefault();
                 if (physics.isDragging) {
                     const touch = e.touches[0];
@@ -492,63 +793,91 @@
 
             document.addEventListener('touchend', () => {
                 physics.endDrag();
+                // Reset shadow
+                ball.style.boxShadow = 
+                    'inset -10px -10px 20px rgba(0,0,0,0.2), ' +
+                    'inset 10px 10px 20px rgba(255,255,255,0.5), ' +
+                    '0 20px 40px rgba(0,0,0,0.3)';
             });
 
-            // Double tap to push card
+            // Double tap to push
             let lastTap = 0;
-            card.addEventListener('touchend', (e) => {
+            ball.addEventListener('touchend', (e) => {
                 if (physics.isDragging) return;
                 
-                const currentTime = new Date().getTime();
+                const currentTime = Date.now();
                 const tapLength = currentTime - lastTap;
                 
-                if (tapLength < 300 && tapLength > 0) {
-                    // Double tap detected
+                if (tapLength < 300) {
+                    // Double tap - push away from tap point
                     const touch = e.changedTouches[0];
-                    physics.tap(touch.clientX, touch.clientY);
+                    const dx = physics.x - touch.clientX;
+                    const dy = physics.y - touch.clientY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance > 0) {
+                        const force = 20 / distance;
+                        physics.addImpulse(dx * force, dy * force);
+                    }
                 }
                 
                 lastTap = currentTime;
             });
 
-            // Click/tap anywhere to give a little push
+            // Tap anywhere to push toward tap point
             document.addEventListener('touchend', (e) => {
-                if (e.target === card || e.target === settingsBtn) return;
+                if (e.target === ball || e.target === menuBtn) return;
                 
                 const touch = e.changedTouches[0];
-                physics.tap(touch.clientX, touch.clientY);
+                const dx = touch.clientX - physics.x;
+                const dy = touch.clientY - physics.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 0) {
+                    const force = 15 / distance;
+                    physics.addImpulse(dx * force, dy * force);
+                }
             });
 
-            // Settings button
-            settingsBtn.addEventListener('click', () => {
-                settingsPanel.classList.toggle('show');
+            // UI controls
+            menuBtn.addEventListener('click', () => {
+                menuPanel.classList.toggle('show');
             });
 
-            // Close settings
-            document.getElementById('close-settings').addEventListener('click', () => {
-                settingsPanel.classList.remove('show');
+            document.getElementById('close-menu').addEventListener('click', () => {
+                menuPanel.classList.remove('show');
             });
 
-            // Reset position
-            document.getElementById('reset-position').addEventListener('click', () => {
+            document.getElementById('reset-btn').addEventListener('click', () => {
                 physics.reset();
-                settingsPanel.classList.remove('show');
+                menuPanel.classList.remove('show');
             });
 
-            // Card upload
-            document.getElementById('card-upload').addEventListener('change', (e) => {
+            trailToggle.addEventListener('click', () => {
+                physics.trailEnabled = !physics.trailEnabled;
+                trailToggle.textContent = `✨ Trail: ${physics.trailEnabled ? 'ON' : 'OFF'}`;
+                
+                if (!physics.trailEnabled) {
+                    // Clear existing trails
+                    trailContainer.innerHTML = '';
+                    trailDots = [];
+                }
+            });
+
+            // File uploads
+            document.getElementById('ball-upload').addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file && file.type.startsWith('image/')) {
                     const reader = new FileReader();
                     reader.onload = (event) => {
-                        card.querySelector('img').src = event.target.result;
+                        ball.style.backgroundImage = `url(${event.target.result})`;
+                        ball.style.backgroundSize = 'cover';
                     };
                     reader.readAsDataURL(file);
                 }
-                settingsPanel.classList.remove('show');
+                menuPanel.classList.remove('show');
             });
 
-            // Background upload
             document.getElementById('bg-upload').addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file && file.type.startsWith('image/')) {
@@ -556,50 +885,18 @@
                     reader.onload = (event) => {
                         document.getElementById('background').style.backgroundImage = 
                             `url(${event.target.result})`;
-                        document.getElementById('background').style.backgroundSize = 'cover';
                     };
                     reader.readAsDataURL(file);
                 }
-                settingsPanel.classList.remove('show');
+                menuPanel.classList.remove('show');
             });
 
-            // Default card
-            document.getElementById('default-card').addEventListener('click', () => {
-                card.querySelector('img').src = "https://deckofcardsapi.com/static/img/AS.png";
-                settingsPanel.classList.remove('show');
-            });
-
-            // Close settings when clicking outside
+            // Close menu when clicking outside
             document.addEventListener('touchstart', (e) => {
-                if (!settingsPanel.contains(e.target) && 
-                    e.target !== settingsBtn && 
-                    settingsPanel.classList.contains('show')) {
-                    settingsPanel.classList.remove('show');
-                }
-            });
-        }
-
-        // Shake detection for fun
-        let lastShake = 0;
-        if (window.DeviceMotionEvent) {
-            window.addEventListener('devicemotion', (e) => {
-                const currentTime = Date.now();
-                if (currentTime - lastShake > 2000) { // Only shake every 2 seconds
-                    const acceleration = e.accelerationIncludingGravity;
-                    if (acceleration) {
-                        const totalAccel = Math.abs(acceleration.x) + Math.abs(acceleration.y) + Math.abs(acceleration.z);
-                        if (totalAccel > 40) { // Shake detected
-                            lastShake = currentTime;
-                            physics.vx += (Math.random() - 0.5) * 15;
-                            physics.vy += (Math.random() - 0.5) * 15;
-                            
-                            // Visual feedback
-                            document.body.style.backgroundColor = '#ff6b6b';
-                            setTimeout(() => {
-                                document.body.style.backgroundColor = '';
-                            }, 300);
-                        }
-                    }
+                if (!menuPanel.contains(e.target) && 
+                    e.target !== menuBtn && 
+                    menuPanel.classList.contains('show')) {
+                    menuPanel.classList.remove('show');
                 }
             });
         }
