@@ -99,6 +99,41 @@
             transition: all 0.15s ease;
         }
 
+        /* Boundary visualization */
+        .boundary {
+            position: fixed;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 0;
+        }
+        
+        .boundary-top {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+        }
+        
+        .boundary-bottom {
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+        }
+        
+        .boundary-left {
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+        }
+        
+        .boundary-right {
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+        }
+
         /* Simple UI */
         .ui-btn {
             position: fixed;
@@ -225,6 +260,12 @@
     </style>
 </head>
 <body>
+    <!-- Boundary walls -->
+    <div class="boundary boundary-top"></div>
+    <div class="boundary boundary-bottom"></div>
+    <div class="boundary boundary-left"></div>
+    <div class="boundary boundary-right"></div>
+
     <!-- Permission Prompt -->
     <div id="permission-prompt">
         <h2>🎮 Magic Ball Physics</h2>
@@ -266,11 +307,15 @@
 
     <script>
         // ============================
-        // SIMPLE BALL PHYSICS
+        // FIXED BALL PHYSICS - STAYS IN BOUNDS
         // ============================
-        class SimpleBallPhysics {
+        class FixedBallPhysics {
             constructor() {
-                // Start at center
+                // Ball properties
+                this.radius = 70;
+                this.diameter = this.radius * 2;
+                
+                // Start at center, considering radius
                 this.x = window.innerWidth / 2;
                 this.y = window.innerHeight / 2;
                 this.vx = 0;
@@ -282,18 +327,14 @@
                 this.bounce = 0.8;
                 this.mass = 1;
                 
-                // Ball size
-                this.radius = 70;
-                
                 // Motion sensor data
                 this.beta = 0;    // Front-back tilt
                 this.gamma = 0;   // Left-right tilt
-                this.alpha = 0;   // Compass direction
                 
                 // Motion permission
                 this.motionPermissionGranted = false;
                 
-                // Update boundaries
+                // Update boundaries with proper padding
                 this.updateBoundaries();
                 
                 // Initialize immediately
@@ -301,24 +342,32 @@
             }
             
             updateBoundaries() {
-                this.minX = this.radius;
-                this.minY = this.radius;
-                this.maxX = window.innerWidth - this.radius;
-                this.maxY = window.innerHeight - this.radius;
+                // Calculate boundaries with ball radius consideration
+                // Ball position is at its center, so we need to account for radius
+                this.minX = this.radius;  // Left edge + radius
+                this.minY = this.radius;  // Top edge + radius
+                this.maxX = window.innerWidth - this.radius;    // Right edge - radius
+                this.maxY = window.innerHeight - this.radius;   // Bottom edge - radius
+                
+                console.log("Boundaries updated:", {
+                    minX: this.minX,
+                    maxX: this.maxX,
+                    minY: this.minY,
+                    maxY: this.maxY,
+                    screenWidth: window.innerWidth,
+                    screenHeight: window.innerHeight,
+                    radius: this.radius
+                });
             }
             
             initMotionSensors() {
-                // Check if DeviceOrientationEvent is supported
                 if (window.DeviceOrientationEvent) {
                     console.log("DeviceOrientationEvent supported");
                     
-                    // For iOS 13+, we need to request permission on user gesture
                     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
                         console.log("iOS 13+ detected - will request permission");
-                        // Permission will be requested via button click
                         return false;
                     } else {
-                        // For Android and older iOS - start listening immediately
                         this.startListening();
                         return true;
                     }
@@ -349,12 +398,10 @@
             }
             
             startListening() {
-                // Listen for device orientation
                 window.addEventListener('deviceorientation', (event) => {
                     this.handleOrientation(event);
                 });
                 
-                // Also listen for devicemotion for better response
                 if (window.DeviceMotionEvent) {
                     window.addEventListener('devicemotion', (event) => {
                         this.handleMotion(event);
@@ -366,34 +413,32 @@
             }
             
             handleOrientation(event) {
-                // Get tilt values
-                this.beta = event.beta || 0;   // Front-back tilt (-180 to 180)
-                this.gamma = event.gamma || 0; // Left-right tilt (-90 to 90)
-                this.alpha = event.alpha || 0; // Compass direction
+                this.beta = event.beta || 0;
+                this.gamma = event.gamma || 0;
                 
-                // Normalize values
-                const normalizedBeta = Math.max(-60, Math.min(60, this.beta)) / 60; // -1 to 1
-                const normalizedGamma = Math.max(-45, Math.min(45, this.gamma)) / 45; // -1 to 1
+                // Normalize and limit tilt values
+                const maxTilt = 60;
+                const normalizedBeta = Math.max(-maxTilt, Math.min(maxTilt, this.beta)) / maxTilt;
+                const normalizedGamma = Math.max(-maxTilt, Math.min(maxTilt, this.gamma)) / maxTilt;
                 
-                // Update velocities based on tilt (like ball on inclined plane)
-                const tiltStrength = 0.15;
+                // Apply tilt to velocity (ball rolls downhill)
+                const tiltStrength = 0.12;
                 this.vx += normalizedGamma * tiltStrength;
-                this.vy += normalizedBeta * tiltStrength * 0.7; // Less vertical movement
+                this.vy += normalizedBeta * tiltStrength * 0.7;
             }
             
             handleMotion(event) {
-                // Use accelerometer for shake detection and additional movement
                 const accel = event.accelerationIncludingGravity;
                 if (accel) {
-                    const shakeStrength = 0.02;
+                    const shakeStrength = 0.015;
                     this.vx += (accel.x || 0) * shakeStrength;
                     this.vy += (accel.y || 0) * shakeStrength;
                 }
             }
             
             update() {
-                // Apply gravity (always pulls down)
-                this.vy += this.gravity * 0.1;
+                // Apply gravity (pulls down)
+                this.vy += this.gravity * 0.08;
                 
                 // Apply friction
                 this.vx *= this.friction;
@@ -403,51 +448,75 @@
                 this.x += this.vx;
                 this.y += this.vy;
                 
-                // Handle collisions with boundaries
-                this.handleCollisions();
+                // Handle boundary collisions - FIXED
+                this.handleBoundaryCollisions();
                 
-                // Return current state
+                // Ensure ball stays within bounds
+                this.clampToBoundaries();
+                
+                // Return visual position (top-left corner)
                 return {
-                    x: this.x - this.radius,
-                    y: this.y - this.radius,
+                    x: this.x - this.radius,  // Convert center to top-left
+                    y: this.y - this.radius,  // Convert center to top-left
                     vx: this.vx,
                     vy: this.vy,
                     speed: Math.sqrt(this.vx * this.vx + this.vy * this.vy)
                 };
             }
             
-            handleCollisions() {
-                // Left wall
+            handleBoundaryCollisions() {
+                let collided = false;
+                
+                // Check left boundary (using center position)
                 if (this.x < this.minX) {
+                    collided = true;
                     this.x = this.minX;
                     this.vx = Math.abs(this.vx) * this.bounce;
                 }
                 
-                // Right wall
+                // Check right boundary
                 if (this.x > this.maxX) {
+                    collided = true;
                     this.x = this.maxX;
                     this.vx = -Math.abs(this.vx) * this.bounce;
                 }
                 
-                // Top wall
+                // Check top boundary
                 if (this.y < this.minY) {
+                    collided = true;
                     this.y = this.minY;
                     this.vy = Math.abs(this.vy) * this.bounce;
                 }
                 
-                // Bottom wall
+                // Check bottom boundary
                 if (this.y > this.maxY) {
+                    collided = true;
                     this.y = this.maxY;
                     this.vy = -Math.abs(this.vy) * this.bounce;
-                    this.vx *= 0.9; // Extra friction on bottom
+                    
+                    // Extra friction on bottom
+                    this.vx *= 0.9;
                 }
                 
-                // Damping for very small velocities
-                if (Math.abs(this.vx) < 0.1) this.vx = 0;
-                if (Math.abs(this.vy) < 0.1) this.vy = 0;
+                // Visual feedback on collision
+                if (collided) {
+                    // Add extra damping
+                    this.vx *= 0.95;
+                    this.vy *= 0.95;
+                }
+                
+                // Stop very slow movement
+                if (Math.abs(this.vx) < 0.05) this.vx = 0;
+                if (Math.abs(this.vy) < 0.05) this.vy = 0;
             }
             
-            // Touch interaction
+            clampToBoundaries() {
+                // Double-check boundaries
+                this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
+                this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
+            }
+            
+            // Touch interaction methods
             startDrag(x, y) {
                 this.dragOffsetX = x - this.x;
                 this.dragOffsetY = y - this.y;
@@ -456,21 +525,26 @@
             }
             
             updateDrag(x, y) {
-                const newX = x - this.dragOffsetX;
-                const newY = y - this.dragOffsetY;
+                // Calculate new center position
+                let newX = x - this.dragOffsetX;
+                let newY = y - this.dragOffsetY;
+                
+                // Constrain to boundaries while dragging
+                newX = Math.max(this.minX, Math.min(this.maxX, newX));
+                newY = Math.max(this.minY, Math.min(this.maxY, newY));
                 
                 // Calculate velocity from movement
-                this.vx = (newX - this.x) * 0.8;
-                this.vy = (newY - this.y) * 0.8;
+                this.vx = (newX - this.x) * 0.7;
+                this.vy = (newY - this.y) * 0.7;
                 
                 this.x = newX;
                 this.y = newY;
             }
             
             endDrag() {
-                // Give extra momentum when released
-                this.vx *= 1.5;
-                this.vy *= 1.5;
+                // Give momentum when released
+                this.vx *= 1.4;
+                this.vy *= 1.4;
             }
             
             addImpulse(impulseX, impulseY) {
@@ -479,17 +553,21 @@
             }
             
             reset() {
+                // Reset to center of screen
                 this.x = window.innerWidth / 2;
                 this.y = window.innerHeight / 2;
                 this.vx = 0;
                 this.vy = 0;
+                
+                // Update boundaries in case screen size changed
+                this.updateBoundaries();
             }
         }
 
         // ============================
         // MAIN APPLICATION
         // ============================
-        const physics = new SimpleBallPhysics();
+        const physics = new FixedBallPhysics();
         const ball = document.getElementById('ball');
         const shadow = document.querySelector('.ball-shadow');
         const permissionPrompt = document.getElementById('permission-prompt');
@@ -513,8 +591,7 @@
                     permissionPrompt.style.display = 'none';
                     startAnimation();
                 } else {
-                    alert("Sensor gerak diperlukan untuk aplikasi ini. Tanpa izin, bola tidak akan bergerak dengan sendirinya.");
-                    // Still start animation but without motion control
+                    alert("Sensor gerak diperlukan untuk aplikasi ini.");
                     permissionPrompt.style.display = 'none';
                     startAnimation();
                 }
@@ -530,7 +607,7 @@
         // Start animation loop
         function startAnimation() {
             function animate(currentTime) {
-                const deltaTime = lastTime ? currentTime - lastTime : 16.67;
+                const deltaTime = lastTime ? (currentTime - lastTime) / 16.67 : 1;
                 lastTime = currentTime;
                 
                 // Update physics
@@ -550,37 +627,43 @@
         }
 
         function updateBall(state) {
-            // Calculate rotation based on movement
-            const rotation = state.vx * 2;
+            // Calculate rotation based on horizontal movement
+            const rotation = state.vx * 1.5;
             
-            // Apply transformations
+            // Apply transformations - FIXED: state.x and state.y are already top-left coordinates
             ball.style.transform = `
                 translate3d(${state.x}px, ${state.y}px, 0)
                 rotate(${rotation}deg)
             `;
             
-            // Add slight squash/stretch effect
+            // Add visual effects based on speed
             const speed = state.speed;
-            if (speed > 5) {
-                const stretchX = 1 + Math.abs(state.vx) * 0.01;
-                const stretchY = 1 - Math.abs(state.vx) * 0.005;
+            if (speed > 3) {
+                const stretchX = 1 + Math.abs(state.vx) * 0.008;
+                const stretchY = 1 - Math.abs(state.vx) * 0.004;
                 ball.style.transform += ` scaleX(${stretchX}) scaleY(${stretchY})`;
             }
         }
 
         function updateShadow(state) {
             const speed = state.speed;
-            const heightFactor = (state.y - physics.minY) / (physics.maxY - physics.minY);
             
-            // Shadow size and opacity based on height and speed
-            const shadowSize = 0.8 + (1 - heightFactor) * 0.2;
-            const shadowOpacity = 0.4 - heightFactor * 0.2;
+            // Shadow position (center below ball)
+            const shadowX = state.x + physics.radius - 60;
+            const shadowY = state.y + physics.radius + 20;
+            
+            // Shadow effects based on ball position and speed
+            const heightFromBottom = physics.maxY - (state.y + physics.radius);
+            const heightFactor = heightFromBottom / (physics.maxY - physics.minY);
+            
+            const shadowSize = 0.7 + heightFactor * 0.3;
+            const shadowOpacity = 0.4 - heightFactor * 0.2 + speed * 0.01;
             
             shadow.style.width = `${120 * shadowSize}px`;
             shadow.style.height = `${30 * shadowSize}px`;
             shadow.style.opacity = Math.max(0.1, Math.min(0.6, shadowOpacity));
-            shadow.style.left = `${state.x + 10}px`;
-            shadow.style.top = `${state.y + 100}px`;
+            shadow.style.left = `${shadowX}px`;
+            shadow.style.top = `${shadowY}px`;
         }
 
         // Event listeners
@@ -588,6 +671,7 @@
             // Window resize
             window.addEventListener('resize', () => {
                 physics.updateBoundaries();
+                physics.clampToBoundaries();
             });
 
             // Ball touch interaction
@@ -632,7 +716,7 @@
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     
                     if (distance > 0) {
-                        const force = 15 / distance;
+                        const force = 12 / distance;
                         physics.addImpulse(dx * force, dy * force);
                     }
                 }
@@ -650,7 +734,7 @@
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
                 if (distance > 0) {
-                    const force = 10 / distance;
+                    const force = 8 / distance;
                     physics.addImpulse(dx * force, dy * force);
                 }
             });
@@ -710,19 +794,19 @@
         // Start the app
         window.addEventListener('load', init);
         
-        // Fallback: if no motion permission, at least make ball draggable
+        // Fallback for devices without motion sensors
         setTimeout(() => {
             if (!physics.motionPermissionGranted) {
                 console.log("Using fallback physics without motion sensors");
-                // Add some random movement to show it's working
+                // Add slight random movement
                 setInterval(() => {
                     physics.addImpulse(
-                        (Math.random() - 0.5) * 0.5,
-                        (Math.random() - 0.5) * 0.5
+                        (Math.random() - 0.5) * 0.3,
+                        (Math.random() - 0.5) * 0.3
                     );
-                }, 1000);
+                }, 2000);
             }
-        }, 5000);
+        }, 3000);
     </script>
 </body>
 </html>
