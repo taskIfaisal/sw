@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magic Ball - Real Physics</title>
+    <title>Magic Card Trick</title>
     <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
     <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Magic Ball">
+    <meta name="apple-mobile-web-app-title" content="Timeline">
+    <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
     <style>
         html, body {
@@ -16,20 +17,18 @@
             padding: 0;
             width: 100vw;
             height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #1a2980 0%, #26d0ce 100%);
+            font-family: 'SF Pro Display', sans-serif;
+            background-color: black;
+            background-size: cover;
+            background-position: center;
+            color: white;
             overflow: hidden;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            touch-action: none;
+            position: relative;
         }
 
         * {
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
         }
         
         #background {
@@ -38,775 +37,415 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1;
             background-size: cover;
             background-position: center;
-        }
-        
-        #ball {
-            position: absolute;
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0);
-            box-shadow: 
-                inset -10px -10px 20px rgba(0,0,0,0.2),
-                inset 10px 10px 20px rgba(255,255,255,0.5),
-                0 20px 40px rgba(0,0,0,0.3);
-            z-index: 2;
-            transform-origin: center center;
-            overflow: hidden;
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        .ball-inner {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            bottom: 10px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 40% 40%, #ffffff, #e8e8e8);
-            box-shadow: 
-                inset 5px 5px 10px rgba(255,255,255,0.8),
-                inset -5px -5px 10px rgba(0,0,0,0.1);
-        }
-
-        .ball-reflection {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), transparent 70%);
-            z-index: 3;
-        }
-
-        .ball-shadow {
-            position: absolute;
-            width: 120px;
-            height: 30px;
-            background: radial-gradient(ellipse at center, 
-                rgba(0,0,0,0.3) 0%,
-                rgba(0,0,0,0) 80%);
-            border-radius: 50%;
             z-index: 1;
-            transition: all 0.15s ease;
-        }
-
-        /* Boundary visualization */
-        .boundary {
-            position: fixed;
-            background: rgba(255, 255, 255, 0.1);
-            z-index: 0;
         }
         
-        .boundary-top {
-            top: 0;
+        #card {
+            position: absolute;
+            width: 100%;
+            max-width: 200px;
+            z-index: 2;
+            user-select: none;
+            -webkit-user-drag: none;
+            touch-action: none;
+            /* Tambahkan ini untuk zoom yang lebih baik */
+            transform-origin: center center;
+            height: auto; /* Biarkan tinggi menyesuaikan */
+        }
+        #settings {
+            position: fixed;
+            top: -100%;
             left: 0;
             width: 100%;
-            height: 5px;
-        }
-        
-        .boundary-bottom {
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-        }
-        
-        .boundary-left {
-            top: 0;
-            left: 0;
-            width: 5px;
             height: 100%;
-        }
-        
-        .boundary-right {
-            top: 0;
-            right: 0;
-            width: 5px;
-            height: 100%;
-        }
-
-        /* Simple UI */
-        .ui-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(0,0,0,0.9);
+            z-index: 3;
+            transition: top 0.5s ease;
             color: white;
-            font-size: 20px;
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
         }
-
-        .ui-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.1);
+        
+        .setting-section {
+            margin-bottom: 20px;
         }
-
-        .ui-panel {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            background: rgba(255,255,255,0.95);
-            border-radius: 12px;
-            padding: 15px;
-            z-index: 10;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transform: scale(0.9);
-            opacity: 0;
-            transition: all 0.3s ease;
-            pointer-events: none;
-        }
-
-        .ui-panel.show {
-            transform: scale(1);
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .ui-panel button, .ui-panel label {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            margin: 5px 0;
-            border-radius: 8px;
+        
+        button {
+            background: #4CAF50;
+            color: white;
             border: none;
-            background: linear-gradient(135deg, #1a2980 0%, #26d0ce 100%);
-            color: white;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
             cursor: pointer;
-            text-align: center;
-            font-size: 16px;
         }
-
+        
         input[type="file"] {
             display: none;
         }
+        
+        .file-upload {
+            background: #2196F3;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            display: inline-block;
+            cursor: pointer;
+        }
 
-        /* Permission prompt */
-        #permission-prompt {
+        /* Editor Modal Styles */
+        .image-editor {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.9);
+            z-index: 9999;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            z-index: 1000;
-            padding: 20px;
+            justify-content: center;
+        }
+
+        .editor-container {
+            position: relative;
+            width: 90%;
+            height: 70%;
+            margin: 20px;
+        }
+
+        #editing-card {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+            margin: 0 auto;
+            touch-action: none;
+            /* Tambahkan ini untuk zoom yang lebih baik */
+            transform-origin: center center;
+        }
+
+        .editor-controls {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
             text-align: center;
-            color: white;
-        }
-
-        #permission-prompt h2 {
-            margin-bottom: 20px;
-            color: #fff;
-        }
-
-        #permission-prompt p {
-            margin-bottom: 30px;
-            color: rgba(255,255,255,0.8);
-            max-width: 300px;
-            line-height: 1.5;
-        }
-
-        #permission-prompt button {
-            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 18px;
-            cursor: pointer;
-            margin: 10px;
-        }
-
-        /* Instructions */
-        .instructions {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            padding: 15px 0;
             background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 14px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            text-align: center;
-            max-width: 90%;
+        }
+
+        .editor-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .editor-buttons button {
+            min-width: 100px;
+        }
+
+        #cancel-edit {
+            background: #f44336;
         }
     </style>
 </head>
 <body>
-    <!-- Boundary walls -->
-    <div class="boundary boundary-top"></div>
-    <div class="boundary boundary-bottom"></div>
-    <div class="boundary boundary-left"></div>
-    <div class="boundary boundary-right"></div>
-
-    <!-- Permission Prompt -->
-    <div id="permission-prompt">
-        <h2>🎮 Magic Ball Physics</h2>
-        <p>Izinkan akses ke sensor gerak HP untuk menggerakkan bola secara realistis dengan memiringkan perangkat.</p>
-        <button id="grant-permission">Izinkan Sensor Gerak</button>
-        <p style="font-size: 12px; margin-top: 20px; color: rgba(255,255,255,0.6);">
-            Tekan tombol di atas, lalu izinkan akses ketika browser meminta izin
-        </p>
-    </div>
-
     <div id="background"></div>
-    
-    <div id="ball">
-        <div class="ball-inner"></div>
-        <div class="ball-reflection"></div>
-    </div>
-    <div class="ball-shadow"></div>
-    
-    <!-- Instructions -->
-    <div class="instructions">
-        Miringkan HP untuk menggerakkan bola • Sentuh bola untuk mendorong
-    </div>
-    
-    <!-- UI -->
-    <button class="ui-btn" id="menu-btn">⚙️</button>
-    
-    <div class="ui-panel" id="menu-panel">
-        <label>
-            🎨 Custom Ball
-            <input type="file" id="ball-upload" accept="image/*">
-        </label>
-        <label>
-            🌄 Background
-            <input type="file" id="bg-upload" accept="image/*">
-        </label>
-        <button id="reset-btn">📍 Reset Ball</button>
-        <button id="close-menu">✕ Close</button>
+    <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
+    <div id="settings">
+        <h2>Magic Card Settings</h2>
+        
+        <div class="setting-section">
+            <h3>Background Image</h3>
+            <label class="file-upload">
+                Choose Background
+                <input type="file" id="bg-upload" accept="image/*">
+            </label>
+        </div>
+        
+        <div class="setting-section">
+            <h3>Card Image</h3>
+            <label class="file-upload">
+                Choose Card
+                <input type="file" id="card-upload" accept="image/*">
+            </label>
+            <button id="default-card">Use Default Card</button>
+        </div>
+        
+        <div class="setting-section">
+            <button id="close-settings">Save & Close</button>
+        </div>
     </div>
 
     <script>
-        // ============================
-        // FIXED BALL PHYSICS - STAYS IN BOUNDS
-        // ============================
-        class FixedBallPhysics {
-            constructor() {
-                // Ball properties
-                this.radius = 70;
-                this.diameter = this.radius * 2;
-                
-                // Start at center, considering radius
-                this.x = window.innerWidth / 2;
-                this.y = window.innerHeight / 2;
-                this.vx = 0;
-                this.vy = 0;
-                
-                // Natural physics properties
-                this.gravity = 0.5;
-                this.friction = 0.98;
-                this.bounce = 0.8;
-                this.mass = 1;
-                
-                // Motion sensor data
-                this.beta = 0;    // Front-back tilt
-                this.gamma = 0;   // Left-right tilt
-                
-                // Motion permission
-                this.motionPermissionGranted = false;
-                
-                // Update boundaries with proper padding
-                this.updateBoundaries();
-                
-                // Initialize immediately
-                this.initMotionSensors();
-            }
-            
-            updateBoundaries() {
-                // Calculate boundaries with ball radius consideration
-                // Ball position is at its center, so we need to account for radius
-                this.minX = this.radius;  // Left edge + radius
-                this.minY = this.radius;  // Top edge + radius
-                this.maxX = window.innerWidth - this.radius;    // Right edge - radius
-                this.maxY = window.innerHeight - this.radius;   // Bottom edge - radius
-                
-                console.log("Boundaries updated:", {
-                    minX: this.minX,
-                    maxX: this.maxX,
-                    minY: this.minY,
-                    maxY: this.maxY,
-                    screenWidth: window.innerWidth,
-                    screenHeight: window.innerHeight,
-                    radius: this.radius
-                });
-            }
-            
-            initMotionSensors() {
-                if (window.DeviceOrientationEvent) {
-                    console.log("DeviceOrientationEvent supported");
-                    
-                    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                        console.log("iOS 13+ detected - will request permission");
-                        return false;
-                    } else {
-                        this.startListening();
-                        return true;
-                    }
-                } else {
-                    console.log("DeviceOrientationEvent not supported");
-                    return false;
-                }
-            }
-            
-            async requestPermission() {
-                try {
-                    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                        const permission = await DeviceOrientationEvent.requestPermission();
-                        if (permission === 'granted') {
-                            console.log("Motion permission granted");
-                            this.motionPermissionGranted = true;
-                            this.startListening();
-                            return true;
-                        } else {
-                            console.log("Motion permission denied");
-                            return false;
-                        }
-                    }
-                } catch (error) {
-                    console.error("Error requesting motion permission:", error);
-                    return false;
-                }
-            }
-            
-            startListening() {
-                window.addEventListener('deviceorientation', (event) => {
-                    this.handleOrientation(event);
-                });
-                
-                if (window.DeviceMotionEvent) {
-                    window.addEventListener('devicemotion', (event) => {
-                        this.handleMotion(event);
-                    });
-                }
-                
-                console.log("Motion sensors activated");
-                this.motionPermissionGranted = true;
-            }
-            
-            handleOrientation(event) {
-                this.beta = event.beta || 0;
-                this.gamma = event.gamma || 0;
-                
-                // Normalize and limit tilt values
-                const maxTilt = 60;
-                const normalizedBeta = Math.max(-maxTilt, Math.min(maxTilt, this.beta)) / maxTilt;
-                const normalizedGamma = Math.max(-maxTilt, Math.min(maxTilt, this.gamma)) / maxTilt;
-                
-                // Apply tilt to velocity (ball rolls downhill)
-                const tiltStrength = 0.12;
-                this.vx += normalizedGamma * tiltStrength;
-                this.vy += normalizedBeta * tiltStrength * 0.7;
-            }
-            
-            handleMotion(event) {
-                const accel = event.accelerationIncludingGravity;
-                if (accel) {
-                    const shakeStrength = 0.015;
-                    this.vx += (accel.x || 0) * shakeStrength;
-                    this.vy += (accel.y || 0) * shakeStrength;
-                }
-            }
-            
-            update() {
-                // Apply gravity (pulls down)
-                this.vy += this.gravity * 0.08;
-                
-                // Apply friction
-                this.vx *= this.friction;
-                this.vy *= this.friction;
-                
-                // Update position
-                this.x += this.vx;
-                this.y += this.vy;
-                
-                // Handle boundary collisions - FIXED
-                this.handleBoundaryCollisions();
-                
-                // Ensure ball stays within bounds
-                this.clampToBoundaries();
-                
-                // Return visual position (top-left corner)
-                return {
-                    x: this.x - this.radius,  // Convert center to top-left
-                    y: this.y - this.radius,  // Convert center to top-left
-                    vx: this.vx,
-                    vy: this.vy,
-                    speed: Math.sqrt(this.vx * this.vx + this.vy * this.vy)
-                };
-            }
-            
-            handleBoundaryCollisions() {
-                let collided = false;
-                
-                // Check left boundary (using center position)
-                if (this.x < this.minX) {
-                    collided = true;
-                    this.x = this.minX;
-                    this.vx = Math.abs(this.vx) * this.bounce;
-                }
-                
-                // Check right boundary
-                if (this.x > this.maxX) {
-                    collided = true;
-                    this.x = this.maxX;
-                    this.vx = -Math.abs(this.vx) * this.bounce;
-                }
-                
-                // Check top boundary
-                if (this.y < this.minY) {
-                    collided = true;
-                    this.y = this.minY;
-                    this.vy = Math.abs(this.vy) * this.bounce;
-                }
-                
-                // Check bottom boundary
-                if (this.y > this.maxY) {
-                    collided = true;
-                    this.y = this.maxY;
-                    this.vy = -Math.abs(this.vy) * this.bounce;
-                    
-                    // Extra friction on bottom
-                    this.vx *= 0.9;
-                }
-                
-                // Visual feedback on collision
-                if (collided) {
-                    // Add extra damping
-                    this.vx *= 0.95;
-                    this.vy *= 0.95;
-                }
-                
-                // Stop very slow movement
-                if (Math.abs(this.vx) < 0.05) this.vx = 0;
-                if (Math.abs(this.vy) < 0.05) this.vy = 0;
-            }
-            
-            clampToBoundaries() {
-                // Double-check boundaries
-                this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
-                this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
-            }
-            
-            // Touch interaction methods
-            startDrag(x, y) {
-                this.dragOffsetX = x - this.x;
-                this.dragOffsetY = y - this.y;
-                this.vx = 0;
-                this.vy = 0;
-            }
-            
-            updateDrag(x, y) {
-                // Calculate new center position
-                let newX = x - this.dragOffsetX;
-                let newY = y - this.dragOffsetY;
-                
-                // Constrain to boundaries while dragging
-                newX = Math.max(this.minX, Math.min(this.maxX, newX));
-                newY = Math.max(this.minY, Math.min(this.maxY, newY));
-                
-                // Calculate velocity from movement
-                this.vx = (newX - this.x) * 0.7;
-                this.vy = (newY - this.y) * 0.7;
-                
-                this.x = newX;
-                this.y = newY;
-            }
-            
-            endDrag() {
-                // Give momentum when released
-                this.vx *= 1.4;
-                this.vy *= 1.4;
-            }
-            
-            addImpulse(impulseX, impulseY) {
-                this.vx += impulseX;
-                this.vy += impulseY;
-            }
-            
-            reset() {
-                // Reset to center of screen
-                this.x = window.innerWidth / 2;
-                this.y = window.innerHeight / 2;
-                this.vx = 0;
-                this.vy = 0;
-                
-                // Update boundaries in case screen size changed
-                this.updateBoundaries();
-            }
-        }
-
-        // ============================
-        // MAIN APPLICATION
-        // ============================
-        const physics = new FixedBallPhysics();
-        const ball = document.getElementById('ball');
-        const shadow = document.querySelector('.ball-shadow');
-        const permissionPrompt = document.getElementById('permission-prompt');
-        const menuBtn = document.getElementById('menu-btn');
-        const menuPanel = document.getElementById('menu-panel');
+        // Elements
+        const background = document.getElementById('background');
+        const card = document.getElementById('card');
+        const settings = document.getElementById('settings');
+        const bgUpload = document.getElementById('bg-upload');
+        const cardUpload = document.getElementById('card-upload');
+        const defaultCardBtn = document.getElementById('default-card');
+        const closeSettingsBtn = document.getElementById('close-settings');
         
-        let animationId = null;
+        // Initialize card properties
+        let posX = window.innerWidth / 2 - card.offsetWidth / 2;
+        let posY = window.innerHeight / 2 - card.offsetHeight / 2;
+        let scale = 1;
+        let isDragging = false;
+        let startX, startY;
+        let velocityX = 0;
+        let velocityY = 0;
+        let lastPosX = 0;
+        let lastPosY = 0;
         let lastTime = 0;
-
-        // Initialize app
-        function init() {
-            setupEventListeners();
-            
-            // Show permission prompt
-            permissionPrompt.style.display = 'flex';
-            
-            // Grant permission button
-            document.getElementById('grant-permission').addEventListener('click', async () => {
-                const granted = await physics.requestPermission();
-                if (granted) {
-                    permissionPrompt.style.display = 'none';
-                    startAnimation();
-                } else {
-                    alert("Sensor gerak diperlukan untuk aplikasi ini.");
-                    permissionPrompt.style.display = 'none';
-                    startAnimation();
+        
+        // Set initial positions
+        updateCardTransform();
+        
+        // Touch events for swipe up to open settings
+        let startYPos = 0;
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                startYPos = e.touches[0].clientY;
+            }
+        }, {passive: false});
+        
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                const currentY = e.touches[0].clientY;
+                if (currentY - startYPos > 100) { // Swipe UP with two fingers
+                    e.preventDefault();
+                    settings.style.top = '0';
                 }
-            });
-            
-            // Try to start without permission for non-iOS devices
-            if (physics.motionPermissionGranted) {
-                permissionPrompt.style.display = 'none';
-                startAnimation();
             }
-        }
-
-        // Start animation loop
-        function startAnimation() {
-            function animate(currentTime) {
-                const deltaTime = lastTime ? (currentTime - lastTime) / 16.67 : 1;
-                lastTime = currentTime;
-                
-                // Update physics
-                const state = physics.update();
-                
-                // Update ball position
-                updateBall(state);
-                
-                // Update shadow
-                updateShadow(state);
-                
-                // Continue animation
-                animationId = requestAnimationFrame(animate);
+        }, {passive: false});
+        
+        // Double click to show card
+        let lastTap = 0;
+        document.addEventListener('touchend', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            if (tapLength < 300 && tapLength > 0) {
+                showCard();
             }
-            
-            animationId = requestAnimationFrame(animate);
-        }
-
-        function updateBall(state) {
-            // Calculate rotation based on horizontal movement
-            const rotation = state.vx * 1.5;
-            
-            // Apply transformations - FIXED: state.x and state.y are already top-left coordinates
-            ball.style.transform = `
-                translate3d(${state.x}px, ${state.y}px, 0)
-                rotate(${rotation}deg)
+            lastTap = currentTime;
+        });
+        
+        // Card dragging functionality with velocity tracking
+        card.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                startX = e.touches[0].clientX - posX;
+                startY = e.touches[0].clientY - posY;
+                velocityX = 0;
+                velocityY = 0;
+                lastPosX = posX;
+                lastPosY = posY;
+                lastTime = Date.now();
+                e.preventDefault();
+            }
+        }, {passive: false});
+        
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging && e.touches.length === 1) {
+                const now = Date.now();
+                const deltaTime = now - lastTime;
+                
+                if (deltaTime > 0) {
+                    const newPosX = e.touches[0].clientX - startX;
+                    const newPosY = e.touches[0].clientY - startY;
+                    
+                    velocityX = (newPosX - lastPosX) / deltaTime * 1000;
+                    velocityY = (newPosY - lastPosY) / deltaTime * 1000;
+                    
+                    lastPosX = newPosX;
+                    lastPosY = newPosY;
+                    lastTime = now;
+                    
+                    posX = newPosX;
+                    posY = newPosY;
+                    updateCardTransform();
+                }
+                e.preventDefault();
+            }
+        }, {passive: false});
+        
+        document.addEventListener('touchend', (e) => {
+            if (isDragging) {
+                isDragging = false;
+                
+                // Check if card is flicked quickly
+                const speedThreshold = 1000; // pixels per second
+                const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+                
+                if (currentSpeed > speedThreshold || 
+                    posX < -card.offsetWidth * scale * 0.5 || 
+                    posX > window.innerWidth - card.offsetWidth * scale * 0.5 ||
+                    posY < -card.offsetHeight * scale * 0.5 || 
+                    posY > window.innerHeight - card.offsetHeight * scale * 0.5) {
+                    
+                    // Add momentum to the flick
+                    const momentumDuration = 300; // ms
+                    const startMomentum = Date.now();
+                    
+                    const animateMomentum = () => {
+                        const elapsed = Date.now() - startMomentum;
+                        if (elapsed < momentumDuration) {
+                            const progress = 1 - (elapsed / momentumDuration);
+                            posX += velocityX * 0.01 * progress;
+                            posY += velocityY * 0.01 * progress;
+                            updateCardTransform();
+                            requestAnimationFrame(animateMomentum);
+                        } else {
+                            hideCard();
+                        }
+                    };
+                    
+                    animateMomentum();
+                }
+            }
+        });
+        
+        // Settings functionality
+        bgUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    background.style.backgroundImage = `url(${event.target.result})`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Modified card upload with image editor
+        cardUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    showImageEditor(event.target.result, (editedImage) => {
+                        card.src = editedImage;
+                        // Reset scale when new image is loaded
+                        scale = 1;
+                        updateCardTransform();
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        defaultCardBtn.addEventListener('click', () => {
+            card.src = "https://deckofcardsapi.com/static/img/AS.png";
+            // Reset scale when default image is loaded
+            scale = 1;
+            updateCardTransform();
+        });
+        
+        closeSettingsBtn.addEventListener('click', () => {
+            settings.style.top = '-100%';
+        });
+        
+        // Image Editor Function
+        function showImageEditor(imageSrc, callback) {
+            // Create editor modal
+            const editor = document.createElement('div');
+            editor.className = 'image-editor';
+            editor.innerHTML = `
+                <div class="editor-container">
+                    <img id="editing-card" src="${imageSrc}" alt="Card being edited">
+                    <div class="editor-controls">
+                        <div style="color:white; margin-bottom:10px;">Pinch to zoom</div>
+                        <div class="editor-buttons">
+                            <button id="save-edit">Save</button>
+                            <button id="cancel-edit">Cancel</button>
+                        </div>
+                    </div>
+                </div>
             `;
             
-            // Add visual effects based on speed
-            const speed = state.speed;
-            if (speed > 3) {
-                const stretchX = 1 + Math.abs(state.vx) * 0.008;
-                const stretchY = 1 - Math.abs(state.vx) * 0.004;
-                ball.style.transform += ` scaleX(${stretchX}) scaleY(${stretchY})`;
-            }
-        }
-
-        function updateShadow(state) {
-            const speed = state.speed;
+            document.body.appendChild(editor);
             
-            // Shadow position (center below ball)
-            const shadowX = state.x + physics.radius - 60;
-            const shadowY = state.y + physics.radius + 20;
+            const editingCard = document.getElementById('editing-card');
+            const saveBtn = document.getElementById('save-edit');
+            const cancelBtn = document.getElementById('cancel-edit');
             
-            // Shadow effects based on ball position and speed
-            const heightFromBottom = physics.maxY - (state.y + physics.radius);
-            const heightFactor = heightFromBottom / (physics.maxY - physics.minY);
+            let currentScale = 1;
+            let startDistance = 0;
             
-            const shadowSize = 0.7 + heightFactor * 0.3;
-            const shadowOpacity = 0.4 - heightFactor * 0.2 + speed * 0.01;
+            // Zoom with pinch gesture
+            editingCard.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    e.preventDefault();
+                    startDistance = getDistance(
+                        e.touches[0].clientX, e.touches[0].clientY,
+                        e.touches[1].clientX, e.touches[1].clientY
+                    );
+                }
+            }, {passive: false});
             
-            shadow.style.width = `${120 * shadowSize}px`;
-            shadow.style.height = `${30 * shadowSize}px`;
-            shadow.style.opacity = Math.max(0.1, Math.min(0.6, shadowOpacity));
-            shadow.style.left = `${shadowX}px`;
-            shadow.style.top = `${shadowY}px`;
-        }
-
-        // Event listeners
-        function setupEventListeners() {
-            // Window resize
-            window.addEventListener('resize', () => {
-                physics.updateBoundaries();
-                physics.clampToBoundaries();
-            });
-
-            // Ball touch interaction
-            ball.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                physics.startDrag(touch.clientX, touch.clientY);
-                
-                // Visual feedback
-                ball.style.boxShadow = 
-                    'inset -5px -5px 15px rgba(0,0,0,0.3), ' +
-                    'inset 5px 5px 15px rgba(255,255,255,0.6), ' +
-                    '0 25px 50px rgba(0,0,0,0.4)';
-            });
-
-            ball.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                physics.updateDrag(touch.clientX, touch.clientY);
-            });
-
-            document.addEventListener('touchend', () => {
-                physics.endDrag();
-                // Reset shadow
-                ball.style.boxShadow = 
-                    'inset -10px -10px 20px rgba(0,0,0,0.2), ' +
-                    'inset 10px 10px 20px rgba(255,255,255,0.5), ' +
-                    '0 20px 40px rgba(0,0,0,0.3)';
-            });
-
-            // Double tap to push away
-            let lastTap = 0;
-            ball.addEventListener('touchend', (e) => {
-                const currentTime = Date.now();
-                const tapLength = currentTime - lastTap;
-                
-                if (tapLength < 300) {
-                    // Double tap - push away from tap point
-                    const touch = e.changedTouches[0];
-                    const dx = physics.x - touch.clientX;
-                    const dy = physics.y - touch.clientY;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
+            editingCard.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2) {
+                    e.preventDefault();
+                    const currentDistance = getDistance(
+                        e.touches[0].clientX, e.touches[0].clientY,
+                        e.touches[1].clientX, e.touches[1].clientY
+                    );
                     
-                    if (distance > 0) {
-                        const force = 12 / distance;
-                        physics.addImpulse(dx * force, dy * force);
+                    if (startDistance > 0) {
+                        currentScale = Math.max(0.3, Math.min(3, currentDistance / startDistance));
+                        editingCard.style.transform = `scale(${currentScale})`;
                     }
                 }
-                
-                lastTap = currentTime;
+            }, {passive: false});
+            
+            editingCard.addEventListener('touchend', () => {
+                startDistance = 0;
+            }, {passive: false});
+            
+            // Save/cancel buttons
+            saveBtn.addEventListener('click', () => {
+                document.body.removeChild(editor);
+                callback(imageSrc); // Return the original image (scaling is handled by CSS)
             });
-
-            // Tap anywhere to push toward tap point
-            document.addEventListener('touchend', (e) => {
-                if (e.target === ball || e.target === menuBtn) return;
-                
-                const touch = e.changedTouches[0];
-                const dx = touch.clientX - physics.x;
-                const dy = touch.clientY - physics.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance > 0) {
-                    const force = 8 / distance;
-                    physics.addImpulse(dx * force, dy * force);
-                }
-            });
-
-            // UI controls
-            menuBtn.addEventListener('click', () => {
-                menuPanel.classList.toggle('show');
-            });
-
-            document.getElementById('close-menu').addEventListener('click', () => {
-                menuPanel.classList.remove('show');
-            });
-
-            document.getElementById('reset-btn').addEventListener('click', () => {
-                physics.reset();
-                menuPanel.classList.remove('show');
-            });
-
-            // File uploads
-            document.getElementById('ball-upload').addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        ball.style.backgroundImage = `url(${event.target.result})`;
-                        ball.style.backgroundSize = 'cover';
-                    };
-                    reader.readAsDataURL(file);
-                }
-                menuPanel.classList.remove('show');
-            });
-
-            document.getElementById('bg-upload').addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        document.getElementById('background').style.backgroundImage = 
-                            `url(${event.target.result})`;
-                        document.getElementById('background').style.backgroundSize = 'cover';
-                    };
-                    reader.readAsDataURL(file);
-                }
-                menuPanel.classList.remove('show');
-            });
-
-            // Close menu when clicking outside
-            document.addEventListener('touchstart', (e) => {
-                if (!menuPanel.contains(e.target) && 
-                    e.target !== menuBtn && 
-                    menuPanel.classList.contains('show')) {
-                    menuPanel.classList.remove('show');
-                }
+            
+            cancelBtn.addEventListener('click', () => {
+                document.body.removeChild(editor);
             });
         }
-
-        // Start the app
-        window.addEventListener('load', init);
         
-        // Fallback for devices without motion sensors
-        setTimeout(() => {
-            if (!physics.motionPermissionGranted) {
-                console.log("Using fallback physics without motion sensors");
-                // Add slight random movement
-                setInterval(() => {
-                    physics.addImpulse(
-                        (Math.random() - 0.5) * 0.3,
-                        (Math.random() - 0.5) * 0.3
-                    );
-                }, 2000);
-            }
-        }, 3000);
+        // Helper function to calculate distance between two points
+        function getDistance(x1, y1, x2, y2) {
+            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        }
+        
+        // Helper functions
+        function updateCardTransform() {
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        }
+        
+        function hideCard() {
+            card.style.display = 'none';
+        }
+        
+        function showCard() {
+            // Reset to center position
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+            updateCardTransform();
+            card.style.display = 'block';
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+            updateCardTransform();
+        });
     </script>
 </body>
 </html>
