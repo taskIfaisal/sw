@@ -8,35 +8,27 @@
     <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Timeline">
+    <meta name="apple-mobile-web-app-title" content="Magic Card">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
     <style>
-        :root {
-            --card-width: 200px;
-            --card-height: 280px;
-        }
-        
         html, body {
             margin: 0;
             padding: 0;
             width: 100vw;
             height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background-color: #000;
-            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             overflow: hidden;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            -webkit-tap-highlight-color: transparent;
         }
 
         * {
             box-sizing: border-box;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
             user-select: none;
         }
         
@@ -46,606 +38,290 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             z-index: 1;
-        }
-
-        #particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 2;
-        }
-        
-        #card-container {
-            position: absolute;
-            width: var(--card-width);
-            height: var(--card-height);
-            z-index: 3;
-            pointer-events: auto;
-            transform-origin: center center;
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
-            transition: filter 0.3s ease;
+            opacity: 0.9;
         }
         
         #card {
-            width: 100%;
-            height: 100%;
-            border-radius: 16px;
-            overflow: hidden;
+            position: absolute;
+            width: 180px;
+            height: 250px;
+            border-radius: 12px;
             background: white;
-            position: relative;
+            box-shadow: 
+                0 20px 40px rgba(0,0,0,0.3),
+                0 0 0 1px rgba(255,255,255,0.1),
+                0 0 30px rgba(255,255,255,0.1);
+            z-index: 2;
+            transform-origin: center center;
+            overflow: hidden;
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
-            transform-style: preserve-3d;
         }
 
-        #card-image {
+        #card img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
         }
 
-        .card-reflection {
+        #card::after {
+            content: '';
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            right: 0;
+            bottom: 0;
             background: linear-gradient(
                 135deg,
-                rgba(255,255,255,0.1) 0%,
-                rgba(255,255,255,0.05) 50%,
-                rgba(255,255,255,0) 100%
+                rgba(255,255,255,0.3) 0%,
+                rgba(255,255,255,0.1) 50%,
+                transparent 100%
             );
-            border-radius: 16px;
+            border-radius: 12px;
             pointer-events: none;
         }
 
-        #card-shadow {
+        .card-shadow {
             position: absolute;
-            width: 90%;
+            width: 150px;
             height: 20px;
             background: radial-gradient(ellipse at center, 
                 rgba(0,0,0,0.4) 0%,
-                rgba(0,0,0,0) 70%);
-            bottom: -15px;
-            left: 5%;
+                rgba(0,0,0,0) 80%);
             border-radius: 50%;
-            z-index: 2;
-            opacity: 0.8;
-            transition: all 0.3s ease;
+            z-index: 1;
+            transition: all 0.2s ease;
         }
 
-        #settings {
-            position: fixed;
-            top: -100vh;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background: rgba(10, 10, 20, 0.98);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            z-index: 100;
-            transition: top 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
-            color: white;
-            padding: 20px;
-            box-sizing: border-box;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .setting-section {
-            margin-bottom: 30px;
-            background: rgba(255,255,255,0.05);
-            padding: 20px;
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .setting-title {
-            font-size: 18px;
-            margin: 0 0 15px 0;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 14px 24px;
-            margin: 8px 0;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 16px;
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        input[type="file"] {
-            display: none;
-        }
-        
-        .file-upload {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            padding: 14px 24px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            cursor: pointer;
-            margin: 8px 0;
-            font-weight: 600;
-            font-size: 16px;
-            box-shadow: 0 4px 20px rgba(79, 172, 254, 0.3);
-            transition: all 0.3s ease;
-        }
-        
-        .file-upload:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(79, 172, 254, 0.4);
-        }
-
-        /* Slider Styles */
-        .slider-container {
-            margin: 20px 0;
-        }
-        
-        .slider-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: 16px;
-            color: rgba(255,255,255,0.9);
-        }
-        
-        .slider {
-            width: 100%;
-            height: 6px;
-            border-radius: 3px;
-            background: rgba(255,255,255,0.1);
-            outline: none;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-        
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            border: 3px solid rgba(255,255,255,0.2);
-        }
-
-        /* Debug Info */
-        #debug-info {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.7);
-            padding: 15px;
-            border-radius: 12px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            z-index: 4;
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            max-width: 200px;
-        }
-
-        #debug-info.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .debug-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-
-        /* Settings Toggle Button */
-        #settings-toggle {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            z-index: 99;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
-        }
-
-        #settings-toggle:hover {
-            transform: scale(1.1);
-        }
-
-        /* Close Settings Button */
-        #close-settings {
-            position: sticky;
-            top: 10px;
-            align-self: flex-end;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            font-size: 24px;
-            margin: 0 0 20px auto;
-        }
-
-        /* Card Controls */
-        .card-controls {
-            position: fixed;
-            bottom: 30px;
-            left: 30px;
-            display: flex;
-            gap: 15px;
-            z-index: 99;
-        }
-
-        .control-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        .control-btn:hover {
-            background: rgba(255,255,255,0.2);
-            transform: scale(1.1);
-        }
-
-        /* Loading Screen */
-        #loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 0.5s ease;
-        }
-
-        .loader {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(255,255,255,0.1);
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            :root {
-                --card-width: 180px;
-                --card-height: 252px;
-            }
-            
-            #debug-info {
-                max-width: 180px;
-                font-size: 11px;
-                padding: 12px;
-            }
-            
-            .card-controls {
-                bottom: 20px;
-                left: 20px;
-            }
-            
-            #settings-toggle {
-                bottom: 20px;
-                right: 20px;
-            }
-        }
-
-        /* Gyro Permission Prompt */
-        #gyro-permission {
+        /* Simple touch hint */
+        .touch-hint {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(20, 20, 30, 0.95);
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            z-index: 1000;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1);
-            max-width: 90%;
-            width: 400px;
-        }
-
-        #gyro-permission h3 {
-            margin: 0 0 15px 0;
-            color: #fff;
-        }
-
-        #gyro-permission p {
             color: rgba(255,255,255,0.8);
-            margin-bottom: 25px;
-            line-height: 1.5;
+            font-size: 18px;
+            text-align: center;
+            z-index: 3;
+            animation: fadeOut 3s forwards;
+            pointer-events: none;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Simple settings */
+        #settings-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #settings-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 10;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .settings-panel.show {
+            transform: scale(1);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .settings-panel button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px 0;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .settings-panel label {
+            display: block;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            margin: 5px 0;
+            cursor: pointer;
+            text-align: center;
+            color: #667eea;
+        }
+
+        input[type="file"] {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div id="loading">
-        <div class="loader"></div>
-        <div>Initializing Physics Engine...</div>
-    </div>
-
-    <!-- Gyro Permission -->
-    <div id="gyro-permission" style="display: none;">
-        <h3>🌐 Motion Access Required</h3>
-        <p>This app uses your device's motion sensors to create natural card movements. Please allow access when prompted.</p>
-        <button id="grant-permission">Enable Motion Sensors</button>
-    </div>
-
-    <!-- Background & Effects -->
     <div id="background"></div>
-    <canvas id="particles"></canvas>
+    <div id="card">
+        <img src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
+    </div>
+    <div class="card-shadow"></div>
     
-    <!-- Card with Shadow and Reflection -->
-    <div id="card-container">
-        <div id="card">
-            <img id="card-image" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
-            <div class="card-reflection"></div>
-        </div>
-        <div id="card-shadow"></div>
+    <div class="touch-hint">
+        ⚡ Miringkan HP untuk menggerakkan kartu<br>
+        👆 Sentuh untuk mendorong
     </div>
-
-    <!-- Debug Info -->
-    <div id="debug-info">
-        <div class="debug-row">
-            <span>Position:</span>
-            <span id="pos-display">0, 0</span>
-        </div>
-        <div class="debug-row">
-            <span>Velocity:</span>
-            <span id="vel-display">0, 0</span>
-        </div>
-        <div class="debug-row">
-            <span>Gyro:</span>
-            <span id="gyro-display">0°, 0°, 0°</span>
-        </div>
-        <div class="debug-row">
-            <span>FPS:</span>
-            <span id="fps-display">60</span>
-        </div>
-        <div class="debug-row">
-            <span>Mode:</span>
-            <span id="mode-display">Physics</span>
-        </div>
-    </div>
-
-    <!-- Control Buttons -->
-    <div class="card-controls">
-        <button class="control-btn" id="center-card" title="Center Card">📍</button>
-        <button class="control-btn" id="toggle-debug" title="Toggle Debug">📊</button>
-        <button class="control-btn" id="shake-card" title="Shake Card">🌀</button>
-    </div>
-
-    <!-- Settings Toggle -->
-    <button id="settings-toggle" title="Settings">⚙️</button>
-
-    <!-- Settings Panel -->
-    <div id="settings">
-        <button id="close-settings">✕</button>
-        
-        <div class="setting-section">
-            <h3 class="setting-title">🎨 Background</h3>
-            <label class="file-upload">
-                📁 Choose Background
-                <input type="file" id="bg-upload" accept="image/*">
-            </label>
-            <button id="reset-bg">Reset Background</button>
-        </div>
-        
-        <div class="setting-section">
-            <h3 class="setting-title">🃏 Card Image</h3>
-            <label class="file-upload">
-                📁 Choose Card Image
-                <input type="file" id="card-upload" accept="image/*">
-            </label>
-            <button id="default-card">🎴 Default Card</button>
-        </div>
-        
-        <div class="setting-section">
-            <h3 class="setting-title">⚙️ Physics Settings</h3>
-            
-            <div class="slider-container">
-                <div class="slider-label">
-                    <span>Responsiveness:</span>
-                    <span id="responsiveness-value">70%</span>
-                </div>
-                <input type="range" min="10" max="100" value="70" class="slider" id="responsiveness">
-            </div>
-            
-            <div class="slider-container">
-                <div class="slider-label">
-                    <span>Gravity Strength:</span>
-                    <span id="gravity-value">0.8</span>
-                </div>
-                <input type="range" min="1" max="20" value="8" class="slider" id="gravity">
-            </div>
-            
-            <div class="slider-container">
-                <div class="slider-label">
-                    <span>Friction:</span>
-                    <span id="friction-value">0.96</span>
-                </div>
-                <input type="range" min="80" max="99" value="96" class="slider" id="friction">
-            </div>
-            
-            <div class="slider-container">
-                <div class="slider-label">
-                    <span>Bounciness:</span>
-                    <span id="bounce-value">0.7</span>
-                </div>
-                <input type="range" min="10" max="90" value="70" class="slider" id="bounce">
-            </div>
-            
-            <button id="toggle-physics">🔄 Toggle Physics: <span id="physics-toggle">ON</span></button>
-            <button id="calibrate-gyro">🎯 Calibrate Gyroscope</button>
-        </div>
-        
-        <div class="setting-section">
-            <h3 class="setting-title">🎮 Control Mode</h3>
-            <button id="mode-physics">🌊 Fluid Physics</button>
-            <button id="mode-gyro">📱 Gyro Control</button>
-            <button id="mode-touch">👆 Touch Only</button>
-        </div>
-        
-        <div class="setting-section">
-            <button id="reset-all">🔄 Reset All Settings</button>
-        </div>
+    
+    <button id="settings-btn">⚙️</button>
+    
+    <div class="settings-panel">
+        <h3 style="margin: 0 0 15px 0; color: #333;">Magic Card</h3>
+        <label>
+            📁 Pilih Kartu
+            <input type="file" id="card-upload" accept="image/*">
+        </label>
+        <label>
+            🎨 Pilih Background
+            <input type="file" id="bg-upload" accept="image/*">
+        </label>
+        <button id="default-card">🔄 Kartu Default</button>
+        <button id="reset-position">📍 Tengahkan</button>
+        <button id="close-settings">✕ Tutup</button>
     </div>
 
     <script>
         // ============================
-        // PHYSICS ENGINE - NATURAL MOVEMENT
+        // SIMPLE PHYSICS ENGINE
         // ============================
-        class PhysicsEngine {
+        class SimplePhysics {
             constructor() {
                 // Position and velocity
-                this.x = window.innerWidth / 2;
-                this.y = window.innerHeight / 2;
+                this.x = window.innerWidth / 2 - 90;
+                this.y = window.innerHeight / 2 - 125;
                 this.vx = 0;
                 this.vy = 0;
                 
-                // Physics properties
-                this.responsiveness = 0.007; // How quickly card responds to tilt
-                this.gravity = 0.008;        // Downward acceleration
-                this.friction = 0.96;        // Velocity decay
-                this.bounce = 0.7;           // Bounce energy retention
+                // Fixed physics properties (simple and natural)
+                this.gravity = 0.5;
+                this.friction = 0.96;
+                this.bounce = 0.7;
+                this.responsiveness = 0.8;
                 
-                // Boundaries
-                this.minX = 0;
-                this.minY = 0;
-                this.maxX = window.innerWidth;
-                this.maxY = window.innerHeight;
-                
-                // Card dimensions
-                this.cardWidth = 200;
-                this.cardHeight = 280;
+                // Card size
+                this.width = 180;
+                this.height = 250;
                 
                 // Gyro data
-                this.beta = 0;   // Front-back tilt (-180 to 180)
-                this.gamma = 0;  // Left-right tilt (-90 to 90)
-                this.gyroCalibration = { beta: 0, gamma: 0 };
+                this.beta = 0;
+                this.gamma = 0;
+                this.gyroAvailable = false;
                 
-                // Mode
-                this.mode = 'physics'; // 'physics', 'gyro', 'touch'
-                this.physicsEnabled = true;
-                
-                // Touch dragging
+                // Touch
                 this.isDragging = false;
-                this.dragOffsetX = 0;
-                this.dragOffsetY = 0;
+                this.lastTouchTime = 0;
                 
-                // Smoothing
-                this.smoothedBeta = 0;
-                this.smoothedGamma = 0;
-                this.smoothingFactor = 0.3;
+                // Initialize
+                this.updateBoundaries();
+                this.initGyro();
             }
             
             updateBoundaries() {
-                this.cardWidth = document.getElementById('card-container').offsetWidth;
-                this.cardHeight = document.getElementById('card-container').offsetHeight;
-                this.minX = 0;
-                this.minY = 0;
-                this.maxX = window.innerWidth - this.cardWidth;
-                this.maxY = window.innerHeight - this.cardHeight;
+                this.minX = 10;
+                this.minY = 10;
+                this.maxX = window.innerWidth - this.width - 10;
+                this.maxY = window.innerHeight - this.height - 10;
             }
             
-            updateGyro(beta, gamma) {
-                // Smooth the gyro data
-                this.smoothedBeta = this.smoothedBeta * (1 - this.smoothingFactor) + beta * this.smoothingFactor;
-                this.smoothedGamma = this.smoothedGamma * (1 - this.smoothingFactor) + gamma * this.smoothingFactor;
-                
-                // Apply calibration
-                this.beta = this.smoothedBeta - this.gyroCalibration.beta;
-                this.gamma = this.smoothedGamma - this.gyroCalibration.gamma;
+            initGyro() {
+                if (window.DeviceOrientationEvent) {
+                    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                        // iOS 13+ - request permission on first interaction
+                        setTimeout(() => {
+                            this.requestGyroPermission();
+                        }, 1000);
+                    } else {
+                        this.gyroAvailable = true;
+                        window.addEventListener('deviceorientation', (e) => {
+                            this.beta = (e.beta || 0) / 90;  // Normalize to -1 to 1
+                            this.gamma = (e.gamma || 0) / 45; // Normalize to -1 to 1
+                        });
+                    }
+                }
+            }
+            
+            async requestGyroPermission() {
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission === 'granted') {
+                        this.gyroAvailable = true;
+                        window.addEventListener('deviceorientation', (e) => {
+                            this.beta = (e.beta || 0) / 90;
+                            this.gamma = (e.gamma || 0) / 45;
+                        });
+                    }
+                } catch (e) {
+                    console.log('Gyro not available');
+                }
             }
             
             update() {
-                if (!this.physicsEnabled) return;
-                
-                if (this.mode === 'physics' || this.mode === 'gyro') {
-                    // Calculate acceleration from gyro
-                    const ax = this.gamma * this.responsiveness;
-                    const ay = this.beta * this.responsiveness;
-                    
-                    // Add gravity effect (always pulls down)
-                    const gravityAccel = this.gravity;
-                    
-                    // Update velocity with acceleration
-                    this.vx += ax;
-                    this.vy += ay + gravityAccel;
-                    
-                    // Apply friction
-                    this.vx *= this.friction;
-                    this.vy *= this.friction;
-                    
-                    // Update position
-                    this.x += this.vx;
-                    this.y += this.vy;
-                    
-                    // Handle boundary collisions with realistic bounce
-                    this.handleCollisions();
+                // Apply gyro movement if available
+                if (this.gyroAvailable && !this.isDragging) {
+                    this.vx += this.gamma * this.responsiveness * 0.1;
+                    this.vy += this.beta * this.responsiveness * 0.1;
                 }
                 
-                // Keep within bounds
+                // Always apply gravity
+                this.vy += this.gravity * 0.05;
+                
+                // Apply friction
+                this.vx *= this.friction;
+                this.vy *= this.friction;
+                
+                // Update position
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Handle screen boundaries with bounce
+                this.handleCollisions();
+                
+                // Keep within screen
                 this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
                 this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
+                
+                // Return position for rendering
+                return { x: this.x, y: this.y, vx: this.vx, vy: this.vy };
             }
             
             handleCollisions() {
@@ -672,232 +348,118 @@
                     this.y = this.maxY;
                     this.vy = -Math.abs(this.vy) * this.bounce;
                 }
-                
-                // Damping for very small velocities
-                if (Math.abs(this.vx) < 0.01) this.vx = 0;
-                if (Math.abs(this.vy) < 0.01) this.vy = 0;
             }
             
-            startDrag(clientX, clientY) {
+            startDrag(x, y) {
                 this.isDragging = true;
-                this.dragOffsetX = clientX - this.x;
-                this.dragOffsetY = clientY - this.y;
+                this.dragOffsetX = x - this.x;
+                this.dragOffsetY = y - this.y;
                 this.vx = 0;
                 this.vy = 0;
             }
             
-            updateDrag(clientX, clientY) {
+            updateDrag(x, y) {
                 if (!this.isDragging) return;
                 
-                // Direct position control while dragging
-                this.x = clientX - this.dragOffsetX;
-                this.y = clientY - this.dragOffsetY;
+                const newX = x - this.dragOffsetX;
+                const newY = y - this.dragOffsetY;
                 
-                // Calculate velocity for throw effect
-                this.vx = (clientX - (this.x + this.dragOffsetX)) * 0.5;
-                this.vy = (clientY - (this.y + this.dragOffsetY)) * 0.5;
+                // Calculate velocity based on movement
+                this.vx = (newX - this.x) * 0.5;
+                this.vy = (newY - this.y) * 0.5;
+                
+                this.x = newX;
+                this.y = newY;
             }
             
             endDrag() {
                 if (!this.isDragging) return;
                 this.isDragging = false;
                 
-                // Apply some impulse based on drag speed
-                this.vx *= 0.5;
-                this.vy *= 0.5;
+                // Give it a little extra push when released
+                this.vx *= 1.5;
+                this.vy *= 1.5;
             }
             
-            shake(force = 10) {
-                this.vx += (Math.random() - 0.5) * force;
-                this.vy += (Math.random() - 0.5) * force;
-            }
-            
-            calibrate() {
-                this.gyroCalibration.beta = this.beta;
-                this.gyroCalibration.gamma = this.gamma;
+            tap(x, y) {
+                // Calculate direction from tap point to card center
+                const cardCenterX = this.x + this.width / 2;
+                const cardCenterY = this.y + this.height / 2;
+                const dx = cardCenterX - x;
+                const dy = cardCenterY - y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Apply impulse away from tap point
+                if (distance > 0) {
+                    const force = 3000 / (distance * distance);
+                    this.vx += (dx / distance) * force;
+                    this.vy += (dy / distance) * force;
+                }
             }
             
             reset() {
-                this.x = window.innerWidth / 2 - this.cardWidth / 2;
-                this.y = window.innerHeight / 2 - this.cardHeight / 2;
+                this.x = window.innerWidth / 2 - this.width / 2;
+                this.y = window.innerHeight / 2 - this.height / 2;
                 this.vx = 0;
                 this.vy = 0;
             }
-            
-            getPosition() {
-                return { x: this.x, y: this.y };
-            }
-            
-            getVelocity() {
-                return { vx: this.vx, vy: this.vy };
-            }
         }
 
         // ============================
-        // INITIALIZATION
+        // MAIN APPLICATION
         // ============================
-        const physics = new PhysicsEngine();
-        let lastTime = 0;
-        let frameCount = 0;
-        let fps = 60;
-        let gyroAvailable = false;
-        let isSettingsOpen = false;
-
-        // DOM Elements
-        const loadingScreen = document.getElementById('loading');
-        const gyroPermission = document.getElementById('gyro-permission');
-        const cardContainer = document.getElementById('card-container');
-        const cardImage = document.getElementById('card-image');
-        const cardShadow = document.getElementById('card-shadow');
-        const settingsPanel = document.getElementById('settings');
-        const debugInfo = document.getElementById('debug-info');
-        const particlesCanvas = document.getElementById('particles');
+        const physics = new SimplePhysics();
+        const card = document.getElementById('card');
+        const shadow = document.querySelector('.card-shadow');
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsPanel = document.querySelector('.settings-panel');
+        const touchHint = document.querySelector('.touch-hint');
+        
+        let lastFrameTime = 0;
+        let isAnimating = true;
 
         // Initialize
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                loadingScreen.style.opacity = '0';
-                setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                    initApp();
-                }, 500);
-            }, 1000);
-        });
-
-        function initApp() {
-            setupCanvas();
+        function init() {
             setupEventListeners();
-            setupGyroscope();
-            loadSettings();
-            startAnimationLoop();
+            startAnimation();
             
-            // Initial boundaries update
-            physics.updateBoundaries();
-            physics.reset();
-            updateCard();
+            // Auto-hide hint after 5 seconds
+            setTimeout(() => {
+                touchHint.style.display = 'none';
+            }, 5000);
         }
 
-        // ============================
-        // GYROSCOPE SETUP
-        // ============================
-        function setupGyroscope() {
-            if (typeof DeviceOrientationEvent !== 'undefined' && 
-                typeof DeviceOrientationEvent.requestPermission === 'function') {
+        // Animation loop
+        function startAnimation() {
+            function animate(timestamp) {
+                if (!isAnimating) return;
                 
-                // iOS 13+ - need to request permission
-                gyroPermission.style.display = 'block';
-                
-                document.getElementById('grant-permission').addEventListener('click', async () => {
-                    try {
-                        const permission = await DeviceOrientationEvent.requestPermission();
-                        if (permission === 'granted') {
-                            gyroAvailable = true;
-                            gyroPermission.style.display = 'none';
-                            window.addEventListener('deviceorientation', handleOrientation);
-                        }
-                    } catch (error) {
-                        console.error('Gyroscope permission error:', error);
-                        gyroAvailable = false;
-                    }
-                });
-            } else if (window.DeviceOrientationEvent) {
-                // Android and older iOS
-                gyroAvailable = true;
-                window.addEventListener('deviceorientation', handleOrientation);
-            } else {
-                gyroAvailable = false;
-                document.getElementById('mode-display').textContent = 'Touch Only';
-            }
-        }
-
-        function handleOrientation(event) {
-            if (!gyroAvailable) return;
-            
-            const beta = event.beta || 0;   // -180 to 180
-            const gamma = event.gamma || 0; // -90 to 90
-            
-            // Normalize and filter extreme values
-            const normalizedBeta = Math.max(-60, Math.min(60, beta));
-            const normalizedGamma = Math.max(-45, Math.min(45, gamma));
-            
-            physics.updateGyro(normalizedBeta, normalizedGamma);
-            
-            // Update debug display
-            document.getElementById('gyro-display').textContent = 
-                `${Math.round(normalizedBeta)}°, ${Math.round(normalizedGamma)}°`;
-        }
-
-        // ============================
-        // CANVAS & PARTICLES
-        // ============================
-        function setupCanvas() {
-            const ctx = particlesCanvas.getContext('2d');
-            particlesCanvas.width = window.innerWidth;
-            particlesCanvas.height = window.innerHeight;
-            
-            const particles = [];
-            const particleCount = 50;
-            
-            for (let i = 0; i < particleCount; i++) {
-                particles.push({
-                    x: Math.random() * particlesCanvas.width,
-                    y: Math.random() * particlesCanvas.height,
-                    size: Math.random() * 3 + 1,
-                    speed: Math.random() * 0.5 + 0.2,
-                    opacity: Math.random() * 0.3 + 0.1
-                });
-            }
-            
-            function animateParticles() {
-                ctx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
-                
-                for (const p of particles) {
-                    p.y += p.speed;
-                    if (p.y > particlesCanvas.height) {
-                        p.y = 0;
-                        p.x = Math.random() * particlesCanvas.width;
-                    }
-                    
-                    ctx.beginPath();
-                    ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
-                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                
-                requestAnimationFrame(animateParticles);
-            }
-            
-            animateParticles();
-        }
-
-        // ============================
-        // ANIMATION LOOP
-        // ============================
-        function startAnimationLoop() {
-            function animate(currentTime) {
-                frameCount++;
-                
-                // Calculate FPS
-                if (lastTime) {
-                    const delta = currentTime - lastTime;
-                    if (delta >= 1000) {
-                        fps = Math.round((frameCount * 1000) / delta);
-                        frameCount = 0;
-                        lastTime = currentTime;
-                        document.getElementById('fps-display').textContent = fps;
-                    }
-                } else {
-                    lastTime = currentTime;
-                }
+                // Calculate delta time for consistent physics
+                const deltaTime = lastFrameTime ? (timestamp - lastFrameTime) / 16.67 : 1;
+                lastFrameTime = timestamp;
                 
                 // Update physics
-                physics.update();
+                const state = physics.update();
                 
-                // Update card position
-                updateCard();
+                // Calculate rotation based on velocity (like a rolling ball)
+                const rotation = state.vx * 0.5;
                 
-                // Update shadow based on velocity
-                updateShadow();
+                // Calculate shadow properties
+                const speed = Math.sqrt(state.vx * state.vx + state.vy * state.vy);
+                const shadowSize = 0.8 + speed * 0.01;
+                const shadowOpacity = 0.5 - speed * 0.01;
+                
+                // Apply transformations
+                card.style.transform = `
+                    translate3d(${state.x}px, ${state.y}px, 0)
+                    rotate(${rotation}deg)
+                `;
+                
+                // Update shadow
+                shadow.style.width = `${150 * shadowSize}px`;
+                shadow.style.opacity = Math.max(0.2, Math.min(0.6, shadowOpacity));
+                shadow.style.left = `${state.x + 15}px`;
+                shadow.style.top = `${state.y + 230}px`;
                 
                 // Continue animation
                 requestAnimationFrame(animate);
@@ -906,359 +468,144 @@
             requestAnimationFrame(animate);
         }
 
-        function updateCard() {
-            const pos = physics.getPosition();
-            const vel = physics.getVelocity();
-            
-            // Calculate rotation based on velocity (more natural)
-            const rotation = vel.vx * 0.3;
-            
-            // Calculate tilt based on gyro for 3D effect
-            const tiltX = physics.gamma * 0.5;
-            const tiltY = physics.beta * 0.3;
-            
-            // Apply transformation
-            cardContainer.style.transform = `
-                translate3d(${pos.x}px, ${pos.y}px, 0)
-                rotate(${rotation}deg)
-                rotateX(${tiltY}deg)
-                rotateY(${tiltX}deg)
-            `;
-            
-            // Update debug info
-            document.getElementById('pos-display').textContent = 
-                `${Math.round(pos.x)}, ${Math.round(pos.y)}`;
-            document.getElementById('vel-display').textContent = 
-                `${vel.vx.toFixed(1)}, ${vel.vy.toFixed(1)}`;
-        }
-
-        function updateShadow() {
-            const vel = physics.getVelocity();
-            const speed = Math.sqrt(vel.vx * vel.vx + vel.vy * vel.vy);
-            
-            // Shadow gets bigger and softer when card moves fast
-            const shadowSize = 0.9 + (speed * 0.05);
-            const shadowOpacity = 0.8 - (speed * 0.05);
-            const shadowBlur = 5 + (speed * 2);
-            
-            cardShadow.style.transform = `scale(${shadowSize})`;
-            cardShadow.style.opacity = Math.max(0.3, Math.min(0.8, shadowOpacity));
-            cardShadow.style.filter = `blur(${shadowBlur}px)`;
-        }
-
-        // ============================
-        // EVENT LISTENERS
-        // ============================
+        // Event listeners
         function setupEventListeners() {
             // Window resize
             window.addEventListener('resize', () => {
                 physics.updateBoundaries();
-                particlesCanvas.width = window.innerWidth;
-                particlesCanvas.height = window.innerHeight;
             });
 
             // Touch events for card
-            cardContainer.addEventListener('touchstart', (e) => {
+            card.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 const touch = e.touches[0];
                 physics.startDrag(touch.clientX, touch.clientY);
-            }, { passive: false });
+            });
 
-            cardContainer.addEventListener('touchmove', (e) => {
+            card.addEventListener('touchmove', (e) => {
                 e.preventDefault();
                 if (physics.isDragging) {
                     const touch = e.touches[0];
                     physics.updateDrag(touch.clientX, touch.clientY);
                 }
-            }, { passive: false });
+            });
 
             document.addEventListener('touchend', () => {
                 physics.endDrag();
             });
 
-            // Settings toggle
-            document.getElementById('settings-toggle').addEventListener('click', () => {
-                isSettingsOpen = true;
-                settingsPanel.style.top = '0';
+            // Double tap to push card
+            let lastTap = 0;
+            card.addEventListener('touchend', (e) => {
+                if (physics.isDragging) return;
+                
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTap;
+                
+                if (tapLength < 300 && tapLength > 0) {
+                    // Double tap detected
+                    const touch = e.changedTouches[0];
+                    physics.tap(touch.clientX, touch.clientY);
+                }
+                
+                lastTap = currentTime;
+            });
+
+            // Click/tap anywhere to give a little push
+            document.addEventListener('touchend', (e) => {
+                if (e.target === card || e.target === settingsBtn) return;
+                
+                const touch = e.changedTouches[0];
+                physics.tap(touch.clientX, touch.clientY);
+            });
+
+            // Settings button
+            settingsBtn.addEventListener('click', () => {
+                settingsPanel.classList.toggle('show');
             });
 
             // Close settings
             document.getElementById('close-settings').addEventListener('click', () => {
-                isSettingsOpen = false;
-                settingsPanel.style.top = '-100vh';
-                saveSettings();
+                settingsPanel.classList.remove('show');
             });
 
-            // Control buttons
-            document.getElementById('center-card').addEventListener('click', () => {
+            // Reset position
+            document.getElementById('reset-position').addEventListener('click', () => {
                 physics.reset();
+                settingsPanel.classList.remove('show');
             });
 
-            document.getElementById('toggle-debug').addEventListener('click', () => {
-                debugInfo.classList.toggle('hidden');
-            });
-
-            document.getElementById('shake-card').addEventListener('click', () => {
-                physics.shake(15);
-            });
-
-            // Settings controls
-            setupSettingControls();
-            
-            // Mode buttons
-            document.getElementById('mode-physics').addEventListener('click', () => {
-                physics.mode = 'physics';
-                updateModeDisplay();
-            });
-            
-            document.getElementById('mode-gyro').addEventListener('click', () => {
-                if (gyroAvailable) {
-                    physics.mode = 'gyro';
-                    updateModeDisplay();
-                } else {
-                    alert('Gyroscope not available on this device');
+            // Card upload
+            document.getElementById('card-upload').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        card.querySelector('img').src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
                 }
+                settingsPanel.classList.remove('show');
             });
-            
-            document.getElementById('mode-touch').addEventListener('click', () => {
-                physics.mode = 'touch';
-                updateModeDisplay();
+
+            // Background upload
+            document.getElementById('bg-upload').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        document.getElementById('background').style.backgroundImage = 
+                            `url(${event.target.result})`;
+                        document.getElementById('background').style.backgroundSize = 'cover';
+                    };
+                    reader.readAsDataURL(file);
+                }
+                settingsPanel.classList.remove('show');
             });
-            
-            // Calibrate gyro
-            document.getElementById('calibrate-gyro').addEventListener('click', () => {
-                physics.calibrate();
-                alert('Gyroscope calibrated!');
-            });
-            
-            // Toggle physics
-            document.getElementById('toggle-physics').addEventListener('click', () => {
-                physics.physicsEnabled = !physics.physicsEnabled;
-                document.getElementById('physics-toggle').textContent = 
-                    physics.physicsEnabled ? 'ON' : 'OFF';
-            });
-            
-            // File uploads
-            document.getElementById('bg-upload').addEventListener('change', handleBackgroundUpload);
-            document.getElementById('card-upload').addEventListener('change', handleCardUpload);
+
+            // Default card
             document.getElementById('default-card').addEventListener('click', () => {
-                cardImage.src = "https://deckofcardsapi.com/static/img/AS.png";
-                saveSetting('cardImage', cardImage.src);
+                card.querySelector('img').src = "https://deckofcardsapi.com/static/img/AS.png";
+                settingsPanel.classList.remove('show');
             });
-            document.getElementById('reset-bg').addEventListener('click', () => {
-                document.getElementById('background').style.background = 
-                    'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)';
-                saveSetting('background', 'default');
-            });
-            
-            // Reset all
-            document.getElementById('reset-all').addEventListener('click', () => {
-                if (confirm('Reset all settings to default?')) {
-                    localStorage.clear();
-                    location.reload();
+
+            // Close settings when clicking outside
+            document.addEventListener('touchstart', (e) => {
+                if (!settingsPanel.contains(e.target) && 
+                    e.target !== settingsBtn && 
+                    settingsPanel.classList.contains('show')) {
+                    settingsPanel.classList.remove('show');
                 }
             });
         }
 
-        function setupSettingControls() {
-            // Responsiveness slider
-            const responsivenessSlider = document.getElementById('responsiveness');
-            const responsivenessValue = document.getElementById('responsiveness-value');
-            
-            responsivenessSlider.addEventListener('input', (e) => {
-                const value = e.target.value / 10000;
-                physics.responsiveness = value;
-                responsivenessValue.textContent = `${e.target.value}%`;
-            });
-
-            // Gravity slider
-            const gravitySlider = document.getElementById('gravity');
-            const gravityValue = document.getElementById('gravity-value');
-            
-            gravitySlider.addEventListener('input', (e) => {
-                const value = e.target.value / 1000;
-                physics.gravity = value;
-                gravityValue.textContent = value.toFixed(2);
-            });
-
-            // Friction slider
-            const frictionSlider = document.getElementById('friction');
-            const frictionValue = document.getElementById('friction-value');
-            
-            frictionSlider.addEventListener('input', (e) => {
-                const value = e.target.value / 100;
-                physics.friction = value;
-                frictionValue.textContent = value.toFixed(2);
-            });
-
-            // Bounce slider
-            const bounceSlider = document.getElementById('bounce');
-            const bounceValue = document.getElementById('bounce-value');
-            
-            bounceSlider.addEventListener('input', (e) => {
-                const value = e.target.value / 100;
-                physics.bounce = value;
-                bounceValue.textContent = value.toFixed(2);
-            });
-        }
-
-        function updateModeDisplay() {
-            const modeDisplay = document.getElementById('mode-display');
-            modeDisplay.textContent = physics.mode.charAt(0).toUpperCase() + physics.mode.slice(1);
-            
-            // Update button states
-            document.querySelectorAll('[id^="mode-"]').forEach(btn => {
-                btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-            });
-            
-            const activeBtn = document.getElementById(`mode-${physics.mode}`);
-            if (activeBtn) {
-                activeBtn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)';
-            }
-        }
-
-        // ============================
-        // FILE HANDLING
-        // ============================
-        function handleBackgroundUpload(e) {
-            const file = e.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    document.getElementById('background').style.backgroundImage = 
-                        `url(${event.target.result})`;
-                    document.getElementById('background').style.backgroundSize = 'cover';
-                    saveSetting('background', event.target.result);
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function handleCardUpload(e) {
-            const file = e.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    cardImage.src = event.target.result;
-                    saveSetting('cardImage', event.target.result);
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // ============================
-        // SETTINGS MANAGEMENT
-        // ============================
-        function loadSettings() {
-            // Load physics settings
-            const savedResponsiveness = localStorage.getItem('responsiveness');
-            if (savedResponsiveness) {
-                physics.responsiveness = parseFloat(savedResponsiveness);
-                document.getElementById('responsiveness').value = physics.responsiveness * 10000;
-                document.getElementById('responsiveness-value').textContent = 
-                    `${Math.round(physics.responsiveness * 10000)}%`;
-            }
-            
-            const savedGravity = localStorage.getItem('gravity');
-            if (savedGravity) {
-                physics.gravity = parseFloat(savedGravity);
-                document.getElementById('gravity').value = physics.gravity * 1000;
-                document.getElementById('gravity-value').textContent = physics.gravity.toFixed(2);
-            }
-            
-            const savedFriction = localStorage.getItem('friction');
-            if (savedFriction) {
-                physics.friction = parseFloat(savedFriction);
-                document.getElementById('friction').value = physics.friction * 100;
-                document.getElementById('friction-value').textContent = physics.friction.toFixed(2);
-            }
-            
-            const savedBounce = localStorage.getItem('bounce');
-            if (savedBounce) {
-                physics.bounce = parseFloat(savedBounce);
-                document.getElementById('bounce').value = physics.bounce * 100;
-                document.getElementById('bounce-value').textContent = physics.bounce.toFixed(2);
-            }
-            
-            // Load mode
-            const savedMode = localStorage.getItem('mode');
-            if (savedMode) {
-                physics.mode = savedMode;
-                updateModeDisplay();
-            }
-            
-            // Load background
-            const savedBg = localStorage.getItem('background');
-            if (savedBg && savedBg !== 'default') {
-                document.getElementById('background').style.backgroundImage = `url(${savedBg})`;
-                document.getElementById('background').style.backgroundSize = 'cover';
-            }
-            
-            // Load card image
-            const savedCard = localStorage.getItem('cardImage');
-            if (savedCard) {
-                cardImage.src = savedCard;
-            }
-            
-            // Load physics enabled state
-            const savedPhysicsEnabled = localStorage.getItem('physicsEnabled');
-            if (savedPhysicsEnabled !== null) {
-                physics.physicsEnabled = savedPhysicsEnabled === 'true';
-                document.getElementById('physics-toggle').textContent = 
-                    physics.physicsEnabled ? 'ON' : 'OFF';
-            }
-        }
-
-        function saveSettings() {
-            saveSetting('responsiveness', physics.responsiveness);
-            saveSetting('gravity', physics.gravity);
-            saveSetting('friction', physics.friction);
-            saveSetting('bounce', physics.bounce);
-            saveSetting('mode', physics.mode);
-            saveSetting('physicsEnabled', physics.physicsEnabled);
-        }
-
-        function saveSetting(key, value) {
-            try {
-                localStorage.setItem(key, value.toString());
-            } catch (e) {
-                console.warn('Failed to save setting:', key);
-            }
-        }
-
-        // ============================
-        // SHAKE DETECTION (Bonus Feature)
-        // ============================
-        let lastShakeTime = 0;
-        let lastAcceleration = { x: 0, y: 0, z: 0 };
-        
+        // Shake detection for fun
+        let lastShake = 0;
         if (window.DeviceMotionEvent) {
-            window.addEventListener('devicemotion', (event) => {
-                const acceleration = event.accelerationIncludingGravity;
-                if (!acceleration) return;
-                
+            window.addEventListener('devicemotion', (e) => {
                 const currentTime = Date.now();
-                if (currentTime - lastShakeTime > 1000) { // Prevent multiple shakes in 1 second
-                    const deltaX = Math.abs(acceleration.x - lastAcceleration.x);
-                    const deltaY = Math.abs(acceleration.y - lastAcceleration.y);
-                    const deltaZ = Math.abs(acceleration.z - lastAcceleration.z);
-                    
-                    // If movement is significant
-                    if (deltaX + deltaY + deltaZ > 30) {
-                        lastShakeTime = currentTime;
-                        physics.shake(20);
-                        
-                        // Visual feedback
-                        document.body.style.backgroundColor = '#ff4444';
-                        setTimeout(() => {
-                            document.body.style.backgroundColor = '';
-                        }, 100);
+                if (currentTime - lastShake > 2000) { // Only shake every 2 seconds
+                    const acceleration = e.accelerationIncludingGravity;
+                    if (acceleration) {
+                        const totalAccel = Math.abs(acceleration.x) + Math.abs(acceleration.y) + Math.abs(acceleration.z);
+                        if (totalAccel > 40) { // Shake detected
+                            lastShake = currentTime;
+                            physics.vx += (Math.random() - 0.5) * 15;
+                            physics.vy += (Math.random() - 0.5) * 15;
+                            
+                            // Visual feedback
+                            document.body.style.backgroundColor = '#ff6b6b';
+                            setTimeout(() => {
+                                document.body.style.backgroundColor = '';
+                            }, 300);
+                        }
                     }
                 }
-                
-                lastAcceleration = acceleration;
             });
         }
+
+        // Start the app
+        window.addEventListener('load', init);
     </script>
 </body>
 </html>
