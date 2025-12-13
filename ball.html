@@ -248,29 +248,34 @@ class BallInContainer {
     }
     
     hideBall() {
-        this.isVisible = false;
-        this.ball.style.opacity = '0';
-        this.isTouching = false;
-    }
+    this.isVisible = false;
+    this.isTouching = false;
+
+    this.ball.style.opacity = '0';
+    this.ball.style.display = 'none'; // 🔥 INI KUNCI
+}
+
     
     respawnBall(x = null, y = null) {
-        this.isVisible = true;
+    this.isVisible = true;
+
+    this.ball.style.display = 'block'; // 🔥 MUNCULKAN LAGI
+    requestAnimationFrame(() => {
         this.ball.style.opacity = '1';
-        
-        if (x !== null && y !== null) {
-            // Posisi di tempat double click
-            this.x = Math.max(this.radius, Math.min(this.maxX, x));
-            this.y = Math.max(this.radius, Math.min(this.maxY, y));
-        } else {
-            // Posisi default di tengah
-            this.x = this.width / 2;
-            this.y = this.height / 2;
-        }
-        
-        // Reset sensor values
-        this.smoothBeta = 0;
-        this.smoothGamma = 0;
+    });
+
+    if (x !== null && y !== null) {
+        this.x = Math.max(this.radius, Math.min(this.maxX, x));
+        this.y = Math.max(this.radius, Math.min(this.maxY, y));
+    } else {
+        this.x = this.width / 2;
+        this.y = this.height / 2;
     }
+
+    this.smoothBeta = 0;
+    this.smoothGamma = 0;
+}
+
 
     applyBounds() {
         this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
