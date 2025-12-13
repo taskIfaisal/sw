@@ -7,7 +7,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Magic Ball">
-<meta name="theme-color" content="#10B981">
 
 <title>Magic Ball</title>
 
@@ -26,7 +25,6 @@ html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #10B981;
     touch-action: none;
 }
 
@@ -36,6 +34,8 @@ html, body {
     width: 100vw;
     height: 100dvh;
     background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    background-size: cover;
+    background-position: center;
     overflow: hidden;
 }
 
@@ -45,33 +45,16 @@ html, body {
     height: 120px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0);
+    background-size: cover;
+    background-position: center;
     will-change: transform;
-    touch-action: none;
-    transition: opacity 0.3s ease;
 }
 
-.ball-inner {
-    position: absolute;
-    inset: 12px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 40% 40%, #ffffff, #e8e8e8);
-}
-
-.ball-reflection {
-    position: absolute;
-    top: 18px;
-    left: 18px;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 70%);
-}
-
-/* ===== SETTINGS OVERLAY ===== */
+/* SETTINGS */
 #settings {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.55);
+    background: rgba(0,0,0,0.6);
     backdrop-filter: blur(8px);
     display: none;
     z-index: 9999;
@@ -88,19 +71,23 @@ html, body {
 }
 
 .settings-panel h3 {
-    margin-bottom: 12px;
-    font-size: 16px;
+    margin: 10px 0;
+    font-size: 15px;
+}
+
+.settings-panel input {
+    width: 100%;
+    margin-bottom: 10px;
 }
 
 .settings-panel button {
     width: 100%;
-    margin-bottom: 10px;
     padding: 12px;
-    font-size: 14px;
     border-radius: 12px;
     border: none;
     background: #10B981;
     color: #fff;
+    font-size: 14px;
 }
 </style>
 </head>
@@ -108,252 +95,84 @@ html, body {
 <body>
 
 <div class="container" id="container">
-    <div id="ball">
-        <div class="ball-inner"></div>
-        <div class="ball-reflection"></div>
-    </div>
+    <div id="ball"></div>
 </div>
 
-<!-- SETTINGS -->
 <div id="settings">
     <div class="settings-panel">
-        <h3>Background</h3>
-        <button onclick="setBg(1)">Green</button>
-        <button onclick="setBg(2)">Dark</button>
+        <h3>Upload Background</h3>
+        <input type="file" accept="image/*" onchange="uploadBackground(this)">
 
-        <h3>Ball Object</h3>
-        <button onclick="setBall(1)">Glass Ball</button>
-        <button onclick="setBall(2)">Dark Ball</button>
+        <h3>Upload Object Ball</h3>
+        <input type="file" accept="image/*" onchange="uploadBall(this)">
 
         <button onclick="closeSettings()">Close</button>
     </div>
 </div>
 
 <script>
-class BallInContainer {
-    constructor() {
-        this.ball = document.getElementById('ball');
-        this.radius = 60;
-
-        this.sensitivity = 0.35;
-        this.smoothing = 0.15;
-        this.smoothBeta = 0;
-        this.smoothGamma = 0;
-
-        this.isTouching = false;
-        this.isVisible = true;
-
-        this.lastTapTime = 0;
-        this.doubleTapDelay = 300;
-
-        this.updateBounds();
-        this.x = this.width / 2;
-        this.y = this.height / 2;
-
-        window.addEventListener('resize', () => this.updateBounds());
-        window.visualViewport?.addEventListener('resize', () => this.updateBounds());
-
-        this.initSensor();
-        this.initTouch();
-        this.initDoubleClick();
-        this.initTwoFingerSwipe();
-        this.loop();
-    }
-
-    updateBounds() {
-        this.width = window.innerWidth;
-        this.height = window.innerHeight;
-
-        this.minX = this.radius;
-        this.minY = this.radius;
-        this.maxX = this.width - this.radius;
-        this.maxY = this.height - this.radius;
-    }
-
-    initSensor() {
-        if (typeof DeviceOrientationEvent?.requestPermission === "function") {
-            const btn = document.createElement("button");
-            btn.innerText = "Izinkan Sensor Gerak";
-            btn.style.cssText = `
-                position:fixed;inset:0;
-                background:#000;color:#fff;
-                font-size:20px;z-index:9999;
-            `;
-            document.body.appendChild(btn);
-
-            btn.onclick = async () => {
-                if (await DeviceOrientationEvent.requestPermission() === "granted") {
-                    btn.remove();
-                    this.listen();
-                }
-            };
-        } else {
-            this.listen();
-        }
-    }
-
-    listen() {
-        window.addEventListener("deviceorientation", e => {
-            if (this.isTouching || !this.isVisible) return;
-
-            const beta = Math.max(-45, Math.min(45, e.beta || 0));
-            const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
-
-            this.smoothBeta += (beta - this.smoothBeta) * this.smoothing;
-            this.smoothGamma += (gamma - this.smoothGamma) * this.smoothing;
-        });
-    }
-
-    initTouch() {
-        let offsetX = 0;
-        let offsetY = 0;
-
-        this.ball.addEventListener('touchstart', e => {
-            if (!this.isVisible) return;
-            const t = e.touches[0];
-            this.isTouching = true;
-            offsetX = t.clientX - this.x;
-            offsetY = t.clientY - this.y;
-        });
-
-        window.addEventListener('touchmove', e => {
-            if (!this.isTouching || !this.isVisible) return;
-            const t = e.touches[0];
-
-            this.x = t.clientX - offsetX;
-            this.y = t.clientY - offsetY;
-
-            this.checkIfOutOfScreen();
-        }, { passive: false });
-
-        window.addEventListener('touchend', () => {
-            this.isTouching = false;
-            if (
-                this.isVisible &&
-                this.x > this.minX &&
-                this.x < this.maxX &&
-                this.y > this.minY &&
-                this.y < this.maxY
-            ) {
-                this.applyBounds();
-            }
-        });
-    }
-
-    initDoubleClick() {
-        document.addEventListener('touchend', e => {
-            if (this.isVisible) return;
-            const now = Date.now();
-            if (now - this.lastTapTime < this.doubleTapDelay) {
-                this.respawnBall(
-                    e.changedTouches[0].clientX,
-                    e.changedTouches[0].clientY
-                );
-            }
-            this.lastTapTime = now;
-        });
-    }
-
-    initTwoFingerSwipe() {
-        let startY = 0;
-
-        window.addEventListener('touchstart', e => {
-            if (e.touches.length === 2) {
-                startY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-            }
-        });
-
-        window.addEventListener('touchmove', e => {
-            if (e.touches.length === 2) {
-                const y = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-                if (y - startY > 120) {
-                    openSettings();
-                }
-            }
-        });
-    }
-
-    checkIfOutOfScreen() {
-        const rect = this.ball.getBoundingClientRect();
-        if (
-            rect.right < 0 ||
-            rect.left > window.innerWidth ||
-            rect.bottom < 0 ||
-            rect.top > window.innerHeight
-        ) {
-            this.hideBall();
-        }
-    }
-
-    hideBall() {
-        this.isVisible = false;
-        this.ball.style.display = 'none';
-        this.isTouching = false;
-    }
-
-    respawnBall(x, y) {
-        this.isVisible = true;
-        this.ball.style.display = 'block';
-
-        this.x = Math.max(this.radius, Math.min(this.maxX, x));
-        this.y = Math.max(this.radius, Math.min(this.maxY, y));
-
-        this.smoothBeta = 0;
-        this.smoothGamma = 0;
-    }
-
-    applyBounds() {
-        this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
-        this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
-    }
-
-    update() {
-        if (!this.isVisible) return;
-
-        if (!this.isTouching) {
-            this.x += this.smoothGamma * this.sensitivity;
-            this.y += this.smoothBeta * this.sensitivity;
-            this.applyBounds();
-        }
-
-        this.ball.style.transform =
-            `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
-    }
-
-    loop() {
-        this.update();
-        requestAnimationFrame(() => this.loop());
-    }
-}
-
-window.onload = () => new BallInContainer();
-
-/* ===== SETTINGS FUNCTIONS ===== */
-const settings = document.getElementById('settings');
 const container = document.getElementById('container');
 const ball = document.getElementById('ball');
+const settings = document.getElementById('settings');
 
+/* ===== LOAD SAVED ASSETS ===== */
+const savedBg = localStorage.getItem('magic_bg');
+if (savedBg) {
+    container.style.backgroundImage = `url(${savedBg})`;
+}
+
+const savedBall = localStorage.getItem('magic_ball');
+if (savedBall) {
+    ball.style.backgroundImage = `url(${savedBall})`;
+}
+
+/* ===== UPLOAD HANDLERS ===== */
+function uploadBackground(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        container.style.backgroundImage = `url(${e.target.result})`;
+        localStorage.setItem('magic_bg', e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+function uploadBall(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        ball.style.backgroundImage = `url(${e.target.result})`;
+        localStorage.setItem('magic_ball', e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+/* ===== SETTINGS CONTROL ===== */
 function openSettings() {
     settings.style.display = 'block';
 }
-
 function closeSettings() {
     settings.style.display = 'none';
 }
 
-function setBg(type) {
-    container.style.background =
-        type === 1
-        ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-        : 'linear-gradient(135deg, #111 0%, #000 100%)';
-}
+/* ===== 2 FINGER SWIPE ===== */
+let startY = 0;
+window.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+        startY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    }
+});
 
-function setBall(type) {
-    ball.style.background =
-        type === 1
-        ? 'radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0)'
-        : 'radial-gradient(circle at 30% 30%, #444, #000)';
-}
+window.addEventListener('touchmove', e => {
+    if (e.touches.length === 2) {
+        const y = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        if (y - startY > 120) openSettings();
+    }
+});
 </script>
 
 </body>
