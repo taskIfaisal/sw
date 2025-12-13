@@ -1,52 +1,53 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#10B981">
-    <meta name="apple-mobile-web-app-title" content="Magic Ball">
-    <title>Magic Ball - Bola dalam Wadah</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        }
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Magic Ball">
+<meta name="theme-color" content="#10B981">
 
-        html, body {
-    width: 100%;
-    height: 100%;
+<title>Magic Ball</title>
+
+<style>
+* {
     margin: 0;
-    overflow: hidden;
-    position: fixed;
-    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-    overscroll-behavior: none;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-body {
-    min-height: 100vh;
-    min-height: 100svh;
-}
-
-.container {
+html, body {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: #10B981;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+/* CONTAINER FULL SCREEN (ANTI GARIS PUTIH) */
+.container {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    overflow: hidden;
+}
 
-        #ball {
+/* BALL */
+#ball {
     position: absolute;
     width: 120px;
     height: 120px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0);
-    box-shadow: 
+    box-shadow:
         inset -10px -10px 20px rgba(0,0,0,0.2),
         inset 10px 10px 20px rgba(255,255,255,0.6),
         0 20px 40px rgba(0,0,0,0.4);
@@ -54,86 +55,81 @@ body {
     will-change: transform;
 }
 
+.ball-inner {
+    position: absolute;
+    inset: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #ffffff, #e8e8e8);
+    box-shadow:
+        inset 5px 5px 10px rgba(255,255,255,0.8),
+        inset -5px -5px 10px rgba(0,0,0,0.1);
+}
 
-        .ball-inner {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            right: 12px;
-            bottom: 12px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 40% 40%, #ffffff, #e8e8e8);
-            box-shadow: 
-                inset 5px 5px 10px rgba(255,255,255,0.8),
-                inset -5px -5px 10px rgba(0,0,0,0.1);
-        }
+.ball-reflection {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 70%);
+}
 
-        .ball-reflection {
-            position: absolute;
-            top: 18px;
-            left: 18px;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 70%);
-            z-index: 3;
-        }
+/* TEXT */
+.instructions {
+    position: fixed;
+    top: 30px;
+    width: 100%;
+    text-align: center;
+    color: rgba(255,255,255,0.9);
+    font-size: 16px;
+    padding: 0 20px;
+    z-index: 3;
+    pointer-events: none;
+    animation: fadeOut 5s forwards;
+}
 
-        .instructions {
-            position: fixed;
-            top: 30px;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            color: rgba(255,255,255,0.9);
-            font-size: 16px;
-            padding: 0 20px;
-            z-index: 3;
-            pointer-events: none;
-            animation: fadeOut 5s forwards;
-        }
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
 
-        @keyframes fadeOut {
-            0% { opacity: 1; }
-            80% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-
-        .container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        /* Untuk iOS Safari optimasi */
-        @supports (-webkit-touch-callout: none) {
-            #ball {
-                -webkit-transform: translateZ(0);
-                transform: translateZ(0);
-            }
-        }
-    </style>
+/* iOS GPU FIX */
+@supports (-webkit-touch-callout: none) {
+    #ball {
+        transform: translateZ(0);
+    }
+}
+</style>
 </head>
-<body>
-    <!-- Container untuk bola -->
-    <div class="container">
-        <!-- Instructions -->
-        <div class="instructions">
-            Miringkan HP seperti wadah<br>
-            Bola akan berguling mengikuti kemiringan
-        </div>
 
-        <!-- Ball and Shadow -->
-        <div id="ball">
-            <div class="ball-inner"></div>
-            <div class="ball-reflection"></div>
-        </div>
+<body>
+
+<div class="container">
+    <div class="instructions">
+        Miringkan HP seperti wadah<br>
+        Bola akan berguling mengikuti kemiringan
     </div>
 
-    <script>
+    <div id="ball">
+        <div class="ball-inner"></div>
+        <div class="ball-reflection"></div>
+    </div>
+</div>
+
+<script>
+/* === FIX VIEWPORT iOS (ANTI GARIS PUTIH) === */
+(function () {
+    function fixVH() {
+        document.documentElement.style.height = window.innerHeight + 'px';
+        document.body.style.height = window.innerHeight + 'px';
+    }
+    fixVH();
+    window.addEventListener('resize', fixVH);
+})();
+
+/* === BALL LOGIC === */
 class BallInContainer {
     constructor() {
         this.ball = document.getElementById('ball');
@@ -143,16 +139,12 @@ class BallInContainer {
         this.y = window.innerHeight / 2;
 
         this.minX = this.radius;
-        this.maxX = window.innerWidth - this.radius;
         this.minY = this.radius;
+        this.maxX = window.innerWidth - this.radius;
         this.maxY = window.innerHeight - this.radius;
 
-        // Sensitivitas (bisa di-tuning)
         this.sensitivity = 0.35;
 
-        // Smoothing supaya halus di iPhone 7
-        this.beta = 0;
-        this.gamma = 0;
         this.smoothBeta = 0;
         this.smoothGamma = 0;
         this.smoothing = 0.15;
@@ -185,35 +177,24 @@ class BallInContainer {
     }
 
     listen() {
-        window.addEventListener("deviceorientation", (e) => {
-            // Clamp biar stabil
+        window.addEventListener("deviceorientation", e => {
             const beta = Math.max(-45, Math.min(45, e.beta || 0));
             const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
 
-            // Smoothing (penting di iPhone 7)
             this.smoothBeta += (beta - this.smoothBeta) * this.smoothing;
             this.smoothGamma += (gamma - this.smoothGamma) * this.smoothing;
-
-            this.beta = this.smoothBeta;
-            this.gamma = this.smoothGamma;
         });
     }
 
     update() {
-        // HP DIAM → beta & gamma kecil → tidak bergerak
-        const moveX = this.gamma * this.sensitivity;
-        const moveY = this.beta * this.sensitivity;
+        this.x += this.smoothGamma * this.sensitivity;
+        this.y += this.smoothBeta * this.sensitivity;
 
-        this.x += moveX;
-        this.y += moveY;
-
-        // Batas wadah
         this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
         this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
 
-        this.ball.style.transform = `
-            translate(${this.x - this.radius}px, ${this.y - this.radius}px)
-        `;
+        this.ball.style.transform =
+            `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
     }
 
     loop() {
@@ -222,9 +203,7 @@ class BallInContainer {
     }
 }
 
-window.onload = () => {
-    new BallInContainer();
-};
+window.onload = () => new BallInContainer();
 </script>
 
 </body>
