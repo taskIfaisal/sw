@@ -12,6 +12,7 @@
 <title>Magic Ball</title>
 
 <style>
+/* RESET */
 * {
     margin: 0;
     padding: 0;
@@ -20,6 +21,7 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+/* FULLSCREEN */
 html, body {
     position: fixed;
     inset: 0;
@@ -30,6 +32,7 @@ html, body {
     touch-action: none;
 }
 
+/* CONTAINER */
 .container {
     position: fixed;
     inset: 0;
@@ -39,84 +42,52 @@ html, body {
     overflow: hidden;
 }
 
-/* OBJECT */
+/* BALL */
 #ball {
     position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0);
     will-change: transform;
+    touch-action: none;
+    opacity: 1;
+    transition: opacity 0.3s ease;
 }
 
-#ball img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    pointer-events: none;
+.ball-inner {
+    position: absolute;
+    inset: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #ffffff, #e8e8e8);
 }
 
-/* SETTINGS */
-#settings {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.85);
-    color: #fff;
-    display: none;
-    z-index: 9999;
-    padding: 20px;
-    font-family: system-ui;
-}
-
-#settings h2 {
-    margin-bottom: 15px;
-}
-
-#settings label {
-    display: block;
-    margin-top: 20px;
-    font-size: 14px;
-}
-
-#settings input {
-    margin-top: 10px;
-    width: 100%;
-}
-
-#closeSettings {
-    margin-top: 30px;
-    padding: 12px;
-    width: 100%;
-    font-size: 16px;
+.ball-reflection {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 70%);
 }
 </style>
 </head>
 
 <body>
 
-<div class="container" id="container">
+<div class="container">
     <div id="ball">
-        <img id="ballImage">
+        <div class="ball-inner"></div>
+        <div class="ball-reflection"></div>
     </div>
 </div>
 
-<div id="settings">
-    <h2>Settings</h2>
-
-    <label>Ganti Background</label>
-    <input type="file" accept="image/*" id="bgInput">
-
-    <label>Ganti Object</label>
-    <input type="file" accept="image/*" id="ballInput">
-
-    <button id="closeSettings">Tutup</button>
-</div>
-
 <script>
-class MagicObject {
+class BallInContainer {
     constructor() {
         this.ball = document.getElementById('ball');
-        this.img = document.getElementById('ballImage');
-        this.container = document.getElementById('container');
-
-        this.x = 100;
-        this.y = 100;
+        this.radius = 60;
 
         this.sensitivity = 0.35;
         this.smoothing = 0.15;
@@ -125,23 +96,35 @@ class MagicObject {
 
         this.isTouching = false;
         this.isVisible = true;
-        this.settingsOpen = false;
+        
+        // Threshold untuk menentukan kapan bola dianggap "ditarik keluar"
+        this.exitThreshold = 50;
+        
+        // Untuk menghitung double click
+        this.lastTapTime = 0;
+        this.doubleTapDelay = 300;
 
         this.updateBounds();
-        this.restoreAssets();
+        this.x = this.width / 2;
+        this.y = this.height / 2;
 
         window.addEventListener('resize', () => this.updateBounds());
         window.visualViewport?.addEventListener('resize', () => this.updateBounds());
 
         this.initSensor();
         this.initTouch();
-        this.initSettingsGesture();
+        this.initDoubleClick();
         this.loop();
     }
 
     updateBounds() {
         this.width = window.innerWidth;
-        this.height = window.visualViewport.height;
+        this.height = window.screen.height; // FULL FISIK LAYAR
+
+        this.minX = this.radius;
+        this.minY = this.radius;
+        this.maxX = this.width - this.radius;
+        this.maxY = this.height - this.radius;
     }
 
     initSensor() {
@@ -151,7 +134,7 @@ class MagicObject {
             btn.style.cssText = `
                 position:fixed;inset:0;
                 background:#000;color:#fff;
-                font-size:20px;z-index:99999;
+                font-size:20px;z-index:9999;
             `;
             document.body.appendChild(btn);
 
@@ -179,92 +162,132 @@ class MagicObject {
     }
 
     initTouch() {
-        let ox = 0, oy = 0;
+        let offsetX = 0;
+        let offsetY = 0;
+        let startX = 0;
+        let startY = 0;
 
         this.ball.addEventListener('touchstart', e => {
-            if (!this.isVisible || this.settingsOpen) return;
+            if (!this.isVisible) return;
+            
             const t = e.touches[0];
             this.isTouching = true;
-            ox = t.clientX - this.x;
-            oy = t.clientY - this.y;
+            offsetX = t.clientX - this.x;
+            offsetY = t.clientY - this.y;
+            startX = this.x;
+            startY = this.y;
         });
 
         window.addEventListener('touchmove', e => {
             if (!this.isTouching || !this.isVisible) return;
             const t = e.touches[0];
-            this.x = t.clientX - ox;
-            this.y = t.clientY - oy;
-            this.checkOut();
-        }, { passive:false });
+
+            this.x = t.clientX - offsetX;
+            this.y = t.clientY - offsetY;
+
+            // Periksa apakah bola ditarik keluar layar
+            this.checkIfPulledOut();
+        }, { passive: false });
 
         window.addEventListener('touchend', () => {
+            if (!this.isVisible) return;
+            
             this.isTouching = false;
-        });
-    }
-
-    checkOut() {
-        const r = this.ball.getBoundingClientRect();
-        if (
-            r.right < 0 ||
-            r.left > this.width ||
-            r.bottom < 0 ||
-            r.top > this.height
-        ) {
-            this.ball.style.display = 'none';
-            this.isVisible = false;
-        }
-    }
-
-    initSettingsGesture() {
-        let startY = 0;
-
-        window.addEventListener('touchstart', e => {
-            if (e.touches.length === 2) {
-                startY = e.touches[0].clientY;
-            }
-        });
-
-        window.addEventListener('touchmove', e => {
-            if (e.touches.length === 2) {
-                const dy = e.touches[0].clientY - startY;
-                if (dy > 80) this.openSettings();
+            
+            // Jika bola tidak ditarik keluar, kembalikan ke dalam batas
+            if (this.isVisible) {
+                this.applyBounds();
             }
         });
     }
-
-    openSettings() {
-        this.settingsOpen = true;
-        document.getElementById('settings').style.display = 'block';
+    
+    initDoubleClick() {
+        this.ball.addEventListener('touchstart', (e) => {
+            if (!this.isVisible) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - this.lastTapTime;
+                
+                if (tapLength < this.doubleTapDelay && tapLength > 0) {
+                    // Double tap terdeteksi - munculkan bola kembali
+                    this.respawnBall();
+                }
+                
+                this.lastTapTime = currentTime;
+            }
+        });
+        
+        // Juga tambahkan double click untuk container jika bola tidak terlihat
+        document.querySelector('.container').addEventListener('touchstart', (e) => {
+            if (!this.isVisible) {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - this.lastTapTime;
+                
+                if (tapLength < this.doubleTapDelay && tapLength > 0) {
+                    // Double tap terdeteksi - munculkan bola kembali di posisi tap
+                    this.respawnBall(e.touches[0].clientX, e.touches[0].clientY);
+                }
+                
+                this.lastTapTime = currentTime;
+            }
+        });
     }
-
-    closeSettings() {
-        this.settingsOpen = false;
-        document.getElementById('settings').style.display = 'none';
-    }
-
-    restoreAssets() {
-        const bg = localStorage.getItem('magic_bg');
-        if (bg) this.container.style.backgroundImage = `url(${bg})`;
-
-        const obj = localStorage.getItem('magic_obj');
-        if (obj) {
-            this.img.src = obj;
-            this.img.onload = () => {
-                this.ball.style.width = this.img.naturalWidth + 'px';
-                this.ball.style.height = this.img.naturalHeight + 'px';
-            };
+    
+    checkIfPulledOut() {
+        // Cek jika bola ditarik keluar dari layar melebihi threshold
+        if (this.x < -this.exitThreshold || 
+            this.x > this.width + this.exitThreshold ||
+            this.y < -this.exitThreshold || 
+            this.y > this.height + this.exitThreshold) {
+            
+            // Bola dianggap ditarik keluar - hilangkan
+            this.hideBall();
         }
+    }
+    
+    hideBall() {
+        this.isVisible = false;
+        this.ball.style.opacity = '0';
+        this.isTouching = false;
+    }
+    
+    respawnBall(x = null, y = null) {
+        this.isVisible = true;
+        this.ball.style.opacity = '1';
+        
+        if (x !== null && y !== null) {
+            // Posisi di tempat double click
+            this.x = Math.max(this.radius, Math.min(this.maxX, x));
+            this.y = Math.max(this.radius, Math.min(this.maxY, y));
+        } else {
+            // Posisi default di tengah
+            this.x = this.width / 2;
+            this.y = this.height / 2;
+        }
+        
+        // Reset sensor values
+        this.smoothBeta = 0;
+        this.smoothGamma = 0;
+    }
+
+    applyBounds() {
+        this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
+        this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
     }
 
     update() {
-        if (!this.isVisible || this.settingsOpen) return;
-
+        if (!this.isVisible) return;
+        
         if (!this.isTouching) {
             this.x += this.smoothGamma * this.sensitivity;
             this.y += this.smoothBeta * this.sensitivity;
+            this.applyBounds();
         }
 
-        this.ball.style.transform = `translate(${this.x}px, ${this.y}px)`;
+        this.ball.style.transform =
+            `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
     }
 
     loop() {
@@ -273,34 +296,7 @@ class MagicObject {
     }
 }
 
-const app = new MagicObject();
-
-/* SETTINGS HANDLER */
-document.getElementById('closeSettings').onclick = () => app.closeSettings();
-
-document.getElementById('bgInput').onchange = e => {
-    const r = new FileReader();
-    r.onload = ev => {
-        container.style.backgroundImage = `url(${ev.target.result})`;
-        localStorage.setItem('magic_bg', ev.target.result);
-    };
-    r.readAsDataURL(e.target.files[0]);
-};
-
-document.getElementById('ballInput').onchange = e => {
-    const r = new FileReader();
-    r.onload = ev => {
-        app.img.src = ev.target.result;
-        localStorage.setItem('magic_obj', ev.target.result);
-        app.img.onload = () => {
-            app.ball.style.width = app.img.naturalWidth + 'px';
-            app.ball.style.height = app.img.naturalHeight + 'px';
-            app.isVisible = true;
-            app.ball.style.display = 'block';
-        };
-    };
-    r.readAsDataURL(e.target.files[0]);
-};
+window.onload = () => new BallInContainer();
 </script>
 
 </body>
