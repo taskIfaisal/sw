@@ -21,7 +21,7 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-/* FULLSCREEN */
+/* FULLSCREEN - Sama seperti Magic Card Trick */
 html, body {
     position: fixed;
     inset: 0;
@@ -32,52 +32,22 @@ html, body {
     touch-action: none;
 }
 
-/* CONTAINER */
-.container {
+/* BACKGROUND - Sama seperti #background di Magic Card Trick */
+#background {
     position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100dvh;
-    overflow: hidden;
-    /* Background default akan diatur via JS */
-}
-
-/* Status bar area (untuk iOS) */
-.status-bar-area {
-    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: env(safe-area-inset-top, 20px);
-    background: transparent;
-    z-index: 1;
-}
-
-/* Home indicator area (untuk iOS) */
-.home-indicator-area {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: env(safe-area-inset-bottom, 0px);
-    background: transparent;
-    z-index: 1;
-}
-
-/* Container untuk background saja - HANYA DI AREA AMAN */
-.background-container {
-    position: absolute;
-    top: env(safe-area-inset-top, 20px); /* Mulai dari bawah status bar */
-    left: 0;
-    width: 100%;
-    height: calc(100% - env(safe-area-inset-top, 20px) - env(safe-area-inset-bottom, 0px)); /* Tinggi dikurangi safe areas */
-    z-index: 1;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
     background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    z-index: 1;
 }
 
-/* Container untuk bola (di atas background) */
+/* CONTAINER UNTUK BOLA */
 .ball-container {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
@@ -115,7 +85,7 @@ html, body {
     background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 70%);
 }
 
-/* SETTINGS MODAL */
+/* SETTINGS MODAL - Tetap sama */
 #settings {
     position: fixed;
     top: 0;
@@ -223,23 +193,14 @@ html, body {
     </div>
 </div>
 
-<!-- Main Game Container -->
-<div class="container hidden">
-    <!-- Area untuk status bar (transparent) -->
-    <div class="status-bar-area"></div>
-    
-    <!-- Area untuk home indicator (transparent) -->
-    <div class="home-indicator-area"></div>
-    
-    <!-- Container untuk background saja - HANYA DI AREA AMAN -->
-    <div class="background-container" id="background-container"></div>
-    
-    <!-- Container untuk bola -->
-    <div class="ball-container">
-        <div id="ball">
-            <div class="ball-inner"></div>
-            <div class="ball-reflection"></div>
-        </div>
+<!-- Background Element - Sama seperti Magic Card Trick -->
+<div id="background"></div>
+
+<!-- Container untuk bola -->
+<div class="ball-container">
+    <div id="ball">
+        <div class="ball-inner"></div>
+        <div class="ball-reflection"></div>
     </div>
 </div>
 
@@ -247,8 +208,7 @@ html, body {
 class MagicBallGame {
     constructor() {
         this.settings = document.getElementById('settings');
-        this.container = document.querySelector('.container');
-        this.backgroundContainer = document.getElementById('background-container');
+        this.background = document.getElementById('background');
         this.ball = document.getElementById('ball');
         this.bgUpload = document.getElementById('bg-upload');
         this.startBtn = document.getElementById('start-btn');
@@ -258,7 +218,7 @@ class MagicBallGame {
     }
     
     initSettings() {
-        // Handle background upload
+        // Handle background upload - Sama seperti Magic Card Trick
         this.bgUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -272,7 +232,7 @@ class MagicBallGame {
         
         // Handle default background
         this.defaultBgBtn.addEventListener('click', () => {
-            this.saveBackground(null); // null untuk menggunakan background default
+            this.saveBackground(null);
         });
         
         // Handle start button
@@ -294,39 +254,38 @@ class MagicBallGame {
     saveBackground(imageData) {
         if (imageData) {
             localStorage.setItem('magicBallBackground', imageData);
-            // Tampilkan preview
-            this.backgroundContainer.style.backgroundImage = `url(${imageData})`;
+            // Tampilkan preview - Sama seperti Magic Card Trick
+            this.background.style.backgroundImage = `url(${imageData})`;
         } else {
             localStorage.removeItem('magicBallBackground');
             // Reset ke default
-            this.backgroundContainer.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
-            this.backgroundContainer.style.backgroundImage = 'none';
+            this.background.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+            this.background.style.backgroundImage = 'none';
         }
         
-        this.backgroundContainer.style.backgroundSize = 'cover';
-        this.backgroundContainer.style.backgroundPosition = 'center';
+        this.background.style.backgroundSize = 'cover';
+        this.background.style.backgroundPosition = 'center';
     }
     
     startGame(savedBg = null) {
         // Sembunyikan settings
         this.settings.classList.add('hidden');
-        this.container.classList.remove('hidden');
         
-        // Apply background jika ada
+        // Apply background jika ada - Sama seperti Magic Card Trick
         if (savedBg) {
-            this.backgroundContainer.style.backgroundImage = `url(${savedBg})`;
-            this.backgroundContainer.style.backgroundSize = 'cover';
-            this.backgroundContainer.style.backgroundPosition = 'center';
+            this.background.style.backgroundImage = `url(${savedBg})`;
+            this.background.style.backgroundSize = 'cover';
+            this.background.style.backgroundPosition = 'center';
         } else {
             const savedBackground = localStorage.getItem('magicBallBackground');
             if (savedBackground) {
-                this.backgroundContainer.style.backgroundImage = `url(${savedBackground})`;
-                this.backgroundContainer.style.backgroundSize = 'cover';
-                this.backgroundContainer.style.backgroundPosition = 'center';
+                this.background.style.backgroundImage = `url(${savedBackground})`;
+                this.background.style.backgroundSize = 'cover';
+                this.background.style.backgroundPosition = 'center';
             } else {
                 // Background default
-                this.backgroundContainer.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
-                this.backgroundContainer.style.backgroundImage = 'none';
+                this.background.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+                this.background.style.backgroundImage = 'none';
             }
         }
         
@@ -348,10 +307,7 @@ class BallInContainer {
         this.isTouching = false;
         this.isVisible = true;
         
-        // Threshold untuk menentukan kapan bola dianggap "ditarik keluar"
         this.exitThreshold = 50;
-        
-        // Untuk menghitung double click
         this.lastTapTime = 0;
         this.doubleTapDelay = 300;
 
@@ -369,10 +325,10 @@ class BallInContainer {
     }
 
     updateBounds() {
+        // Gunakan window.innerWidth/Height seperti Magic Card Trick
         this.width = window.innerWidth;
-        this.height = window.screen.height; // FULL FISIK LAYAR
+        this.height = window.innerHeight;
 
-        // Biarkan bola sampai ke tepi atas layar
         this.minX = this.radius;
         this.minY = this.radius;
         this.maxX = this.width - this.radius;
@@ -452,11 +408,9 @@ class BallInContainer {
             this.x = t.clientX - offsetX;
             this.y = t.clientY - offsetY;
 
-            // Update posisi visual
             this.ball.style.transform =
                 `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
 
-            // Periksa apakah bola ditarik keluar layar
             this.checkIfPulledOut();
             
             e.preventDefault();
@@ -467,7 +421,6 @@ class BallInContainer {
             
             this.isTouching = false;
             
-            // Jika bola tidak ditarik keluar, kembalikan ke dalam batas
             if (this.isVisible) {
                 this.applyBounds();
                 this.ball.style.transform =
@@ -483,7 +436,6 @@ class BallInContainer {
                 const tapLength = currentTime - this.lastTapTime;
                 
                 if (tapLength < this.doubleTapDelay && tapLength > 0) {
-                    // Double tap terdeteksi - munculkan bola kembali di posisi tap
                     this.respawnBall(e.touches[0].clientX, e.touches[0].clientY);
                     e.preventDefault();
                 }
@@ -494,13 +446,11 @@ class BallInContainer {
     }
     
     checkIfPulledOut() {
-        // Cek jika bola ditarik keluar dari layar melebihi threshold
         if (this.x < -this.exitThreshold || 
             this.x > this.width + this.exitThreshold ||
             this.y < -this.exitThreshold || 
             this.y > this.height + this.exitThreshold) {
             
-            // Bola dianggap ditarik keluar - hilangkan
             this.hideBall();
         }
     }
@@ -518,20 +468,16 @@ class BallInContainer {
         this.ball.style.pointerEvents = 'auto';
         
         if (x !== null && y !== null) {
-            // Posisi di tempat double click dengan batas
             this.x = Math.max(this.radius, Math.min(this.maxX, x));
             this.y = Math.max(this.radius, Math.min(this.maxY, y));
         } else {
-            // Posisi default di tengah
             this.x = this.width / 2;
             this.y = this.height / 2;
         }
         
-        // Update posisi
         this.ball.style.transform =
             `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
         
-        // Reset sensor values
         this.smoothBeta = 0;
         this.smoothGamma = 0;
     }
