@@ -67,12 +67,44 @@
       left: 61.5%;
       transform: translateX(-50%);
     }
+    
+    /* Style untuk file input */
+    #fileInput {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border: 2px dashed #ccc;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    
+    /* Clear image button */
+    #clearImageBtn {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(255,0,0,0.7);
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      z-index: 10;
+    }
+    
+    #clearImageBtn:hover {
+      background: rgba(255,0,0,0.9);
+    }
   </style>
 </head>
 <body>
   <div id="uploadMenu">
     <input type="file" id="fileInput" accept="image/*">
   </div>
+  
+  <button id="clearImageBtn">Hapus Gambar</button>
 
   <div id="textOverlay">Facebook</div>
   <div id="textOverlay2">Mail</div>
@@ -84,24 +116,133 @@
   const preview = document.getElementById('preview');
   const textOverlay = document.getElementById('textOverlay');
   const textOverlay2 = document.getElementById('textOverlay2');
+  const clearImageBtn = document.getElementById('clearImageBtn');
+
+  // KEY untuk localStorage
+  const STORAGE_KEY = 'peek_app_background_image';
+
+  // Fungsi untuk menyimpan gambar ke localStorage
+  function saveImageToLocalStorage(imageData) {
+    try {
+      localStorage.setItem(STORAGE_KEY, imageData);
+      console.log('Gambar berhasil disimpan ke localStorage');
+      return true;
+    } catch (e) {
+      console.error('Gagal menyimpan gambar ke localStorage:', e);
+      // Jika localStorage penuh, coba hapus yang lama
+      if (e.name === 'QuotaExceededError') {
+        alert('Penyimpanan lokal penuh. Hapus beberapa data atau coba gambar yang lebih kecil.');
+      }
+      return false;
+    }
+  }
+
+  // Fungsi untuk memuat gambar dari localStorage
+  function loadImageFromLocalStorage() {
+    try {
+      const savedImage = localStorage.getItem(STORAGE_KEY);
+      if (savedImage) {
+        // Cek apakah data valid (harus data URL)
+        if (savedImage.startsWith('data:image')) {
+          preview.src = savedImage;
+          preview.style.display = 'block';
+          textOverlay.style.display = 'block';
+          textOverlay2.style.display = 'block';
+          clearImageBtn.style.display = 'block';
+          console.log('Gambar berhasil dimuat dari localStorage');
+          return true;
+        } else {
+          // Data tidak valid, hapus dari localStorage
+          localStorage.removeItem(STORAGE_KEY);
+          console.log('Data gambar tidak valid, dihapus dari localStorage');
+          return false;
+        }
+      }
+    } catch (e) {
+      console.error('Gagal memuat gambar dari localStorage:', e);
+      return false;
+    }
+    return false;
+  }
+
+  // Fungsi untuk menghapus gambar dari localStorage
+  function clearImageFromLocalStorage() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      preview.style.display = 'none';
+      preview.src = '';
+      textOverlay.style.display = 'none';
+      textOverlay2.style.display = 'none';
+      clearImageBtn.style.display = 'none';
+      console.log('Gambar dihapus dari localStorage');
+    } catch (e) {
+      console.error('Gagal menghapus gambar dari localStorage:', e);
+    }
+  }
+
+  // Event listener untuk tombol hapus gambar
+  clearImageBtn.addEventListener('click', () => {
+    if (confirm('Apakah Anda yakin ingin menghapus gambar?')) {
+      clearImageFromLocalStorage();
+    }
+  });
 
   // Double click untuk buka menu upload
   document.body.addEventListener('dblclick', () => {
     uploadMenu.style.display = 'block';
   });
 
+  // Klik di luar upload menu untuk menutupnya
+  document.addEventListener('click', (e) => {
+    if (uploadMenu.style.display === 'block' && 
+        !uploadMenu.contains(e.target)) {
+      uploadMenu.style.display = 'none';
+    }
+  });
+
   // Saat gambar dipilih
   fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validasi ukuran file (maksimal 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        alert('Ukuran gambar terlalu besar. Maksimal 5MB.');
+        fileInput.value = '';
+        return;
+      }
+      
+      // Validasi tipe file
+      if (!file.type.startsWith('image/')) {
+        alert('File harus berupa gambar.');
+        fileInput.value = '';
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = function(evt) {
-        preview.src = evt.target.result;
-        preview.style.display = 'block';
-        uploadMenu.style.display = 'none';
-        textOverlay.style.display = 'block';
-        textOverlay2.style.display = 'block';
+        const imageData = evt.target.result;
+        
+        // Simpan ke localStorage
+        if (saveImageToLocalStorage(imageData)) {
+          // Tampilkan gambar
+          preview.src = imageData;
+          preview.style.display = 'block';
+          uploadMenu.style.display = 'none';
+          textOverlay.style.display = 'block';
+          textOverlay2.style.display = 'block';
+          clearImageBtn.style.display = 'block';
+          
+          // Reset input file
+          fileInput.value = '';
+        }
       };
+      
+      reader.onerror = function() {
+        alert('Gagal membaca file gambar.');
+        fileInput.value = '';
+      };
+      
       reader.readAsDataURL(file);
     }
   });
@@ -131,20 +272,37 @@
     }
   }
 
+  // Fungsi untuk mengecek dan memperbaiki gambar yang rusak
+  function checkAndFixImage() {
+    if (preview.src && preview.complete) {
+      if (preview.naturalWidth === 0) {
+        console.log('Gambar rusak, menghapus dari localStorage');
+        clearImageFromLocalStorage();
+      }
+    }
+  }
+
   // Jalankan saat halaman dibuka
-  updateTextFromAPI();
+  window.addEventListener('load', () => {
+    // Coba muat gambar dari localStorage
+    if (loadImageFromLocalStorage()) {
+      // Cek apakah gambar valid setelah dimuat
+      setTimeout(checkAndFixImage, 1000);
+    }
+    
+    // Update teks dari API
+    updateTextFromAPI();
+  });
 
   // Update otomatis setiap 2 detik
   setInterval(updateTextFromAPI, 2000);
+  
+  // Event listener untuk error gambar
+  preview.addEventListener('error', () => {
+    console.log('Gambar error, menghapus dari localStorage');
+    clearImageFromLocalStorage();
+  });
 </script>
 
 </body>
 </html>
-
-
-
-
-
-
-
-
