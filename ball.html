@@ -12,7 +12,7 @@
 <title>Magic Ball</title>
 
 <style>
-/* HAPUS SELECTOR * YANG SALAH */
+/* RESET AMAN */
 * {
     margin: 0;
     padding: 0;
@@ -21,22 +21,21 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+/* HTML & BODY FULL */
 html, body {
     position: fixed;
     inset: 0;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
-    width: 100vw;
-    height: 100vh;
-    background: #10B981; /* Warna hijau, bukan hitam */
+    background: #10B981;
 }
 
-/* CONTAINER BENAR-BENAR FULL */
+/* CONTAINER REAL FULLSCREEN */
 .container {
     position: fixed;
-    top: 0;
-    left: 0;
+    inset: 0;
     width: 100vw;
-    height: 100vh;
     height: 100dvh;
     background: linear-gradient(135deg, #10B981 0%, #059669 100%);
     overflow: hidden;
@@ -95,32 +94,22 @@ class BallInContainer {
         this.x = this.width / 2;
         this.y = this.height / 2;
 
-        window.addEventListener('resize', () => this.updateBounds());
         window.visualViewport?.addEventListener('resize', () => this.updateBounds());
+        window.addEventListener('resize', () => this.updateBounds());
 
         this.initSensor();
         this.loop();
     }
 
     updateBounds() {
-        // Gunakan document.documentElement untuk mendapatkan ukuran tepat
-        this.width = document.documentElement.clientWidth;
-        this.height = document.documentElement.clientHeight;
+        const vv = window.visualViewport || window;
+        this.width = vv.width;
+        this.height = vv.height;
 
-        console.log("Screen bounds:", {
-            width: this.width,
-            height: this.height,
-            clientWidth: document.documentElement.clientWidth,
-            clientHeight: document.documentElement.clientHeight,
-            innerWidth: window.innerWidth,
-            innerHeight: window.innerHeight
-        });
-
-        // Radius untuk batas
         this.minX = this.radius;
         this.minY = this.radius;
         this.maxX = this.width - this.radius;
-        this.maxY = this.height; // Gunakan height asli
+        this.maxY = this.height - this.radius;
     }
 
     initSensor() {
@@ -159,21 +148,11 @@ class BallInContainer {
         this.x += this.smoothGamma * this.sensitivity;
         this.y += this.smoothBeta * this.sensitivity;
 
-        // Batasi posisi X (kiri-kanan)
         this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
-        
-        // Batasi posisi Y (atas-bawah)
-        // Kurangi radius untuk memastikan bola tidak keluar
-        const maxYPosition = this.maxY - this.radius;
-        this.y = Math.max(this.minY, Math.min(maxYPosition, this.y));
+        this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
 
         this.ball.style.transform =
             `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
-            
-        // Debug jika bola di bawah
-        if (this.y >= maxYPosition - 5) {
-            console.log("Ball at bottom:", this.y, "maxY:", maxYPosition);
-        }
     }
 
     loop() {
@@ -182,24 +161,7 @@ class BallInContainer {
     }
 }
 
-window.onload = () => {
-    // Reset semua margin dan padding
-    document.documentElement.style.margin = '0';
-    document.documentElement.style.padding = '0';
-    document.documentElement.style.width = '100%';
-    document.documentElement.style.height = '100%';
-    document.documentElement.style.overflow = 'hidden';
-    
-    document.body.style.margin = '0';
-    document.body.style.padding = '0';
-    document.body.style.width = '100%';
-    document.body.style.height = '100%';
-    document.body.style.overflow = 'hidden';
-    document.body.style.background = '#10B981'; // Pastikan background hijau
-    
-    // Start app
-    new BallInContainer();
-};
+window.onload = () => new BallInContainer();
 </script>
 
 </body>
