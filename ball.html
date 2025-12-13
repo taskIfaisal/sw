@@ -53,13 +53,24 @@ html, body {
     z-index: 1;
 }
 
-/* Container untuk background saja - HANYA DI BAWAH STATUS BAR */
+/* Home indicator area (untuk iOS) */
+.home-indicator-area {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: env(safe-area-inset-bottom, 0px);
+    background: transparent;
+    z-index: 1;
+}
+
+/* Container untuk background saja - HANYA DI AREA AMAN */
 .background-container {
     position: absolute;
     top: env(safe-area-inset-top, 20px); /* Mulai dari bawah status bar */
     left: 0;
     width: 100%;
-    height: calc(100% - env(safe-area-inset-top, 20px)); /* Tinggi dikurangi status bar */
+    height: calc(100% - env(safe-area-inset-top, 20px) - env(safe-area-inset-bottom, 0px)); /* Tinggi dikurangi safe areas */
     z-index: 1;
     background: linear-gradient(135deg, #10B981 0%, #059669 100%);
 }
@@ -217,7 +228,10 @@ html, body {
     <!-- Area untuk status bar (transparent) -->
     <div class="status-bar-area"></div>
     
-    <!-- Container untuk background saja - HANYA DI BAWAH STATUS BAR -->
+    <!-- Area untuk home indicator (transparent) -->
+    <div class="home-indicator-area"></div>
+    
+    <!-- Container untuk background saja - HANYA DI AREA AMAN -->
     <div class="background-container" id="background-container"></div>
     
     <!-- Container untuk bola -->
