@@ -72,6 +72,25 @@ html, body {
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 70%);
 }
+
+/* PERMISSION BUTTON */
+#permissionBtn {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    font-size: 20px;
+    font-family: sans-serif;
+    border: none;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+    line-height: 1.5;
+    cursor: pointer;
+}
 </style>
 </head>
 
@@ -84,10 +103,13 @@ html, body {
     </div>
 </div>
 
+<button id="permissionBtn" style="display: none;">Izinkan Sensor Gerak</button>
+
 <script>
 class BallInContainer {
     constructor() {
         this.ball = document.getElementById('ball');
+        this.permissionBtn = document.getElementById('permissionBtn');
         this.radius = 60;
 
         this.sensitivity = 0.35;
@@ -99,7 +121,7 @@ class BallInContainer {
         this.isVisible = true;
         
         // Threshold untuk menentukan kapan bola dianggap "ditarik keluar"
-        this.exitThreshold = 80; // Dinaikkan agar lebih mudah ditarik keluar
+        this.exitThreshold = 80;
         
         // Untuk menghitung double click
         this.lastTapTime = 0;
@@ -120,7 +142,7 @@ class BallInContainer {
 
     updateBounds() {
         this.width = window.innerWidth;
-        this.height = window.screen.height; // FULL FISIK LAYAR
+        this.height = window.screen.height;
 
         this.minX = this.radius;
         this.minY = this.radius;
@@ -129,23 +151,34 @@ class BallInContainer {
     }
 
     initSensor() {
-        if (typeof DeviceOrientationEvent?.requestPermission === "function") {
-            const btn = document.createElement("button");
-            btn.innerText = "Izinkan Sensor Gerak";
-            btn.style.cssText = `
-                position:fixed;inset:0;
-                background:#000;color:#fff;
-                font-size:20px;z-index:9999;
-            `;
-            document.body.appendChild(btn);
-
-            btn.onclick = async () => {
-                if (await DeviceOrientationEvent.requestPermission() === "granted") {
-                    btn.remove();
-                    this.listen();
+        // Cek apakah device orientation supported
+        if (!window.DeviceOrientationEvent) {
+            console.log("DeviceOrientationEvent tidak didukung");
+            this.listen();
+            return;
+        }
+        
+        // Untuk iOS 13+ dan beberapa browser yang membutuhkan permission
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            // Tampilkan tombol permission
+            this.permissionBtn.style.display = 'flex';
+            
+            this.permissionBtn.onclick = async () => {
+                try {
+                    const permissionState = await DeviceOrientationEvent.requestPermission();
+                    if (permissionState === 'granted') {
+                        this.permissionBtn.style.display = 'none';
+                        this.listen();
+                    } else {
+                        this.permissionBtn.textContent = 'Izin ditolak. Buka pengaturan browser untuk mengizinkan sensor.';
+                    }
+                } catch (error) {
+                    console.error("Error requesting permission:", error);
+                    this.permissionBtn.textContent = 'Error meminta izin. Coba refresh halaman.';
                 }
             };
         } else {
+            // Untuk browser yang tidak membutuhkan permission
             this.listen();
         }
     }
