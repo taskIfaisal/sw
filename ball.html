@@ -53,6 +53,7 @@ html, body {
     touch-action: none;
     opacity: 1;
     transition: opacity 0.3s ease;
+    pointer-events: auto;
 }
 
 .ball-inner {
@@ -98,7 +99,7 @@ class BallInContainer {
         this.isVisible = true;
         
         // Threshold untuk menentukan kapan bola dianggap "ditarik keluar"
-        this.exitThreshold = 50;
+        this.exitThreshold = 80; // Dinaikkan agar lebih mudah ditarik keluar
         
         // Untuk menghitung double click
         this.lastTapTime = 0;
@@ -164,8 +165,6 @@ class BallInContainer {
     initTouch() {
         let offsetX = 0;
         let offsetY = 0;
-        let startX = 0;
-        let startY = 0;
 
         this.ball.addEventListener('touchstart', e => {
             if (!this.isVisible) return;
@@ -174,8 +173,8 @@ class BallInContainer {
             this.isTouching = true;
             offsetX = t.clientX - this.x;
             offsetY = t.clientY - this.y;
-            startX = this.x;
-            startY = this.y;
+            
+            e.preventDefault();
         });
 
         window.addEventListener('touchmove', e => {
@@ -185,11 +184,17 @@ class BallInContainer {
             this.x = t.clientX - offsetX;
             this.y = t.clientY - offsetY;
 
+            // Update posisi bola saat ditarik
+            this.ball.style.transform =
+                `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
+                
             // Periksa apakah bola ditarik keluar layar
             this.checkIfPulledOut();
+            
+            e.preventDefault();
         }, { passive: false });
 
-        window.addEventListener('touchend', () => {
+        window.addEventListener('touchend', (e) => {
             if (!this.isVisible) return;
             
             this.isTouching = false;
@@ -197,37 +202,42 @@ class BallInContainer {
             // Jika bola tidak ditarik keluar, kembalikan ke dalam batas
             if (this.isVisible) {
                 this.applyBounds();
+                this.ball.style.transform =
+                    `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
             }
+            
+            e.preventDefault();
         });
     }
     
     initDoubleClick() {
-        this.ball.addEventListener('touchstart', (e) => {
-            if (!this.isVisible) {
-                e.preventDefault();
-                e.stopPropagation();
-                
+        const container = document.querySelector('.container');
+        
+        // Untuk bola yang terlihat
+        this.ball.addEventListener('touchend', (e) => {
+            if (this.isVisible) {
                 const currentTime = new Date().getTime();
                 const tapLength = currentTime - this.lastTapTime;
                 
                 if (tapLength < this.doubleTapDelay && tapLength > 0) {
-                    // Double tap terdeteksi - munculkan bola kembali
-                    this.respawnBall();
+                    // Double tap pada bola yang terlihat - tidak melakukan apa-apa
+                    e.preventDefault();
                 }
                 
                 this.lastTapTime = currentTime;
             }
         });
         
-        // Juga tambahkan double click untuk container jika bola tidak terlihat
-        document.querySelector('.container').addEventListener('touchstart', (e) => {
+        // Untuk container ketika bola tidak terlihat
+        container.addEventListener('touchend', (e) => {
             if (!this.isVisible) {
                 const currentTime = new Date().getTime();
                 const tapLength = currentTime - this.lastTapTime;
                 
                 if (tapLength < this.doubleTapDelay && tapLength > 0) {
-                    // Double tap terdeteksi - munculkan bola kembali di posisi tap
-                    this.respawnBall(e.touches[0].clientX, e.touches[0].clientY);
+                    // Double tap terdeteksi - munculkan bola kembali di posisi tap pertama
+                    this.respawnBall();
+                    e.preventDefault();
                 }
                 
                 this.lastTapTime = currentTime;
@@ -236,12 +246,18 @@ class BallInContainer {
     }
     
     checkIfPulledOut() {
-        // Cek jika bola ditarik keluar dari layar melebihi threshold
-        if (this.x < -this.exitThreshold || 
-            this.x > this.width + this.exitThreshold ||
-            this.y < -this.exitThreshold || 
-            this.y > this.height + this.exitThreshold) {
-            
+        // Hitung posisi pusat bola
+        const ballCenterX = this.x;
+        const ballCenterY = this.y;
+        
+        // Cek jika pusat bola berada di luar layar melebihi threshold
+        const isPulledOut = 
+            ballCenterX < -this.exitThreshold || 
+            ballCenterX > this.width + this.exitThreshold ||
+            ballCenterY < -this.exitThreshold || 
+            ballCenterY > this.height + this.exitThreshold;
+        
+        if (isPulledOut) {
             // Bola dianggap ditarik keluar - hilangkan
             this.hideBall();
         }
@@ -250,22 +266,25 @@ class BallInContainer {
     hideBall() {
         this.isVisible = false;
         this.ball.style.opacity = '0';
+        this.ball.style.pointerEvents = 'none';
         this.isTouching = false;
+        
+        // Reset sensor
+        this.smoothBeta = 0;
+        this.smoothGamma = 0;
     }
     
-    respawnBall(x = null, y = null) {
+    respawnBall() {
         this.isVisible = true;
         this.ball.style.opacity = '1';
+        this.ball.style.pointerEvents = 'auto';
         
-        if (x !== null && y !== null) {
-            // Posisi di tempat double click
-            this.x = Math.max(this.radius, Math.min(this.maxX, x));
-            this.y = Math.max(this.radius, Math.min(this.maxY, y));
-        } else {
-            // Posisi default di tengah
-            this.x = this.width / 2;
-            this.y = this.height / 2;
-        }
+        // Posisi default di tengah
+        this.x = this.width / 2;
+        this.y = this.height / 2;
+        
+        this.ball.style.transform =
+            `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
         
         // Reset sensor values
         this.smoothBeta = 0;
@@ -284,10 +303,10 @@ class BallInContainer {
             this.x += this.smoothGamma * this.sensitivity;
             this.y += this.smoothBeta * this.sensitivity;
             this.applyBounds();
+            
+            this.ball.style.transform =
+                `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
         }
-
-        this.ball.style.transform =
-            `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
     }
 
     loop() {
