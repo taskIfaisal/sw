@@ -97,8 +97,9 @@ class BallInContainer {
         this.isTouching = false;
         this.isVisible = true;
         
-        // Threshold untuk menentukan kapan bola dianggap "ditarik keluar"
-        this.exitThreshold = 50;
+        // PERUBAHAN: Threshold diperkecil dan ditambah zona mudah hilang
+        this.exitThreshold = 30; // Diperkecil dari 50
+        this.easyExitThreshold = 15; // Zona yang lebih mudah
         
         // Untuk menghitung double click
         this.lastTapTime = 0;
@@ -185,6 +186,10 @@ class BallInContainer {
             this.x = t.clientX - offsetX;
             this.y = t.clientY - offsetY;
 
+            // Update posisi visual bola
+            this.ball.style.transform =
+                `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
+
             // Periksa apakah bola ditarik keluar layar
             this.checkIfPulledOut();
         }, { passive: false });
@@ -197,6 +202,9 @@ class BallInContainer {
             // Jika bola tidak ditarik keluar, kembalikan ke dalam batas
             if (this.isVisible) {
                 this.applyBounds();
+                // Update posisi setelah apply bounds
+                this.ball.style.transform =
+                    `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
             }
         });
     }
@@ -235,51 +243,81 @@ class BallInContainer {
         });
     }
     
-   checkIfPulledOut() {
-    const left   = this.x - this.radius;
-    const right  = this.x + this.radius;
-    const top    = this.y - this.radius;
-    const bottom = this.y + this.radius;
-
-    if (
-        right < -this.exitThreshold ||
-        left > this.width + this.exitThreshold ||
-        bottom < -this.exitThreshold ||
-        top > this.height + this.exitThreshold
-    ) {
-        this.hideBall();
+    checkIfPulledOut() {
+        // PERUBAHAN: Logika yang lebih sensitif untuk menghilang
+        const ballLeft = this.x - this.radius;
+        const ballRight = this.x + this.radius;
+        const ballTop = this.y - this.radius;
+        const ballBottom = this.y + this.radius;
+        
+        // Cek setiap sisi dengan threshold yang lebih sensitif
+        const isPulledOutLeft = ballRight < -this.easyExitThreshold;
+        const isPulledOutRight = ballLeft > this.width + this.easyExitThreshold;
+        const isPulledOutTop = ballBottom < -this.easyExitThreshold;
+        const isPulledOutBottom = ballTop > this.height + this.easyExitThreshold;
+        
+        // Cek juga dengan threshold normal untuk kasus diagonal
+        const isPulledOutNormalLeft = ballRight < -this.exitThreshold;
+        const isPulledOutNormalRight = ballLeft > this.width + this.exitThreshold;
+        const isPulledOutNormalTop = ballBottom < -this.exitThreshold;
+        const isPulledOutNormalBottom = ballTop > this.height + this.exitThreshold;
+        
+        // PERUBAHAN: Cek jika salah satu sisi sudah keluar cukup jauh
+        // atau jika bola sudah hampir seluruhnya keluar
+        if (isPulledOutLeft || isPulledOutRight || isPulledOutTop || isPulledOutBottom ||
+            isPulledOutNormalLeft || isPulledOutNormalRight || 
+            isPulledOutNormalTop || isPulledOutNormalBottom) {
+            
+            // PERUBAHAN: Tambah cek untuk kasus diagonal
+            // Jika bola ditarik ke sudut, dia akan lebih cepat hilang
+            const isInCorner = 
+                (ballLeft < -this.easyExitThreshold && ballTop < -this.easyExitThreshold) ||
+                (ballRight > this.width + this.easyExitThreshold && ballTop < -this.easyExitThreshold) ||
+                (ballLeft < -this.easyExitThreshold && ballBottom > this.height + this.easyExitThreshold) ||
+                (ballRight > this.width + this.easyExitThreshold && ballBottom > this.height + this.easyExitThreshold);
+            
+            // PERUBAHAN: Jika di sudut atau sudah cukup keluar, langsung hilang
+            if (isInCorner || 
+                ballRight < -this.exitThreshold || 
+                ballLeft > this.width + this.exitThreshold ||
+                ballBottom < -this.exitThreshold || 
+                ballTop > this.height + this.exitThreshold) {
+                this.hideBall();
+            }
+        }
     }
-}
     
     hideBall() {
-    this.isVisible = false;
-    this.isTouching = false;
+        this.isVisible = false;
+        this.isTouching = false;
 
-    this.ball.style.opacity = '0';
-    this.ball.style.display = 'none'; // 🔥 INI KUNCI
-}
-
+        this.ball.style.opacity = '0';
+        this.ball.style.display = 'none'; // 🔥 INI KUNCI
+    }
     
     respawnBall(x = null, y = null) {
-    this.isVisible = true;
+        this.isVisible = true;
 
-    this.ball.style.display = 'block'; // 🔥 MUNCULKAN LAGI
-    requestAnimationFrame(() => {
-        this.ball.style.opacity = '1';
-    });
+        this.ball.style.display = 'block'; // 🔥 MUNCULKAN LAGI
+        requestAnimationFrame(() => {
+            this.ball.style.opacity = '1';
+        });
 
-    if (x !== null && y !== null) {
-        this.x = Math.max(this.radius, Math.min(this.maxX, x));
-        this.y = Math.max(this.radius, Math.min(this.maxY, y));
-    } else {
-        this.x = this.width / 2;
-        this.y = this.height / 2;
+        if (x !== null && y !== null) {
+            this.x = Math.max(this.radius, Math.min(this.maxX, x));
+            this.y = Math.max(this.radius, Math.min(this.maxY, y));
+        } else {
+            this.x = this.width / 2;
+            this.y = this.height / 2;
+        }
+
+        // Update posisi bola
+        this.ball.style.transform =
+            `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
+
+        this.smoothBeta = 0;
+        this.smoothGamma = 0;
     }
-
-    this.smoothBeta = 0;
-    this.smoothGamma = 0;
-}
-
 
     applyBounds() {
         this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
