@@ -71,12 +71,117 @@ html, body {
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 70%);
 }
+
+/* SETTINGS MODAL */
+#settings {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+
+.setting-content {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 20px;
+    max-width: 90%;
+    width: 400px;
+    backdrop-filter: blur(10px);
+}
+
+.setting-content h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.file-upload-label {
+    display: inline-block;
+    background: #4CAF50;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-size: 18px;
+    cursor: pointer;
+    margin: 10px 0;
+    transition: background 0.3s;
+}
+
+.file-upload-label:hover {
+    background: #45a049;
+}
+
+#bg-upload {
+    display: none;
+}
+
+#start-btn {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 10px;
+    font-size: 18px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background 0.3s;
+}
+
+#start-btn:hover {
+    background: #1976D2;
+}
+
+#default-bg {
+    background: #9C27B0;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.hidden {
+    display: none !important;
+}
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<!-- Settings Modal -->
+<div id="settings">
+    <div class="setting-content">
+        <h2>Pilih Background</h2>
+        <p>Pilih gambar background untuk permainan Magic Ball</p>
+        
+        <label class="file-upload-label">
+            📁 Upload Background
+            <input type="file" id="bg-upload" accept="image/*">
+        </label>
+        
+        <div style="margin: 15px 0; color: #ccc;">atau</div>
+        
+        <button id="default-bg">Gunakan Background Default</button>
+        
+        <div style="margin-top: 30px;">
+            <button id="start-btn">Mulai Permainan</button>
+        </div>
+    </div>
+</div>
+
+<!-- Main Game Container -->
+<div class="container hidden">
     <div id="ball">
         <div class="ball-inner"></div>
         <div class="ball-reflection"></div>
@@ -84,6 +189,94 @@ html, body {
 </div>
 
 <script>
+class MagicBallGame {
+    constructor() {
+        this.settings = document.getElementById('settings');
+        this.container = document.querySelector('.container');
+        this.ball = document.getElementById('ball');
+        this.bgUpload = document.getElementById('bg-upload');
+        this.startBtn = document.getElementById('start-btn');
+        this.defaultBgBtn = document.getElementById('default-bg');
+        
+        this.isFirstLoad = true;
+        
+        this.initSettings();
+    }
+    
+    initSettings() {
+        // Handle background upload
+        this.bgUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    this.saveBackground(event.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Handle default background
+        this.defaultBgBtn.addEventListener('click', () => {
+            this.saveBackground(null); // null untuk menggunakan background default
+        });
+        
+        // Handle start button
+        this.startBtn.addEventListener('click', () => {
+            this.startGame();
+        });
+        
+        // Load saved background if exists
+        const savedBg = localStorage.getItem('magicBallBackground');
+        if (savedBg) {
+            // Jika ada background yang disimpan, langsung start game
+            this.startGame(savedBg);
+        }
+    }
+    
+    saveBackground(imageData) {
+        if (imageData) {
+            localStorage.setItem('magicBallBackground', imageData);
+        } else {
+            localStorage.removeItem('magicBallBackground');
+        }
+        
+        // Tampilkan preview
+        if (imageData) {
+            this.container.style.backgroundImage = `url(${imageData})`;
+            this.container.style.backgroundSize = 'cover';
+            this.container.style.backgroundPosition = 'center';
+        } else {
+            // Reset ke default
+            this.container.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+            this.container.style.backgroundImage = 'none';
+        }
+    }
+    
+    startGame(savedBg = null) {
+        // Sembunyikan settings
+        this.settings.classList.add('hidden');
+        this.container.classList.remove('hidden');
+        
+        // Apply background jika ada
+        if (savedBg) {
+            this.container.style.backgroundImage = `url(${savedBg})`;
+            this.container.style.backgroundSize = 'cover';
+            this.container.style.backgroundPosition = 'center';
+        } else {
+            const savedBackground = localStorage.getItem('magicBallBackground');
+            if (savedBackground) {
+                this.container.style.backgroundImage = `url(${savedBackground})`;
+                this.container.style.backgroundSize = 'cover';
+                this.container.style.backgroundPosition = 'center';
+            }
+        }
+        
+        // Start the ball game
+        new BallInContainer();
+    }
+}
+
 class BallInContainer {
     constructor() {
         this.ball = document.getElementById('ball');
@@ -121,8 +314,11 @@ class BallInContainer {
         this.width = window.innerWidth;
         this.height = window.screen.height; // FULL FISIK LAYAR
 
+        // Atur batas agar bola tidak terlalu ke atas (menghindari status bar)
+        const topOffset = 20; // Offset dari atas untuk menghindari status bar
+        
         this.minX = this.radius;
-        this.minY = this.radius;
+        this.minY = this.radius + topOffset; // Tambah offset dari atas
         this.maxX = this.width - this.radius;
         this.maxY = this.height - this.radius;
     }
@@ -132,16 +328,28 @@ class BallInContainer {
             const btn = document.createElement("button");
             btn.innerText = "Izinkan Sensor Gerak";
             btn.style.cssText = `
-                position:fixed;inset:0;
-                background:#000;color:#fff;
-                font-size:20px;z-index:9999;
+                position:fixed;
+                top:0;
+                left:0;
+                width:100%;
+                height:100%;
+                background:#000;
+                color:#fff;
+                font-size:20px;
+                z-index:9999;
+                border:none;
             `;
             document.body.appendChild(btn);
 
             btn.onclick = async () => {
-                if (await DeviceOrientationEvent.requestPermission() === "granted") {
-                    btn.remove();
-                    this.listen();
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission === "granted") {
+                        btn.remove();
+                        this.listen();
+                    }
+                } catch (error) {
+                    console.error("Error requesting permission:", error);
                 }
             };
         } else {
@@ -164,8 +372,6 @@ class BallInContainer {
     initTouch() {
         let offsetX = 0;
         let offsetY = 0;
-        let startX = 0;
-        let startY = 0;
 
         this.ball.addEventListener('touchstart', e => {
             if (!this.isVisible) return;
@@ -174,8 +380,8 @@ class BallInContainer {
             this.isTouching = true;
             offsetX = t.clientX - this.x;
             offsetY = t.clientY - this.y;
-            startX = this.x;
-            startY = this.y;
+            
+            e.preventDefault();
         });
 
         window.addEventListener('touchmove', e => {
@@ -185,8 +391,14 @@ class BallInContainer {
             this.x = t.clientX - offsetX;
             this.y = t.clientY - offsetY;
 
+            // Update posisi visual
+            this.ball.style.transform =
+                `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
+
             // Periksa apakah bola ditarik keluar layar
             this.checkIfPulledOut();
+            
+            e.preventDefault();
         }, { passive: false });
 
         window.addEventListener('touchend', () => {
@@ -197,29 +409,13 @@ class BallInContainer {
             // Jika bola tidak ditarik keluar, kembalikan ke dalam batas
             if (this.isVisible) {
                 this.applyBounds();
+                this.ball.style.transform =
+                    `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
             }
         });
     }
     
     initDoubleClick() {
-        this.ball.addEventListener('touchstart', (e) => {
-            if (!this.isVisible) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const currentTime = new Date().getTime();
-                const tapLength = currentTime - this.lastTapTime;
-                
-                if (tapLength < this.doubleTapDelay && tapLength > 0) {
-                    // Double tap terdeteksi - munculkan bola kembali
-                    this.respawnBall();
-                }
-                
-                this.lastTapTime = currentTime;
-            }
-        });
-        
-        // Juga tambahkan double click untuk container jika bola tidak terlihat
         document.querySelector('.container').addEventListener('touchstart', (e) => {
             if (!this.isVisible) {
                 const currentTime = new Date().getTime();
@@ -228,6 +424,7 @@ class BallInContainer {
                 if (tapLength < this.doubleTapDelay && tapLength > 0) {
                     // Double tap terdeteksi - munculkan bola kembali di posisi tap
                     this.respawnBall(e.touches[0].clientX, e.touches[0].clientY);
+                    e.preventDefault();
                 }
                 
                 this.lastTapTime = currentTime;
@@ -250,22 +447,28 @@ class BallInContainer {
     hideBall() {
         this.isVisible = false;
         this.ball.style.opacity = '0';
+        this.ball.style.pointerEvents = 'none';
         this.isTouching = false;
     }
     
     respawnBall(x = null, y = null) {
         this.isVisible = true;
         this.ball.style.opacity = '1';
+        this.ball.style.pointerEvents = 'auto';
         
         if (x !== null && y !== null) {
-            // Posisi di tempat double click
+            // Posisi di tempat double click dengan batas
             this.x = Math.max(this.radius, Math.min(this.maxX, x));
-            this.y = Math.max(this.radius, Math.min(this.maxY, y));
+            this.y = Math.max(this.radius + 20, Math.min(this.maxY, y)); // Tambah offset untuk atas
         } else {
             // Posisi default di tengah
             this.x = this.width / 2;
             this.y = this.height / 2;
         }
+        
+        // Update posisi
+        this.ball.style.transform =
+            `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
         
         // Reset sensor values
         this.smoothBeta = 0;
@@ -284,10 +487,10 @@ class BallInContainer {
             this.x += this.smoothGamma * this.sensitivity;
             this.y += this.smoothBeta * this.sensitivity;
             this.applyBounds();
+            
+            this.ball.style.transform =
+                `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
         }
-
-        this.ball.style.transform =
-            `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
     }
 
     loop() {
@@ -296,7 +499,10 @@ class BallInContainer {
     }
 }
 
-window.onload = () => new BallInContainer();
+// Start the application
+window.onload = () => {
+    new MagicBallGame();
+};
 </script>
 
 </body>
