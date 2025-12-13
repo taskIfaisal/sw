@@ -12,7 +12,6 @@
 <title>Magic Ball</title>
 
 <style>
-/* RESET */
 * {
     margin: 0;
     padding: 0;
@@ -21,7 +20,6 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-/* FULLSCREEN */
 html, body {
     position: fixed;
     inset: 0;
@@ -32,7 +30,6 @@ html, body {
     touch-action: none;
 }
 
-/* CONTAINER */
 .container {
     position: fixed;
     inset: 0;
@@ -42,7 +39,6 @@ html, body {
     overflow: hidden;
 }
 
-/* BALL */
 #ball {
     position: absolute;
     width: 120px;
@@ -93,27 +89,28 @@ class BallInContainer {
         this.smoothGamma = 0;
 
         this.isTouching = false;
+        this.isHidden = false;
 
         this.updateBounds();
-        this.x = this.width / 2;
-        this.y = this.height / 2;
+        this.centerBall();
 
         window.addEventListener('resize', () => this.updateBounds());
         window.visualViewport?.addEventListener('resize', () => this.updateBounds());
 
         this.initSensor();
         this.initTouch();
+        this.initDoubleTap();
         this.loop();
     }
 
     updateBounds() {
         this.width = window.innerWidth;
-        this.height = window.screen.height; // FULL FISIK LAYAR
+        this.height = window.screen.height;
+    }
 
-        this.minX = this.radius;
-        this.minY = this.radius;
-        this.maxX = this.width - this.radius;
-        this.maxY = this.height - this.radius;
+    centerBall() {
+        this.x = this.width / 2;
+        this.y = this.height / 2;
     }
 
     initSensor() {
@@ -140,7 +137,7 @@ class BallInContainer {
 
     listen() {
         window.addEventListener("deviceorientation", e => {
-            if (this.isTouching) return;
+            if (this.isTouching || this.isHidden) return;
 
             const beta = Math.max(-45, Math.min(45, e.beta || 0));
             const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
@@ -155,6 +152,7 @@ class BallInContainer {
         let offsetY = 0;
 
         this.ball.addEventListener('touchstart', e => {
+            if (this.isHidden) return;
             const t = e.touches[0];
             this.isTouching = true;
             offsetX = t.clientX - this.x;
@@ -162,13 +160,13 @@ class BallInContainer {
         });
 
         window.addEventListener('touchmove', e => {
-            if (!this.isTouching) return;
+            if (!this.isTouching || this.isHidden) return;
             const t = e.touches[0];
 
             this.x = t.clientX - offsetX;
             this.y = t.clientY - offsetY;
 
-            this.applyBounds();
+            this.checkDisappear();
         }, { passive: false });
 
         window.addEventListener('touchend', () => {
@@ -176,20 +174,49 @@ class BallInContainer {
         });
     }
 
-    applyBounds() {
-        this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
-        this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
+    checkDisappear() {
+        const out =
+            this.x < -this.radius ||
+            this.x > this.width + this.radius ||
+            this.y < -this.radius ||
+            this.y > this.height + this.radius;
+
+        if (out) {
+            this.ball.style.display = "none";
+            this.isHidden = true;
+        }
+    }
+
+    initDoubleTap() {
+        let lastTap = 0;
+
+        window.addEventListener('touchend', e => {
+            const now = Date.now();
+            if (now - lastTap < 300) {
+                this.showBall();
+            }
+            lastTap = now;
+        });
+    }
+
+    showBall() {
+        if (!this.isHidden) return;
+
+        this.isHidden = false;
+        this.ball.style.display = "block";
+        this.centerBall();
     }
 
     update() {
-        if (!this.isTouching) {
+        if (!this.isTouching && !this.isHidden) {
             this.x += this.smoothGamma * this.sensitivity;
             this.y += this.smoothBeta * this.sensitivity;
-            this.applyBounds();
         }
 
-        this.ball.style.transform =
-            `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
+        if (!this.isHidden) {
+            this.ball.style.transform =
+                `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
+        }
     }
 
     loop() {
