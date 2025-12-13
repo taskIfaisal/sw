@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#10B981">
+    <meta name="apple-mobile-web-app-title" content="Magic Ball">
+    <title>Magic Ball - PWA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        #ball {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0);
+            box-shadow: 
+                inset -8px -8px 16px rgba(0,0,0,0.2),
+                inset 8px 8px 16px rgba(255,255,255,0.6),
+                0 15px 30px rgba(0,0,0,0.3);
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            transition: transform 0.1s linear;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .ball-inner {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, #ffffff, #e8e8e8);
+            box-shadow: 
+                inset 4px 4px 8px rgba(255,255,255,0.8),
+                inset -4px -4px 8px rgba(0,0,0,0.1);
+        }
+
+        .ball-reflection {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), transparent 70%);
+            z-index: 3;
+        }
+
+        .ball-shadow {
+            position: absolute;
+            width: 80px;
+            height: 20px;
+            background: radial-gradient(ellipse at center, 
+                rgba(0,0,0,0.2) 0%,
+                rgba(0,0,0,0) 70%);
+            border-radius: 50%;
+            z-index: 1;
+            transition: all 0.1s ease;
+        }
+
+        .instructions {
+            position: fixed;
+            top: 30px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            font-size: 16px;
+            padding: 0 20px;
+            z-index: 3;
+            pointer-events: none;
+            animation: fadeOut 4s forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .permission-prompt {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .permission-prompt.hidden {
+            display: none;
+        }
+
+        .permission-prompt h2 {
+            margin-bottom: 20px;
+            color: #10B981;
+        }
+
+        .permission-prompt p {
+            margin-bottom: 30px;
+            color: rgba(255,255,255,0.8);
+            max-width: 300px;
+            line-height: 1.5;
+        }
+
+        .permission-prompt button {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 10px;
+        }
+
+        .permission-prompt button:active {
+            transform: scale(0.98);
+        }
+
+        /* Debug info - bisa dihapus di production */
+        .debug-info {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: monospace;
+            z-index: 3;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Permission Prompt -->
+    <div id="permissionPrompt" class="permission-prompt">
+        <h2>🎮 Magic Ball Physics</h2>
+        <p>Bola akan bergerak sesuai kemiringan HP Anda. Izinkan akses ke sensor gerak untuk pengalaman terbaik.</p>
+        <button id="grantPermissionBtn">Izinkan Sensor Gerak</button>
+        <p style="font-size: 12px; margin-top: 20px; color: rgba(255,255,255,0.6);">
+            Tekan tombol di atas, lalu izinkan ketika browser meminta izin
+        </p>
+    </div>
+
+    <!-- Instructions -->
+    <div class="instructions">
+        Miringkan HP untuk menggerakkan bola<br>
+        Sentuh bola untuk mendorong
+    </div>
+
+    <!-- Ball and Shadow -->
+    <div id="ball">
+        <div class="ball-inner"></div>
+        <div class="ball-reflection"></div>
+    </div>
+    <div class="ball-shadow"></div>
+
+    <!-- Debug Info (optional) -->
+    <div class="debug-info" id="debugInfo">
+        X: 0 | Y: 0
+    </div>
+
+    <script>
+        // ============================
+        // SIMPLE BALL PHYSICS
+        // ============================
+        class SimpleBallPhysics {
+            constructor() {
+                // Ball properties
+                this.radius = 50;
+                this.x = window.innerWidth / 2;
+                this.y = window.innerHeight / 2;
+                this.vx = 0;
+                this.vy = 0;
+                
+                // Physics properties
+                this.gravity = 0.5;
+                this.friction = 0.98;
+                this.bounce = 0.8;
+                this.tiltStrength = 0.12;
+                
+                // Gyro data
+                this.beta = 0;    // Front-back tilt
+                this.gamma = 0;   // Left-right tilt
+                this.gyroAvailable = false;
+                
+                // Touch state
+                this.isDragging = false;
+                
+                // Initialize boundaries
+                this.updateBoundaries();
+            }
+            
+            updateBoundaries() {
+                this.minX = this.radius;
+                this.minY = this.radius;
+                this.maxX = window.innerWidth - this.radius;
+                this.maxY = window.innerHeight - this.radius;
+            }
+            
+            initGyro() {
+                if (window.DeviceOrientationEvent) {
+                    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                        // iOS 13+ - will request permission via button
+                        console.log("iOS 13+ detected");
+                    } else {
+                        // Android and older iOS
+                        this.startGyroListening();
+                    }
+                }
+            }
+            
+            async requestPermission() {
+                try {
+                    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                        const permission = await DeviceOrientationEvent.requestPermission();
+                        if (permission === 'granted') {
+                            this.startGyroListening();
+                            return true;
+                        }
+                    }
+                } catch (e) {
+                    console.log("Permission error:", e);
+                }
+                return false;
+            }
+            
+            startGyroListening() {
+                this.gyroAvailable = true;
+                window.addEventListener('deviceorientation', (e) => {
+                    this.beta = e.beta || 0;   // Front-back tilt (-180 to 180)
+                    this.gamma = e.gamma || 0; // Left-right tilt (-90 to 90)
+                    
+                    // Normalize values
+                    const normalizedBeta = Math.max(-60, Math.min(60, this.beta)) / 60;
+                    const normalizedGamma = Math.max(-45, Math.min(45, this.gamma)) / 45;
+                    
+                    // Update velocities based on tilt
+                    this.vx += normalizedGamma * this.tiltStrength;
+                    this.vy += normalizedBeta * this.tiltStrength * 0.7;
+                });
+            }
+            
+            update() {
+                // Apply gravity (always pulls down)
+                this.vy += this.gravity * 0.05;
+                
+                // Apply friction
+                this.vx *= this.friction;
+                this.vy *= this.friction;
+                
+                // Update position
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Handle collisions
+                this.handleCollisions();
+                
+                // Keep within screen
+                this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
+                this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
+                
+                return {
+                    x: this.x - this.radius,
+                    y: this.y - this.radius,
+                    vx: this.vx,
+                    vy: this.vy
+                };
+            }
+            
+            handleCollisions() {
+                // Left wall
+                if (this.x < this.minX) {
+                    this.x = this.minX;
+                    this.vx = Math.abs(this.vx) * this.bounce;
+                }
+                
+                // Right wall
+                if (this.x > this.maxX) {
+                    this.x = this.maxX;
+                    this.vx = -Math.abs(this.vx) * this.bounce;
+                }
+                
+                // Top wall
+                if (this.y < this.minY) {
+                    this.y = this.minY;
+                    this.vy = Math.abs(this.vy) * this.bounce;
+                }
+                
+                // Bottom wall
+                if (this.y > this.maxY) {
+                    this.y = this.maxY;
+                    this.vy = -Math.abs(this.vy) * this.bounce;
+                    this.vx *= 0.9; // Extra friction on bottom
+                }
+                
+                // Stop very slow movement
+                if (Math.abs(this.vx) < 0.05) this.vx = 0;
+                if (Math.abs(this.vy) < 0.05) this.vy = 0;
+            }
+            
+            startDrag(x, y) {
+                this.isDragging = true;
+                this.dragOffsetX = x - this.x;
+                this.dragOffsetY = y - this.y;
+                this.vx = 0;
+                this.vy = 0;
+            }
+            
+            updateDrag(x, y) {
+                if (!this.isDragging) return;
+                
+                const newX = x - this.dragOffsetX;
+                const newY = y - this.dragOffsetY;
+                
+                this.vx = (newX - this.x) * 0.7;
+                this.vy = (newY - this.y) * 0.7;
+                
+                this.x = newX;
+                this.y = newY;
+            }
+            
+            endDrag() {
+                if (!this.isDragging) return;
+                this.isDragging = false;
+                
+                // Give momentum when released
+                this.vx *= 1.5;
+                this.vy *= 1.5;
+            }
+            
+            addImpulse(impulseX, impulseY) {
+                this.vx += impulseX;
+                this.vy += impulseY;
+            }
+            
+            reset() {
+                this.x = window.innerWidth / 2;
+                this.y = window.innerHeight / 2;
+                this.vx = 0;
+                this.vy = 0;
+            }
+        }
+
+        // ============================
+        // MAIN APPLICATION
+        // ============================
+        const physics = new SimpleBallPhysics();
+        const ball = document.getElementById('ball');
+        const shadow = document.querySelector('.ball-shadow');
+        const permissionPrompt = document.getElementById('permissionPrompt');
+        const debugInfo = document.getElementById('debugInfo');
+        
+        let animationId = null;
+        let lastTime = 0;
+
+        // Initialize app
+        function init() {
+            setupEventListeners();
+            
+            // Hide permission prompt for non-iOS devices
+            if (!(typeof DeviceOrientationEvent !== 'undefined' && 
+                  typeof DeviceOrientationEvent.requestPermission === 'function')) {
+                physics.startGyroListening();
+                permissionPrompt.classList.add('hidden');
+                startAnimation();
+            }
+        }
+
+        // Grant permission button
+        document.getElementById('grantPermissionBtn').addEventListener('click', async () => {
+            const granted = await physics.requestPermission();
+            if (granted) {
+                permissionPrompt.classList.add('hidden');
+                startAnimation();
+            } else {
+                alert("Sensor gerak diperlukan untuk pengalaman terbaik. Anda masih bisa menggerakkan bola dengan sentuhan.");
+                permissionPrompt.classList.add('hidden');
+                startAnimation();
+            }
+        });
+
+        // Start animation loop
+        function startAnimation() {
+            function animate(currentTime) {
+                const deltaTime = lastTime ? currentTime - lastTime : 16.67;
+                lastTime = currentTime;
+                
+                // Update physics
+                const state = physics.update();
+                
+                // Update ball position
+                updateBall(state);
+                
+                // Update shadow
+                updateShadow(state);
+                
+                // Update debug info
+                debugInfo.textContent = `X: ${Math.round(state.x)} | Y: ${Math.round(state.y)}`;
+                
+                // Continue animation
+                animationId = requestAnimationFrame(animate);
+            }
+            
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function updateBall(state) {
+            // Calculate rotation based on movement
+            const rotation = state.vx * 1.2;
+            
+            // Apply transformations
+            ball.style.transform = `
+                translate3d(${state.x}px, ${state.y}px, 0)
+                rotate(${rotation}deg)
+            `;
+        }
+
+        function updateShadow(state) {
+            const speed = Math.sqrt(state.vx * state.vx + state.vy * state.vy);
+            const heightFactor = (state.y - physics.minY) / (physics.maxY - physics.minY);
+            
+            const shadowSize = 0.7 + (1 - heightFactor) * 0.3;
+            const shadowOpacity = 0.3 - heightFactor * 0.1;
+            
+            shadow.style.width = `${80 * shadowSize}px`;
+            shadow.style.height = `${20 * shadowSize}px`;
+            shadow.style.opacity = Math.max(0.1, Math.min(0.5, shadowOpacity));
+            shadow.style.left = `${state.x + 10}px`;
+            shadow.style.top = `${state.y + 70}px`;
+        }
+
+        // Event listeners
+        function setupEventListeners() {
+            // Window resize
+            window.addEventListener('resize', () => {
+                physics.updateBoundaries();
+                physics.reset();
+            });
+
+            // Ball touch interaction
+            ball.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                physics.startDrag(touch.clientX, touch.clientY);
+                
+                // Visual feedback
+                ball.style.boxShadow = 
+                    'inset -4px -4px 12px rgba(0,0,0,0.3), ' +
+                    'inset 4px 4px 12px rgba(255,255,255,0.6), ' +
+                    '0 20px 40px rgba(0,0,0,0.4)';
+            });
+
+            ball.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                physics.updateDrag(touch.clientX, touch.clientY);
+            });
+
+            document.addEventListener('touchend', () => {
+                physics.endDrag();
+                // Reset shadow
+                ball.style.boxShadow = 
+                    'inset -8px -8px 16px rgba(0,0,0,0.2), ' +
+                    'inset 8px 8px 16px rgba(255,255,255,0.6), ' +
+                    '0 15px 30px rgba(0,0,0,0.3)';
+            });
+
+            // Double tap to push
+            let lastTap = 0;
+            ball.addEventListener('touchend', (e) => {
+                const currentTime = Date.now();
+                const tapLength = currentTime - lastTap;
+                
+                if (tapLength < 300) {
+                    // Double tap - push away from tap point
+                    const touch = e.changedTouches[0];
+                    const dx = physics.x - touch.clientX;
+                    const dy = physics.y - touch.clientY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance > 0) {
+                        const force = 10 / distance;
+                        physics.addImpulse(dx * force, dy * force);
+                    }
+                }
+                
+                lastTap = currentTime;
+            });
+
+            // Tap anywhere to push toward tap point
+            document.addEventListener('touchend', (e) => {
+                if (e.target === ball) return;
+                
+                const touch = e.changedTouches[0];
+                const dx = touch.clientX - physics.x;
+                const dy = touch.clientY - physics.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 0) {
+                    const force = 8 / distance;
+                    physics.addImpulse(dx * force, dy * force);
+                }
+            });
+        }
+
+        // Start the app
+        window.addEventListener('load', init);
+        
+        // Fallback motion for devices without gyro
+        setTimeout(() => {
+            if (!physics.gyroAvailable) {
+                console.log("Using touch-only physics");
+            }
+        }, 5000);
+
+        // PWA installation
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            console.log("PWA install prompt available");
+        });
+    </script>
+</body>
+</html>
