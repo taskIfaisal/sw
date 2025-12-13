@@ -75,19 +75,6 @@
             z-index: 3;
         }
 
-        .ball-shadow {
-            position: absolute;
-            width: 100px;
-            height: 25px;
-            background: radial-gradient(ellipse at center, 
-                rgba(0,0,0,0.3) 0%,
-                rgba(0,0,0,0) 80%);
-            border-radius: 50%;
-            z-index: 1;
-            transition: all 0.15s ease;
-            will-change: transform, opacity;
-        }
-
         .instructions {
             position: fixed;
             top: 30px;
@@ -140,7 +127,6 @@
             <div class="ball-inner"></div>
             <div class="ball-reflection"></div>
         </div>
-        <div class="ball-shadow"></div>
     </div>
 
     <script>
