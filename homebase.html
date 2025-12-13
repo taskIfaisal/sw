@@ -47,6 +47,11 @@
       max-width: 100%;
       max-height: 100vh;
       object-fit: contain;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+      image-rendering: high-quality;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     #textOverlay, #textOverlay2 {
       position: absolute;
@@ -56,6 +61,8 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
       display: none;
       z-index: 5;
+      font-weight: 500;
+      letter-spacing: 0.5px;
     }
     #textOverlay {
       top: 25.5%;
@@ -76,35 +83,37 @@
       border: 2px dashed #ccc;
       border-radius: 5px;
       cursor: pointer;
+      background: white;
     }
     
-    /* Clear image button */
-    #clearImageBtn {
-      display: none;
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: rgba(255,0,0,0.7);
-      color: white;
+    /* Style untuk close button di menu upload */
+    .close-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: none;
       border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
+      font-size: 18px;
       cursor: pointer;
-      font-size: 14px;
-      z-index: 10;
+      color: #333;
+      width: 25px;
+      height: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
     }
     
-    #clearImageBtn:hover {
-      background: rgba(255,0,0,0.9);
+    .close-btn:hover {
+      background: rgba(0,0,0,0.1);
     }
   </style>
 </head>
 <body>
   <div id="uploadMenu">
+    <button class="close-btn" onclick="hideUploadMenu()">×</button>
     <input type="file" id="fileInput" accept="image/*">
   </div>
-  
-  <button id="clearImageBtn">Hapus Gambar</button>
 
   <div id="textOverlay">Facebook</div>
   <div id="textOverlay2">Mail</div>
@@ -116,22 +125,22 @@
   const preview = document.getElementById('preview');
   const textOverlay = document.getElementById('textOverlay');
   const textOverlay2 = document.getElementById('textOverlay2');
-  const clearImageBtn = document.getElementById('clearImageBtn');
 
   // KEY untuk localStorage
   const STORAGE_KEY = 'peek_app_background_image';
 
-  // Fungsi untuk menyimpan gambar ke localStorage
+  // Fungsi untuk menyimpan gambar ke localStorage TANPA kompresi
   function saveImageToLocalStorage(imageData) {
     try {
       localStorage.setItem(STORAGE_KEY, imageData);
-      console.log('Gambar berhasil disimpan ke localStorage');
+      console.log('Gambar berhasil disimpan ke localStorage (kualitas asli)');
       return true;
     } catch (e) {
       console.error('Gagal menyimpan gambar ke localStorage:', e);
-      // Jika localStorage penuh, coba hapus yang lama
+      // Jika localStorage penuh, tampilkan pesan
       if (e.name === 'QuotaExceededError') {
-        alert('Penyimpanan lokal penuh. Hapus beberapa data atau coba gambar yang lebih kecil.');
+        alert('Penyimpanan lokal penuh. Untuk gambar berukuran besar, hapus gambar lain atau gunakan gambar dengan ukuran lebih kecil.');
+        return false;
       }
       return false;
     }
@@ -144,12 +153,21 @@
       if (savedImage) {
         // Cek apakah data valid (harus data URL)
         if (savedImage.startsWith('data:image')) {
-          preview.src = savedImage;
-          preview.style.display = 'block';
-          textOverlay.style.display = 'block';
-          textOverlay2.style.display = 'block';
-          clearImageBtn.style.display = 'block';
-          console.log('Gambar berhasil dimuat dari localStorage');
+          // Buat elemen gambar sementara untuk preload
+          const tempImg = new Image();
+          tempImg.onload = function() {
+            console.log('Gambar dimuat: ' + this.width + 'x' + this.height + 'px');
+            preview.src = savedImage;
+            preview.style.display = 'block';
+            textOverlay.style.display = 'block';
+            textOverlay2.style.display = 'block';
+          };
+          tempImg.onerror = function() {
+            console.log('Gambar rusak, menghapus dari localStorage');
+            localStorage.removeItem(STORAGE_KEY);
+            preview.style.display = 'none';
+          };
+          tempImg.src = savedImage;
           return true;
         } else {
           // Data tidak valid, hapus dari localStorage
@@ -165,7 +183,7 @@
     return false;
   }
 
-  // Fungsi untuk menghapus gambar dari localStorage
+  // Fungsi untuk menghapus gambar (untuk internal use)
   function clearImageFromLocalStorage() {
     try {
       localStorage.removeItem(STORAGE_KEY);
@@ -173,30 +191,53 @@
       preview.src = '';
       textOverlay.style.display = 'none';
       textOverlay2.style.display = 'none';
-      clearImageBtn.style.display = 'none';
       console.log('Gambar dihapus dari localStorage');
     } catch (e) {
       console.error('Gagal menghapus gambar dari localStorage:', e);
     }
   }
 
-  // Event listener untuk tombol hapus gambar
-  clearImageBtn.addEventListener('click', () => {
-    if (confirm('Apakah Anda yakin ingin menghapus gambar?')) {
-      clearImageFromLocalStorage();
-    }
-  });
+  // Fungsi untuk menampilkan/menyembunyikan menu upload
+  function showUploadMenu() {
+    uploadMenu.style.display = 'block';
+  }
+  
+  function hideUploadMenu() {
+    uploadMenu.style.display = 'none';
+    fileInput.value = ''; // Reset input file
+  }
 
   // Double click untuk buka menu upload
   document.body.addEventListener('dblclick', () => {
-    uploadMenu.style.display = 'block';
+    showUploadMenu();
   });
 
   // Klik di luar upload menu untuk menutupnya
   document.addEventListener('click', (e) => {
     if (uploadMenu.style.display === 'block' && 
         !uploadMenu.contains(e.target)) {
-      uploadMenu.style.display = 'none';
+      hideUploadMenu();
+    }
+  });
+
+  // Triple click untuk hapus gambar
+  let clickCount = 0;
+  let clickTimer;
+  document.body.addEventListener('click', () => {
+    clickCount++;
+    
+    if (clickCount === 1) {
+      clickTimer = setTimeout(() => {
+        clickCount = 0;
+      }, 300); // Reset setelah 300ms
+    }
+    
+    if (clickCount === 3) {
+      clearTimeout(clickTimer);
+      if (confirm('Hapus gambar yang tersimpan?')) {
+        clearImageFromLocalStorage();
+      }
+      clickCount = 0;
     }
   });
 
@@ -204,10 +245,10 @@
   fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validasi ukuran file (maksimal 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      // Validasi ukuran file (maksimal 10MB untuk menjaga kualitas)
+      const maxSize = 10 * 1024 * 1024; // 10MB
       if (file.size > maxSize) {
-        alert('Ukuran gambar terlalu besar. Maksimal 5MB.');
+        alert('Ukuran gambar terlalu besar. Maksimal 10MB untuk menjaga kualitas asli.');
         fileInput.value = '';
         return;
       }
@@ -219,22 +260,33 @@
         return;
       }
       
+      // Gunakan FileReader untuk membaca file TANPA kompresi
       const reader = new FileReader();
       reader.onload = function(evt) {
         const imageData = evt.target.result;
         
-        // Simpan ke localStorage
+        // Cek ukuran data URL (perkiraan)
+        const dataSize = Math.round((imageData.length * 3) / 4);
+        console.log('Ukuran data gambar: ~' + Math.round(dataSize / 1024) + 'KB');
+        
+        // Simpan ke localStorage TANPA kompresi
         if (saveImageToLocalStorage(imageData)) {
-          // Tampilkan gambar
+          // Tampilkan gambar dengan kualitas asli
           preview.src = imageData;
           preview.style.display = 'block';
-          uploadMenu.style.display = 'none';
+          hideUploadMenu();
           textOverlay.style.display = 'block';
           textOverlay2.style.display = 'block';
-          clearImageBtn.style.display = 'block';
           
           // Reset input file
           fileInput.value = '';
+          
+          // Tampilkan info ukuran gambar
+          const img = new Image();
+          img.onload = function() {
+            console.log('Gambar ditampilkan: ' + this.width + 'x' + this.height + 'px');
+          };
+          img.src = imageData;
         }
       };
       
@@ -243,6 +295,7 @@
         fileInput.value = '';
       };
       
+      // Baca sebagai data URL TANPA kompresi
       reader.readAsDataURL(file);
     }
   });
@@ -272,23 +325,23 @@
     }
   }
 
-  // Fungsi untuk mengecek dan memperbaiki gambar yang rusak
-  function checkAndFixImage() {
-    if (preview.src && preview.complete) {
-      if (preview.naturalWidth === 0) {
-        console.log('Gambar rusak, menghapus dari localStorage');
-        clearImageFromLocalStorage();
-      }
-    }
-  }
+  // Event listener untuk error gambar
+  preview.addEventListener('error', () => {
+    console.log('Gambar error, menghapus dari localStorage');
+    clearImageFromLocalStorage();
+  });
+
+  // Optimasi display gambar
+  preview.addEventListener('load', () => {
+    // Optimasi rendering
+    preview.style.imageRendering = 'auto';
+    preview.style.webkitFontSmoothing = 'antialiased';
+  });
 
   // Jalankan saat halaman dibuka
   window.addEventListener('load', () => {
     // Coba muat gambar dari localStorage
-    if (loadImageFromLocalStorage()) {
-      // Cek apakah gambar valid setelah dimuat
-      setTimeout(checkAndFixImage, 1000);
-    }
+    loadImageFromLocalStorage();
     
     // Update teks dari API
     updateTextFromAPI();
@@ -297,10 +350,15 @@
   // Update otomatis setiap 2 detik
   setInterval(updateTextFromAPI, 2000);
   
-  // Event listener untuk error gambar
-  preview.addEventListener('error', () => {
-    console.log('Gambar error, menghapus dari localStorage');
-    clearImageFromLocalStorage();
+  // Cegah zoom pada gambar
+  preview.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 1) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+  
+  preview.addEventListener('gesturestart', (e) => {
+    e.preventDefault();
   });
 </script>
 
