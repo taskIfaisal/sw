@@ -12,39 +12,34 @@
 <title>Magic Ball</title>
 
 <style>
+/* HAPUS SELECTOR * YANG SALAH */
 * {
     margin: 0;
-      padding: 0;
-      width: 100vw;
-      height: 100vh;
-      /* font-family: 'SF Pro Display', sans-serif; */
-      background-color: black;
-      background-size: cover;
-      background-position: center;
-      color: white;
-      overflow: hidden;
-      touch-action: none;
-      position: relative;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 html, body {
     position: fixed;
     inset: 0;
     overflow: hidden;
-    /* background: #10B981; */
+    width: 100vw;
+    height: 100vh;
+    background: #10B981; /* Warna hijau, bukan hitam */
 }
 
-/* CONTAINER BENAR-BENAR FULL - PERBAIKAN DI SINI */
+/* CONTAINER BENAR-BENAR FULL */
 .container {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
     width: 100vw;
-    height: 100dvh; /* 🔥 dynamic viewport */
+    height: 100vh;
+    height: 100dvh;
     background: linear-gradient(135deg, #10B981 0%, #059669 100%);
     overflow: hidden;
-    /* HAPUS padding-bottom: env(safe-area-inset-bottom); */
-    /* GUNAKAN padding-top saja untuk safe area atas */
-    padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* BALL */
@@ -54,10 +49,6 @@ html, body {
     height: 120px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0);
-    /* box-shadow:
-        inset -10px -10px 20px rgba(0,0,0,0.2),
-        inset 10px 10px 20px rgba(255,255,255,0.6),
-        0 20px 40px rgba(0,0,0,0.4); */
     will-change: transform;
 }
 
@@ -76,10 +67,6 @@ html, body {
     height: 30px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 70%);
-}
-
-@keyframes fadeOut {
-    to { opacity: 0; }
 }
 </style>
 </head>
@@ -116,22 +103,24 @@ class BallInContainer {
     }
 
     updateBounds() {
-        const vv = window.visualViewport || window;
-        this.width = vv.width;
-        this.height = vv.height;
+        // Gunakan document.documentElement untuk mendapatkan ukuran tepat
+        this.width = document.documentElement.clientWidth;
+        this.height = document.documentElement.clientHeight;
 
-        // PERBAIKAN DI SINI: Tidak dikurangi radius untuk maxY
+        console.log("Screen bounds:", {
+            width: this.width,
+            height: this.height,
+            clientWidth: document.documentElement.clientWidth,
+            clientHeight: document.documentElement.clientHeight,
+            innerWidth: window.innerWidth,
+            innerHeight: window.innerHeight
+        });
+
+        // Radius untuk batas
         this.minX = this.radius;
         this.minY = this.radius;
         this.maxX = this.width - this.radius;
-        this.maxY = this.height; // TIDAK dikurangi radius lagi
-        
-        console.log("Bounds updated:", {
-            width: this.width,
-            height: this.height,
-            maxY: this.maxY,
-            ballBottom: this.maxY - this.radius
-        });
+        this.maxY = this.height; // Gunakan height asli
     }
 
     initSensor() {
@@ -170,15 +159,21 @@ class BallInContainer {
         this.x += this.smoothGamma * this.sensitivity;
         this.y += this.smoothBeta * this.sensitivity;
 
-        // Batasi posisi X (kiri-kanan) tetap dengan radius
+        // Batasi posisi X (kiri-kanan)
         this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
         
-        // PERBAIKAN DI SINI: Batasi posisi Y (atas-bawah)
-        // Untuk bawah, batasi sampai maxY - radius
-        this.y = Math.max(this.minY, Math.min(this.maxY - this.radius, this.y));
+        // Batasi posisi Y (atas-bawah)
+        // Kurangi radius untuk memastikan bola tidak keluar
+        const maxYPosition = this.maxY - this.radius;
+        this.y = Math.max(this.minY, Math.min(maxYPosition, this.y));
 
         this.ball.style.transform =
             `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
+            
+        // Debug jika bola di bawah
+        if (this.y >= maxYPosition - 5) {
+            console.log("Ball at bottom:", this.y, "maxY:", maxYPosition);
+        }
     }
 
     loop() {
@@ -187,7 +182,24 @@ class BallInContainer {
     }
 }
 
-window.onload = () => new BallInContainer();
+window.onload = () => {
+    // Reset semua margin dan padding
+    document.documentElement.style.margin = '0';
+    document.documentElement.style.padding = '0';
+    document.documentElement.style.width = '100%';
+    document.documentElement.style.height = '100%';
+    document.documentElement.style.overflow = 'hidden';
+    
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
+    document.body.style.overflow = 'hidden';
+    document.body.style.background = '#10B981'; // Pastikan background hijau
+    
+    // Start app
+    new BallInContainer();
+};
 </script>
 
 </body>
