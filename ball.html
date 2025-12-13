@@ -12,6 +12,7 @@
 <title>Magic Ball</title>
 
 <style>
+/* RESET AMAN */
 * {
     margin: 0;
     padding: 0;
@@ -20,25 +21,27 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+/* HTML & BODY FULL */
 html, body {
     position: fixed;
     inset: 0;
-    overflow: hidden;
     width: 100%;
     height: 100%;
+    overflow: hidden;
+    background: #10B981;
 }
 
+/* CONTAINER REAL FULLSCREEN */
 .container {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
     background: linear-gradient(135deg, #10B981 0%, #059669 100%);
     overflow: hidden;
 }
 
-/* BOLA - POSISI ABSOLUT TANPA BATASAN */
+/* BALL */
 #ball {
     position: absolute;
     width: 120px;
@@ -87,41 +90,28 @@ class BallInContainer {
         this.smoothBeta = 0;
         this.smoothGamma = 0;
 
-        // Posisi center bola
-        this.x = 0;
-        this.y = 0;
-        
         this.updateBounds();
+        this.x = this.width / 2;
+        this.y = this.height / 2;
+
+        window.visualViewport?.addEventListener('resize', () => this.updateBounds());
+        window.addEventListener('resize', () => this.updateBounds());
+
         this.initSensor();
         this.loop();
     }
 
     updateBounds() {
-        // Gunakan window.inner untuk mendapatkan ukuran layar sebenarnya
-        this.width = window.innerWidth;
-        this.height = window.innerHeight;
-        
-        // Reset posisi ke tengah
-        this.x = this.width / 2;
-        this.y = this.height / 2;
+    this.width = window.innerWidth;
+    this.height = window.screen.height; // 🔥 PAKSA FULL LAYAR FISIK
 
-        console.log("Screen size:", this.width, "x", this.height);
-        
-        // BATASAN YANG BENAR-BENAR SAMPAI BAWAH
-        this.minX = this.radius;
-        this.minY = this.radius;
-        this.maxX = this.width - this.radius;
-        this.maxY = this.height; // TANPA dikurangi radius
-        
-        console.log("Ball boundaries:", {
-            minX: this.minX,
-            maxX: this.maxX,
-            minY: this.minY,
-            maxY: this.maxY,
-            ballBottomAtMaxY: this.maxY + this.radius
-        });
-    }
+    this.minX = this.radius;
+    this.minY = this.radius;
 
+    // BIARKAN BOLA MASUK AREA HOME BAR
+    this.maxX = this.width - this.radius;
+    this.maxY = this.height - this.radius;
+}
     initSensor() {
         if (typeof DeviceOrientationEvent?.requestPermission === "function") {
             const btn = document.createElement("button");
@@ -158,28 +148,11 @@ class BallInContainer {
         this.x += this.smoothGamma * this.sensitivity;
         this.y += this.smoothBeta * this.sensitivity;
 
-        // Batasi posisi X
         this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
-        
-        // BATASI POSISI Y - YANG INI YANG PERLU DIPERBAIKI
-        // maxY sudah = height, jadi kita batasi sampai maxY
         this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
 
-        // POSISI BOLA - center ke top-left
-        const ballX = this.x - this.radius;
-        const ballY = this.y - this.radius;
-        
-        this.ball.style.transform = `translate(${ballX}px, ${ballY}px)`;
-        
-        // Debug ketika bola di bawah
-        if (this.y >= this.maxY - 1) {
-            console.log("Bola di paling bawah:", {
-                centerY: this.y,
-                screenHeight: this.height,
-                ballBottom: this.y + this.radius,
-                maxY: this.maxY
-            });
-        }
+        this.ball.style.transform =
+            `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
     }
 
     loop() {
@@ -188,42 +161,7 @@ class BallInContainer {
     }
 }
 
-// RESET SEMUA STYLE AGAR FULLSCREEN
-document.documentElement.style.cssText = `
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    overflow: hidden !important;
-    background: #10B981 !important;
-`;
-
-document.body.style.cssText = `
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    overflow: hidden !important;
-    background: #10B981 !important;
-`;
-
-window.onload = () => {
-    // Force fullscreen
-    if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen();
-    }
-    
-    // Start app
-    new BallInContainer();
-};
-
-// Handle resize
-window.addEventListener('resize', () => {
-    document.documentElement.style.width = '100%';
-    document.documentElement.style.height = '100%';
-    document.body.style.width = '100%';
-    document.body.style.height = '100%';
-});
+window.onload = () => new BallInContainer();
 </script>
 
 </body>
