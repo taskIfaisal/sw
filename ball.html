@@ -175,9 +175,20 @@ class BallInContainer {
         }, { passive: false });
 
         window.addEventListener('touchend', () => {
-            this.isTouching = false;
-            if (this.isVisible) this.applyBounds();
-        });
+    this.isTouching = false;
+
+    // JANGAN tarik balik jika sudah dekat tepi
+    if (
+        this.isVisible &&
+        this.x > this.minX &&
+        this.x < this.maxX &&
+        this.y > this.minY &&
+        this.y < this.maxY
+    ) {
+        this.applyBounds();
+    }
+});
+
     }
 
     initDoubleClick() {
