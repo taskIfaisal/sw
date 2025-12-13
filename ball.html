@@ -208,15 +208,18 @@ class BallInContainer {
 
     // 🔥 LOGIKA HILANG SEPERTI KODE KARTU
     checkIfOutOfScreen() {
-        if (
-            this.x < -this.radius ||
-            this.x > this.width + this.radius ||
-            this.y < -this.radius ||
-            this.y > this.height + this.radius
-        ) {
-            this.hideBall();
-        }
+    const rect = this.ball.getBoundingClientRect();
+
+    if (
+        rect.right < 0 ||
+        rect.left > window.innerWidth ||
+        rect.bottom < 0 ||
+        rect.top > window.innerHeight
+    ) {
+        this.hideBall();
     }
+}
+
 
     hideBall() {
         this.isVisible = false;
