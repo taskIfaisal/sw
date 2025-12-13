@@ -466,21 +466,24 @@
         }
         
         function applyBounds() {
-            // Hitung ukuran kartu yang sudah discale
-            const cardWidth = card.offsetWidth * scale;
-            const cardHeight = card.offsetHeight * scale;
-            
-            // PERBAIKAN: Kartu bisa mentok sampai menutupi status bar
-            // MinY = -cardHeight * 0.5 agar kartu bisa naik sampai menutupi status bar
-            const minX = -cardWidth * 0.5;
-            const maxX = window.innerWidth - cardWidth * 0.5;
-            const minY = -cardHeight * 0.5;
-            const maxY = window.innerHeight - cardHeight * 0.5;
-            
-            // Terapkan batas dengan benar
-            posX = Math.max(minX, Math.min(maxX, posX));
-            posY = Math.max(minY, Math.min(maxY, posY));
-        }
+    const cardWidth = card.offsetWidth * scale;
+    const cardHeight = card.offsetHeight * scale;
+
+    const minX = 0;
+    const maxX = window.innerWidth - cardWidth;
+
+    // ⬇️ PERBAIKAN UTAMA DI SINI
+    const statusBarOffset = window.visualViewport
+        ? window.visualViewport.offsetTop
+        : 0;
+
+    const minY = -statusBarOffset; // BOLEH NAIK KE STATUS BAR
+    const maxY = window.innerHeight - cardHeight;
+
+    posX = Math.max(minX, Math.min(maxX, posX));
+    posY = Math.max(minY, Math.min(maxY, posY));
+}
+
         // ===== END SENSOR IMPLEMENTATION =====
         
         // Image Editor Function
