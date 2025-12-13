@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Magic Card Trick</title>
     <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
     <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
@@ -13,8 +13,8 @@
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
     <style>
         html, body {
-            margin: 0;
-            padding: 0;
+            padding-top: 0 !important;
+    margin-top: 0 !important;
             width: 100vw;
             height: 100vh;
             font-family: 'SF Pro Display', sans-serif;
@@ -466,20 +466,19 @@
         }
         
         function applyBounds() {
-            // Hitung ukuran kartu yang sudah discale
-            const cardWidth = card.offsetWidth * scale;
-            const cardHeight = card.offsetHeight * scale;
-            
-            // PERBAIKAN: Hitung batas dengan benar
-            const minX = 0;
-            const maxX = window.innerWidth - cardWidth;
-            const minY = -4;
-            const maxY = window.innerHeight - cardHeight;
-            
-            // Terapkan batas dengan benar
-            posX = Math.max(minX, Math.min(maxX, posX));
-            posY = Math.max(minY, Math.min(maxY, posY));
-        }
+    const cardWidth = card.offsetWidth * scale;
+    const cardHeight = card.offsetHeight * scale;
+
+    const minX = 0;
+    const maxX = window.innerWidth - cardWidth;
+
+    // 🔥 IZINKAN KARTU MASUK KE STATUS BAR
+    const minY = -window.visualViewport.offsetTop;
+    const maxY = window.innerHeight - cardHeight;
+
+    posX = Math.max(minX, Math.min(maxX, posX));
+    posY = Math.max(minY, Math.min(maxY, posY));
+}
         // ===== END SENSOR IMPLEMENTATION =====
         
         // Image Editor Function
