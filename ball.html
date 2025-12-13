@@ -465,19 +465,28 @@
         }
         
         function applyBounds() {
-    const cardWidth = card.offsetWidth * scale;
-    const cardHeight = card.offsetHeight * scale;
+    const rect = card.getBoundingClientRect();
 
+    // posisi visual kartu saat ini
+    const currentLeft = rect.left;
+    const currentTop = rect.top;
+
+    // batas layar
     const minX = 0;
-    const maxX = window.innerWidth - cardWidth;
+    const maxX = window.innerWidth - rect.width;
 
-    // 🔥 IZINKAN KARTU MASUK KE STATUS BAR
+    // izinkan masuk status bar (atas)
     const minY = -window.visualViewport.offsetTop;
-    const maxY = window.innerHeight - cardHeight;
+    const maxY = window.innerHeight - rect.height;
 
-    posX = Math.max(minX, Math.min(maxX, posX));
-    posY = Math.max(minY, Math.min(maxY, posY));
+    // koreksi posisi berbasis VISUAL, bukan offsetWidth
+    if (currentLeft < minX) posX += (minX - currentLeft);
+    if (currentLeft > maxX) posX -= (currentLeft - maxX);
+
+    if (currentTop < minY) posY += (minY - currentTop);
+    if (currentTop > maxY) posY -= (currentTop - maxY);
 }
+
         // ===== END SENSOR IMPLEMENTATION =====
         
         // Image Editor Function
