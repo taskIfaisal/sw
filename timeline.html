@@ -152,6 +152,17 @@
   let isRewinding = false;
   let rewindInterval = null;
 
+  // Key untuk localStorage
+  const BG_STORAGE_KEY = 'timeline_background_image';
+
+  // Load background dari localStorage saat halaman dibuka
+  window.addEventListener('load', function() {
+    const savedBackground = localStorage.getItem(BG_STORAGE_KEY);
+    if (savedBackground) {
+      document.body.style.backgroundImage = `url('${savedBackground}')`;
+    }
+  });
+
   // Saat tombol "Simpan & Tutup" ditekan
   document.getElementById('apply-time-travel').addEventListener('click', () => {
     const inputMinutes = parseInt(document.getElementById('extra-minutes').value, 10);
@@ -244,7 +255,11 @@ const dateArea = document.getElementById('date');
     if (file) {
       const reader = new FileReader();
       reader.onload = function(evt) {
-        document.body.style.backgroundImage = `url('${evt.target.result}')`;
+        const imageData = evt.target.result;
+        // Simpan ke localStorage
+        localStorage.setItem(BG_STORAGE_KEY, imageData);
+        // Terapkan ke background
+        document.body.style.backgroundImage = `url('${imageData}')`;
       };
       reader.readAsDataURL(file);
     }
