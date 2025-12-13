@@ -311,6 +311,9 @@
                     
                     posX = newPosX;
                     posY = newPosY;
+                    
+                    // Apply bounds saat dragging juga
+                    applyBounds();
                     updateCardTransform();
                 }
                 e.preventDefault();
@@ -341,6 +344,9 @@
                             const progress = 1 - (elapsed / momentumDuration);
                             posX += velocityX * 0.01 * progress;
                             posY += velocityY * 0.01 * progress;
+                            
+                            // Apply bounds selama momentum
+                            applyBounds();
                             updateCardTransform();
                             requestAnimationFrame(animateMomentum);
                         } else {
@@ -349,6 +355,10 @@
                     };
                     
                     animateMomentum();
+                } else {
+                    // Jika tidak dilempar, pastikan dalam bounds
+                    applyBounds();
+                    updateCardTransform();
                 }
             }
         });
@@ -444,7 +454,7 @@
                     posX += smoothGamma * sensitivity;
                     posY += smoothBeta * sensitivity;
                     
-                    // Pastikan kartu tetap dalam batas layar
+                    // PASTIKAN KARTU TIDAK KELUAR DARI BATAS LAYAR
                     applyBounds();
                     updateCardTransform();
                 }
@@ -456,13 +466,20 @@
         }
         
         function applyBounds() {
-            // Batas layar untuk kartu
+            // Hitung ukuran kartu yang sudah discale
             const cardWidth = card.offsetWidth * scale;
             const cardHeight = card.offsetHeight * scale;
             
-            // Pastikan kartu tidak keluar dari layar
-            posX = Math.max(-cardWidth * 0.5, Math.min(window.innerWidth - cardWidth * 0.5, posX));
-            posY = Math.max(-cardHeight * 0.5, Math.min(window.innerHeight - cardHeight * 0.5, posY));
+            // PERBAIKAN: Kartu bisa mentok sampai menutupi status bar
+            // MinY = -cardHeight * 0.5 agar kartu bisa naik sampai menutupi status bar
+            const minX = -cardWidth * 0.5;
+            const maxX = window.innerWidth - cardWidth * 0.5;
+            const minY = -cardHeight * 0.5;
+            const maxY = window.innerHeight - cardHeight * 0.5;
+            
+            // Terapkan batas dengan benar
+            posX = Math.max(minX, Math.min(maxX, posX));
+            posY = Math.max(minY, Math.min(maxY, posY));
         }
         // ===== END SENSOR IMPLEMENTATION =====
         
