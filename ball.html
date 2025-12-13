@@ -2,17 +2,13 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Magic Ball">
-<meta name="theme-color" content="#10B981">
 
-<title>Magic Ball</title>
+<title>Magic Ball Trick</title>
 
 <style>
-/* RESET */
 * {
     margin: 0;
     padding: 0;
@@ -21,495 +17,231 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-/* FULLSCREEN - Sama seperti Magic Card Trick */
 html, body {
-    position: fixed;
-    inset: 0;
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #10B981;
+    background: black;
     touch-action: none;
 }
 
-/* BACKGROUND - Sama seperti #background di Magic Card Trick */
 #background {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background-size: cover;
     background-position: center;
-    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
     z-index: 1;
 }
 
-/* CONTAINER UNTUK BOLA */
-.ball-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 2;
-}
-
-/* BALL */
+/* BALL (IMAGE) */
 #ball {
     position: absolute;
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0);
-    will-change: transform;
+    max-width: 200px;
+    height: auto;
+    z-index: 2;
     touch-action: none;
     opacity: 1;
     transition: opacity 0.3s ease;
 }
 
-.ball-inner {
-    position: absolute;
-    inset: 12px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 40% 40%, #ffffff, #e8e8e8);
-}
-
-.ball-reflection {
-    position: absolute;
-    top: 18px;
-    left: 18px;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 70%);
-}
-
-/* SETTINGS MODAL - Tetap sama */
+/* SETTINGS */
 #settings {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    text-align: center;
+    top: -100%;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 10;
     padding: 20px;
+    color: white;
+    transition: top 0.5s ease;
 }
 
-.setting-content {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 30px;
-    border-radius: 20px;
-    max-width: 90%;
-    width: 400px;
-    backdrop-filter: blur(10px);
+button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    margin: 5px 0;
 }
 
-.setting-content h2 {
-    margin-bottom: 20px;
-    font-size: 24px;
-}
-
-.file-upload-label {
+.file-upload {
     display: inline-block;
-    background: #4CAF50;
-    color: white;
-    padding: 15px 25px;
-    border-radius: 10px;
-    font-size: 18px;
-    cursor: pointer;
-    margin: 10px 0;
-    transition: background 0.3s;
-}
-
-.file-upload-label:hover {
-    background: #45a049;
-}
-
-#bg-upload {
-    display: none;
-}
-
-#start-btn {
+    padding: 10px;
     background: #2196F3;
-    color: white;
-    border: none;
-    padding: 15px 30px;
-    border-radius: 10px;
-    font-size: 18px;
+    border-radius: 6px;
     cursor: pointer;
-    margin-top: 20px;
-    transition: background 0.3s;
 }
 
-#start-btn:hover {
-    background: #1976D2;
-}
-
-#default-bg {
-    background: #9C27B0;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 10px;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 10px;
-}
-
-.hidden {
-    display: none !important;
-}
+input[type=file] { display: none; }
 </style>
 </head>
 
 <body>
 
-<!-- Settings Modal -->
-<div id="settings">
-    <div class="setting-content">
-        <h2>Pilih Background</h2>
-        <p>Pilih gambar background untuk permainan Magic Ball</p>
-        
-        <label class="file-upload-label">
-            📁 Upload Background
-            <input type="file" id="bg-upload" accept="image/*">
-        </label>
-        
-        <div style="margin: 15px 0; color: #ccc;">atau</div>
-        
-        <button id="default-bg">Gunakan Background Default</button>
-        
-        <div style="margin-top: 30px;">
-            <button id="start-btn">Mulai Permainan</button>
-        </div>
-    </div>
-</div>
-
-<!-- Background Element - Sama seperti Magic Card Trick -->
 <div id="background"></div>
+<img id="ball" src="https://deckofcardsapi.com/static/img/AS.png">
 
-<!-- Container untuk bola -->
-<div class="ball-container">
-    <div id="ball">
-        <div class="ball-inner"></div>
-        <div class="ball-reflection"></div>
-    </div>
+<div id="settings">
+    <h2>Settings</h2>
+
+    <label class="file-upload">
+        Upload Background
+        <input type="file" id="bgUpload" accept="image/*">
+    </label><br>
+
+    <label class="file-upload">
+        Upload Ball Image
+        <input type="file" id="ballUpload" accept="image/*">
+    </label><br>
+
+    <button onclick="closeSettings()">Save & Close</button>
 </div>
 
 <script>
-class MagicBallGame {
-    constructor() {
-        this.settings = document.getElementById('settings');
-        this.background = document.getElementById('background');
-        this.ball = document.getElementById('ball');
-        this.bgUpload = document.getElementById('bg-upload');
-        this.startBtn = document.getElementById('start-btn');
-        this.defaultBgBtn = document.getElementById('default-bg');
-        
-        this.initSettings();
-    }
-    
-    initSettings() {
-        // Handle background upload - Sama seperti Magic Card Trick
-        this.bgUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    this.saveBackground(event.target.result);
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-        
-        // Handle default background
-        this.defaultBgBtn.addEventListener('click', () => {
-            this.saveBackground(null);
-        });
-        
-        // Handle start button
-        this.startBtn.addEventListener('click', () => {
-            this.startGame();
-        });
-        
-        // Load saved background if exists
-        const savedBg = localStorage.getItem('magicBallBackground');
-        if (savedBg) {
-            // Jika ada background yang disimpan, langsung start game
-            this.startGame(savedBg);
-        } else {
-            // Jika tidak ada background yang disimpan, tampilkan settings
-            this.settings.classList.remove('hidden');
+/* ================= STORAGE ================= */
+const bg = document.getElementById('background');
+const ball = document.getElementById('ball');
+
+if (localStorage.bg) bg.style.backgroundImage = `url(${localStorage.bg})`;
+if (localStorage.ball) ball.src = localStorage.ball;
+
+/* ================= SETTINGS ================= */
+let twoFingerStart = 0;
+
+document.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) twoFingerStart = e.touches[0].clientY;
+});
+
+document.addEventListener('touchmove', e => {
+    if (e.touches.length === 2) {
+        if (e.touches[0].clientY - twoFingerStart > 100) {
+            document.getElementById('settings').style.top = '0';
         }
     }
-    
-    saveBackground(imageData) {
-        if (imageData) {
-            localStorage.setItem('magicBallBackground', imageData);
-            // Tampilkan preview - Sama seperti Magic Card Trick
-            this.background.style.backgroundImage = `url(${imageData})`;
-        } else {
-            localStorage.removeItem('magicBallBackground');
-            // Reset ke default
-            this.background.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
-            this.background.style.backgroundImage = 'none';
-        }
-        
-        this.background.style.backgroundSize = 'cover';
-        this.background.style.backgroundPosition = 'center';
-    }
-    
-    startGame(savedBg = null) {
-        // Sembunyikan settings
-        this.settings.classList.add('hidden');
-        
-        // Apply background jika ada - Sama seperti Magic Card Trick
-        if (savedBg) {
-            this.background.style.backgroundImage = `url(${savedBg})`;
-            this.background.style.backgroundSize = 'cover';
-            this.background.style.backgroundPosition = 'center';
-        } else {
-            const savedBackground = localStorage.getItem('magicBallBackground');
-            if (savedBackground) {
-                this.background.style.backgroundImage = `url(${savedBackground})`;
-                this.background.style.backgroundSize = 'cover';
-                this.background.style.backgroundPosition = 'center';
-            } else {
-                // Background default
-                this.background.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
-                this.background.style.backgroundImage = 'none';
-            }
-        }
-        
-        // Start the ball game
-        new BallInContainer();
-    }
+});
+
+function closeSettings() {
+    document.getElementById('settings').style.top = '-100%';
 }
 
-class BallInContainer {
-    constructor() {
-        this.ball = document.getElementById('ball');
-        this.radius = 60;
-
-        this.sensitivity = 0.35;
-        this.smoothing = 0.15;
-        this.smoothBeta = 0;
-        this.smoothGamma = 0;
-
-        this.isTouching = false;
-        this.isVisible = true;
-        
-        this.exitThreshold = 50;
-        this.lastTapTime = 0;
-        this.doubleTapDelay = 300;
-
-        this.updateBounds();
-        this.x = this.width / 2;
-        this.y = this.height / 2;
-
-        window.addEventListener('resize', () => this.updateBounds());
-        window.visualViewport?.addEventListener('resize', () => this.updateBounds());
-
-        this.initSensor();
-        this.initTouch();
-        this.initDoubleClick();
-        this.loop();
-    }
-
-    updateBounds() {
-        // Gunakan window.innerWidth/Height seperti Magic Card Trick
-        this.width = window.innerWidth;
-        this.height = window.innerHeight;
-
-        this.minX = this.radius;
-        this.minY = this.radius;
-        this.maxX = this.width - this.radius;
-        this.maxY = this.height - this.radius;
-    }
-
-    initSensor() {
-        if (typeof DeviceOrientationEvent?.requestPermission === "function") {
-            const btn = document.createElement("button");
-            btn.innerText = "Izinkan Sensor Gerak";
-            btn.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.9);
-                color: white;
-                font-size: 24px;
-                z-index: 9999;
-                border: none;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                backdrop-filter: blur(10px);
-            `;
-            document.body.appendChild(btn);
-
-            btn.onclick = async () => {
-                try {
-                    const permission = await DeviceOrientationEvent.requestPermission();
-                    if (permission === "granted") {
-                        btn.style.display = 'none';
-                        this.listen();
-                    }
-                } catch (error) {
-                    console.error("Error requesting permission:", error);
-                    btn.innerText = "Error meminta izin. Coba refresh halaman.";
-                }
-            };
-        } else {
-            this.listen();
-        }
-    }
-
-    listen() {
-        window.addEventListener("deviceorientation", e => {
-            if (this.isTouching || !this.isVisible) return;
-
-            const beta = Math.max(-45, Math.min(45, e.beta || 0));
-            const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
-
-            this.smoothBeta += (beta - this.smoothBeta) * this.smoothing;
-            this.smoothGamma += (gamma - this.smoothGamma) * this.smoothing;
-        });
-    }
-
-    initTouch() {
-        let offsetX = 0;
-        let offsetY = 0;
-
-        this.ball.addEventListener('touchstart', e => {
-            if (!this.isVisible) return;
-            
-            const t = e.touches[0];
-            this.isTouching = true;
-            offsetX = t.clientX - this.x;
-            offsetY = t.clientY - this.y;
-            
-            e.preventDefault();
-        });
-
-        window.addEventListener('touchmove', e => {
-            if (!this.isTouching || !this.isVisible) return;
-            const t = e.touches[0];
-
-            this.x = t.clientX - offsetX;
-            this.y = t.clientY - offsetY;
-
-            this.ball.style.transform =
-                `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
-
-            this.checkIfPulledOut();
-            
-            e.preventDefault();
-        }, { passive: false });
-
-        window.addEventListener('touchend', () => {
-            if (!this.isVisible) return;
-            
-            this.isTouching = false;
-            
-            if (this.isVisible) {
-                this.applyBounds();
-                this.ball.style.transform =
-                    `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
-            }
-        });
-    }
-    
-    initDoubleClick() {
-        document.querySelector('.ball-container').addEventListener('touchstart', (e) => {
-            if (!this.isVisible) {
-                const currentTime = new Date().getTime();
-                const tapLength = currentTime - this.lastTapTime;
-                
-                if (tapLength < this.doubleTapDelay && tapLength > 0) {
-                    this.respawnBall(e.touches[0].clientX, e.touches[0].clientY);
-                    e.preventDefault();
-                }
-                
-                this.lastTapTime = currentTime;
-            }
-        });
-    }
-    
-    checkIfPulledOut() {
-        if (this.x < -this.exitThreshold || 
-            this.x > this.width + this.exitThreshold ||
-            this.y < -this.exitThreshold || 
-            this.y > this.height + this.exitThreshold) {
-            
-            this.hideBall();
-        }
-    }
-    
-    hideBall() {
-        this.isVisible = false;
-        this.ball.style.opacity = '0';
-        this.ball.style.pointerEvents = 'none';
-        this.isTouching = false;
-    }
-    
-    respawnBall(x = null, y = null) {
-        this.isVisible = true;
-        this.ball.style.opacity = '1';
-        this.ball.style.pointerEvents = 'auto';
-        
-        if (x !== null && y !== null) {
-            this.x = Math.max(this.radius, Math.min(this.maxX, x));
-            this.y = Math.max(this.radius, Math.min(this.maxY, y));
-        } else {
-            this.x = this.width / 2;
-            this.y = this.height / 2;
-        }
-        
-        this.ball.style.transform =
-            `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
-        
-        this.smoothBeta = 0;
-        this.smoothGamma = 0;
-    }
-
-    applyBounds() {
-        this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
-        this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
-    }
-
-    update() {
-        if (!this.isVisible) return;
-        
-        if (!this.isTouching) {
-            this.x += this.smoothGamma * this.sensitivity;
-            this.y += this.smoothBeta * this.sensitivity;
-            this.applyBounds();
-            
-            this.ball.style.transform =
-                `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
-        }
-    }
-
-    loop() {
-        this.update();
-        requestAnimationFrame(() => this.loop());
-    }
-}
-
-// Start the application
-window.onload = () => {
-    new MagicBallGame();
+/* ================= UPLOAD ================= */
+bgUpload.onchange = e => {
+    const r = new FileReader();
+    r.onload = ev => {
+        bg.style.backgroundImage = `url(${ev.target.result})`;
+        localStorage.bg = ev.target.result;
+    };
+    r.readAsDataURL(e.target.files[0]);
 };
+
+ballUpload.onchange = e => {
+    const r = new FileReader();
+    r.onload = ev => {
+        ball.src = ev.target.result;
+        localStorage.ball = ev.target.result;
+        resetBall();
+    };
+    r.readAsDataURL(e.target.files[0]);
+};
+
+/* ================= BALL LOGIC (FROM MAGIC BALL) ================= */
+let x, y;
+let isTouching = false;
+let visible = true;
+let smoothBeta = 0;
+let smoothGamma = 0;
+
+const sensitivity = 0.35;
+const smoothing = 0.15;
+const exitThreshold = 80;
+
+function resetBall(cx = innerWidth / 2, cy = innerHeight / 2) {
+    ball.style.display = 'block';
+    ball.style.opacity = '1';
+    visible = true;
+    x = cx;
+    y = cy;
+    updateBall();
+}
+
+function updateBall() {
+    ball.style.transform =
+        `translate(${x - ball.offsetWidth / 2}px, ${y - ball.offsetHeight / 2}px)`;
+}
+
+resetBall();
+
+/* ================= SENSOR ================= */
+if (typeof DeviceOrientationEvent?.requestPermission === 'function') {
+    const btn = document.createElement('button');
+    btn.textContent = 'Enable Motion';
+    btn.style.cssText = `
+        position:fixed; inset:0;
+        background:black; color:white;
+        font-size:24px; z-index:999;
+    `;
+    document.body.appendChild(btn);
+    btn.onclick = async () => {
+        if (await DeviceOrientationEvent.requestPermission() === 'granted') {
+            btn.remove();
+            listenSensor();
+        }
+    };
+} else {
+    listenSensor();
+}
+
+function listenSensor() {
+    window.addEventListener('deviceorientation', e => {
+        if (!visible || isTouching) return;
+        smoothBeta += ((e.beta || 0) - smoothBeta) * smoothing;
+        smoothGamma += ((e.gamma || 0) - smoothGamma) * smoothing;
+    });
+}
+
+/* ================= TOUCH ================= */
+ball.addEventListener('touchstart', e => {
+    isTouching = true;
+});
+
+window.addEventListener('touchmove', e => {
+    if (!isTouching || !visible) return;
+    x = e.touches[0].clientX;
+    y = e.touches[0].clientY;
+    updateBall();
+
+    if (
+        x < -exitThreshold || x > innerWidth + exitThreshold ||
+        y < -exitThreshold || y > innerHeight + exitThreshold
+    ) hideBall();
+}, { passive: false });
+
+window.addEventListener('touchend', () => isTouching = false);
+
+/* ================= HIDE / SHOW ================= */
+function hideBall() {
+    visible = false;
+    ball.style.opacity = '0';
+}
+
+let lastTap = 0;
+document.addEventListener('touchstart', e => {
+    const now = Date.now();
+    if (!visible && now - lastTap < 300) {
+        resetBall(e.touches[0].clientX, e.touches[0].clientY);
+    }
+    lastTap = now;
+});
+
+/* ================= LOOP ================= */
+function loop() {
+    if (visible && !isTouching) {
+        x += smoothGamma * sensitivity;
+        y += smoothBeta * sensitivity;
+        updateBall();
+    }
+    requestAnimationFrame(loop);
+}
+loop();
 </script>
 
 </body>
