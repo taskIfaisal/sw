@@ -12,7 +12,6 @@
 <title>Magic Ball</title>
 
 <style>
-/* RESET */
 * {
     margin: 0;
     padding: 0;
@@ -21,7 +20,6 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-/* FULLSCREEN */
 html, body {
     position: fixed;
     inset: 0;
@@ -32,7 +30,6 @@ html, body {
     touch-action: none;
 }
 
-/* CONTAINER */
 .container {
     position: fixed;
     inset: 0;
@@ -42,7 +39,6 @@ html, body {
     overflow: hidden;
 }
 
-/* BALL */
 #ball {
     position: absolute;
     width: 120px;
@@ -51,7 +47,6 @@ html, body {
     background: radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0);
     will-change: transform;
     touch-action: none;
-    opacity: 1;
     transition: opacity 0.3s ease;
 }
 
@@ -96,18 +91,7 @@ class BallInContainer {
 
         this.isTouching = false;
         this.isVisible = true;
-        
-        // Logika dari Magic Card Trick
-        this.velocityX = 0;
-        this.velocityY = 0;
-        this.lastPosX = 0;
-        this.lastPosY = 0;
-        this.lastTime = 0;
-        
-        // Threshold untuk kecepatan saat dilempar (dari Magic Card Trick)
-        this.speedThreshold = 500; // pixels per second
-        
-        // Untuk menghitung double click
+
         this.lastTapTime = 0;
         this.doubleTapDelay = 300;
 
@@ -174,129 +158,70 @@ class BallInContainer {
 
         this.ball.addEventListener('touchstart', e => {
             if (!this.isVisible) return;
-            
             const t = e.touches[0];
             this.isTouching = true;
             offsetX = t.clientX - this.x;
             offsetY = t.clientY - this.y;
-            
-            // Inisialisasi tracking velocity (dari Magic Card Trick)
-            this.velocityX = 0;
-            this.velocityY = 0;
-            this.lastPosX = this.x;
-            this.lastPosY = this.y;
-            this.lastTime = Date.now();
-            
-            e.preventDefault();
         });
 
         window.addEventListener('touchmove', e => {
             if (!this.isTouching || !this.isVisible) return;
             const t = e.touches[0];
 
-            // Hitung velocity (dari Magic Card Trick)
-            const now = Date.now();
-            const deltaTime = now - this.lastTime;
-            
-            if (deltaTime > 0) {
-                const newX = t.clientX - offsetX;
-                const newY = t.clientY - offsetY;
-                
-                this.velocityX = (newX - this.lastPosX) / deltaTime * 1000;
-                this.velocityY = (newY - this.lastPosY) / deltaTime * 1000;
-                
-                this.lastPosX = newX;
-                this.lastPosY = newY;
-                this.lastTime = now;
-                
-                this.x = newX;
-                this.y = newY;
-            }
+            this.x = t.clientX - offsetX;
+            this.y = t.clientY - offsetY;
 
-            // Update posisi bola saat ditarik
-            this.ball.style.transform =
-                `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
-            
-            e.preventDefault();
+            this.checkIfOutOfScreen();
         }, { passive: false });
 
-        window.addEventListener('touchend', (e) => {
-            if (!this.isVisible) return;
-            
+        window.addEventListener('touchend', () => {
             this.isTouching = false;
-            
-            // LOGIKA DARI MAGIC CARD TRICK: Cek apakah bola dilempar/ditarik keluar
-            const currentSpeed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
-            
-            // Cek jika bola dilempar cepat ATAU sudah di luar layar
-            if (currentSpeed > this.speedThreshold || 
-                this.x < -this.radius * 2 || 
-                this.x > this.width + this.radius * 2 ||
-                this.y < -this.radius * 2 || 
-                this.y > this.height + this.radius * 2) {
-                
-                // Bola dianggap ditarik/dilempar keluar - hilangkan
-                this.hideBall();
-            } else {
-                // Jika tidak, kembalikan ke dalam batas
-                this.applyBounds();
-                this.ball.style.transform =
-                    `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
-            }
-            
-            e.preventDefault();
+            if (this.isVisible) this.applyBounds();
         });
     }
-    
+
     initDoubleClick() {
-        const container = document.querySelector('.container');
-        
-        container.addEventListener('touchend', (e) => {
-            if (!this.isVisible) {
-                const currentTime = new Date().getTime();
-                const tapLength = currentTime - this.lastTapTime;
-                
-                if (tapLength < this.doubleTapDelay && tapLength > 0) {
-                    // Double tap terdeteksi - munculkan bola kembali
-                    this.respawnBall();
-                    e.preventDefault();
-                }
-                
-                this.lastTapTime = currentTime;
+        document.addEventListener('touchend', e => {
+            if (this.isVisible) return;
+
+            const now = Date.now();
+            if (now - this.lastTapTime < this.doubleTapDelay) {
+                this.respawnBall(
+                    e.changedTouches[0].clientX,
+                    e.changedTouches[0].clientY
+                );
             }
+            this.lastTapTime = now;
         });
     }
-    
+
+    // 🔥 LOGIKA HILANG SEPERTI KODE KARTU
+    checkIfOutOfScreen() {
+        if (
+            this.x < -this.radius ||
+            this.x > this.width + this.radius ||
+            this.y < -this.radius ||
+            this.y > this.height + this.radius
+        ) {
+            this.hideBall();
+        }
+    }
+
     hideBall() {
         this.isVisible = false;
-        this.ball.style.opacity = '0';
-        this.ball.style.pointerEvents = 'none';
+        this.ball.style.display = 'none';
         this.isTouching = false;
-        
-        // Reset sensor
-        this.smoothBeta = 0;
-        this.smoothGamma = 0;
-        this.velocityX = 0;
-        this.velocityY = 0;
     }
-    
-    respawnBall() {
+
+    respawnBall(x, y) {
         this.isVisible = true;
-        this.ball.style.opacity = '1';
-        this.ball.style.pointerEvents = 'auto';
-        
-        // Posisi default di tengah
-        this.x = this.width / 2;
-        this.y = this.height / 2;
-        
-        this.ball.style.transform =
-            `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
-        
-        // Reset semua values
+        this.ball.style.display = 'block';
+
+        this.x = Math.max(this.radius, Math.min(this.maxX, x));
+        this.y = Math.max(this.radius, Math.min(this.maxY, y));
+
         this.smoothBeta = 0;
         this.smoothGamma = 0;
-        this.velocityX = 0;
-        this.velocityY = 0;
     }
 
     applyBounds() {
@@ -306,15 +231,15 @@ class BallInContainer {
 
     update() {
         if (!this.isVisible) return;
-        
+
         if (!this.isTouching) {
             this.x += this.smoothGamma * this.sensitivity;
             this.y += this.smoothBeta * this.sensitivity;
             this.applyBounds();
-            
-            this.ball.style.transform =
-                `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
         }
+
+        this.ball.style.transform =
+            `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
     }
 
     loop() {
