@@ -12,43 +12,57 @@
 <title>Magic Ball</title>
 
 <style>
-/* RESET AMAN */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
-/* HTML & BODY FULL */
 html, body {
     position: fixed;
     inset: 0;
+    overflow: hidden;
     width: 100%;
     height: 100%;
-    overflow: hidden;
     background: #10B981;
 }
 
-/* CONTAINER REAL FULLSCREEN */
 .container {
     position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100dvh;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background: linear-gradient(135deg, #10B981 0%, #059669 100%);
     overflow: hidden;
 }
 
-/* BALL */
+/* BOLA DENGAN EFEK SENTUH */
 #ball {
     position: absolute;
     width: 120px;
     height: 120px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0);
+    box-shadow:
+        inset -10px -10px 20px rgba(0,0,0,0.2),
+        inset 10px 10px 20px rgba(255,255,255,0.6),
+        0 20px 40px rgba(0,0,0,0.4);
     will-change: transform;
+    cursor: pointer;
+    transition: transform 0.1s ease-out, box-shadow 0.2s ease;
+    z-index: 10;
+}
+
+#ball:active {
+    box-shadow:
+        inset -5px -5px 15px rgba(0,0,0,0.3),
+        inset 5px 5px 15px rgba(255,255,255,0.7),
+        0 25px 50px rgba(0,0,0,0.5);
+    transform: scale(0.95);
 }
 
 .ball-inner {
@@ -56,6 +70,7 @@ html, body {
     inset: 12px;
     border-radius: 50%;
     background: radial-gradient(circle at 40% 40%, #ffffff, #e8e8e8);
+    pointer-events: none;
 }
 
 .ball-reflection {
@@ -66,6 +81,60 @@ html, body {
     height: 30px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 70%);
+    pointer-events: none;
+}
+
+/* Bayangan yang mengikuti bola */
+.ball-shadow {
+    position: absolute;
+    width: 100px;
+    height: 25px;
+    background: radial-gradient(ellipse at center, 
+        rgba(0,0,0,0.3) 0%,
+        rgba(0,0,0,0) 70%);
+    border-radius: 50%;
+    transition: all 0.15s ease;
+    will-change: transform, opacity;
+    pointer-events: none;
+}
+
+/* Efek ripple saat disentuh */
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(0);
+    animation: ripple-animation 0.6s linear;
+    pointer-events: none;
+    z-index: 5;
+}
+
+@keyframes ripple-animation {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Instruksi */
+.instructions {
+    position: fixed;
+    top: 30px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    color: rgba(255,255,255,0.9);
+    font-size: 16px;
+    z-index: 3;
+    pointer-events: none;
+    animation: fadeOut 5s forwards;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
 }
 </style>
 </head>
@@ -73,45 +142,204 @@ html, body {
 <body>
 
 <div class="container">
+    <div class="instructions">
+        Miringkan HP atau sentuh & geser bola
+    </div>
+
     <div id="ball">
         <div class="ball-inner"></div>
         <div class="ball-reflection"></div>
     </div>
+    <div class="ball-shadow"></div>
 </div>
 
 <script>
-class BallInContainer {
+class InteractiveBall {
     constructor() {
         this.ball = document.getElementById('ball');
+        this.shadow = document.querySelector('.ball-shadow');
+        this.container = document.querySelector('.container');
         this.radius = 60;
 
+        // Fisika
         this.sensitivity = 0.35;
         this.smoothing = 0.15;
         this.smoothBeta = 0;
         this.smoothGamma = 0;
-
+        
+        // Velocity dan posisi
+        this.x = 0;
+        this.y = 0;
+        this.vx = 0;
+        this.vy = 0;
+        
+        // State untuk drag
+        this.isDragging = false;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
+        this.ballStartX = 0;
+        this.ballStartY = 0;
+        
+        // Physics properties
+        this.friction = 0.98;
+        this.bounce = 0.85;
+        this.gravity = 0.5;
+        
         this.updateBounds();
-        this.x = this.width / 2;
-        this.y = this.height / 2;
-
-        window.visualViewport?.addEventListener('resize', () => this.updateBounds());
-        window.addEventListener('resize', () => this.updateBounds());
-
+        this.setupEventListeners();
         this.initSensor();
         this.loop();
     }
 
     updateBounds() {
-    this.width = window.innerWidth;
-    this.height = window.screen.height; // 🔥 PAKSA FULL LAYAR FISIK
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        
+        // Set posisi awal ke tengah
+        this.x = this.width / 2;
+        this.y = this.height / 2;
 
-    this.minX = this.radius;
-    this.minY = this.radius;
+        // Batasan untuk bola (center position)
+        this.minX = this.radius;
+        this.minY = this.radius;
+        this.maxX = this.width - this.radius;
+        this.maxY = this.height - this.radius;
+    }
 
-    // BIARKAN BOLA MASUK AREA HOME BAR
-    this.maxX = this.width - this.radius;
-    this.maxY = this.height - this.radius;
-}
+    setupEventListeners() {
+        // Touch events untuk drag
+        this.ball.addEventListener('touchstart', this.handleTouchStart.bind(this));
+        this.ball.addEventListener('touchmove', this.handleTouchMove.bind(this));
+        this.ball.addEventListener('touchend', this.handleTouchEnd.bind(this));
+        
+        // Mouse events untuk desktop testing
+        this.ball.addEventListener('mousedown', this.handleMouseDown.bind(this));
+        document.addEventListener('mousemove', this.handleMouseMove.bind(this));
+        document.addEventListener('mouseup', this.handleMouseUp.bind(this));
+        
+        // Window resize
+        window.addEventListener('resize', () => {
+            this.updateBounds();
+            this.renderBall();
+        });
+    }
+
+    handleTouchStart(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        this.startDrag(touch.clientX, touch.clientY);
+        this.createRipple(touch.clientX, touch.clientY);
+    }
+
+    handleTouchMove(e) {
+        if (!this.isDragging) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        this.updateDrag(touch.clientX, touch.clientY);
+    }
+
+    handleTouchEnd(e) {
+        if (!this.isDragging) return;
+        this.endDrag();
+        if (e.changedTouches[0]) {
+            this.createRipple(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+        }
+    }
+
+    handleMouseDown(e) {
+        e.preventDefault();
+        this.startDrag(e.clientX, e.clientY);
+        this.createRipple(e.clientX, e.clientY);
+    }
+
+    handleMouseMove(e) {
+        if (!this.isDragging) return;
+        e.preventDefault();
+        this.updateDrag(e.clientX, e.clientY);
+    }
+
+    handleMouseUp(e) {
+        if (!this.isDragging) return;
+        this.endDrag();
+        this.createRipple(e.clientX, e.clientY);
+    }
+
+    startDrag(clientX, clientY) {
+        this.isDragging = true;
+        this.dragStartX = clientX;
+        this.dragStartY = clientY;
+        this.ballStartX = this.x;
+        this.ballStartY = this.y;
+        
+        // Hentikan velocity saat mulai drag
+        this.vx = 0;
+        this.vy = 0;
+        
+        // Efek visual
+        this.ball.style.transition = 'transform 0.1s ease-out';
+    }
+
+    updateDrag(clientX, clientY) {
+        if (!this.isDragging) return;
+        
+        // Hitung perbedaan posisi
+        const deltaX = clientX - this.dragStartX;
+        const deltaY = clientY - this.dragStartY;
+        
+        // Posisi baru
+        let newX = this.ballStartX + deltaX;
+        let newY = this.ballStartY + deltaY;
+        
+        // Batasi dalam layar
+        newX = Math.max(this.minX, Math.min(this.maxX, newX));
+        newY = Math.max(this.minY, Math.min(this.maxY, newY));
+        
+        // Hitung velocity dari gerakan drag
+        this.vx = (newX - this.x) * 0.8;
+        this.vy = (newY - this.y) * 0.8;
+        
+        this.x = newX;
+        this.y = newY;
+        
+        this.renderBall();
+    }
+
+    endDrag() {
+        if (!this.isDragging) return;
+        this.isDragging = false;
+        
+        // Beri momentum saat dilepas
+        this.vx *= 1.5;
+        this.vy *= 1.5;
+        
+        // Reset transition
+        this.ball.style.transition = '';
+    }
+
+    createRipple(x, y) {
+        const ripple = document.createElement('div');
+        ripple.className = 'ripple';
+        
+        // Hitung posisi ripple relatif terhadap bola
+        const ballRect = this.ball.getBoundingClientRect();
+        const rippleX = x - ballRect.left;
+        const rippleY = y - ballRect.top;
+        
+        ripple.style.left = `${rippleX}px`;
+        ripple.style.top = `${rippleY}px`;
+        ripple.style.width = `${this.radius}px`;
+        ripple.style.height = `${this.radius}px`;
+        
+        this.ball.appendChild(ripple);
+        
+        // Hapus ripple setelah animasi selesai
+        setTimeout(() => {
+            if (ripple.parentNode) {
+                ripple.parentNode.removeChild(ripple);
+            }
+        }, 600);
+    }
+
     initSensor() {
         if (typeof DeviceOrientationEvent?.requestPermission === "function") {
             const btn = document.createElement("button");
@@ -120,21 +348,28 @@ class BallInContainer {
                 position:fixed;inset:0;
                 background:#000;color:#fff;
                 font-size:20px;z-index:9999;
+                border:none;
+                font-family:-apple-system, BlinkMacSystemFont, sans-serif;
             `;
             document.body.appendChild(btn);
 
             btn.onclick = async () => {
-                if (await DeviceOrientationEvent.requestPermission() === "granted") {
+                try {
+                    if (await DeviceOrientationEvent.requestPermission() === "granted") {
+                        btn.remove();
+                        this.listenToSensor();
+                    }
+                } catch (error) {
+                    console.log("Permission error:", error);
                     btn.remove();
-                    this.listen();
                 }
             };
         } else {
-            this.listen();
+            this.listenToSensor();
         }
     }
 
-    listen() {
+    listenToSensor() {
         window.addEventListener("deviceorientation", e => {
             const beta = Math.max(-45, Math.min(45, e.beta || 0));
             const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
@@ -144,24 +379,141 @@ class BallInContainer {
         });
     }
 
-    update() {
-        this.x += this.smoothGamma * this.sensitivity;
-        this.y += this.smoothBeta * this.sensitivity;
-
+    updatePhysics() {
+        if (!this.isDragging) {
+            // Terapkan sensor gerak jika tidak sedang drag
+            this.vx += this.smoothGamma * this.sensitivity;
+            this.vy += this.smoothBeta * this.sensitivity;
+            
+            // Terapkan gravitasi
+            this.vy += this.gravity * 0.05;
+        }
+        
+        // Terapkan gesekan
+        this.vx *= this.friction;
+        this.vy *= this.friction;
+        
+        // Update posisi
+        this.x += this.vx;
+        this.y += this.vy;
+        
+        // Handle collisions
+        this.handleCollisions();
+        
+        // Batasi dalam layar
         this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
         this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
+        
+        // Hentikan gerakan sangat kecil
+        if (Math.abs(this.vx) < 0.01) this.vx = 0;
+        if (Math.abs(this.vy) < 0.01) this.vy = 0;
+    }
 
-        this.ball.style.transform =
-            `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
+    handleCollisions() {
+        let collided = false;
+        
+        if (this.x < this.minX) {
+            this.x = this.minX;
+            this.vx = Math.abs(this.vx) * this.bounce;
+            collided = true;
+        }
+        
+        if (this.x > this.maxX) {
+            this.x = this.maxX;
+            this.vx = -Math.abs(this.vx) * this.bounce;
+            collided = true;
+        }
+        
+        if (this.y < this.minY) {
+            this.y = this.minY;
+            this.vy = Math.abs(this.vy) * this.bounce;
+            collided = true;
+        }
+        
+        if (this.y > this.maxY) {
+            this.y = this.maxY;
+            this.vy = -Math.abs(this.vy) * this.bounce;
+            this.vx *= 0.9; // Extra friction di bawah
+            collided = true;
+        }
+        
+        if (collided) {
+            this.vx *= 0.95;
+            this.vy *= 0.95;
+        }
+    }
+
+    renderBall() {
+        // Posisi bola (center ke top-left)
+        const ballX = this.x - this.radius;
+        const ballY = this.y - this.radius;
+        
+        // Hitung rotasi berdasarkan velocity
+        const rotation = this.vx * 1.5;
+        
+        // Terapkan transformasi
+        this.ball.style.transform = `
+            translate(${ballX}px, ${ballY}px)
+            rotate(${rotation}deg)
+        `;
+        
+        // Update shadow
+        this.updateShadow();
+    }
+
+    updateShadow() {
+        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        const heightFactor = (this.y - this.minY) / (this.maxY - this.minY);
+        
+        const shadowSize = 0.7 + (1 - heightFactor) * 0.3;
+        const shadowOpacity = 0.25 - heightFactor * 0.1 + speed * 0.01;
+        const shadowBlur = 3 + speed * 0.5;
+        
+        this.shadow.style.width = `${100 * shadowSize}px`;
+        this.shadow.style.height = `${25 * shadowSize}px`;
+        this.shadow.style.opacity = Math.max(0.1, Math.min(0.4, shadowOpacity));
+        this.shadow.style.filter = `blur(${shadowBlur}px)`;
+        this.shadow.style.left = `${this.x - 50}px`;
+        this.shadow.style.top = `${this.y + 40}px`;
     }
 
     loop() {
-        this.update();
+        this.updatePhysics();
+        this.renderBall();
         requestAnimationFrame(() => this.loop());
     }
 }
 
-window.onload = () => new BallInContainer();
+// Inisialisasi saat halaman load
+window.onload = () => {
+    // Force fullscreen experience
+    document.documentElement.style.cssText = `
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: hidden !important;
+    `;
+    
+    document.body.style.cssText = `
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: hidden !important;
+    `;
+    
+    // Start the interactive ball
+    new InteractiveBall();
+    
+    // Auto-hide instructions
+    setTimeout(() => {
+        const instructions = document.querySelector('.instructions');
+        if (instructions) {
+            instructions.style.display = 'none';
+        }
+    }, 5000);
+};
 </script>
 
 </body>
