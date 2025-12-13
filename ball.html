@@ -85,6 +85,46 @@
             transition: all 0.1s ease;
         }
 
+        /* Boundary indicator - bisa dihapus jika tidak perlu */
+        .boundary-indicator {
+            position: fixed;
+            border: 2px solid rgba(255,255,255,0.2);
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .boundary-top {
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .boundary-bottom {
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            border-top: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .boundary-left {
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 2px;
+            border-right: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .boundary-right {
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 2px;
+            border-left: 2px solid rgba(255,255,255,0.3);
+        }
+
         .instructions {
             position: fixed;
             top: 30px;
@@ -152,24 +192,15 @@
         .permission-prompt button:active {
             transform: scale(0.98);
         }
-
-        /* Debug info - bisa dihapus di production */
-        .debug-info {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.5);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-family: monospace;
-            z-index: 3;
-            pointer-events: none;
-        }
     </style>
 </head>
 <body>
+    <!-- Boundary indicators (optional visual aid) -->
+    <div class="boundary-indicator boundary-top"></div>
+    <div class="boundary-indicator boundary-bottom"></div>
+    <div class="boundary-indicator boundary-left"></div>
+    <div class="boundary-indicator boundary-right"></div>
+
     <!-- Permission Prompt -->
     <div id="permissionPrompt" class="permission-prompt">
         <h2>🎮 Magic Ball Physics</h2>
@@ -193,21 +224,16 @@
     </div>
     <div class="ball-shadow"></div>
 
-    <!-- Debug Info (optional) -->
-    <div class="debug-info" id="debugInfo">
-        X: 0 | Y: 0
-    </div>
-
     <script>
         // ============================
-        // SIMPLE BALL PHYSICS
+        // FIXED BALL PHYSICS - STAYS WITHIN BOUNDARIES
         // ============================
-        class SimpleBallPhysics {
+        class FixedBallPhysics {
             constructor() {
-                // Ball properties
-                this.radius = 50;
-                this.x = window.innerWidth / 2;
-                this.y = window.innerHeight / 2;
+                // Ball properties - posisi dihitung dari center
+                this.radius = 50; // Radius 50px untuk bola diameter 100px
+                this.x = window.innerWidth / 2; // Center X
+                this.y = window.innerHeight / 2; // Center Y
                 this.vx = 0;
                 this.vy = 0;
                 
@@ -225,24 +251,36 @@
                 // Touch state
                 this.isDragging = false;
                 
-                // Initialize boundaries
+                // Initialize boundaries dengan benar
                 this.updateBoundaries();
+                
+                console.log("Ball boundaries:", {
+                    minX: this.minX,
+                    maxX: this.maxX,
+                    minY: this.minY,
+                    maxY: this.maxY,
+                    radius: this.radius,
+                    screenWidth: window.innerWidth,
+                    screenHeight: window.innerHeight
+                });
             }
             
             updateBoundaries() {
-                this.minX = this.radius;
-                this.minY = this.radius;
-                this.maxX = window.innerWidth - this.radius;
-                this.maxY = window.innerHeight - this.radius;
+                // Hitung batasan dengan benar: bola tidak boleh keluar layar
+                // Center position harus berada dalam batas radius dari tepi
+                this.minX = this.radius; // Minimal jarak dari kiri = radius
+                this.minY = this.radius; // Minimal jarak dari atas = radius
+                this.maxX = window.innerWidth - this.radius; // Maksimal jarak dari kiri = lebar layar - radius
+                this.maxY = window.innerHeight - this.radius; // Maksimal jarak dari atas = tinggi layar - radius
             }
             
             initGyro() {
                 if (window.DeviceOrientationEvent) {
                     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                        // iOS 13+ - will request permission via button
-                        console.log("iOS 13+ detected");
+                        // iOS 13+ - akan minta permission via button
+                        console.log("iOS 13+ terdeteksi");
                     } else {
-                        // Android and older iOS
+                        // Android dan iOS lama
                         this.startGyroListening();
                     }
                 }
@@ -291,50 +329,69 @@
                 this.x += this.vx;
                 this.y += this.vy;
                 
-                // Handle collisions
-                this.handleCollisions();
+                // Handle collisions with proper boundary checking
+                this.handleBoundaryCollisions();
                 
-                // Keep within screen
-                this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
-                this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
+                // Double-check boundaries (safety)
+                this.clampToBoundaries();
                 
                 return {
-                    x: this.x - this.radius,
-                    y: this.y - this.radius,
+                    x: this.x - this.radius, // Convert center to top-left for CSS
+                    y: this.y - this.radius, // Convert center to top-left for CSS
                     vx: this.vx,
                     vy: this.vy
                 };
             }
             
-            handleCollisions() {
-                // Left wall
+            handleBoundaryCollisions() {
+                let collided = false;
+                
+                // Check left boundary (using center position)
                 if (this.x < this.minX) {
+                    collided = true;
                     this.x = this.minX;
                     this.vx = Math.abs(this.vx) * this.bounce;
                 }
                 
-                // Right wall
+                // Check right boundary
                 if (this.x > this.maxX) {
+                    collided = true;
                     this.x = this.maxX;
                     this.vx = -Math.abs(this.vx) * this.bounce;
                 }
                 
-                // Top wall
+                // Check top boundary
                 if (this.y < this.minY) {
+                    collided = true;
                     this.y = this.minY;
                     this.vy = Math.abs(this.vy) * this.bounce;
                 }
                 
-                // Bottom wall
+                // Check bottom boundary
                 if (this.y > this.maxY) {
+                    collided = true;
                     this.y = this.maxY;
                     this.vy = -Math.abs(this.vy) * this.bounce;
-                    this.vx *= 0.9; // Extra friction on bottom
+                    
+                    // Extra friction on bottom
+                    this.vx *= 0.9;
+                }
+                
+                // Damping for collisions
+                if (collided) {
+                    this.vx *= 0.95;
+                    this.vy *= 0.95;
                 }
                 
                 // Stop very slow movement
                 if (Math.abs(this.vx) < 0.05) this.vx = 0;
                 if (Math.abs(this.vy) < 0.05) this.vy = 0;
+            }
+            
+            clampToBoundaries() {
+                // Safety clamp - ensure ball stays within bounds
+                this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
+                this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
             }
             
             startDrag(x, y) {
@@ -348,8 +405,13 @@
             updateDrag(x, y) {
                 if (!this.isDragging) return;
                 
-                const newX = x - this.dragOffsetX;
-                const newY = y - this.dragOffsetY;
+                // Calculate new center position
+                let newX = x - this.dragOffsetX;
+                let newY = y - this.dragOffsetY;
+                
+                // Constrain to boundaries while dragging
+                newX = Math.max(this.minX, Math.min(this.maxX, newX));
+                newY = Math.max(this.minY, Math.min(this.maxY, newY));
                 
                 this.vx = (newX - this.x) * 0.7;
                 this.vy = (newY - this.y) * 0.7;
@@ -377,17 +439,17 @@
                 this.y = window.innerHeight / 2;
                 this.vx = 0;
                 this.vy = 0;
+                this.updateBoundaries();
             }
         }
 
         // ============================
         // MAIN APPLICATION
         // ============================
-        const physics = new SimpleBallPhysics();
+        const physics = new FixedBallPhysics();
         const ball = document.getElementById('ball');
         const shadow = document.querySelector('.ball-shadow');
         const permissionPrompt = document.getElementById('permissionPrompt');
-        const debugInfo = document.getElementById('debugInfo');
         
         let animationId = null;
         let lastTime = 0;
@@ -433,9 +495,6 @@
                 // Update shadow
                 updateShadow(state);
                 
-                // Update debug info
-                debugInfo.textContent = `X: ${Math.round(state.x)} | Y: ${Math.round(state.y)}`;
-                
                 // Continue animation
                 animationId = requestAnimationFrame(animate);
             }
@@ -447,7 +506,7 @@
             // Calculate rotation based on movement
             const rotation = state.vx * 1.2;
             
-            // Apply transformations
+            // Apply transformations - state.x dan state.y sudah top-left position
             ball.style.transform = `
                 translate3d(${state.x}px, ${state.y}px, 0)
                 rotate(${rotation}deg)
@@ -473,7 +532,7 @@
             // Window resize
             window.addEventListener('resize', () => {
                 physics.updateBoundaries();
-                physics.reset();
+                physics.clampToBoundaries();
             });
 
             // Ball touch interaction
@@ -544,19 +603,6 @@
 
         // Start the app
         window.addEventListener('load', init);
-        
-        // Fallback motion for devices without gyro
-        setTimeout(() => {
-            if (!physics.gyroAvailable) {
-                console.log("Using touch-only physics");
-            }
-        }, 5000);
-
-        // PWA installation
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            console.log("PWA install prompt available");
-        });
     </script>
 </body>
 </html>
