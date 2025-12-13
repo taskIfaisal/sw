@@ -66,15 +66,66 @@ html, body {
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 70%);
 }
+
+/* ===== SETTINGS OVERLAY ===== */
+#settings {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(8px);
+    display: none;
+    z-index: 9999;
+}
+
+.settings-panel {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 20px;
+    background: #111;
+    border-radius: 20px 20px 0 0;
+    color: #fff;
+}
+
+.settings-panel h3 {
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+.settings-panel button {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 12px;
+    font-size: 14px;
+    border-radius: 12px;
+    border: none;
+    background: #10B981;
+    color: #fff;
+}
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="container" id="container">
     <div id="ball">
         <div class="ball-inner"></div>
         <div class="ball-reflection"></div>
+    </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings">
+    <div class="settings-panel">
+        <h3>Background</h3>
+        <button onclick="setBg(1)">Green</button>
+        <button onclick="setBg(2)">Dark</button>
+
+        <h3>Ball Object</h3>
+        <button onclick="setBall(1)">Glass Ball</button>
+        <button onclick="setBall(2)">Dark Ball</button>
+
+        <button onclick="closeSettings()">Close</button>
     </div>
 </div>
 
@@ -105,12 +156,13 @@ class BallInContainer {
         this.initSensor();
         this.initTouch();
         this.initDoubleClick();
+        this.initTwoFingerSwipe();
         this.loop();
     }
 
     updateBounds() {
         this.width = window.innerWidth;
-        this.height = window.screen.height;
+        this.height = window.innerHeight;
 
         this.minX = this.radius;
         this.minY = this.radius;
@@ -175,26 +227,22 @@ class BallInContainer {
         }, { passive: false });
 
         window.addEventListener('touchend', () => {
-    this.isTouching = false;
-
-    // JANGAN tarik balik jika sudah dekat tepi
-    if (
-        this.isVisible &&
-        this.x > this.minX &&
-        this.x < this.maxX &&
-        this.y > this.minY &&
-        this.y < this.maxY
-    ) {
-        this.applyBounds();
-    }
-});
-
+            this.isTouching = false;
+            if (
+                this.isVisible &&
+                this.x > this.minX &&
+                this.x < this.maxX &&
+                this.y > this.minY &&
+                this.y < this.maxY
+            ) {
+                this.applyBounds();
+            }
+        });
     }
 
     initDoubleClick() {
         document.addEventListener('touchend', e => {
             if (this.isVisible) return;
-
             const now = Date.now();
             if (now - this.lastTapTime < this.doubleTapDelay) {
                 this.respawnBall(
@@ -206,20 +254,36 @@ class BallInContainer {
         });
     }
 
-    // 🔥 LOGIKA HILANG SEPERTI KODE KARTU
-    checkIfOutOfScreen() {
-    const rect = this.ball.getBoundingClientRect();
+    initTwoFingerSwipe() {
+        let startY = 0;
 
-    if (
-        rect.right < 0 ||
-        rect.left > window.innerWidth ||
-        rect.bottom < 0 ||
-        rect.top > window.innerHeight
-    ) {
-        this.hideBall();
+        window.addEventListener('touchstart', e => {
+            if (e.touches.length === 2) {
+                startY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            }
+        });
+
+        window.addEventListener('touchmove', e => {
+            if (e.touches.length === 2) {
+                const y = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                if (y - startY > 120) {
+                    openSettings();
+                }
+            }
+        });
     }
-}
 
+    checkIfOutOfScreen() {
+        const rect = this.ball.getBoundingClientRect();
+        if (
+            rect.right < 0 ||
+            rect.left > window.innerWidth ||
+            rect.bottom < 0 ||
+            rect.top > window.innerHeight
+        ) {
+            this.hideBall();
+        }
+    }
 
     hideBall() {
         this.isVisible = false;
@@ -263,6 +327,33 @@ class BallInContainer {
 }
 
 window.onload = () => new BallInContainer();
+
+/* ===== SETTINGS FUNCTIONS ===== */
+const settings = document.getElementById('settings');
+const container = document.getElementById('container');
+const ball = document.getElementById('ball');
+
+function openSettings() {
+    settings.style.display = 'block';
+}
+
+function closeSettings() {
+    settings.style.display = 'none';
+}
+
+function setBg(type) {
+    container.style.background =
+        type === 1
+        ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+        : 'linear-gradient(135deg, #111 0%, #000 100%)';
+}
+
+function setBall(type) {
+    ball.style.background =
+        type === 1
+        ? 'radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0)'
+        : 'radial-gradient(circle at 30% 30%, #444, #000)';
+}
 </script>
 
 </body>
