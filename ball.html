@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Magic Ball">
+<meta name="theme-color" content="#10B981">
 
 <title>Magic Ball</title>
 
@@ -25,6 +26,7 @@ html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
+    background: #10B981;
     touch-action: none;
 }
 
@@ -34,60 +36,54 @@ html, body {
     width: 100vw;
     height: 100dvh;
     background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-    background-size: cover;
-    background-position: center;
     overflow: hidden;
 }
 
+/* OBJECT */
 #ball {
     position: absolute;
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0);
-    background-size: cover;
-    background-position: center;
     will-change: transform;
+}
+
+#ball img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
 }
 
 /* SETTINGS */
 #settings {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(8px);
+    background: rgba(0,0,0,0.85);
+    color: #fff;
     display: none;
     z-index: 9999;
-}
-
-.settings-panel {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
     padding: 20px;
-    background: #111;
-    border-radius: 20px 20px 0 0;
-    color: #fff;
+    font-family: system-ui;
 }
 
-.settings-panel h3 {
-    margin: 10px 0;
-    font-size: 15px;
+#settings h2 {
+    margin-bottom: 15px;
 }
 
-.settings-panel input {
-    width: 100%;
-    margin-bottom: 10px;
-}
-
-.settings-panel button {
-    width: 100%;
-    padding: 12px;
-    border-radius: 12px;
-    border: none;
-    background: #10B981;
-    color: #fff;
+#settings label {
+    display: block;
+    margin-top: 20px;
     font-size: 14px;
+}
+
+#settings input {
+    margin-top: 10px;
+    width: 100%;
+}
+
+#closeSettings {
+    margin-top: 30px;
+    padding: 12px;
+    width: 100%;
+    font-size: 16px;
 }
 </style>
 </head>
@@ -95,84 +91,216 @@ html, body {
 <body>
 
 <div class="container" id="container">
-    <div id="ball"></div>
-</div>
-
-<div id="settings">
-    <div class="settings-panel">
-        <h3>Upload Background</h3>
-        <input type="file" accept="image/*" onchange="uploadBackground(this)">
-
-        <h3>Upload Object Ball</h3>
-        <input type="file" accept="image/*" onchange="uploadBall(this)">
-
-        <button onclick="closeSettings()">Close</button>
+    <div id="ball">
+        <img id="ballImage">
     </div>
 </div>
 
+<div id="settings">
+    <h2>Settings</h2>
+
+    <label>Ganti Background</label>
+    <input type="file" accept="image/*" id="bgInput">
+
+    <label>Ganti Object</label>
+    <input type="file" accept="image/*" id="ballInput">
+
+    <button id="closeSettings">Tutup</button>
+</div>
+
 <script>
-const container = document.getElementById('container');
-const ball = document.getElementById('ball');
-const settings = document.getElementById('settings');
+class MagicObject {
+    constructor() {
+        this.ball = document.getElementById('ball');
+        this.img = document.getElementById('ballImage');
+        this.container = document.getElementById('container');
 
-/* ===== LOAD SAVED ASSETS ===== */
-const savedBg = localStorage.getItem('magic_bg');
-if (savedBg) {
-    container.style.backgroundImage = `url(${savedBg})`;
-}
+        this.x = 100;
+        this.y = 100;
 
-const savedBall = localStorage.getItem('magic_ball');
-if (savedBall) {
-    ball.style.backgroundImage = `url(${savedBall})`;
-}
+        this.sensitivity = 0.35;
+        this.smoothing = 0.15;
+        this.smoothBeta = 0;
+        this.smoothGamma = 0;
 
-/* ===== UPLOAD HANDLERS ===== */
-function uploadBackground(input) {
-    const file = input.files[0];
-    if (!file) return;
+        this.isTouching = false;
+        this.isVisible = true;
+        this.settingsOpen = false;
 
-    const reader = new FileReader();
-    reader.onload = e => {
-        container.style.backgroundImage = `url(${e.target.result})`;
-        localStorage.setItem('magic_bg', e.target.result);
-    };
-    reader.readAsDataURL(file);
-}
+        this.updateBounds();
+        this.restoreAssets();
 
-function uploadBall(input) {
-    const file = input.files[0];
-    if (!file) return;
+        window.addEventListener('resize', () => this.updateBounds());
+        window.visualViewport?.addEventListener('resize', () => this.updateBounds());
 
-    const reader = new FileReader();
-    reader.onload = e => {
-        ball.style.backgroundImage = `url(${e.target.result})`;
-        localStorage.setItem('magic_ball', e.target.result);
-    };
-    reader.readAsDataURL(file);
-}
-
-/* ===== SETTINGS CONTROL ===== */
-function openSettings() {
-    settings.style.display = 'block';
-}
-function closeSettings() {
-    settings.style.display = 'none';
-}
-
-/* ===== 2 FINGER SWIPE ===== */
-let startY = 0;
-window.addEventListener('touchstart', e => {
-    if (e.touches.length === 2) {
-        startY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        this.initSensor();
+        this.initTouch();
+        this.initSettingsGesture();
+        this.loop();
     }
-});
 
-window.addEventListener('touchmove', e => {
-    if (e.touches.length === 2) {
-        const y = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-        if (y - startY > 120) openSettings();
+    updateBounds() {
+        this.width = window.innerWidth;
+        this.height = window.visualViewport.height;
     }
-});
+
+    initSensor() {
+        if (typeof DeviceOrientationEvent?.requestPermission === "function") {
+            const btn = document.createElement("button");
+            btn.innerText = "Izinkan Sensor Gerak";
+            btn.style.cssText = `
+                position:fixed;inset:0;
+                background:#000;color:#fff;
+                font-size:20px;z-index:99999;
+            `;
+            document.body.appendChild(btn);
+
+            btn.onclick = async () => {
+                if (await DeviceOrientationEvent.requestPermission() === "granted") {
+                    btn.remove();
+                    this.listen();
+                }
+            };
+        } else {
+            this.listen();
+        }
+    }
+
+    listen() {
+        window.addEventListener("deviceorientation", e => {
+            if (this.isTouching || !this.isVisible) return;
+
+            const beta = Math.max(-45, Math.min(45, e.beta || 0));
+            const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
+
+            this.smoothBeta += (beta - this.smoothBeta) * this.smoothing;
+            this.smoothGamma += (gamma - this.smoothGamma) * this.smoothing;
+        });
+    }
+
+    initTouch() {
+        let ox = 0, oy = 0;
+
+        this.ball.addEventListener('touchstart', e => {
+            if (!this.isVisible || this.settingsOpen) return;
+            const t = e.touches[0];
+            this.isTouching = true;
+            ox = t.clientX - this.x;
+            oy = t.clientY - this.y;
+        });
+
+        window.addEventListener('touchmove', e => {
+            if (!this.isTouching || !this.isVisible) return;
+            const t = e.touches[0];
+            this.x = t.clientX - ox;
+            this.y = t.clientY - oy;
+            this.checkOut();
+        }, { passive:false });
+
+        window.addEventListener('touchend', () => {
+            this.isTouching = false;
+        });
+    }
+
+    checkOut() {
+        const r = this.ball.getBoundingClientRect();
+        if (
+            r.right < 0 ||
+            r.left > this.width ||
+            r.bottom < 0 ||
+            r.top > this.height
+        ) {
+            this.ball.style.display = 'none';
+            this.isVisible = false;
+        }
+    }
+
+    initSettingsGesture() {
+        let startY = 0;
+
+        window.addEventListener('touchstart', e => {
+            if (e.touches.length === 2) {
+                startY = e.touches[0].clientY;
+            }
+        });
+
+        window.addEventListener('touchmove', e => {
+            if (e.touches.length === 2) {
+                const dy = e.touches[0].clientY - startY;
+                if (dy > 80) this.openSettings();
+            }
+        });
+    }
+
+    openSettings() {
+        this.settingsOpen = true;
+        document.getElementById('settings').style.display = 'block';
+    }
+
+    closeSettings() {
+        this.settingsOpen = false;
+        document.getElementById('settings').style.display = 'none';
+    }
+
+    restoreAssets() {
+        const bg = localStorage.getItem('magic_bg');
+        if (bg) this.container.style.backgroundImage = `url(${bg})`;
+
+        const obj = localStorage.getItem('magic_obj');
+        if (obj) {
+            this.img.src = obj;
+            this.img.onload = () => {
+                this.ball.style.width = this.img.naturalWidth + 'px';
+                this.ball.style.height = this.img.naturalHeight + 'px';
+            };
+        }
+    }
+
+    update() {
+        if (!this.isVisible || this.settingsOpen) return;
+
+        if (!this.isTouching) {
+            this.x += this.smoothGamma * this.sensitivity;
+            this.y += this.smoothBeta * this.sensitivity;
+        }
+
+        this.ball.style.transform = `translate(${this.x}px, ${this.y}px)`;
+    }
+
+    loop() {
+        this.update();
+        requestAnimationFrame(() => this.loop());
+    }
+}
+
+const app = new MagicObject();
+
+/* SETTINGS HANDLER */
+document.getElementById('closeSettings').onclick = () => app.closeSettings();
+
+document.getElementById('bgInput').onchange = e => {
+    const r = new FileReader();
+    r.onload = ev => {
+        container.style.backgroundImage = `url(${ev.target.result})`;
+        localStorage.setItem('magic_bg', ev.target.result);
+    };
+    r.readAsDataURL(e.target.files[0]);
+};
+
+document.getElementById('ballInput').onchange = e => {
+    const r = new FileReader();
+    r.onload = ev => {
+        app.img.src = ev.target.result;
+        localStorage.setItem('magic_obj', ev.target.result);
+        app.img.onload = () => {
+            app.ball.style.width = app.img.naturalWidth + 'px';
+            app.ball.style.height = app.img.naturalHeight + 'px';
+            app.isVisible = true;
+            app.ball.style.display = 'block';
+        };
+    };
+    r.readAsDataURL(e.target.files[0]);
+};
 </script>
 
 </body>
