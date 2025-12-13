@@ -235,17 +235,21 @@ class BallInContainer {
         });
     }
     
-    checkIfPulledOut() {
-        // Cek jika bola ditarik keluar dari layar melebihi threshold
-        if (this.x < -this.exitThreshold || 
-            this.x > this.width + this.exitThreshold ||
-            this.y < -this.exitThreshold || 
-            this.y > this.height + this.exitThreshold) {
-            
-            // Bola dianggap ditarik keluar - hilangkan
-            this.hideBall();
-        }
+   checkIfPulledOut() {
+    const left   = this.x - this.radius;
+    const right  = this.x + this.radius;
+    const top    = this.y - this.radius;
+    const bottom = this.y + this.radius;
+
+    if (
+        right < -this.exitThreshold ||
+        left > this.width + this.exitThreshold ||
+        bottom < -this.exitThreshold ||
+        top > this.height + this.exitThreshold
+    ) {
+        this.hideBall();
     }
+}
     
     hideBall() {
     this.isVisible = false;
