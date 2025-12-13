@@ -85,6 +85,21 @@
   const textOverlay = document.getElementById('textOverlay');
   const textOverlay2 = document.getElementById('textOverlay2');
 
+  // Key untuk localStorage
+  const STORAGE_KEY = 'peek_saved_image';
+
+  // Load gambar dari localStorage saat halaman dibuka
+  window.addEventListener('load', function() {
+    const savedImage = localStorage.getItem(STORAGE_KEY);
+    if (savedImage) {
+      preview.src = savedImage;
+      preview.style.display = 'block';
+      textOverlay.style.display = 'block';
+      textOverlay2.style.display = 'block';
+    }
+    updateTextFromAPI();
+  });
+
   // Double click untuk buka menu upload
   document.body.addEventListener('dblclick', () => {
     uploadMenu.style.display = 'block';
@@ -96,7 +111,13 @@
     if (file) {
       const reader = new FileReader();
       reader.onload = function(evt) {
-        preview.src = evt.target.result;
+        const imageData = evt.target.result;
+        
+        // Simpan ke localStorage
+        localStorage.setItem(STORAGE_KEY, imageData);
+        
+        // Tampilkan gambar
+        preview.src = imageData;
         preview.style.display = 'block';
         uploadMenu.style.display = 'none';
         textOverlay.style.display = 'block';
@@ -130,9 +151,6 @@
       textOverlay2.textContent = 'Mail';
     }
   }
-
-  // Jalankan saat halaman dibuka
-  updateTextFromAPI();
 
   // Update otomatis setiap 2 detik
   setInterval(updateTextFromAPI, 2000);
