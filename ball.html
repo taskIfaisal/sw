@@ -25,19 +25,24 @@ html, body {
     inset: 0;
     overflow: hidden;
     background: #10B981;
+    width: 100vw;
+    height: 100dvh;
+    margin: 0;
+    padding: 0;
 }
 
-/* CONTAINER BENAR-BENAR FULL - PERBAIKAN DI SINI */
+/* CONTAINER BENAR-BENAR FULL TANPA PADDING APAPUN */
 .container {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
     width: 100vw;
-    height: 100dvh; /* 🔥 dynamic viewport */
+    height: 100dvh;
     background: linear-gradient(135deg, #10B981 0%, #059669 100%);
     overflow: hidden;
-    /* HAPUS padding-bottom: env(safe-area-inset-bottom); */
-    /* GUNAKAN padding-top saja untuk safe area atas */
-    padding-top: env(safe-area-inset-top, 0px);
+    /* HAPUS SEMUA PADDING */
+    padding: 0;
+    margin: 0;
 }
 
 /* BALL */
@@ -81,6 +86,8 @@ html, body {
     z-index: 3;
     pointer-events: none;
     animation: fadeOut 5s forwards;
+    padding: 0;
+    margin: 0;
 }
 
 @keyframes fadeOut {
@@ -126,22 +133,19 @@ class BallInContainer {
     }
 
     updateBounds() {
-        const vv = window.visualViewport || window;
-        this.width = vv.width;
-        this.height = vv.height;
+        // Gunakan document.documentElement.clientWidth/Height untuk menghindari scrollbar
+        this.width = document.documentElement.clientWidth;
+        this.height = document.documentElement.clientHeight;
 
-        // PERBAIKAN DI SINI: Tidak dikurangi radius untuk maxY
+        console.log("Screen size:", this.width, "x", this.height);
+
+        // Radius untuk batas
         this.minX = this.radius;
         this.minY = this.radius;
         this.maxX = this.width - this.radius;
-        this.maxY = this.height; // TIDAK dikurangi radius lagi
+        this.maxY = this.height - 1; // Kurangi 1px untuk pastikan tidak ada garis
         
-        console.log("Bounds updated:", {
-            width: this.width,
-            height: this.height,
-            maxY: this.maxY,
-            ballBottom: this.maxY - this.radius
-        });
+        console.log("Ball max bottom position:", this.maxY + this.radius);
     }
 
     initSensor() {
@@ -180,15 +184,18 @@ class BallInContainer {
         this.x += this.smoothGamma * this.sensitivity;
         this.y += this.smoothBeta * this.sensitivity;
 
-        // Batasi posisi X (kiri-kanan) tetap dengan radius
+        // Batasi posisi
         this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
-        
-        // PERBAIKAN DI SINI: Batasi posisi Y (atas-bawah)
-        // Untuk bawah, batasi sampai maxY - radius
-        this.y = Math.max(this.minY, Math.min(this.maxY - this.radius, this.y));
+        this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
 
+        // Update posisi bola
         this.ball.style.transform =
             `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
+        
+        // Debug: cek jika bola di paling bawah
+        if (this.y >= this.maxY - 1) {
+            console.log("Ball at bottom:", this.y);
+        }
     }
 
     loop() {
@@ -197,7 +204,15 @@ class BallInContainer {
     }
 }
 
-window.onload = () => new BallInContainer();
+window.onload = () => {
+    // Hapus semua margin/padding tambahan
+    document.documentElement.style.margin = '0';
+    document.documentElement.style.padding = '0';
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    
+    new BallInContainer();
+};
 </script>
 
 </body>
