@@ -493,7 +493,7 @@ if (outTop || outBottom || outLeft || outRight) {
     });
 
     zoomSlider.oninput = () => {
-        cropper.zoomTo(zoomSlider.value);
+        cropper.zoom(parseFloat(zoomSlider.value) - 1);
     };
 
     document.getElementById('save-edit').onclick = () => {
@@ -545,4 +545,7 @@ if (outTop || outBottom || outLeft || outRight) {
         });
     </script>
 </body>
+
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
+
 </html>
