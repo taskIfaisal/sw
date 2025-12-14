@@ -371,8 +371,12 @@ allowExitByDrag = false;
                     animateMomentum();
                 } else {
                     // Jika tidak dilempar, pastikan dalam bounds
-                    applyBounds();
-                    updateCardTransform();
+                    // Apply bounds HANYA jika BUKAN drag manual keluar
+if (!allowExitByDrag) {
+    applyBounds();
+}
+updateCardTransform();
+
                 }
             }
         });
