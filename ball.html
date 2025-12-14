@@ -314,18 +314,6 @@
                     
                     posX = newPosX;
                     posY = newPosY;
-
-                    // ===== FINAL MAGIC EXIT (HILANG SAAT DITARIK) =====
-const exitLimit = window.innerHeight - (card.offsetHeight * scale * 0.5);
-if (allowExitByDrag && posY > exitLimit) {
-    card.style.transition = 'none';
-    hideCard();
-    allowExitByDrag = false;
-    isDragging = false;
-    return;
-}
-// ===== END FINAL MAGIC EXIT =====
-
                     
                     // Apply bounds saat dragging juga
                     // Apply bounds HANYA jika BUKAN drag manual
@@ -342,7 +330,17 @@ updateCardTransform();
         document.addEventListener('touchend', (e) => {
             if (isDragging) {
                 isDragging = false;
-
+                // ===== PATCH SULAP: TARIK KELUAR HP =====
+if (allowExitByDrag) {
+    const exitLimit = window.innerHeight - (card.offsetHeight * scale * 0.5);
+    if (posY > exitLimit) {
+        card.style.transition = 'none'; // ⬅️ KUNCI PENTING
+        hideCard();
+        allowExitByDrag = false;
+        return; // ⬅️ WAJIB
+    }
+}
+allowExitByDrag = false;
 // ===== END PATCH =====
 
                 // Check if card is flicked quickly
