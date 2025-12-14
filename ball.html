@@ -215,6 +215,8 @@
         <small>(Tap to enable tilt controls)</small>
     </button>
 
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
+    
     <script>
         // Elements
         const background = document.getElementById('background');
@@ -459,55 +461,7 @@ if (outTop || outBottom || outLeft || outRight) {
         }
         // ===== END SENSOR IMPLEMENTATION =====
         
-        // Image Editor Function
-        function showImageEditor(imageSrc, callback) {
-    const editor = document.createElement('div');
-    editor.className = 'image-editor';
-    editor.innerHTML = `
-        <div class="editor-container">
-            <img id="editing-card" src="${imageSrc}">
-            <div class="editor-controls">
-                <input id="zoom-range" type="range" min="0.5" max="2" step="0.01" value="1">
-                <div class="editor-buttons">
-                    <button id="save-edit">Save</button>
-                    <button id="cancel-edit">Cancel</button>
-                </div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(editor);
-
-    const img = document.getElementById('editing-card');
-    const zoomSlider = document.getElementById('zoom-range');
-
-    const cropper = new Cropper(img, {
-        viewMode: 1,
-        background: false,
-        autoCropArea: 1,
-    });
-
-    zoomSlider.oninput = () => {
-        cropper.zoom(parseFloat(zoomSlider.value) - 1);
-    };
-
-    document.getElementById('save-edit').onclick = () => {
-        const canvas = cropper.getCroppedCanvas({
-            imageSmoothingQuality: 'high'
-        });
-
-        const finalImage = canvas.toDataURL('image/png');
-        document.body.removeChild(editor);
-        cropper.destroy();
-
-        callback(finalImage); // ✅ HASIL FINAL
-    };
-
-    document.getElementById('cancel-edit').onclick = () => {
-        cropper.destroy();
-        document.body.removeChild(editor);
-    };
-}
-
+        
         
         // Helper function to calculate distance between two points
         function getDistance(x1, y1, x2, y2) {
@@ -639,7 +593,5 @@ showCropEditor(imageSrc, cropped => {
         });
     </script>
 </body>
-
-    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
 
 </html>
