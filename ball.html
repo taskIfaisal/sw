@@ -214,6 +214,7 @@
     </button>
 
     <script>
+        const VISUAL_RADIUS_FACTOR = 0.85;
         // Elements
         const background = document.getElementById('background');
         const card = document.getElementById('card');
@@ -329,10 +330,14 @@
                 // Check if card is flicked quickly
                 const speedThreshold = 1000; // pixels per second
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
-                const outTop    = posY < -card.offsetHeight * scale * 0.4;
-const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
-const outLeft   = posX < -card.offsetWidth * scale * 0.4;
-const outRight  = posX > window.innerWidth - card.offsetWidth * scale * 0.6;
+                const visualH = card.offsetHeight * scale * VISUAL_RADIUS_FACTOR;
+const visualW = card.offsetWidth  * scale * VISUAL_RADIUS_FACTOR;
+
+const outTop    = posY < -visualH * 0.4;
+const outBottom = posY > window.innerHeight - visualH * 0.6;
+const outLeft   = posX < -visualW * 0.4;
+const outRight  = posX > window.innerWidth  - visualW * 0.6;
+
 
 if (outTop || outBottom || outLeft || outRight) {
     card.style.transition = 'none';
