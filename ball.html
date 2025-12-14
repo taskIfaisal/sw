@@ -473,8 +473,12 @@ updateCardTransform();
                     posY += smoothBeta * sensitivity;
                     
                     // PASTIKAN KARTU TIDAK KELUAR DARI BATAS LAYAR
-                    applyBounds();
-                    updateCardTransform();
+                    // Apply bounds HANYA jika BUKAN drag manual keluar
+if (!allowExitByDrag) {
+    applyBounds();
+}
+updateCardTransform();
+
                 }
                 
                 requestAnimationFrame(animate);
