@@ -184,7 +184,9 @@
     <img id="card" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Basketball.png/512px-Basketball.png" alt="Magic Ball">
     <div id="settings">
         <h2>Magic Card Settings</h2>
-        
+
+        <canvas id="editor-canvas" style="display:none;"></canvas>
+
         <div class="setting-section">
             <h3>Background Image</h3>
             <label class="file-upload">
@@ -214,7 +216,6 @@
     </button>
 
     <script>
-        const VISUAL_RADIUS_FACTOR = 0.85;
         // Elements
         const background = document.getElementById('background');
         const card = document.getElementById('card');
@@ -330,14 +331,10 @@
                 // Check if card is flicked quickly
                 const speedThreshold = 1000; // pixels per second
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
-                const visualH = card.offsetHeight * scale * VISUAL_RADIUS_FACTOR;
-const visualW = card.offsetWidth  * scale * VISUAL_RADIUS_FACTOR;
-
-const outTop    = posY < -visualH * 0.4;
-const outBottom = posY > window.innerHeight - visualH * 0.6;
-const outLeft   = posX < -visualW * 0.4;
-const outRight  = posX > window.innerWidth  - visualW * 0.6;
-
+                const outTop    = posY < -card.offsetHeight * scale * 0.4;
+const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
+const outLeft   = posX < -card.offsetWidth * scale * 0.4;
+const outRight  = posX > window.innerWidth - card.offsetWidth * scale * 0.6;
 
 if (outTop || outBottom || outLeft || outRight) {
     card.style.transition = 'none';
@@ -470,71 +467,53 @@ if (outTop || outBottom || outLeft || outRight) {
         
         // Image Editor Function
         function showImageEditor(imageSrc, callback) {
-            // Create editor modal
-            const editor = document.createElement('div');
-            editor.className = 'image-editor';
-            editor.innerHTML = `
-                <div class="editor-container">
-                    <img id="editing-card" src="${imageSrc}" alt="Card being edited">
-                    <div class="editor-controls">
-                        <div style="color:white; margin-bottom:10px;">Pinch to zoom</div>
-                        <div class="editor-buttons">
-                            <button id="save-edit">Save</button>
-                            <button id="cancel-edit">Cancel</button>
-                        </div>
-                    </div>
+    const editor = document.createElement('div');
+    editor.className = 'image-editor';
+    editor.innerHTML = `
+        <div class="editor-container">
+            <img id="editing-card" src="${imageSrc}">
+            <div class="editor-controls">
+                <input id="zoom-range" type="range" min="0.5" max="2" step="0.01" value="1">
+                <div class="editor-buttons">
+                    <button id="save-edit">Save</button>
+                    <button id="cancel-edit">Cancel</button>
                 </div>
-            `;
-            
-            document.body.appendChild(editor);
-            
-            const editingCard = document.getElementById('editing-card');
-            const saveBtn = document.getElementById('save-edit');
-            const cancelBtn = document.getElementById('cancel-edit');
-            
-            let currentScale = 1;
-            let startDistance = 0;
-            
-            // Zoom with pinch gesture
-            editingCard.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) {
-                    e.preventDefault();
-                    startDistance = getDistance(
-                        e.touches[0].clientX, e.touches[0].clientY,
-                        e.touches[1].clientX, e.touches[1].clientY
-                    );
-                }
-            }, {passive: false});
-            
-            editingCard.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 2) {
-                    e.preventDefault();
-                    const currentDistance = getDistance(
-                        e.touches[0].clientX, e.touches[0].clientY,
-                        e.touches[1].clientX, e.touches[1].clientY
-                    );
-                    
-                    if (startDistance > 0) {
-                        currentScale = Math.max(0.3, Math.min(3, currentDistance / startDistance));
-                        editingCard.style.transform = `scale(${currentScale})`;
-                    }
-                }
-            }, {passive: false});
-            
-            editingCard.addEventListener('touchend', () => {
-                startDistance = 0;
-            }, {passive: false});
-            
-            // Save/cancel buttons
-            saveBtn.addEventListener('click', () => {
-                document.body.removeChild(editor);
-                callback(imageSrc); // Return the original image (scaling is handled by CSS)
-            });
-            
-            cancelBtn.addEventListener('click', () => {
-                document.body.removeChild(editor);
-            });
-        }
+            </div>
+        </div>
+    `;
+    document.body.appendChild(editor);
+
+    const img = document.getElementById('editing-card');
+    const zoomSlider = document.getElementById('zoom-range');
+
+    const cropper = new Cropper(img, {
+        viewMode: 1,
+        background: false,
+        autoCropArea: 1,
+    });
+
+    zoomSlider.oninput = () => {
+        cropper.zoomTo(zoomSlider.value);
+    };
+
+    document.getElementById('save-edit').onclick = () => {
+        const canvas = cropper.getCroppedCanvas({
+            imageSmoothingQuality: 'high'
+        });
+
+        const finalImage = canvas.toDataURL('image/png');
+        document.body.removeChild(editor);
+        cropper.destroy();
+
+        callback(finalImage); // ✅ HASIL FINAL
+    };
+
+    document.getElementById('cancel-edit').onclick = () => {
+        cropper.destroy();
+        document.body.removeChild(editor);
+    };
+}
+
         
         // Helper function to calculate distance between two points
         function getDistance(x1, y1, x2, y2) {
