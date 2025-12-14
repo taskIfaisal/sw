@@ -50,9 +50,8 @@
             user-select: none;
             -webkit-user-drag: none;
             touch-action: none;
-            /* Tambahkan ini untuk zoom yang lebih baik */
             transform-origin: center center;
-            height: auto; /* Biarkan tinggi menyesuaikan */
+            height: auto;
         }
         #settings {
             position: fixed;
@@ -96,7 +95,6 @@
             cursor: pointer;
         }
 
-        /* Editor Modal Styles */
         .image-editor {
             position: fixed;
             top: 0;
@@ -124,7 +122,6 @@
             display: block;
             margin: 0 auto;
             touch-action: none;
-            /* Tambahkan ini untuk zoom yang lebih baik */
             transform-origin: center center;
         }
 
@@ -152,7 +149,6 @@
             background: #f44336;
         }
         
-        /* Permission button for iOS */
         #sensor-permission {
             position: fixed;
             top: 0;
@@ -207,7 +203,6 @@
         </div>
     </div>
     
-    <!-- Sensor Permission Button -->
     <button id="sensor-permission" class="hidden">
         Allow Motion Sensor Access<br>
         <small>(Tap to enable tilt controls)</small>
@@ -235,13 +230,12 @@
         let lastPosX = 0;
         let lastPosY = 0;
         let lastTime = 0;
-        let allowExitByDrag = false;
         
-        // SENSOR VARIABLES - Ditambahkan
-        let smoothBeta = 0;      // Untuk smoothing beta (tilt depan-belakang)
-        let smoothGamma = 0;     // Untuk smoothing gamma (tilt kiri-kanan)
-        const sensitivity = 0.5; // Sensitivitas gerakan kartu
-        const smoothing = 0.2;   // Smoothing untuk gerakan halus
+        // SENSOR VARIABLES
+        let smoothBeta = 0;
+        let smoothGamma = 0;
+        const sensitivity = 0.5;
+        const smoothing = 0.2;
         let isSensorEnabled = false;
         
         // Set initial positions
@@ -283,7 +277,6 @@
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 isDragging = true;
-                allowExitByDrag = true;
                 startX = e.touches[0].clientX - posX;
                 startY = e.touches[0].clientY - posY;
                 velocityX = 0;
@@ -292,7 +285,6 @@
                 lastPosY = posY;
                 lastTime = Date.now();
                 e.preventDefault();
-                
             }
         }, {passive: false});
         
@@ -315,13 +307,22 @@
                     posX = newPosX;
                     posY = newPosY;
                     
-                    // Apply bounds saat dragging juga
-                    // Apply bounds HANYA jika BUKAN drag manual
-if (!allowExitByDrag) {
-    applyBounds();
-}
-updateCardTransform();
-
+                    // Beri efek transparan saat kartu hampir keluar layar
+                    const cardRect = card.getBoundingClientRect();
+                    const exitThreshold = 80;
+                    const isNearEdge = 
+                        cardRect.bottom < exitThreshold || 
+                        cardRect.top > window.innerHeight - exitThreshold ||
+                        cardRect.right < exitThreshold || 
+                        cardRect.left > window.innerWidth - exitThreshold;
+                    
+                    if (isNearEdge) {
+                        card.style.opacity = '0.6';
+                    } else {
+                        card.style.opacity = '1';
+                    }
+                    
+                    updateCardTransform();
                 }
                 e.preventDefault();
             }
@@ -330,31 +331,36 @@ updateCardTransform();
         document.addEventListener('touchend', (e) => {
             if (isDragging) {
                 isDragging = false;
-                // ===== PATCH SULAP: TARIK KELUAR HP =====
-if (allowExitByDrag) {
-    const exitLimit = window.innerHeight - (card.offsetHeight * scale * 0.5);
-    if (posY > exitLimit) {
-        card.style.transition = 'none'; // ⬅️ KUNCI PENTING
-        hideCard();
-        allowExitByDrag = false;
-        return; // ⬅️ WAJIB
-    }
-}
-allowExitByDrag = false;
-// ===== END PATCH =====
-
-                // Check if card is flicked quickly
-                const speedThreshold = 1000; // pixels per second
+                
+                // Reset opacity
+                card.style.opacity = '1';
+                
+                // Cek apakah kartu ditarik keluar layar
+                const cardRect = card.getBoundingClientRect();
+                const exitThreshold = 50; // Pixel dari tepi
+                
+                // Jika kartu ditarik keluar layar, langsung hilangkan
+                if (cardRect.bottom < -exitThreshold || 
+                    cardRect.top > window.innerHeight + exitThreshold ||
+                    cardRect.right < -exitThreshold || 
+                    cardRect.left > window.innerWidth + exitThreshold) {
+                    
+                    // Kartu langsung menghilang
+                    hideCard();
+                    
+                    // Reset ke posisi tengah untuk next show
+                    posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+                    posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+                    return; // Hentikan eksekusi selanjutnya
+                }
+                
+                // Jika kartu tidak ditarik keluar, lanjutkan dengan momentum atau bounds
+                const speedThreshold = 1000;
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
                 
-                if (currentSpeed > speedThreshold || 
-                    posX < -card.offsetWidth * scale * 0.5 || 
-                    posX > window.innerWidth - card.offsetWidth * scale * 0.5 ||
-                    posY < -card.offsetHeight * scale * 0.5 || 
-                    posY > window.innerHeight - card.offsetHeight * scale * 0.5) {
-                    
-                    // Add momentum to the flick
-                    const momentumDuration = 300; // ms
+                if (currentSpeed > speedThreshold) {
+                    // Tambahkan momentum untuk flick cepat
+                    const momentumDuration = 300;
                     const startMomentum = Date.now();
                     
                     const animateMomentum = () => {
@@ -364,24 +370,29 @@ allowExitByDrag = false;
                             posX += velocityX * 0.01 * progress;
                             posY += velocityY * 0.01 * progress;
                             
-                            // Apply bounds selama momentum
+                            // Terapkan bounds selama momentum
                             applyBounds();
                             updateCardTransform();
                             requestAnimationFrame(animateMomentum);
                         } else {
-                            hideCard();
+                            // Cek lagi setelah momentum selesai
+                            const finalRect = card.getBoundingClientRect();
+                            if (finalRect.bottom < -50 || 
+                                finalRect.top > window.innerHeight + 50 ||
+                                finalRect.right < -50 || 
+                                finalRect.left > window.innerWidth + 50) {
+                                hideCard();
+                                posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+                                posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+                            }
                         }
                     };
                     
                     animateMomentum();
                 } else {
                     // Jika tidak dilempar, pastikan dalam bounds
-                    // Apply bounds HANYA jika BUKAN drag manual keluar
-if (!allowExitByDrag) {
-    applyBounds();
-}
-updateCardTransform();
-
+                    applyBounds();
+                    updateCardTransform();
                 }
             }
         });
@@ -477,13 +488,9 @@ updateCardTransform();
                     posX += smoothGamma * sensitivity;
                     posY += smoothBeta * sensitivity;
                     
-                    // PASTIKAN KARTU TIDAK KELUAR DARI BATAS LAYAR
-                    // Apply bounds HANYA jika BUKAN drag manual keluar
-if (!allowExitByDrag) {
-    applyBounds();
-}
-updateCardTransform();
-
+                    // Terapkan bounds
+                    applyBounds();
+                    updateCardTransform();
                 }
                 
                 requestAnimationFrame(animate);
@@ -497,13 +504,14 @@ updateCardTransform();
             const cardWidth = card.offsetWidth * scale;
             const cardHeight = card.offsetHeight * scale;
             
-            // PERBAIKAN: Hitung batas dengan benar
-            const minX = 0;
-            const maxX = window.innerWidth - cardWidth;
-            const minY = 0;
-            const maxY = window.innerHeight - cardHeight;
+            // Batasan dengan sedikit padding
+            const padding = 10;
+            const minX = padding;
+            const maxX = window.innerWidth - cardWidth - padding;
+            const minY = padding;
+            const maxY = window.innerHeight - cardHeight - padding;
             
-            // Terapkan batas dengan benar
+            // Terapkan batas
             posX = Math.max(minX, Math.min(maxX, posX));
             posY = Math.max(minY, Math.min(maxY, posY));
         }
@@ -569,7 +577,7 @@ updateCardTransform();
             // Save/cancel buttons
             saveBtn.addEventListener('click', () => {
                 document.body.removeChild(editor);
-                callback(imageSrc); // Return the original image (scaling is handled by CSS)
+                callback(imageSrc);
             });
             
             cancelBtn.addEventListener('click', () => {
@@ -595,6 +603,7 @@ updateCardTransform();
             // Reset to center position
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+            card.style.opacity = '1';
             updateCardTransform();
             card.style.display = 'block';
         }
