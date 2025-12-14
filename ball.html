@@ -540,7 +540,7 @@ function showZoomEditor(imageSrc, callback) {
     editor.className = 'image-editor';
     editor.innerHTML = `
         <div class="editor-container">
-            <img id="zoom-image" src="${imageSrc}">
+            <canvas id="zoom-preview"></canvas>
             <input id="zoom-range" type="range" min="1" max="3" step="0.01" value="1">
             <div class="editor-buttons">
                 <button id="zoom-save">Save</button>
@@ -550,34 +550,41 @@ function showZoomEditor(imageSrc, callback) {
     `;
     document.body.appendChild(editor);
 
-    const img = document.getElementById('zoom-image');
+    const canvas = document.getElementById('zoom-preview');
+    const ctx = canvas.getContext('2d');
     const slider = document.getElementById('zoom-range');
+
+    const img = new Image();
+    img.src = imageSrc;
 
     let zoom = 1;
 
-    slider.oninput = () => {
-        zoom = parseFloat(slider.value);
-        img.style.transform = `scale(${zoom})`;
+    img.onload = () => {
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        draw();
     };
 
-    document.getElementById('zoom-save').onclick = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-
+    function draw() {
         const sw = img.naturalWidth / zoom;
         const sh = img.naturalHeight / zoom;
         const sx = (img.naturalWidth - sw) / 2;
         const sy = (img.naturalHeight - sh) / 2;
 
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(
             img,
             sx, sy, sw, sh,
             0, 0, canvas.width, canvas.height
         );
+    }
 
+    slider.oninput = () => {
+        zoom = parseFloat(slider.value);
+        draw();
+    };
+
+    document.getElementById('zoom-save').onclick = () => {
         const finalImage = canvas.toDataURL('image/png');
         document.body.removeChild(editor);
         callback(finalImage);
@@ -587,6 +594,7 @@ function showZoomEditor(imageSrc, callback) {
         document.body.removeChild(editor);
     };
 }
+
 
         
         // Handle window resize
