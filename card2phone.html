@@ -223,7 +223,9 @@
         const defaultCardBtn = document.getElementById('default-card');
         const closeSettingsBtn = document.getElementById('close-settings');
         const sensorPermissionBtn = document.getElementById('sensor-permission');
-        
+
+        let isExiting = false;
+
         // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
         let posY = window.innerHeight / 2 - card.offsetHeight / 2;
@@ -313,7 +315,7 @@
                     posY = newPosY;
                     
                     // Apply bounds saat dragging juga
-                    applyBounds();
+
                     updateCardTransform();
                 }
                 e.preventDefault();
@@ -327,39 +329,18 @@
                 // Check if card is flicked quickly
                 const speedThreshold = 1000; // pixels per second
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+                const outTop    = posY < -card.offsetHeight * scale * 0.4;
+const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
+const outLeft   = posX < -card.offsetWidth * scale * 0.4;
+const outRight  = posX > window.innerWidth - card.offsetWidth * scale * 0.6;
+
+if (outTop || outBottom || outLeft || outRight) {
+    card.style.transition = 'none';
+    hideCard();
+    return;
+}
+
                 
-                if (currentSpeed > speedThreshold || 
-                    posX < -card.offsetWidth * scale * 0.5 || 
-                    posX > window.innerWidth - card.offsetWidth * scale * 0.5 ||
-                    posY < -card.offsetHeight * scale * 0.5 || 
-                    posY > window.innerHeight - card.offsetHeight * scale * 0.5) {
-                    
-                    // Add momentum to the flick
-                    const momentumDuration = 300; // ms
-                    const startMomentum = Date.now();
-                    
-                    const animateMomentum = () => {
-                        const elapsed = Date.now() - startMomentum;
-                        if (elapsed < momentumDuration) {
-                            const progress = 1 - (elapsed / momentumDuration);
-                            posX += velocityX * 0.01 * progress;
-                            posY += velocityY * 0.01 * progress;
-                            
-                            // Apply bounds selama momentum
-                            applyBounds();
-                            updateCardTransform();
-                            requestAnimationFrame(animateMomentum);
-                        } else {
-                            hideCard();
-                        }
-                    };
-                    
-                    animateMomentum();
-                } else {
-                    // Jika tidak dilempar, pastikan dalam bounds
-                    applyBounds();
-                    updateCardTransform();
-                }
             }
         });
         
