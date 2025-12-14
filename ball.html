@@ -360,20 +360,14 @@ if (outTop || outBottom || outLeft || outRight) {
         
         // Modified card upload with image editor
         cardUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    showImageEditor(event.target.result, (editedImage) => {
-                        card.src = editedImage;
-                        // Reset scale when new image is loaded
-                        scale = 1;
-                        updateCardTransform();
-                    });
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+    };
+    reader.readAsDataURL(file);
+});
         
         defaultCardBtn.addEventListener('click', () => {
             card.src = "https://deckofcardsapi.com/static/img/AS.png";
