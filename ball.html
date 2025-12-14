@@ -533,18 +533,8 @@ updateCardTransform();
             const saveBtn = document.getElementById('save-edit');
             const cancelBtn = document.getElementById('cancel-edit');
             
-            const cropper = new Cropper(editingCard, {
-    viewMode: 1,
-    dragMode: 'move',
-    autoCropArea: 1,
-    background: false,
-    movable: true,
-    zoomable: true,
-    scalable: false,
-    rotatable: false,
-    responsive: true,
-});
-
+            let currentScale = 1;
+            let startDistance = 0;
             
             // Zoom with pinch gesture
             editingCard.addEventListener('touchstart', (e) => {
@@ -579,15 +569,7 @@ updateCardTransform();
             // Save/cancel buttons
             saveBtn.addEventListener('click', () => {
                 document.body.removeChild(editor);
-                const canvas = cropper.getCroppedCanvas({
-    imageSmoothingEnabled: true,
-    imageSmoothingQuality: 'high',
-});
-
-const resultImage = canvas.toDataURL('image/png');
-document.body.removeChild(editor);
-callback(resultImage);
-
+                callback(imageSrc); // Return the original image (scaling is handled by CSS)
             });
             
             cancelBtn.addEventListener('click', () => {
@@ -625,5 +607,4 @@ callback(resultImage);
         });
     </script>
 </body>
-    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
 </html>
