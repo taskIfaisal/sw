@@ -476,7 +476,7 @@
             // BAWAH: Tetap dalam batas normal (0 sampai window.innerHeight - cardHeight)
             const minX = 0;
             const maxX = window.innerWidth - cardWidth;
-            const minY = -window.visualViewport.offsetTop;
+            const minY = -cardHeight * 0.2; 
             const maxY = window.innerHeight - cardHeight; // BAWAH: tetap normal
             
             // Terapkan batas dengan benar
