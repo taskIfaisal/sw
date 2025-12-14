@@ -196,6 +196,28 @@
     z-index: 10;
 }
 
+        .zoom-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+.zoom-area {
+    flex: 1;
+    position: relative;
+}
+
+.zoom-buttons {
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0,0,0,0.8);
+}
+
+
         
         #sensor-permission.hidden {
             display: none;
@@ -562,11 +584,13 @@ function showZoomEditor(imageSrc, callback) {
     const editor = document.createElement('div');
     editor.className = 'image-editor';
     editor.innerHTML = `
-        <div class="editor-container">
-            <canvas id="zoom-canvas"></canvas>
-            <div class="editor-buttons">
-                <button id="zoom-save">Save</button>
-                <button id="zoom-cancel">Cancel</button>
+        <div class="editor-container zoom-wrapper">
+            <div class="zoom-area">
+                <canvas id="zoom-canvas"></canvas>
+            </div>
+            <div class="zoom-buttons">
+                <button id="zoom-save">Mulai Bermain</button>
+                <button id="zoom-cancel">Batal</button>
             </div>
         </div>
     `;
@@ -579,12 +603,7 @@ function showZoomEditor(imageSrc, callback) {
     img.src = imageSrc;
 
     let zoom = 1;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    let lastTouchDistance = null;
-    let lastX = 0;
-    let lastY = 0;
+    let lastDist = null;
 
     img.onload = () => {
         canvas.width = img.naturalWidth;
@@ -595,73 +614,45 @@ function showZoomEditor(imageSrc, callback) {
     function draw() {
         const sw = img.naturalWidth / zoom;
         const sh = img.naturalHeight / zoom;
-
-        let sx = (img.naturalWidth - sw) / 2 - offsetX;
-        let sy = (img.naturalHeight - sh) / 2 - offsetY;
-
-        // Clamp biar tidak keluar
-        sx = Math.max(0, Math.min(img.naturalWidth - sw, sx));
-        sy = Math.max(0, Math.min(img.naturalHeight - sh, sy));
+        const sx = (img.naturalWidth - sw) / 2;
+        const sy = (img.naturalHeight - sh) / 2;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
     }
 
-    function getDistance(t1, t2) {
-        const dx = t2.clientX - t1.clientX;
-        const dy = t2.clientY - t1.clientY;
-        return Math.hypot(dx, dy);
+    function getDist(t1, t2) {
+        return Math.hypot(
+            t2.clientX - t1.clientX,
+            t2.clientY - t1.clientY
+        );
     }
 
     canvas.addEventListener('touchstart', e => {
-        if (e.touches.length === 1) {
-            lastX = e.touches[0].clientX;
-            lastY = e.touches[0].clientY;
-        }
-
         if (e.touches.length === 2) {
-            lastTouchDistance = getDistance(e.touches[0], e.touches[1]);
+            lastDist = getDist(e.touches[0], e.touches[1]);
         }
     }, { passive: false });
 
     canvas.addEventListener('touchmove', e => {
-        e.preventDefault();
-
-        // 🔹 PAN (1 jari)
-        if (e.touches.length === 1) {
-            const dx = e.touches[0].clientX - lastX;
-            const dy = e.touches[0].clientY - lastY;
-
-            offsetX += dx / zoom;
-            offsetY += dy / zoom;
-
-            lastX = e.touches[0].clientX;
-            lastY = e.touches[0].clientY;
-
-            draw();
-        }
-
-        // 🔹 PINCH ZOOM (2 jari)
         if (e.touches.length === 2) {
-            const dist = getDistance(e.touches[0], e.touches[1]);
-            if (lastTouchDistance) {
-                const scale = dist / lastTouchDistance;
-                zoom *= scale;
-                zoom = Math.max(1, Math.min(4, zoom)); // batas zoom
-                draw();
-            }
-            lastTouchDistance = dist;
+            e.preventDefault();
+            const d = getDist(e.touches[0], e.touches[1]);
+            zoom *= d / lastDist;
+            zoom = Math.max(0.5, Math.min(4, zoom));
+            lastDist = d;
+            draw();
         }
     }, { passive: false });
 
     canvas.addEventListener('touchend', () => {
-        lastTouchDistance = null;
+        lastDist = null;
     });
 
     document.getElementById('zoom-save').onclick = () => {
         const finalImage = canvas.toDataURL('image/png');
         document.body.removeChild(editor);
-        callback(finalImage);
+        callback(finalImage); // ⬅️ ukuran FINAL
     };
 
     document.getElementById('zoom-cancel').onclick = () => {
