@@ -316,8 +316,12 @@
                     posY = newPosY;
                     
                     // Apply bounds saat dragging juga
-                    applyBounds();
-                    updateCardTransform();
+                    // Apply bounds HANYA jika BUKAN drag manual
+if (!allowExitByDrag) {
+    applyBounds();
+}
+updateCardTransform();
+
                 }
                 e.preventDefault();
             }
