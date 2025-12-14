@@ -243,6 +243,19 @@
         const smoothing = 0.2;   // Smoothing untuk gerakan halus
         let isSensorEnabled = false;
         
+        // Hitung tinggi status bar sekali saat inisialisasi
+        let statusBarHeight = 0;
+        function calculateStatusBarHeight() {
+            // Perkiraan tinggi status bar
+            statusBarHeight = window.screen.height - window.innerHeight;
+            // Pastikan minimal 20px dan maksimal 60px (ukuran umum status bar)
+            statusBarHeight = Math.max(20, Math.min(60, statusBarHeight));
+            console.log("Status bar height:", statusBarHeight, "px");
+        }
+        
+        // Panggil saat inisialisasi dan resize
+        calculateStatusBarHeight();
+        
         // Set initial positions
         updateCardTransform();
         
@@ -470,14 +483,16 @@
             const cardWidth = card.offsetWidth * scale;
             const cardHeight = card.offsetHeight * scale;
             
-            // KARTU BISA MENTOK DI GARIS TEPI ATAS LAYAR HP (y = 0)
-            // Visual: ┌─────┐
-            //         │     │  ← Kartu menutupi status bar, tepi atas kartu di y=0
-            //         └─────┘
+            // PERUBAHAN: KARTU BISA MENCAPAI TEPI ATAS FISIK HP
+            // Background bounds (viewport) - untuk kiri-kanan
             const minX = 0;
             const maxX = window.innerWidth - cardWidth;
-            const minY = 0;  // TEPI ATAS KARTU BISA DI y=0 (GARIS TEPI LAYAR)
-            const maxY = window.innerHeight - cardHeight;
+            
+            // Kartu bounds (fisik HP) - bisa lebih tinggi ke atas
+            // minY = -statusBarHeight (kartu bisa naik sebesar tinggi status bar)
+            // maxY = window.innerHeight - cardHeight (bawah tetap viewport)
+            const minY = -statusBarHeight; // Kartu bisa naik ke area status bar
+            const maxY = window.innerHeight - cardHeight; // Bawah tetap normal
             
             // Terapkan batas dengan benar
             posX = Math.max(minX, Math.min(maxX, posX));
@@ -568,7 +583,7 @@
         }
         
         function showCard() {
-            // Reset to center position
+            // Reset to center position (dalam viewport)
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
@@ -577,6 +592,10 @@
         
         // Handle window resize
         window.addEventListener('resize', () => {
+            // Recalculate status bar height
+            calculateStatusBarHeight();
+            
+            // Reset card position to center of viewport
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
