@@ -334,9 +334,10 @@ updateCardTransform();
 if (allowExitByDrag) {
     const exitLimit = window.innerHeight - (card.offsetHeight * scale * 0.5);
     if (posY > exitLimit) {
-        hideCard();            // LANGSUNG HILANG
+        card.style.transition = 'none'; // ⬅️ KUNCI PENTING
+        hideCard();
         allowExitByDrag = false;
-        return;
+        return; // ⬅️ WAJIB
     }
 }
 allowExitByDrag = false;
