@@ -32,21 +32,21 @@
         }
         
         #background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            z-index: 1;
-        }
+    position: fixed;
+    top: env(safe-area-inset-top); /* ⬅️ KUNCI */
+    left: 0;
+    width: 100%;
+    height: calc(100% - env(safe-area-inset-top));
+    background-size: cover;
+    background-position: center;
+    z-index: 1;
+}
         
         #card {
             position: absolute;
             width: 100%;
             max-width: 200px;
-            z-index: 999999; /* PERUBAHAN: z-index sangat tinggi */
+            z-index: 2;
             user-select: none;
             -webkit-user-drag: none;
             touch-action: none;
@@ -162,7 +162,7 @@
             background: rgba(0, 0, 0, 0.9);
             color: white;
             font-size: 24px;
-            z-index: 9999999; /* Lebih tinggi dari kartu */
+            z-index: 9999;
             border: none;
             display: flex;
             flex-direction: column;
@@ -483,14 +483,18 @@
             const cardWidth = card.offsetWidth * scale;
             const cardHeight = card.offsetHeight * scale;
             
-            // KARTU BISA MENCAPAI TEPI ATAS FISIK HP
+            // PERUBAHAN: KARTU BISA MENCAPAI TEPI ATAS FISIK HP
+            // Background bounds (viewport) - untuk kiri-kanan
             const minX = 0;
             const maxX = window.innerWidth - cardWidth;
             
-            // Kartu bisa naik ke area status bar
-            const minY = -statusBarHeight;
-            const maxY = window.innerHeight - cardHeight;
+            // Kartu bounds (fisik HP) - bisa lebih tinggi ke atas
+            // minY = -statusBarHeight (kartu bisa naik sebesar tinggi status bar)
+            // maxY = window.innerHeight - cardHeight (bawah tetap viewport)
+            const minY = -statusBarHeight; // Kartu bisa naik ke area status bar
+            const maxY = window.innerHeight - cardHeight; // Bawah tetap normal
             
+            // Terapkan batas dengan benar
             posX = Math.max(minX, Math.min(maxX, posX));
             posY = Math.max(minY, Math.min(maxY, posY));
         }
@@ -579,6 +583,7 @@
         }
         
         function showCard() {
+            // Reset to center position (dalam viewport)
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
@@ -587,7 +592,10 @@
         
         // Handle window resize
         window.addEventListener('resize', () => {
+            // Recalculate status bar height
             calculateStatusBarHeight();
+            
+            // Reset card position to center of viewport
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
