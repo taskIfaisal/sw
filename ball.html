@@ -223,7 +223,9 @@
         const defaultCardBtn = document.getElementById('default-card');
         const closeSettingsBtn = document.getElementById('close-settings');
         const sensorPermissionBtn = document.getElementById('sensor-permission');
-        
+
+        let isExiting = false;
+
         // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
         let posY = window.innerHeight / 2 - card.offsetHeight / 2;
@@ -235,7 +237,6 @@
         let lastPosX = 0;
         let lastPosY = 0;
         let lastTime = 0;
-        let allowExitByDrag = false;
         
         // SENSOR VARIABLES - Ditambahkan
         let smoothBeta = 0;      // Untuk smoothing beta (tilt depan-belakang)
@@ -283,7 +284,6 @@
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 isDragging = true;
-                allowExitByDrag = true;
                 startX = e.touches[0].clientX - posX;
                 startY = e.touches[0].clientY - posY;
                 velocityX = 0;
@@ -292,7 +292,6 @@
                 lastPosY = posY;
                 lastTime = Date.now();
                 e.preventDefault();
-                
             }
         }, {passive: false});
         
@@ -316,12 +315,8 @@
                     posY = newPosY;
                     
                     // Apply bounds saat dragging juga
-                    // Apply bounds HANYA jika BUKAN drag manual
-if (!allowExitByDrag) {
-    applyBounds();
-}
-updateCardTransform();
 
+                    updateCardTransform();
                 }
                 e.preventDefault();
             }
@@ -330,59 +325,22 @@ updateCardTransform();
         document.addEventListener('touchend', (e) => {
             if (isDragging) {
                 isDragging = false;
-                // ===== PATCH SULAP: TARIK KELUAR HP =====
-if (allowExitByDrag) {
-    const exitLimit = window.innerHeight - (card.offsetHeight * scale * 0.5);
-    if (posY > exitLimit) {
-        card.style.transition = 'none'; // ⬅️ KUNCI PENTING
-        hideCard();
-        allowExitByDrag = false;
-        return; // ⬅️ WAJIB
-    }
-}
-allowExitByDrag = false;
-// ===== END PATCH =====
-
+                
                 // Check if card is flicked quickly
                 const speedThreshold = 1000; // pixels per second
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
-                
-                if (currentSpeed > speedThreshold || 
-                    posX < -card.offsetWidth * scale * 0.5 || 
-                    posX > window.innerWidth - card.offsetWidth * scale * 0.5 ||
-                    posY < -card.offsetHeight * scale * 0.5 || 
-                    posY > window.innerHeight - card.offsetHeight * scale * 0.5) {
-                    
-                    // Add momentum to the flick
-                    const momentumDuration = 300; // ms
-                    const startMomentum = Date.now();
-                    
-                    const animateMomentum = () => {
-                        const elapsed = Date.now() - startMomentum;
-                        if (elapsed < momentumDuration) {
-                            const progress = 1 - (elapsed / momentumDuration);
-                            posX += velocityX * 0.01 * progress;
-                            posY += velocityY * 0.01 * progress;
-                            
-                            // Apply bounds selama momentum
-                            applyBounds();
-                            updateCardTransform();
-                            requestAnimationFrame(animateMomentum);
-                        } else {
-                            hideCard();
-                        }
-                    };
-                    
-                    animateMomentum();
-                } else {
-                    // Jika tidak dilempar, pastikan dalam bounds
-                    // Apply bounds HANYA jika BUKAN drag manual keluar
-if (!allowExitByDrag) {
-    applyBounds();
-}
-updateCardTransform();
+                const outTop    = posY < -card.offsetHeight * scale * 0.4;
+const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
+const outLeft   = posX < -card.offsetWidth * scale * 0.4;
+const outRight  = posX > window.innerWidth - card.offsetWidth * scale * 0.6;
 
-                }
+if (outTop || outBottom || outLeft || outRight) {
+    card.style.transition = 'none';
+    hideCard();
+    return;
+}
+
+                
             }
         });
         
@@ -478,12 +436,8 @@ updateCardTransform();
                     posY += smoothBeta * sensitivity;
                     
                     // PASTIKAN KARTU TIDAK KELUAR DARI BATAS LAYAR
-                    // Apply bounds HANYA jika BUKAN drag manual keluar
-if (!allowExitByDrag) {
-    applyBounds();
-}
-updateCardTransform();
-
+                    applyBounds();
+                    updateCardTransform();
                 }
                 
                 requestAnimationFrame(animate);
