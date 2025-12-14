@@ -188,8 +188,6 @@
     <div id="settings">
         <h2>Magic Card Settings</h2>
 
-        <canvas id="editor-canvas" style="display:none;"></canvas>
-
         <div class="setting-section">
             <h3>Background Image</h3>
             <label class="file-upload">
@@ -368,9 +366,17 @@ if (outTop || outBottom || outLeft || outRight) {
 
     const reader = new FileReader();
     reader.onload = (event) => {
+        showCropEditor(event.target.result, cropped => {
+            showZoomEditor(cropped, finalImage => {
+                card.src = finalImage;
+                scale = 1;
+                updateCardTransform();
+            });
+        });
     };
     reader.readAsDataURL(file);
 });
+
         
         defaultCardBtn.addEventListener('click', () => {
             card.src = "https://deckofcardsapi.com/static/img/AS.png";
@@ -577,13 +583,7 @@ function showZoomEditor(imageSrc, callback) {
         document.body.removeChild(editor);
     };
 }
-showCropEditor(imageSrc, cropped => {
-    showZoomEditor(cropped, finalImage => {
-        card.src = finalImage;
-        scale = 1;
-        updateCardTransform();
-    });
-});
+
 
         
         // Handle window resize
