@@ -351,6 +351,8 @@
         let isAnimating = false;
         let showCardTimeout = null;
         let changeCardTimeout = null;
+        let touchToChangeTimeout = null;
+        let hasBeenTouched = false;
         
         // Double tap detection variables
         let tapCount = 0;
@@ -441,6 +443,22 @@
                 }
             }
         }, {passive: false});
+
+        card.addEventListener('touchend', () => {
+    if (
+        card.style.display === 'none' ||
+        isDragging ||
+        currentCardImage !== 1 ||
+        hasBeenTouched
+    ) return;
+
+    hasBeenTouched = true;
+
+    touchToChangeTimeout = setTimeout(() => {
+        transformToImage2();
+    }, 3000);
+});
+
         
         document.addEventListener('touchmove', (e) => {
             if (isDragging && e.touches.length === 1) {
@@ -591,6 +609,15 @@
         }
         
         function showCardWithTransformation() {
+            hasBeenTouched = false;
+
+if (touchToChangeTimeout) {
+    clearTimeout(touchToChangeTimeout);
+    touchToChangeTimeout = null;
+}
+
+
+            
             if (isAnimating) return;
             isAnimating = true;
             
@@ -615,9 +642,9 @@
                 posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
                 updateCardTransform();
                 
-                changeCardTimeout = setTimeout(() => {
-                    transformToImage2();
-                }, 5000);
+                // changeCardTimeout = setTimeout(() => {
+                //     transformToImage2();
+                // }, 5000);
                 
                 setTimeout(() => {
                     isAnimating = false;
