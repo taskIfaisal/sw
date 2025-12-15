@@ -45,7 +45,7 @@
         #card {
             position: absolute;
             width: 100%;
-            max-width: 300px; /* DIUBAH: Kartu lebih besar (dari 200px ke 300px) */
+            max-width: 300px;
             z-index: 2;
             user-select: none;
             -webkit-user-drag: none;
@@ -316,7 +316,7 @@
         // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
         let posY = window.innerHeight / 2 - card.offsetHeight / 2;
-        let scale = 1; // Tetap 1, karena ukuran sudah besar di CSS
+        let scale = 1;
         let isDragging = false;
         let startX, startY;
         let velocityX = 0;
@@ -516,8 +516,8 @@
         
         defaultCardsBtn.addEventListener('click', () => {
             cardImages = {
-                image1: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png",
-                image2: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image2.png"
+                image1: "https://deckofcardsapi.com/static/img/AS.png",
+                image2: "https://deckofcardsapi.com/static/img/AH.png"
             };
             updatePreviews();
             
@@ -596,12 +596,14 @@
             card.style.display = 'block';
             card.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             
+            // PERBAIKAN: Mulai dari TENGAH BAWAH, bukan pojok bawah
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight + card.offsetHeight;
+            posY = window.innerHeight + card.offsetHeight; // Masih di bawah layar
             updateCardTransform();
             
             card.offsetHeight;
             
+            // Animate ke tengah layar
             setTimeout(() => {
                 posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
                 posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
