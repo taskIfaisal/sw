@@ -52,7 +52,16 @@
             touch-action: none;
             transform-origin: center center;
             height: auto;
-            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                        opacity 0.5s ease;
+        }
+        
+        .card-hidden {
+            opacity: 0;
+        }
+        
+        .card-visible {
+            opacity: 1;
         }
         
         #settings {
@@ -72,6 +81,38 @@
         
         .setting-section {
             margin-bottom: 20px;
+        }
+        
+        .image-upload-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .upload-preview {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #666;
+            border-radius: 5px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #333;
+        }
+        
+        .upload-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
         }
         
         button {
@@ -95,6 +136,8 @@
             border-radius: 5px;
             display: inline-block;
             cursor: pointer;
+            text-align: center;
+            min-width: 150px;
         }
 
         /* Editor Modal Styles */
@@ -181,7 +224,7 @@
 </head>
 <body>
     <div id="background"></div>
-    <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
+    <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card" class="card-hidden">
     
     <div id="settings">
         <h2>Magic Card Settings</h2>
@@ -195,12 +238,44 @@
         </div>
         
         <div class="setting-section">
-            <h3>Card Image</h3>
-            <label class="file-upload">
-                Choose Card
-                <input type="file" id="card-upload" accept="image/*">
-            </label>
-            <button id="default-card">Use Default Card</button>
+            <h3>Card Images</h3>
+            <p>Upload two images for card transformation</p>
+            
+            <div class="image-upload-row">
+                <div class="upload-label">
+                    <div class="file-upload">
+                        Card Image 1
+                        <input type="file" id="card-upload-1" accept="image/*" data-index="1">
+                    </div>
+                    <div class="upload-preview" id="preview-1">
+                        <span style="color: #999;">Preview 1</span>
+                    </div>
+                </div>
+                
+                <div class="upload-label">
+                    <div class="file-upload">
+                        Card Image 2
+                        <input type="file" id="card-upload-2" accept="image/*" data-index="2">
+                    </div>
+                    <div class="upload-preview" id="preview-2">
+                        <span style="color: #999;">Preview 2</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <button id="default-cards">Use Default Cards</button>
+                <button id="swap-cards">Swap Images 1↔2</button>
+            </div>
+            
+            <div style="margin-top: 15px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px;">
+                <small>
+                    <strong>How it works:</strong><br>
+                    1. Double tap to summon card<br>
+                    2. Card shows Image 1<br>
+                    3. After 5 seconds, transforms to Image 2
+                </small>
+            </div>
         </div>
         
         <div class="setting-section">
@@ -220,10 +295,14 @@
         const card = document.getElementById('card');
         const settings = document.getElementById('settings');
         const bgUpload = document.getElementById('bg-upload');
-        const cardUpload = document.getElementById('card-upload');
-        const defaultCardBtn = document.getElementById('default-card');
+        const cardUpload1 = document.getElementById('card-upload-1');
+        const cardUpload2 = document.getElementById('card-upload-2');
+        const defaultCardsBtn = document.getElementById('default-cards');
+        const swapCardsBtn = document.getElementById('swap-cards');
         const closeSettingsBtn = document.getElementById('close-settings');
         const sensorPermissionBtn = document.getElementById('sensor-permission');
+        const preview1 = document.getElementById('preview-1');
+        const preview2 = document.getElementById('preview-2');
 
         // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
@@ -237,6 +316,13 @@
         let lastPosY = 0;
         let lastTime = 0;
         
+        // Card images storage
+        let cardImages = {
+            image1: "https://deckofcardsapi.com/static/img/AS.png", // Default card 1
+            image2: "https://deckofcardsapi.com/static/img/AH.png"  // Default card 2
+        };
+        let currentCardImage = 1; // 1 or 2
+        
         // SENSOR VARIABLES
         let smoothBeta = 0;
         let smoothGamma = 0;
@@ -247,12 +333,16 @@
         // Animation and timing control
         let isAnimating = false;
         let showCardTimeout = null;
+        let changeCardTimeout = null;
         
         // Set initial positions (hidden offscreen at bottom)
         card.style.display = 'block';
         posY = window.innerHeight + card.offsetHeight;
         updateCardTransform();
         card.style.display = 'none';
+        
+        // Initialize previews
+        updatePreviews();
         
         // Initialize sensor
         initSensor();
@@ -275,26 +365,29 @@
             }
         }, {passive: false});
         
-        // Double tap to show card with 5 second delay (no visual indicator)
+        // Double tap to show card with transformation
         let lastTap = 0;
         document.addEventListener('touchend', (e) => {
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTap;
             if (tapLength < 300 && tapLength > 0) {
-                // Cancel any existing timer
+                // Cancel any existing timers
                 if (showCardTimeout) {
                     clearTimeout(showCardTimeout);
+                    showCardTimeout = null;
+                }
+                if (changeCardTimeout) {
+                    clearTimeout(changeCardTimeout);
+                    changeCardTimeout = null;
                 }
                 
-                // Start 5 second delay (5000ms) tanpa visual
-                showCardTimeout = setTimeout(() => {
-                    showCard();
-                }, 5000);
+                // Start showing card
+                showCardWithTransformation();
             }
             lastTap = currentTime;
         });
         
-        // Card dragging functionality with velocity tracking
+        // Card dragging functionality
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 isDragging = true;
@@ -305,7 +398,7 @@
                 lastPosX = posX;
                 lastPosY = posY;
                 lastTime = Date.now();
-                card.style.transition = 'none'; // Hilangkan transition saat dragging
+                card.style.transition = 'none';
                 e.preventDefault();
             }
         }, {passive: false});
@@ -331,19 +424,17 @@
                     
                     updateCardTransform();
                     
-                    // PERBAIKAN: Cek saat kartu diseret keluar layar
+                    // Check if card is dragged out of screen
                     const cardRect = card.getBoundingClientRect();
-                    const exitThreshold = 30; // Pixel dari tepi
+                    const exitThreshold = 30;
                     
-                    // Jika kartu diseret keluar layar, langsung hide
                     if (cardRect.bottom < -exitThreshold || 
                         cardRect.top > window.innerHeight + exitThreshold ||
                         cardRect.right < -exitThreshold || 
                         cardRect.left > window.innerWidth + exitThreshold) {
                         
-                        // Kartu langsung hilang tanpa delay
                         hideCardImmediately();
-                        isDragging = false; // Stop dragging
+                        isDragging = false;
                         return;
                     }
                 }
@@ -354,18 +445,15 @@
         document.addEventListener('touchend', (e) => {
             if (isDragging) {
                 isDragging = false;
-                card.style.transition = ''; // Kembalikan transition
-                card.style.opacity = '1';
+                card.style.transition = '';
                 
-                // Cek apakah kartu dilempar atau ditarik keluar
+                // Check if card is flicked or pulled out
                 const speedThreshold = 1000;
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
                 
-                // Cek posisi kartu
                 const cardRect = card.getBoundingClientRect();
                 const exitThreshold = 50;
                 
-                // Jika kartu di luar layar atau dilempar cepat, langsung hide
                 if (cardRect.bottom < -exitThreshold || 
                     cardRect.top > window.innerHeight + exitThreshold ||
                     cardRect.right < -exitThreshold || 
@@ -376,7 +464,7 @@
                     return;
                 }
                 
-                // Jika kartu masih dalam layar, apply bounds
+                // If card is still in screen, apply bounds
                 applyBounds();
                 updateCardTransform();
             }
@@ -394,37 +482,155 @@
             }
         });
         
-        // Modified card upload with image editor
-        cardUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    showImageEditor(event.target.result, (editedImage) => {
-                        card.src = editedImage;
-                        scale = 1;
-                        posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-                        posY = window.innerHeight + card.offsetHeight;
-                        updateCardTransform();
-                    });
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+        // Card upload with image editor
+        cardUpload1.addEventListener('change', (e) => handleCardUpload(e, 1));
+        cardUpload2.addEventListener('change', (e) => handleCardUpload(e, 2));
         
-        defaultCardBtn.addEventListener('click', () => {
-            card.src = "https://deckofcardsapi.com/static/img/AS.png";
+        defaultCardsBtn.addEventListener('click', () => {
+            cardImages = {
+                image1: "https://deckofcardsapi.com/static/img/AS.png",
+                image2: "https://deckofcardsapi.com/static/img/AH.png"
+            };
+            updatePreviews();
+            
+            if (card.style.display !== 'none') {
+                card.src = cardImages.image1;
+                currentCardImage = 1;
+            }
+            
             scale = 1;
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight + card.offsetHeight;
             updateCardTransform();
         });
         
+        swapCardsBtn.addEventListener('click', () => {
+            // Swap images
+            const temp = cardImages.image1;
+            cardImages.image1 = cardImages.image2;
+            cardImages.image2 = temp;
+            
+            updatePreviews();
+            
+            // If card is currently showing, update it
+            if (card.style.display !== 'none') {
+                if (currentCardImage === 1) {
+                    card.src = cardImages.image1;
+                } else {
+                    card.src = cardImages.image2;
+                }
+            }
+        });
+        
         closeSettingsBtn.addEventListener('click', () => {
             settings.style.top = '-100%';
         });
         
-        // ===== SENSOR IMPLEMENTATION =====
+        // ===== FUNCTIONS =====
+        
+        function handleCardUpload(e, imageNumber) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    showImageEditor(event.target.result, (editedImage) => {
+                        if (imageNumber === 1) {
+                            cardImages.image1 = editedImage;
+                            preview1.innerHTML = `<img src="${editedImage}" alt="Card 1">`;
+                        } else {
+                            cardImages.image2 = editedImage;
+                            preview2.innerHTML = `<img src="${editedImage}" alt="Card 2">`;
+                        }
+                        
+                        // If card is currently showing this image, update it
+                        if (card.style.display !== 'none' && currentCardImage === imageNumber) {
+                            card.src = editedImage;
+                        }
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function updatePreviews() {
+            preview1.innerHTML = `<img src="${cardImages.image1}" alt="Card 1">`;
+            preview2.innerHTML = `<img src="${cardImages.image2}" alt="Card 2">`;
+        }
+        
+        function showCardWithTransformation() {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            // Cancel any pending timers
+            if (showCardTimeout) clearTimeout(showCardTimeout);
+            if (changeCardTimeout) clearTimeout(changeCardTimeout);
+            
+            // Reset to image 1
+            currentCardImage = 1;
+            card.src = cardImages.image1;
+            card.classList.remove('card-visible');
+            card.classList.add('card-hidden');
+            
+            card.style.display = 'block';
+            card.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            
+            // Start from bottom
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight + card.offsetHeight;
+            updateCardTransform();
+            
+            // Force reflow
+            card.offsetHeight;
+            
+            // Animate to center
+            setTimeout(() => {
+                posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+                posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+                updateCardTransform();
+                
+                // Fade in
+                setTimeout(() => {
+                    card.classList.remove('card-hidden');
+                    card.classList.add('card-visible');
+                    
+                    // Schedule transformation to image 2 after 5 seconds
+                    changeCardTimeout = setTimeout(() => {
+                        transformToImage2();
+                    }, 5000);
+                    
+                    // Reset animation flag
+                    setTimeout(() => {
+                        isAnimating = false;
+                        card.style.transition = '';
+                    }, 800);
+                }, 100);
+            }, 10);
+        }
+        
+        function transformToImage2() {
+            if (card.style.display === 'none') return;
+            
+            // Add transition for smooth change
+            card.style.transition = 'opacity 0.5s ease';
+            
+            // Fade out
+            card.classList.remove('card-visible');
+            card.classList.add('card-hidden');
+            
+            // Change image after fade out
+            setTimeout(() => {
+                currentCardImage = 2;
+                card.src = cardImages.image2;
+                
+                // Fade in new image
+                setTimeout(() => {
+                    card.classList.remove('card-hidden');
+                    card.classList.add('card-visible');
+                    card.style.transition = '';
+                }, 50);
+            }, 500);
+        }
+        
         function initSensor() {
             if (typeof DeviceOrientationEvent?.requestPermission === "function") {
                 sensorPermissionBtn.classList.remove('hidden');
@@ -491,9 +697,7 @@
             posX = Math.max(minX, Math.min(maxX, posX));
             posY = Math.max(minY, Math.min(maxY, posY));
         }
-        // ===== END SENSOR IMPLEMENTATION =====
         
-        // Image Editor Function
         function showImageEditor(imageSrc, callback) {
             const editor = document.createElement('div');
             editor.className = 'image-editor';
@@ -558,81 +762,37 @@
             });
         }
         
-        // Helper function to calculate distance between two points
         function getDistance(x1, y1, x2, y2) {
             return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
         }
         
-        // Helper functions
         function updateCardTransform() {
             card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
         }
         
-        // Fungsi untuk langsung hide kartu tanpa animasi
         function hideCardImmediately() {
-            // Cancel any pending show card timeout
+            // Cancel any pending timers
             if (showCardTimeout) {
                 clearTimeout(showCardTimeout);
                 showCardTimeout = null;
             }
-            
-            card.style.transition = 'none'; // Hilangkan animasi
-            card.style.display = 'none'; // Langsung hide
-            
-            // Reset position ke bawah untuk next show
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight + card.offsetHeight;
-            updateCardTransform();
-        }
-        
-        // Fungsi hide dengan animasi (untuk kasus lain)
-        function hideCard() {
-            // Cancel any pending show card timeout
-            if (showCardTimeout) {
-                clearTimeout(showCardTimeout);
-                showCardTimeout = null;
+            if (changeCardTimeout) {
+                clearTimeout(changeCardTimeout);
+                changeCardTimeout = null;
             }
             
-            card.style.transition = 'transform 0.6s cubic-bezier(0.55, 0.055, 0.675, 0.19)';
-            posY = window.innerHeight + card.offsetHeight;
-            updateCardTransform();
+            card.style.transition = 'none';
+            card.style.display = 'none';
+            card.classList.remove('card-visible');
+            card.classList.add('card-hidden');
             
-            setTimeout(() => {
-                card.style.display = 'none';
-                card.style.transition = '';
-            }, 600);
-        }
-        
-        function showCard() {
-            if (isAnimating) return;
-            isAnimating = true;
-            
-            // Cancel any pending timeout
-            if (showCardTimeout) {
-                clearTimeout(showCardTimeout);
-                showCardTimeout = null;
-            }
-            
-            card.style.display = 'block';
-            card.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-            
+            // Reset position for next show
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight + card.offsetHeight;
             updateCardTransform();
             
-            // Force reflow
-            card.offsetHeight;
-            
-            setTimeout(() => {
-                posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-                posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-                updateCardTransform();
-                
-                setTimeout(() => {
-                    isAnimating = false;
-                    card.style.transition = '';
-                }, 800);
-            }, 10);
+            // Reset to image 1 for next time
+            currentCardImage = 1;
         }
         
         // Handle window resize
@@ -650,6 +810,7 @@
             posY = window.innerHeight + card.offsetHeight;
             updateCardTransform();
             card.style.display = 'none';
+            card.classList.add('card-hidden');
         });
     </script>
 </body>
