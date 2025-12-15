@@ -45,23 +45,33 @@
         #card {
             position: absolute;
             width: 100%;
-            max-width: 200px;
+            max-width: 300px; /* DIUBAH: dari 200px ke 300px (50% lebih besar) */
             z-index: 2;
             user-select: none;
             -webkit-user-drag: none;
             touch-action: none;
             transform-origin: center center;
             height: auto;
-            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
-                        opacity 0.5s ease;
+            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            backface-visibility: hidden; /* Untuk efek flip yang smooth */
+            transform-style: preserve-3d; /* Untuk efek 3D */
         }
         
-        .card-hidden {
-            opacity: 0;
+        /* Hapus efek fade, ganti dengan efek flip */
+        .card-flipping {
+            animation: flipCard 1s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
         }
         
-        .card-visible {
-            opacity: 1;
+        @keyframes flipCard {
+            0% {
+                transform: rotateY(0deg) scale(1);
+            }
+            50% {
+                transform: rotateY(90deg) scale(0.95);
+            }
+            100% {
+                transform: rotateY(0deg) scale(1);
+            }
         }
         
         #settings {
@@ -220,11 +230,43 @@
         #sensor-permission.hidden {
             display: none;
         }
+        
+        /* Size control buttons */
+        .size-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 4;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .size-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: 2px solid white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
     <div id="background"></div>
-    <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card" class="card-hidden">
+    <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
+    
+    <!-- Size Controls -->
+    <div class="size-controls">
+        <button class="size-btn" id="zoom-in">+</button>
+        <button class="size-btn" id="zoom-out">-</button>
+        <button class="size-btn" id="reset-size">↺</button>
+    </div>
     
     <div id="settings">
         <h2>Magic Card Settings</h2>
@@ -273,7 +315,8 @@
                     <strong>How it works:</strong><br>
                     1. Double tap to summon card<br>
                     2. Card shows Image 1<br>
-                    3. After 5 seconds, transforms to Image 2
+                    3. After 5 seconds, card flips to Image 2<br>
+                    4. Use + - buttons to resize card
                 </small>
             </div>
         </div>
@@ -303,11 +346,14 @@
         const sensorPermissionBtn = document.getElementById('sensor-permission');
         const preview1 = document.getElementById('preview-1');
         const preview2 = document.getElementById('preview-2');
+        const zoomInBtn = document.getElementById('zoom-in');
+        const zoomOutBtn = document.getElementById('zoom-out');
+        const resetSizeBtn = document.getElementById('reset-size');
 
         // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
         let posY = window.innerHeight / 2 - card.offsetHeight / 2;
-        let scale = 1;
+        let scale = 1.5; // DIUBAH: Default scale lebih besar (dari 1 ke 1.5)
         let isDragging = false;
         let startX, startY;
         let velocityX = 0;
@@ -319,7 +365,6 @@
         // Card images storage - PASTIKAN MENGGUNAKAN RAW URL
         let cardImages = {
             image1: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png",
-            // PASTIKAN MENGGUNAKAN RAW GITHUB URL
             image2: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image2.png"
         };
         let currentCardImage = 1; // 1 or 2
@@ -417,6 +462,7 @@
                 lastPosY = posY;
                 lastTime = Date.now();
                 card.style.transition = 'none';
+                card.style.animation = 'none'; // Hentikan animasi saat drag
                 e.preventDefault();
                 
                 // Reset tap count saat mulai drag
@@ -495,6 +541,26 @@
             }
         });
         
+        // Zoom controls
+        zoomInBtn.addEventListener('click', () => {
+            if (card.style.display !== 'none') {
+                scale = Math.min(3, scale + 0.2); // Maksimal 3x zoom
+                updateCardTransform();
+            }
+        });
+        
+        zoomOutBtn.addEventListener('click', () => {
+            if (card.style.display !== 'none') {
+                scale = Math.max(0.5, scale - 0.2); // Minimal 0.5x zoom
+                updateCardTransform();
+            }
+        });
+        
+        resetSizeBtn.addEventListener('click', () => {
+            scale = 1.5; // Kembali ke ukuran default
+            updateCardTransform();
+        });
+        
         // Settings functionality
         bgUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -513,9 +579,8 @@
         
         defaultCardsBtn.addEventListener('click', () => {
             cardImages = {
-                image1: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png",
-                // PASTIKAN MENGGUNAKAN RAW URL JUGA DI SINI
-                image2: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image2.png"
+                image1: "https://deckofcardsapi.com/static/img/AS.png",
+                image2: "https://deckofcardsapi.com/static/img/AH.png"
             };
             updatePreviews();
             
@@ -524,7 +589,7 @@
                 currentCardImage = 1;
             }
             
-            scale = 1;
+            scale = 1.5; // Reset ke ukuran default
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight + card.offsetHeight;
             updateCardTransform();
@@ -594,8 +659,7 @@
             // Reset to image 1
             currentCardImage = 1;
             card.src = cardImages.image1;
-            card.classList.remove('card-visible');
-            card.classList.add('card-hidden');
+            card.style.animation = 'none'; // Hapus animasi sebelumnya
             
             card.style.display = 'block';
             card.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
@@ -614,47 +678,41 @@
                 posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
                 updateCardTransform();
                 
-                // Fade in
+                // Schedule transformation to image 2 after 5 seconds
+                changeCardTimeout = setTimeout(() => {
+                    transformToImage2();
+                }, 5000);
+                
+                // Reset animation flag
                 setTimeout(() => {
-                    card.classList.remove('card-hidden');
-                    card.classList.add('card-visible');
-                    
-                    // Schedule transformation to image 2 after 5 seconds
-                    changeCardTimeout = setTimeout(() => {
-                        transformToImage2();
-                    }, 5000);
-                    
-                    // Reset animation flag
-                    setTimeout(() => {
-                        isAnimating = false;
-                        card.style.transition = '';
-                    }, 800);
-                }, 100);
+                    isAnimating = false;
+                    card.style.transition = '';
+                }, 800);
             }, 10);
         }
         
         function transformToImage2() {
             if (card.style.display === 'none') return;
             
-            // Add transition for smooth change
-            card.style.transition = 'opacity 0.5s ease';
+            // Hapus class animasi sebelumnya
+            card.classList.remove('card-flipping');
             
-            // Fade out
-            card.classList.remove('card-visible');
-            card.classList.add('card-hidden');
+            // Force reflow untuk memastikan animasi berjalan
+            card.offsetHeight;
             
-            // Change image after fade out
+            // Tambahkan class animasi flip
+            card.classList.add('card-flipping');
+            
+            // Ganti gambar di tengah animasi (saat kartu menghadap ke bawah)
             setTimeout(() => {
                 currentCardImage = 2;
                 card.src = cardImages.image2;
-                
-                // Fade in new image
-                setTimeout(() => {
-                    card.classList.remove('card-hidden');
-                    card.classList.add('card-visible');
-                    card.style.transition = '';
-                }, 50);
-            }, 500);
+            }, 500); // Ganti gambar di titik 50% animasi
+            
+            // Hapus class animasi setelah selesai
+            setTimeout(() => {
+                card.classList.remove('card-flipping');
+            }, 1000);
         }
         
         function initSensor() {
@@ -808,9 +866,9 @@
             }
             
             card.style.transition = 'none';
+            card.style.animation = 'none';
             card.style.display = 'none';
-            card.classList.remove('card-visible');
-            card.classList.add('card-hidden');
+            card.classList.remove('card-flipping');
             
             // Reset position for next show
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
@@ -836,7 +894,6 @@
             posY = window.innerHeight + card.offsetHeight;
             updateCardTransform();
             card.style.display = 'none';
-            card.classList.add('card-hidden');
         });
     </script>
 </body>
