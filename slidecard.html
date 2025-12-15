@@ -574,6 +574,13 @@
         });
         
         // ===== FUNCTIONS =====
+
+        function setCardBottomCenter() {
+    posX = (window.innerWidth - card.offsetWidth * scale) / 2;
+    posY = window.innerHeight + card.offsetHeight;
+    updateCardTransform();
+}
+
         
         function handleCardUpload(e, imageNumber) {
             const file = e.target.files[0];
@@ -623,9 +630,8 @@
             const cardHeight = card.offsetHeight * scale;
             
             // Mulai dari TENGAH BAWAH (di luar layar)
-            posX = window.innerWidth / 2 - cardWidth / 2;
-            posY = window.innerHeight + cardHeight;
-            updateCardTransform();
+            setCardBottomCenter();
+
             
             // Force reflow
             card.offsetHeight;
