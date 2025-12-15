@@ -316,10 +316,11 @@
         let lastPosY = 0;
         let lastTime = 0;
         
-        // Card images storage
+        // Card images storage - PASTIKAN MENGGUNAKAN RAW URL
         let cardImages = {
-            image1: "https://deckofcardsapi.com/static/img/AS.png", // Default card 1
-            image2: "https://github.com/taskIfaisal/sw/blob/main/icon/dark.PNG"  // Default card 2
+            image1: "https://deckofcardsapi.com/static/img/AS.png",
+            // PASTIKAN MENGGUNAKAN RAW GITHUB URL
+            image2: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/dark.PNG"
         };
         let currentCardImage = 1; // 1 or 2
         
@@ -513,7 +514,8 @@
         defaultCardsBtn.addEventListener('click', () => {
             cardImages = {
                 image1: "https://deckofcardsapi.com/static/img/AS.png",
-                image2: "https://deckofcardsapi.com/static/img/AH.png"
+                // PASTIKAN MENGGUNAKAN RAW URL JUGA DI SINI
+                image2: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/dark.PNG"
             };
             updatePreviews();
             
