@@ -251,25 +251,28 @@
             <p>Upload two images for card transformation</p>
             
             <div class="image-upload-row">
-                <div class="upload-label">
-                    <div class="file-upload">
-                        Card Image 1
-                        <input type="file" id="card-upload-1" accept="image/*" data-index="1">
-                    </div>
-                    <div class="upload-preview" id="preview-1">
-                        <span style="color: #999;">Preview 1</span>
-                    </div>
-                </div>
-                
-                <div class="upload-label">
-                    <div class="file-upload">
-                        Card Image 2
-                        <input type="file" id="card-upload-2" accept="image/*" data-index="2">
-                    </div>
-                    <div class="upload-preview" id="preview-2">
-                        <span style="color: #999;">Preview 2</span>
-                    </div>
-                </div>
+                <div class="image-upload-row">
+
+    <!-- BUTTON CARD IMAGE 1 -->
+    <div class="upload-label">
+        <button onclick="document.getElementById('card-upload-1').click()">
+            Upload Card Image 1
+        </button>
+        <input type="file" id="card-upload-1" accept="image/*" data-index="1">
+        <div class="upload-preview" id="preview-1"></div>
+    </div>
+
+    <!-- BUTTON CARD IMAGE 2 -->
+    <div class="upload-label">
+        <button onclick="document.getElementById('card-upload-2').click()">
+            Upload Card Image 2
+        </button>
+        <input type="file" id="card-upload-2" accept="image/*" data-index="2">
+        <div class="upload-preview" id="preview-2"></div>
+    </div>
+
+</div>
+
             </div>
             
             <div style="margin-top: 15px;">
