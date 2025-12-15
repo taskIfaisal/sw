@@ -52,8 +52,32 @@
             touch-action: none;
             transform-origin: center center;
             height: auto;
-            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smooth animation for show */
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
+        
+        /* Loading indicator */
+        #loading-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            z-index: 9998;
+            display: none;
+            text-align: center;
+        }
+        
+        #countdown {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #4CAF50;
+        }
+        
         #settings {
             position: fixed;
             top: -100%;
@@ -181,6 +205,14 @@
 <body>
     <div id="background"></div>
     <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
+    
+    <!-- Loading Indicator -->
+    <div id="loading-indicator">
+        <div>Card will appear in...</div>
+        <div id="countdown">5</div>
+        <div>seconds</div>
+    </div>
+    
     <div id="settings">
         <h2>Magic Card Settings</h2>
         
@@ -222,6 +254,8 @@
         const defaultCardBtn = document.getElementById('default-card');
         const closeSettingsBtn = document.getElementById('close-settings');
         const sensorPermissionBtn = document.getElementById('sensor-permission');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const countdownElement = document.getElementById('countdown');
 
         // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
@@ -235,21 +269,24 @@
         let lastPosY = 0;
         let lastTime = 0;
         
-        // SENSOR VARIABLES - Ditambahkan
-        let smoothBeta = 0;      // Untuk smoothing beta (tilt depan-belakang)
-        let smoothGamma = 0;     // Untuk smoothing gamma (tilt kiri-kanan)
-        const sensitivity = 0.5; // Sensitivitas gerakan kartu
-        const smoothing = 0.2;   // Smoothing untuk gerakan halus
+        // SENSOR VARIABLES
+        let smoothBeta = 0;
+        let smoothGamma = 0;
+        const sensitivity = 0.5;
+        const smoothing = 0.2;
         let isSensorEnabled = false;
         
-        // Animation control
+        // Animation and timing control
         let isAnimating = false;
+        let showCardTimeout = null;
+        let countdownInterval = null;
+        let remainingSeconds = 5;
         
         // Set initial positions (hidden offscreen at bottom)
         card.style.display = 'block';
-        posY = window.innerHeight + card.offsetHeight; // Start offscreen at bottom
+        posY = window.innerHeight + card.offsetHeight;
         updateCardTransform();
-        card.style.display = 'none'; // Hide initially
+        card.style.display = 'none';
         
         // Initialize sensor
         initSensor();
@@ -265,20 +302,28 @@
         document.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2) {
                 const currentY = e.touches[0].clientY;
-                if (currentY - startYPos > 100) { // Swipe UP with two fingers
+                if (currentY - startYPos > 100) {
                     e.preventDefault();
                     settings.style.top = '0';
                 }
             }
         }, {passive: false});
         
-        // Double tap to show card from bottom
+        // Double tap to show card with delay
         let lastTap = 0;
         document.addEventListener('touchend', (e) => {
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTap;
             if (tapLength < 300 && tapLength > 0) {
-                showCard();
+                // Cancel any existing timer
+                if (showCardTimeout) {
+                    clearTimeout(showCardTimeout);
+                    clearInterval(countdownInterval);
+                    loadingIndicator.style.display = 'none';
+                }
+                
+                // Start countdown
+                startCountdown();
             }
             lastTap = currentTime;
         });
@@ -294,7 +339,7 @@
                 lastPosX = posX;
                 lastPosY = posY;
                 lastTime = Date.now();
-                card.style.transition = 'none'; // Remove transition during drag
+                card.style.transition = 'none';
                 e.preventDefault();
             }
         }, {passive: false});
@@ -318,16 +363,16 @@
                     posX = newPosX;
                     posY = newPosY;
                     
-                    // Beri efek transparan saat kartu hampir keluar layar
-                    const exitThreshold = 100;
-                    if (posY > window.innerHeight - exitThreshold || 
-                        posY < exitThreshold ||
-                        posX > window.innerWidth - exitThreshold || 
-                        posX < exitThreshold) {
-                        card.style.opacity = '0.5';
-                    } else {
-                        card.style.opacity = '1';
-                    }
+                    // HAPUS efek transparan - ini yang bikin kartu transparan
+                    // const exitThreshold = 100;
+                    // if (posY > window.innerHeight - exitThreshold || 
+                    //     posY < exitThreshold ||
+                    //     posX > window.innerWidth - exitThreshold || 
+                    //     posX < exitThreshold) {
+                    //     card.style.opacity = '0.5';
+                    // } else {
+                    //     card.style.opacity = '1';
+                    // }
                     
                     updateCardTransform();
                 }
@@ -338,11 +383,11 @@
         document.addEventListener('touchend', (e) => {
             if (isDragging) {
                 isDragging = false;
-                card.style.transition = ''; // Restore transition
-                card.style.opacity = '1'; // Restore opacity
+                card.style.transition = '';
+                card.style.opacity = '1'; // Pastikan opacity normal
                 
                 // Check if card is flicked quickly or pulled out
-                const speedThreshold = 1000; // pixels per second
+                const speedThreshold = 1000;
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
                 
                 // Check if card is pulled out of screen
@@ -385,9 +430,7 @@
                 reader.onload = (event) => {
                     showImageEditor(event.target.result, (editedImage) => {
                         card.src = editedImage;
-                        // Reset scale when new image is loaded
                         scale = 1;
-                        // Reset to bottom position
                         posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
                         posY = window.innerHeight + card.offsetHeight;
                         updateCardTransform();
@@ -399,9 +442,7 @@
         
         defaultCardBtn.addEventListener('click', () => {
             card.src = "https://deckofcardsapi.com/static/img/AS.png";
-            // Reset scale when default image is loaded
             scale = 1;
-            // Reset to bottom position
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight + card.offsetHeight;
             updateCardTransform();
@@ -413,7 +454,6 @@
         
         // ===== SENSOR IMPLEMENTATION =====
         function initSensor() {
-            // Cek apakah perlu permission (untuk iOS)
             if (typeof DeviceOrientationEvent?.requestPermission === "function") {
                 sensorPermissionBtn.classList.remove('hidden');
                 
@@ -430,7 +470,6 @@
                     }
                 };
             } else {
-                // Untuk browser yang tidak memerlukan permission
                 startSensor();
             }
         }
@@ -442,27 +481,21 @@
         }
         
         function handleDeviceOrientation(e) {
-            // Hanya proses jika kartu terlihat dan tidak sedang didrag
             if (!card.style.display || card.style.display === 'none' || isDragging) return;
 
-            // Batasi nilai beta dan gamma antara -45 sampai 45 derajat
             const beta = Math.max(-45, Math.min(45, e.beta || 0));
             const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
 
-            // Smoothing untuk gerakan yang lebih halus
             smoothBeta += (beta - smoothBeta) * smoothing;
             smoothGamma += (gamma - smoothGamma) * smoothing;
         }
         
         function startSensorAnimation() {
             function animate() {
-                // Hanya gerakkan kartu jika sensor enabled dan tidak sedang didrag
                 if (isSensorEnabled && !isDragging && card.style.display !== 'none') {
-                    // Gerakkan kartu berdasarkan nilai sensor
                     posX += smoothGamma * sensitivity;
                     posY += smoothBeta * sensitivity;
                     
-                    // Pastikan kartu tidak keluar dari batas layar
                     applyBounds();
                     updateCardTransform();
                 }
@@ -474,18 +507,15 @@
         }
         
         function applyBounds() {
-            // Hitung ukuran kartu yang sudah discale
             const cardWidth = card.offsetWidth * scale;
             const cardHeight = card.offsetHeight * scale;
             
-            // Batas dengan padding kecil
             const padding = 10;
             const minX = padding;
             const maxX = window.innerWidth - cardWidth - padding;
             const minY = padding;
             const maxY = window.innerHeight - cardHeight - padding;
             
-            // Terapkan batas
             posX = Math.max(minX, Math.min(maxX, posX));
             posY = Math.max(minY, Math.min(maxY, posY));
         }
@@ -493,7 +523,6 @@
         
         // Image Editor Function
         function showImageEditor(imageSrc, callback) {
-            // Create editor modal
             const editor = document.createElement('div');
             editor.className = 'image-editor';
             editor.innerHTML = `
@@ -518,7 +547,6 @@
             let currentScale = 1;
             let startDistance = 0;
             
-            // Zoom with pinch gesture
             editingCard.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 2) {
                     e.preventDefault();
@@ -548,7 +576,6 @@
                 startDistance = 0;
             }, {passive: false});
             
-            // Save/cancel buttons
             saveBtn.addEventListener('click', () => {
                 document.body.removeChild(editor);
                 callback(imageSrc);
@@ -564,18 +591,34 @@
             return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
         }
         
+        // Countdown function
+        function startCountdown() {
+            remainingSeconds = 5;
+            countdownElement.textContent = remainingSeconds;
+            loadingIndicator.style.display = 'block';
+            
+            countdownInterval = setInterval(() => {
+                remainingSeconds--;
+                countdownElement.textContent = remainingSeconds;
+                
+                if (remainingSeconds <= 0) {
+                    clearInterval(countdownInterval);
+                    loadingIndicator.style.display = 'none';
+                    showCard();
+                }
+            }, 1000);
+        }
+        
         // Helper functions
         function updateCardTransform() {
             card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
         }
         
         function hideCard() {
-            // Animate card sliding down and out
             card.style.transition = 'transform 0.5s cubic-bezier(0.55, 0.055, 0.675, 0.19)';
-            posY = window.innerHeight + card.offsetHeight; // Move to bottom offscreen
+            posY = window.innerHeight + card.offsetHeight;
             updateCardTransform();
             
-            // Hide after animation
             setTimeout(() => {
                 card.style.display = 'none';
                 card.style.transition = '';
@@ -586,35 +629,29 @@
             if (isAnimating) return;
             isAnimating = true;
             
-            // Set card to start position (bottom offscreen)
             card.style.display = 'block';
             card.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             
-            // Start from bottom (just outside screen)
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight + card.offsetHeight;
             updateCardTransform();
             
-            // Force reflow
             card.offsetHeight;
             
-            // Animate to center
             setTimeout(() => {
                 posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
                 posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
                 updateCardTransform();
                 
-                // Reset animation flag after animation completes
                 setTimeout(() => {
                     isAnimating = false;
-                    card.style.transition = ''; // Remove transition for dragging
+                    card.style.transition = '';
                 }, 500);
             }, 10);
         }
         
         // Handle window resize
         window.addEventListener('resize', () => {
-            // Jika kartu sedang ditampilkan, pertahankan posisi relatif
             if (card.style.display !== 'none') {
                 posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
                 posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
@@ -624,7 +661,6 @@
         
         // Initialize card position
         window.addEventListener('load', () => {
-            // Set initial position to bottom
             posX = window.innerWidth / 2 - card.offsetWidth / 2;
             posY = window.innerHeight + card.offsetHeight;
             updateCardTransform();
