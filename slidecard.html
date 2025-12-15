@@ -45,7 +45,7 @@
         #card {
             position: absolute;
             width: 100%;
-            max-width: 300px; /* DIUBAH: dari 200px ke 300px (50% lebih besar) */
+            max-width: 300px; /* DIUBAH: Kartu lebih besar (dari 200px ke 300px) */
             z-index: 2;
             user-select: none;
             -webkit-user-drag: none;
@@ -53,24 +53,23 @@
             transform-origin: center center;
             height: auto;
             transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            backface-visibility: hidden; /* Untuk efek flip yang smooth */
-            transform-style: preserve-3d; /* Untuk efek 3D */
+            backface-visibility: hidden;
         }
         
-        /* Hapus efek fade, ganti dengan efek flip */
+        /* Efek flip kartu */
         .card-flipping {
             animation: flipCard 1s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
         }
         
         @keyframes flipCard {
             0% {
-                transform: rotateY(0deg) scale(1);
+                transform: rotateY(0deg);
             }
             50% {
-                transform: rotateY(90deg) scale(0.95);
+                transform: rotateY(90deg);
             }
             100% {
-                transform: rotateY(0deg) scale(1);
+                transform: rotateY(0deg);
             }
         }
         
@@ -230,43 +229,11 @@
         #sensor-permission.hidden {
             display: none;
         }
-        
-        /* Size control buttons */
-        .size-controls {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 4;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .size-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            border: 2px solid white;
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
     </style>
 </head>
 <body>
     <div id="background"></div>
     <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
-    
-    <!-- Size Controls -->
-    <div class="size-controls">
-        <button class="size-btn" id="zoom-in">+</button>
-        <button class="size-btn" id="zoom-out">-</button>
-        <button class="size-btn" id="reset-size">↺</button>
-    </div>
     
     <div id="settings">
         <h2>Magic Card Settings</h2>
@@ -315,8 +282,7 @@
                     <strong>How it works:</strong><br>
                     1. Double tap to summon card<br>
                     2. Card shows Image 1<br>
-                    3. After 5 seconds, card flips to Image 2<br>
-                    4. Use + - buttons to resize card
+                    3. After 5 seconds, card flips to Image 2
                 </small>
             </div>
         </div>
@@ -346,14 +312,11 @@
         const sensorPermissionBtn = document.getElementById('sensor-permission');
         const preview1 = document.getElementById('preview-1');
         const preview2 = document.getElementById('preview-2');
-        const zoomInBtn = document.getElementById('zoom-in');
-        const zoomOutBtn = document.getElementById('zoom-out');
-        const resetSizeBtn = document.getElementById('reset-size');
 
         // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
         let posY = window.innerHeight / 2 - card.offsetHeight / 2;
-        let scale = 1.5; // DIUBAH: Default scale lebih besar (dari 1 ke 1.5)
+        let scale = 1; // Tetap 1, karena ukuran sudah besar di CSS
         let isDragging = false;
         let startX, startY;
         let velocityX = 0;
@@ -362,12 +325,12 @@
         let lastPosY = 0;
         let lastTime = 0;
         
-        // Card images storage - PASTIKAN MENGGUNAKAN RAW URL
+        // Card images storage
         let cardImages = {
             image1: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png",
             image2: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image2.png"
         };
-        let currentCardImage = 1; // 1 or 2
+        let currentCardImage = 1;
         
         // SENSOR VARIABLES
         let smoothBeta = 0;
@@ -404,13 +367,13 @@
                 startYPos = e.touches[0].clientY;
             }
             
-            // Double tap detection - hanya jika tidak sedang menyentuh kartu
+            // Double tap detection
             if (e.touches.length === 1 && !isDragging) {
                 tapCount++;
                 
                 if (tapCount === 1) {
                     tapTimer = setTimeout(() => {
-                        tapCount = 0; // Reset jika tidak double tap dalam waktu 300ms
+                        tapCount = 0;
                     }, 300);
                 } else if (tapCount === 2) {
                     clearTimeout(tapTimer);
@@ -434,7 +397,6 @@
         function handleDoubleTap() {
             console.log("Double tap detected!");
             
-            // Cancel any existing timers
             if (showCardTimeout) {
                 clearTimeout(showCardTimeout);
                 showCardTimeout = null;
@@ -444,10 +406,9 @@
                 changeCardTimeout = null;
             }
             
-            // Start showing card with 5 second delay
             showCardTimeout = setTimeout(() => {
                 showCardWithTransformation();
-            }, 5000); // 5 second delay sebelum kartu muncul
+            }, 5000);
         }
         
         // Card dragging functionality
@@ -462,10 +423,9 @@
                 lastPosY = posY;
                 lastTime = Date.now();
                 card.style.transition = 'none';
-                card.style.animation = 'none'; // Hentikan animasi saat drag
+                card.style.animation = 'none';
                 e.preventDefault();
                 
-                // Reset tap count saat mulai drag
                 tapCount = 0;
                 if (tapTimer) {
                     clearTimeout(tapTimer);
@@ -495,7 +455,6 @@
                     
                     updateCardTransform();
                     
-                    // Check if card is dragged out of screen
                     const cardRect = card.getBoundingClientRect();
                     const exitThreshold = 30;
                     
@@ -518,7 +477,6 @@
                 isDragging = false;
                 card.style.transition = '';
                 
-                // Check if card is flicked or pulled out
                 const speedThreshold = 1000;
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
                 
@@ -535,30 +493,9 @@
                     return;
                 }
                 
-                // If card is still in screen, apply bounds
                 applyBounds();
                 updateCardTransform();
             }
-        });
-        
-        // Zoom controls
-        zoomInBtn.addEventListener('click', () => {
-            if (card.style.display !== 'none') {
-                scale = Math.min(3, scale + 0.2); // Maksimal 3x zoom
-                updateCardTransform();
-            }
-        });
-        
-        zoomOutBtn.addEventListener('click', () => {
-            if (card.style.display !== 'none') {
-                scale = Math.max(0.5, scale - 0.2); // Minimal 0.5x zoom
-                updateCardTransform();
-            }
-        });
-        
-        resetSizeBtn.addEventListener('click', () => {
-            scale = 1.5; // Kembali ke ukuran default
-            updateCardTransform();
         });
         
         // Settings functionality
@@ -589,21 +526,19 @@
                 currentCardImage = 1;
             }
             
-            scale = 1.5; // Reset ke ukuran default
+            scale = 1;
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight + card.offsetHeight;
             updateCardTransform();
         });
         
         swapCardsBtn.addEventListener('click', () => {
-            // Swap images
             const temp = cardImages.image1;
             cardImages.image1 = cardImages.image2;
             cardImages.image2 = temp;
             
             updatePreviews();
             
-            // If card is currently showing, update it
             if (card.style.display !== 'none') {
                 if (currentCardImage === 1) {
                     card.src = cardImages.image1;
@@ -633,7 +568,6 @@
                             preview2.innerHTML = `<img src="${editedImage}" alt="Card 2">`;
                         }
                         
-                        // If card is currently showing this image, update it
                         if (card.style.display !== 'none' && currentCardImage === imageNumber) {
                             card.src = editedImage;
                         }
@@ -652,38 +586,31 @@
             if (isAnimating) return;
             isAnimating = true;
             
-            // Cancel any pending timers
             if (showCardTimeout) clearTimeout(showCardTimeout);
             if (changeCardTimeout) clearTimeout(changeCardTimeout);
             
-            // Reset to image 1
             currentCardImage = 1;
             card.src = cardImages.image1;
-            card.style.animation = 'none'; // Hapus animasi sebelumnya
+            card.style.animation = 'none';
             
             card.style.display = 'block';
             card.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             
-            // Start from bottom
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight + card.offsetHeight;
             updateCardTransform();
             
-            // Force reflow
             card.offsetHeight;
             
-            // Animate to center
             setTimeout(() => {
                 posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
                 posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
                 updateCardTransform();
                 
-                // Schedule transformation to image 2 after 5 seconds
                 changeCardTimeout = setTimeout(() => {
                     transformToImage2();
                 }, 5000);
                 
-                // Reset animation flag
                 setTimeout(() => {
                     isAnimating = false;
                     card.style.transition = '';
@@ -694,22 +621,16 @@
         function transformToImage2() {
             if (card.style.display === 'none') return;
             
-            // Hapus class animasi sebelumnya
             card.classList.remove('card-flipping');
-            
-            // Force reflow untuk memastikan animasi berjalan
             card.offsetHeight;
             
-            // Tambahkan class animasi flip
             card.classList.add('card-flipping');
             
-            // Ganti gambar di tengah animasi (saat kartu menghadap ke bawah)
             setTimeout(() => {
                 currentCardImage = 2;
                 card.src = cardImages.image2;
-            }, 500); // Ganti gambar di titik 50% animasi
+            }, 500);
             
-            // Hapus class animasi setelah selesai
             setTimeout(() => {
                 card.classList.remove('card-flipping');
             }, 1000);
@@ -855,7 +776,6 @@
         }
         
         function hideCardImmediately() {
-            // Cancel any pending timers
             if (showCardTimeout) {
                 clearTimeout(showCardTimeout);
                 showCardTimeout = null;
@@ -870,12 +790,10 @@
             card.style.display = 'none';
             card.classList.remove('card-flipping');
             
-            // Reset position for next show
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight + card.offsetHeight;
             updateCardTransform();
             
-            // Reset to image 1 for next time
             currentCardImage = 1;
         }
         
