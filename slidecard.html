@@ -335,6 +335,10 @@
         let showCardTimeout = null;
         let changeCardTimeout = null;
         
+        // Double tap detection variables
+        let tapCount = 0;
+        let tapTimer = null;
+        
         // Set initial positions (hidden offscreen at bottom)
         card.style.display = 'block';
         posY = window.innerHeight + card.offsetHeight;
@@ -353,6 +357,21 @@
             if (e.touches.length === 2) {
                 startYPos = e.touches[0].clientY;
             }
+            
+            // Double tap detection - hanya jika tidak sedang menyentuh kartu
+            if (e.touches.length === 1 && !isDragging) {
+                tapCount++;
+                
+                if (tapCount === 1) {
+                    tapTimer = setTimeout(() => {
+                        tapCount = 0; // Reset jika tidak double tap dalam waktu 300ms
+                    }, 300);
+                } else if (tapCount === 2) {
+                    clearTimeout(tapTimer);
+                    handleDoubleTap();
+                    tapCount = 0;
+                }
+            }
         }, {passive: false});
         
         document.addEventListener('touchmove', (e) => {
@@ -365,27 +384,25 @@
             }
         }, {passive: false});
         
-        // Double tap to show card with transformation
-        let lastTap = 0;
-        document.addEventListener('touchend', (e) => {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTap;
-            if (tapLength < 300 && tapLength > 0) {
-                // Cancel any existing timers
-                if (showCardTimeout) {
-                    clearTimeout(showCardTimeout);
-                    showCardTimeout = null;
-                }
-                if (changeCardTimeout) {
-                    clearTimeout(changeCardTimeout);
-                    changeCardTimeout = null;
-                }
-                
-                // Start showing card
-                showCardWithTransformation();
+        // Double tap handler
+        function handleDoubleTap() {
+            console.log("Double tap detected!");
+            
+            // Cancel any existing timers
+            if (showCardTimeout) {
+                clearTimeout(showCardTimeout);
+                showCardTimeout = null;
             }
-            lastTap = currentTime;
-        });
+            if (changeCardTimeout) {
+                clearTimeout(changeCardTimeout);
+                changeCardTimeout = null;
+            }
+            
+            // Start showing card with 5 second delay
+            showCardTimeout = setTimeout(() => {
+                showCardWithTransformation();
+            }, 5000); // 5 second delay sebelum kartu muncul
+        }
         
         // Card dragging functionality
         card.addEventListener('touchstart', (e) => {
@@ -400,6 +417,13 @@
                 lastTime = Date.now();
                 card.style.transition = 'none';
                 e.preventDefault();
+                
+                // Reset tap count saat mulai drag
+                tapCount = 0;
+                if (tapTimer) {
+                    clearTimeout(tapTimer);
+                    tapTimer = null;
+                }
             }
         }, {passive: false});
         
