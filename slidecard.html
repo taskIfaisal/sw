@@ -45,7 +45,7 @@
         #card {
             position: absolute;
             width: 100%;
-            max-width: 300px;
+            max-width: 300px; /* DIUBAH: Kartu lebih besar (dari 200px ke 300px) */
             z-index: 2;
             user-select: none;
             -webkit-user-drag: none;
@@ -54,7 +54,6 @@
             height: auto;
             transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             backface-visibility: hidden;
-            display: block; /* Pastikan display block */
         }
         
         /* Efek flip kartu */
@@ -315,9 +314,9 @@
         const preview2 = document.getElementById('preview-2');
 
         // Initialize card properties
-        let posX = 0;
-        let posY = 0;
-        let scale = 1;
+        let posX = window.innerWidth / 2 - card.offsetWidth / 2;
+        let posY = window.innerHeight / 2 - card.offsetHeight / 2;
+        let scale = 1; // Tetap 1, karena ukuran sudah besar di CSS
         let isDragging = false;
         let startX, startY;
         let velocityX = 0;
@@ -349,34 +348,17 @@
         let tapCount = 0;
         let tapTimer = null;
         
-        // Initialize on window load
-        window.addEventListener('load', () => {
-            // Pastikan kartu sudah dimuat
-            card.onload = function() {
-                // Dapatkan ukuran kartu yang sebenarnya
-                const cardWidth = card.offsetWidth * scale;
-                const cardHeight = card.offsetHeight * scale;
-                
-                // Set posisi awal di tengah bawah (di luar layar)
-                posX = window.innerWidth / 2 - cardWidth / 2;
-                posY = window.innerHeight + cardHeight;
-                updateCardTransform();
-                
-                // Sembunyikan kartu
-                card.style.display = 'none';
-                
-                // Initialize previews
-                updatePreviews();
-                
-                // Initialize sensor
-                initSensor();
-            };
-            
-            // Trigger onload jika gambar sudah dimuat
-            if (card.complete) {
-                card.onload();
-            }
-        });
+        // Set initial positions (hidden offscreen at bottom)
+        card.style.display = 'block';
+        posY = window.innerHeight + card.offsetHeight;
+        updateCardTransform();
+        card.style.display = 'none';
+        
+        // Initialize previews
+        updatePreviews();
+        
+        // Initialize sensor
+        initSensor();
         
         // Touch events for swipe up to open settings
         let startYPos = 0;
@@ -431,7 +413,7 @@
         
         // Card dragging functionality
         card.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1 && card.style.display !== 'none') {
+            if (e.touches.length === 1) {
                 isDragging = true;
                 startX = e.touches[0].clientX - posX;
                 startY = e.touches[0].clientY - posY;
@@ -534,8 +516,8 @@
         
         defaultCardsBtn.addEventListener('click', () => {
             cardImages = {
-                image1: "https://deckofcardsapi.com/static/img/AS.png",
-                image2: "https://deckofcardsapi.com/static/img/AH.png"
+                image1: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png",
+                image2: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image2.png"
             };
             updatePreviews();
             
@@ -545,11 +527,8 @@
             }
             
             scale = 1;
-            // Update position dengan ukuran yang baru
-            const cardWidth = card.offsetWidth * scale;
-            const cardHeight = card.offsetHeight * scale;
-            posX = window.innerWidth / 2 - cardWidth / 2;
-            posY = window.innerHeight / 2 - cardHeight / 2;
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight + card.offsetHeight;
             updateCardTransform();
         });
         
@@ -574,13 +553,6 @@
         });
         
         // ===== FUNCTIONS =====
-
-        function setCardBottomCenter() {
-    posX = (window.innerWidth - card.offsetWidth * scale) / 2;
-    posY = window.innerHeight + card.offsetHeight;
-    updateCardTransform();
-}
-
         
         function handleCardUpload(e, imageNumber) {
             const file = e.target.files[0];
@@ -611,7 +583,7 @@
         }
         
         function showCardWithTransformation() {
-            if (isAnimating || card.style.display === 'block') return;
+            if (isAnimating) return;
             isAnimating = true;
             
             if (showCardTimeout) clearTimeout(showCardTimeout);
@@ -621,25 +593,18 @@
             card.src = cardImages.image1;
             card.style.animation = 'none';
             
-            // Tampilkan kartu
             card.style.display = 'block';
             card.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             
-            // Dapatkan ukuran kartu yang benar
-            const cardWidth = card.offsetWidth * scale;
-            const cardHeight = card.offsetHeight * scale;
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight + card.offsetHeight;
+            updateCardTransform();
             
-            // Mulai dari TENGAH BAWAH (di luar layar)
-            setCardBottomCenter();
-
-            
-            // Force reflow
             card.offsetHeight;
             
-            // Animate ke tengah layar
             setTimeout(() => {
-                posX = window.innerWidth / 2 - cardWidth / 2;
-                posY = window.innerHeight / 2 - cardHeight / 2;
+                posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+                posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
                 updateCardTransform();
                 
                 changeCardTimeout = setTimeout(() => {
@@ -699,7 +664,7 @@
         }
         
         function handleDeviceOrientation(e) {
-            if (card.style.display === 'none' || isDragging) return;
+            if (!card.style.display || card.style.display === 'none' || isDragging) return;
 
             const beta = Math.max(-45, Math.min(45, e.beta || 0));
             const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
@@ -825,11 +790,8 @@
             card.style.display = 'none';
             card.classList.remove('card-flipping');
             
-            // Reset position untuk next show (tengah bawah)
-            const cardWidth = card.offsetWidth * scale;
-            const cardHeight = card.offsetHeight * scale;
-            posX = window.innerWidth / 2 - cardWidth / 2;
-            posY = window.innerHeight + cardHeight;
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight + card.offsetHeight;
             updateCardTransform();
             
             currentCardImage = 1;
@@ -838,12 +800,18 @@
         // Handle window resize
         window.addEventListener('resize', () => {
             if (card.style.display !== 'none') {
-                const cardWidth = card.offsetWidth * scale;
-                const cardHeight = card.offsetHeight * scale;
-                posX = window.innerWidth / 2 - cardWidth / 2;
-                posY = window.innerHeight / 2 - cardHeight / 2;
+                posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+                posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
                 updateCardTransform();
             }
+        });
+        
+        // Initialize card position
+        window.addEventListener('load', () => {
+            posX = window.innerWidth / 2 - card.offsetWidth / 2;
+            posY = window.innerHeight + card.offsetHeight;
+            updateCardTransform();
+            card.style.display = 'none';
         });
     </script>
 </body>
