@@ -324,7 +324,7 @@
     // Initialize card properties
     let posX = window.innerWidth / 2 - card.offsetWidth / 2;
     let posY = window.innerHeight / 2 - card.offsetHeight / 2;
-    let scale = 1;
+    let scale = 1; // Tetap 1, karena ukuran sudah besar di CSS
     let isDragging = false;
     let startX, startY;
     let velocityX = 0;
@@ -436,16 +436,6 @@
             card.style.animation = 'none';
             e.preventDefault();
             
-            // Reset semua timeout saat mulai drag
-            if (touchToChangeTimeout) {
-                clearTimeout(touchToChangeTimeout);
-                touchToChangeTimeout = null;
-            }
-            if (changeCardTimeout) {
-                clearTimeout(changeCardTimeout);
-                changeCardTimeout = null;
-            }
-            
             tapCount = 0;
             if (tapTimer) {
                 clearTimeout(tapTimer);
@@ -454,33 +444,33 @@
         }
     }, {passive: false});
 
-    // Event listener untuk sentuhan pada kartu
+    // PERBAIKAN DI SINI: Event touchend untuk kartu
     card.addEventListener('touchend', (e) => {
-        // Reset flag dragging
-        isDragging = false;
-        
-        // Jika kartu sedang ditampilkan dan belum disentuh sebelumnya
-        if (card.style.display !== 'none' && currentCardImage === 1 && !hasBeenTouched) {
-            hasBeenTouched = true;
-            
-            console.log("Kartu disentuh, mulai timer untuk berubah...");
-            
-            // Clear timeout sebelumnya jika ada
-            if (touchToChangeTimeout) {
-                clearTimeout(touchToChangeTimeout);
-            }
-            
-            // Set timeout untuk perubahan kartu
-            touchToChangeTimeout = setTimeout(() => {
-                console.log("3 detik berlalu, mengubah kartu...");
-                transformToImage2();
-            }, 3000);
-        }
-        
-        // Reset flag setelah drag berakhir
+        // Reset flag dragging setelah sentuhan selesai
         setTimeout(() => {
             isDragging = false;
-        }, 100);
+        }, 50);
+        
+        // PERBAIKAN: Kondisi yang lebih sederhana
+        if (card.style.display === 'none' || 
+            hasBeenTouched || 
+            currentCardImage !== 1) {
+            return;
+        }
+        
+        hasBeenTouched = true;
+        console.log("Kartu disentuh, timer dimulai...");
+
+        // Clear timeout sebelumnya jika ada
+        if (touchToChangeTimeout) {
+            clearTimeout(touchToChangeTimeout);
+        }
+        
+        // Set timeout untuk perubahan kartu
+        touchToChangeTimeout = setTimeout(() => {
+            console.log("3 detik berlalu, mengubah kartu...");
+            transformToImage2();
+        }, 3000);
     });
     
     document.addEventListener('touchmove', (e) => {
@@ -573,7 +563,6 @@
         if (card.style.display !== 'none') {
             card.src = cardImages.image1;
             currentCardImage = 1;
-            hasBeenTouched = false; // Reset sentuhan
         }
         
         scale = 1;
@@ -633,27 +622,21 @@
     }
     
     function showCardWithTransformation() {
-        // Reset semua state
         hasBeenTouched = false;
-        currentCardImage = 1;
-        
-        // Clear semua timeout
+
         if (touchToChangeTimeout) {
             clearTimeout(touchToChangeTimeout);
             touchToChangeTimeout = null;
         }
-        if (showCardTimeout) {
-            clearTimeout(showCardTimeout);
-            showCardTimeout = null;
-        }
-        if (changeCardTimeout) {
-            clearTimeout(changeCardTimeout);
-            changeCardTimeout = null;
-        }
+
         
         if (isAnimating) return;
         isAnimating = true;
         
+        if (showCardTimeout) clearTimeout(showCardTimeout);
+        if (changeCardTimeout) clearTimeout(changeCardTimeout);
+        
+        currentCardImage = 1;
         card.src = cardImages.image1;
         card.style.animation = 'none';
         
@@ -664,7 +647,6 @@
         posY = window.innerHeight + card.offsetHeight;
         updateCardTransform();
         
-        // Trigger reflow
         card.offsetHeight;
         
         setTimeout(() => {
@@ -672,7 +654,9 @@
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
             
-            console.log("Kartu ditampilkan. Sentuh untuk mengubah dalam 3 detik.");
+            // changeCardTimeout = setTimeout(() => {
+            //     transformToImage2();
+            // }, 5000);
             
             setTimeout(() => {
                 isAnimating = false;
@@ -682,21 +666,9 @@
     }
     
     function transformToImage2() {
-        if (card.style.display === 'none') {
-            console.log("Kartu tidak ditampilkan, tidak bisa mengubah");
-            return;
-        }
-        
-        console.log("Mengubah kartu ke image 2...");
-        
-        // Clear timeout
-        if (touchToChangeTimeout) {
-            clearTimeout(touchToChangeTimeout);
-            touchToChangeTimeout = null;
-        }
+        if (card.style.display === 'none') return;
         
         card.classList.remove('card-flipping');
-        // Trigger reflow
         card.offsetHeight;
         
         card.classList.add('card-flipping');
@@ -704,7 +676,6 @@
         setTimeout(() => {
             currentCardImage = 2;
             card.src = cardImages.image2;
-            console.log("Kartu berubah ke image 2");
         }, 500);
         
         setTimeout(() => {
@@ -853,7 +824,6 @@
     }
     
     function hideCardImmediately() {
-        // Clear semua timeout
         if (showCardTimeout) {
             clearTimeout(showCardTimeout);
             showCardTimeout = null;
@@ -861,10 +831,6 @@
         if (changeCardTimeout) {
             clearTimeout(changeCardTimeout);
             changeCardTimeout = null;
-        }
-        if (touchToChangeTimeout) {
-            clearTimeout(touchToChangeTimeout);
-            touchToChangeTimeout = null;
         }
         
         card.style.transition = 'none';
@@ -877,7 +843,6 @@
         updateCardTransform();
         
         currentCardImage = 1;
-        hasBeenTouched = false; // Reset sentuhan
     }
     
     // Handle window resize
