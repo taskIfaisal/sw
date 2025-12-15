@@ -596,6 +596,9 @@ function loadFromStorage() {
         posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
         posY = window.innerHeight + card.offsetHeight;
         updateCardTransform();
+
+        localStorage.removeItem(STORAGE_KEYS.image1);
+localStorage.removeItem(STORAGE_KEYS.image2);
     });
     
     swapCardsBtn.addEventListener('click', () => {
@@ -889,6 +892,8 @@ function loadFromStorage() {
         posY = window.innerHeight + card.offsetHeight;
         updateCardTransform();
         card.style.display = 'none';
+
+        loadFromStorage();
     });
 </script>
 </body>
