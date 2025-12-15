@@ -402,7 +402,32 @@
             }
         }
     }, {passive: false});
-    
+
+/* ================= STORAGE ================= */
+const STORAGE_KEYS = {
+    image1: 'magic_card_image_1',
+    image2: 'magic_card_image_2',
+    background: 'magic_card_background'
+};
+
+function saveToStorage() {
+    localStorage.setItem(STORAGE_KEYS.image1, cardImages.image1);
+    localStorage.setItem(STORAGE_KEYS.image2, cardImages.image2);
+}
+
+function loadFromStorage() {
+    const img1 = localStorage.getItem(STORAGE_KEYS.image1);
+    const img2 = localStorage.getItem(STORAGE_KEYS.image2);
+    const bg  = localStorage.getItem(STORAGE_KEYS.background);
+
+    if (img1) cardImages.image1 = img1;
+    if (img2) cardImages.image2 = img2;
+    if (bg) background.style.backgroundImage = `url(${bg})`;
+
+    updatePreviews();
+}
+
+        
     // Double tap handler
     function handleDoubleTap() {
         console.log("Double tap detected!");
@@ -539,15 +564,17 @@
     
     // Settings functionality
     bgUpload.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                background.style.backgroundImage = `url(${event.target.result})`;
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        background.style.backgroundImage = `url(${event.target.result})`;
+        localStorage.setItem(STORAGE_KEYS.background, event.target.result);
+    };
+    reader.readAsDataURL(file);
+});
+
     
     // Card upload with image editor
     cardUpload1.addEventListener('change', (e) => handleCardUpload(e, 1));
@@ -599,18 +626,20 @@
             const reader = new FileReader();
             reader.onload = (event) => {
                 showImageEditor(event.target.result, (editedImage) => {
-                    if (imageNumber === 1) {
-                        cardImages.image1 = editedImage;
-                        preview1.innerHTML = `<img src="${editedImage}" alt="Card 1">`;
-                    } else {
-                        cardImages.image2 = editedImage;
-                        preview2.innerHTML = `<img src="${editedImage}" alt="Card 2">`;
-                    }
-                    
-                    if (card.style.display !== 'none' && currentCardImage === imageNumber) {
-                        card.src = editedImage;
-                    }
-                });
+    if (imageNumber === 1) {
+        cardImages.image1 = editedImage;
+        preview1.innerHTML = `<img src="${editedImage}">`;
+    } else {
+        cardImages.image2 = editedImage;
+        preview2.innerHTML = `<img src="${editedImage}">`;
+    }
+
+    saveToStorage();
+
+    if (card.style.display !== 'none' && currentCardImage === imageNumber) {
+        card.src = editedImage;
+    }
+});
             };
             reader.readAsDataURL(file);
         }
