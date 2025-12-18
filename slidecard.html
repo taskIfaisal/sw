@@ -533,7 +533,7 @@
                     cardRect.right < -exitThreshold || 
                     cardRect.left > window.innerWidth + exitThreshold) {
                     
-                    hideCardWithNaturalAnimation();
+                    hideCardImmediately(); // PERUBAHAN: Gunakan hideCardImmediately
                     isDragging = false;
                     return;
                 }
@@ -560,7 +560,7 @@
                 cardRect.left > window.innerWidth + exitThreshold ||
                 currentSpeed > speedThreshold) {
                 
-                hideCardWithNaturalAnimation();
+                hideCardImmediately(); // PERUBAHAN: Gunakan hideCardImmediately
                 return;
             }
             
@@ -753,8 +753,9 @@
         }, 1000);
     }
     
-    // ===== NATURAL HIDE ANIMATION =====
-    function hideCardWithNaturalAnimation() {
+    // ===== FUNGSI BARU: hideCardImmediately =====
+    // Diambil dari code kedua dan menggantikan hideCardWithNaturalAnimation
+    function hideCardImmediately() {
         if (showCardTimeout) {
             clearTimeout(showCardTimeout);
             showCardTimeout = null;
@@ -764,101 +765,23 @@
             changeCardTimeout = null;
         }
         
-        if (touchToChangeTimeout) {
-            clearTimeout(touchToChangeTimeout);
-            touchToChangeTimeout = null;
-        }
+        card.style.transition = 'none';
+        card.style.animation = 'none';
+        card.style.display = 'none';
+        card.classList.remove('card-flipping');
         
-        isDragging = false;
-        card.style.pointerEvents = 'none';
-        
+        // Reset ke posisi tengah bawah
         const cardRect = card.getBoundingClientRect();
-        const windowCenterX = window.innerWidth / 2;
-        const windowCenterY = window.innerHeight / 2;
+        posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
+        posY = window.innerHeight + card.offsetHeight;
+        updateCardTransform();
         
-        // Hitung kecepatan total
-        const speed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
-        
-        // Tentukan arah keluar berdasarkan posisi kartu relatif terhadap pusat layar
-        const cardCenterX = cardRect.left + cardRect.width / 2;
-        const cardCenterY = cardRect.top + cardRect.height / 2;
-        
-        // Vektor dari pusat layar ke kartu
-        const dirX = cardCenterX - windowCenterX;
-        const dirY = cardCenterY - windowCenterY;
-        
-        // Normalize direction
-        const length = Math.sqrt(dirX * dirX + dirY * dirY);
-        const normX = dirX / length;
-        const normY = dirY / length;
-        
-        // Tambahkan velocity untuk efek lemparan yang lebih natural
-        const velocityInfluence = 0.5;
-        const finalDirX = normX + (velocityX / 1000 * velocityInfluence);
-        const finalDirY = normY + (velocityY / 1000 * velocityInfluence);
-        
-        // Hitung posisi akhir (keluar layar)
-        const exitDistance = 1000; // Jarak cukup jauh
-        let exitX = posX + (finalDirX * exitDistance);
-        let exitY = posY + (finalDirY * exitDistance);
-        
-        // Hitung rotation berdasarkan kecepatan dan arah
-        const rotation = (velocityX * 0.2) + (velocityY * 0.1);
-        
-        // Tentukan easing berdasarkan kecepatan
-        let easing = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // Default
-        let duration = 0.6; // Default duration
-        
-        if (speed > 800) {
-            // Lemparan cepat: lebih dramatis
-            easing = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
-            duration = 0.5;
-        } else if (speed > 300) {
-            // Lemparan sedang
-            easing = 'cubic-bezier(0.4, 0.8, 0.6, 1)';
-            duration = 0.7;
-        }
-        
-        // Scale effect berdasarkan kecepatan
-        const scaleEnd = Math.max(0.3, 0.8 - (speed / 2000));
-        
-        console.log(`Hiding card with natural animation: speed=${speed.toFixed(0)}, dir=(${finalDirX.toFixed(2)}, ${finalDirY.toFixed(2)})`);
-        
-        // Apply animation
-        card.style.transition = `transform ${duration}s ${easing}, opacity ${duration * 0.8}s ease`;
-        card.style.opacity = '0.7';
-        
-        setTimeout(() => {
-            card.style.transform = `translate(${exitX}px, ${exitY}px) rotate(${rotation}deg) scale(${scaleEnd})`;
-        }, 10);
-        
-        // Setelah animasi selesai, reset kartu
-        setTimeout(() => {
-            card.style.display = 'none';
-            card.classList.remove('card-flipping', 'card-visible', 'card-moving');
-            
-            // Reset posisi untuk next appearance
-            const resetX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
-            const resetY = window.innerHeight + 100;
-            
-            card.style.transition = 'none';
-            card.style.transform = `translate(${resetX}px, ${resetY}px) rotate(0deg) scale(1)`;
-            card.style.opacity = '0';
-            card.style.visibility = 'hidden';
-            card.style.pointerEvents = 'auto';
-            
-            currentCardImage = 1;
-            posX = resetX;
-            posY = resetY;
-            
-            console.log("Card hidden with natural animation");
-        }, duration * 1000 + 50);
+        currentCardImage = 1;
     }
     
-    // Fungsi lama untuk kompatibilitas
-    function hideCardImmediately() {
-        hideCardWithNaturalAnimation();
-    }
+    // Hapus fungsi lama yang tidak digunakan
+    // function hideCardWithNaturalAnimation() { ... } 
+    // (dihapus dari code)
     
     function initSensor() {
         if (typeof DeviceOrientationEvent?.requestPermission === "function") {
