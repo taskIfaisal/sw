@@ -672,8 +672,6 @@
     }
     
     function showCardWithTransformation() {
-        card.style.outline = '3px solid red';
-    card.style.outlineOffset = '-3px';
     hasBeenTouched = false;
 
     if (touchToChangeTimeout) {
@@ -693,7 +691,7 @@
     
     card.style.display = 'block';
     
-    // PERBAIKAN: Reset semua posisi CSS sebelum memulai
+    // Reset semua posisi CSS sebelum memulai
     card.style.left = '0';
     card.style.top = '0';
     card.style.right = 'auto';
@@ -710,14 +708,9 @@
         const cardWidth = cardRect.width;
         const cardHeight = cardRect.height;
         
-        console.log("Card size after reset:", cardWidth, "x", cardHeight);
-        console.log("Window size:", window.innerWidth, "x", window.innerHeight);
-        
         // Hitung posisi tengah bawah
         posX = (window.innerWidth / 2) - (cardWidth / 2);
         posY = window.innerHeight; // Bawah layar
-        
-        console.log("Start position (center bottom):", posX, posY);
         
         // Apply posisi tanpa transisi
         card.style.transition = 'none';
@@ -735,7 +728,6 @@
             posX = (window.innerWidth / 2) - (cardWidth / 2);
             posY = (window.innerHeight / 2) - (cardHeight / 2);
             
-            console.log("End position (center screen):", posX, posY);
             updateCardTransform();
             
             setTimeout(() => {
@@ -744,9 +736,6 @@
             }, 800);
         }, 10);
     }, 10);
-        setTimeout(() => {
-        card.style.outline = 'none';
-    }, 2000);
 }
     
     function transformToImage2() {
