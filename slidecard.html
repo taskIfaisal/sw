@@ -42,7 +42,6 @@
             z-index: 1;
         }
         
-        /* PERBAIKAN: Tambah opacity dan visibility untuk hindari flash */
         #card {
             position: absolute;
             width: 100%;
@@ -54,37 +53,27 @@
             left: 0;
             top: 0;
             will-change: transform;
-            
-            /* TAMBAHKAN INI: */
-            opacity: 0; /* Sembunyikan sampai siap */
-            visibility: hidden; /* Double protection */
+            opacity: 0;
+            visibility: hidden;
+            transform-origin: center;
         }
 
-        /* Class untuk menampilkan kartu dengan smooth */
         .card-visible {
             opacity: 1 !important;
             visibility: visible !important;
         }
 
-        /* Pisahkan animasi flip ke class terpisah */
         .card-flipping {
             animation: flipCard 1s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
             backface-visibility: hidden;
         }
 
         @keyframes flipCard {
-            0% {
-                transform: rotateY(0deg);
-            }
-            50% {
-                transform: rotateY(90deg);
-            }
-            100% {
-                transform: rotateY(0deg);
-            }
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(90deg); }
+            100% { transform: rotateY(0deg); }
         }
 
-        /* Transisi untuk gerakan biasa */
         .card-moving {
             transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
         }
@@ -165,7 +154,6 @@
             min-width: 150px;
         }
 
-        /* Editor Modal Styles */
         .image-editor {
             position: fixed;
             top: 0;
@@ -224,7 +212,6 @@
             background: #f44336;
         }
         
-        /* Permission button for iOS */
         #sensor-permission {
             position: fixed;
             top: 0;
@@ -308,7 +295,6 @@
         </div>
     </div>
     
-    <!-- Sensor Permission Button -->
     <button id="sensor-permission" class="hidden">
         Allow Motion Sensor Access<br>
         <small>(Tap to enable tilt controls)</small>
@@ -401,14 +387,13 @@
         });
     }
 
-    // Set initial positions (hidden offscreen at bottom CENTER)
+    // Set initial positions
     card.style.display = 'block';
     card.style.opacity = '0';
     card.style.visibility = 'hidden';
     
-    // Hitung posisi X yang tepat untuk tengah bawah
     posX = Math.floor(window.innerWidth / 2 - card.offsetWidth / 2);
-    posY = window.innerHeight + card.offsetHeight + 100; // Extra margin
+    posY = window.innerHeight + card.offsetHeight + 100;
     
     updateCardTransform();
     card.style.display = 'none';
@@ -542,12 +527,13 @@
                 const cardRect = card.getBoundingClientRect();
                 const exitThreshold = 30;
                 
+                // Check jika kartu sudah keluar layar
                 if (cardRect.bottom < -exitThreshold || 
                     cardRect.top > window.innerHeight + exitThreshold ||
                     cardRect.right < -exitThreshold || 
                     cardRect.left > window.innerWidth + exitThreshold) {
                     
-                    hideCardImmediately();
+                    hideCardWithNaturalAnimation();
                     isDragging = false;
                     return;
                 }
@@ -567,13 +553,14 @@
             const cardRect = card.getBoundingClientRect();
             const exitThreshold = 50;
             
+            // Check jika kartu sudah keluar layar atau dilempar cepat
             if (cardRect.bottom < -exitThreshold || 
                 cardRect.top > window.innerHeight + exitThreshold ||
                 cardRect.right < -exitThreshold || 
                 cardRect.left > window.innerWidth + exitThreshold ||
                 currentSpeed > speedThreshold) {
                 
-                hideCardImmediately();
+                hideCardWithNaturalAnimation();
                 return;
             }
             
@@ -612,7 +599,6 @@
         }
         
         scale = 1;
-        // Hitung ulang posisi tengah
         posX = Math.floor(window.innerWidth / 2 - card.offsetWidth / 2);
         posY = window.innerHeight + card.offsetHeight;
         updateCardTransform();
@@ -691,62 +677,48 @@
         card.src = cardImages.image1;
         card.style.animation = 'none';
         
-        // PERBAIKAN: Sembunyikan dulu SEMUA visual
         card.style.opacity = '0';
         card.style.visibility = 'hidden';
         card.style.display = 'block';
         
-        // Reset semua posisi CSS sebelum memulai
         card.style.left = '0';
         card.style.top = '0';
         card.style.right = 'auto';
         card.style.bottom = 'auto';
         card.style.margin = '0';
         
-        // Hapus class transisi untuk inisialisasi
         card.classList.remove('card-moving', 'card-flipping', 'card-visible');
         
-        // Tunggu FRAME berikutnya untuk memastikan reset selesai
         requestAnimationFrame(() => {
-            // Tunggu gambar selesai load (jika ada)
             if (card.complete) {
                 initCardAnimation();
             } else {
                 card.onload = initCardAnimation;
-                // Fallback timeout
                 setTimeout(initCardAnimation, 500);
             }
         });
         
         function initCardAnimation() {
-            // Dapatkan ukuran kartu setelah reset
             const cardRect = card.getBoundingClientRect();
             const cardWidth = cardRect.width;
             const cardHeight = cardRect.height;
             
-            // Hitung posisi tengah bawah (OFFSCREEN dengan extra margin)
             posX = (window.innerWidth / 2) - (cardWidth / 2);
-            posY = window.innerHeight + 100; // JAUH di bawah layar
+            posY = window.innerHeight + 100;
             
-            // Apply posisi tanpa transisi (masih tersembunyi)
             card.style.transition = 'none';
             card.style.transform = `translate(${posX}px, ${posY}px)`;
             
-            // Force reflow
             void card.offsetHeight;
             
-            // PERBAIKAN: Tampilkan kartu SEBELUM animasi dimulai
             card.style.opacity = '1';
             card.style.visibility = 'visible';
             card.classList.add('card-visible');
             
-            // Tunggu 1 frame untuk memastikan render
             requestAnimationFrame(() => {
-                // Tambahkan class untuk transisi
                 card.classList.add('card-moving');
                 card.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
                 
-                // Pindah ke tengah layar
                 setTimeout(() => {
                     posX = (window.innerWidth / 2) - (cardWidth / 2);
                     posY = (window.innerHeight / 2) - (cardHeight / 2);
@@ -757,7 +729,7 @@
                         isAnimating = false;
                         card.classList.remove('card-moving');
                     }, 800);
-                }, 50); // Delay sedikit lebih lama
+                }, 50);
             });
         }
     }
@@ -779,6 +751,113 @@
             card.classList.remove('card-flipping');
             hasBeenTouched = false;
         }, 1000);
+    }
+    
+    // ===== NATURAL HIDE ANIMATION =====
+    function hideCardWithNaturalAnimation() {
+        if (showCardTimeout) {
+            clearTimeout(showCardTimeout);
+            showCardTimeout = null;
+        }
+        if (changeCardTimeout) {
+            clearTimeout(changeCardTimeout);
+            changeCardTimeout = null;
+        }
+        
+        if (touchToChangeTimeout) {
+            clearTimeout(touchToChangeTimeout);
+            touchToChangeTimeout = null;
+        }
+        
+        isDragging = false;
+        card.style.pointerEvents = 'none';
+        
+        const cardRect = card.getBoundingClientRect();
+        const windowCenterX = window.innerWidth / 2;
+        const windowCenterY = window.innerHeight / 2;
+        
+        // Hitung kecepatan total
+        const speed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+        
+        // Tentukan arah keluar berdasarkan posisi kartu relatif terhadap pusat layar
+        const cardCenterX = cardRect.left + cardRect.width / 2;
+        const cardCenterY = cardRect.top + cardRect.height / 2;
+        
+        // Vektor dari pusat layar ke kartu
+        const dirX = cardCenterX - windowCenterX;
+        const dirY = cardCenterY - windowCenterY;
+        
+        // Normalize direction
+        const length = Math.sqrt(dirX * dirX + dirY * dirY);
+        const normX = dirX / length;
+        const normY = dirY / length;
+        
+        // Tambahkan velocity untuk efek lemparan yang lebih natural
+        const velocityInfluence = 0.5;
+        const finalDirX = normX + (velocityX / 1000 * velocityInfluence);
+        const finalDirY = normY + (velocityY / 1000 * velocityInfluence);
+        
+        // Hitung posisi akhir (keluar layar)
+        const exitDistance = 1000; // Jarak cukup jauh
+        let exitX = posX + (finalDirX * exitDistance);
+        let exitY = posY + (finalDirY * exitDistance);
+        
+        // Hitung rotation berdasarkan kecepatan dan arah
+        const rotation = (velocityX * 0.2) + (velocityY * 0.1);
+        
+        // Tentukan easing berdasarkan kecepatan
+        let easing = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // Default
+        let duration = 0.6; // Default duration
+        
+        if (speed > 800) {
+            // Lemparan cepat: lebih dramatis
+            easing = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
+            duration = 0.5;
+        } else if (speed > 300) {
+            // Lemparan sedang
+            easing = 'cubic-bezier(0.4, 0.8, 0.6, 1)';
+            duration = 0.7;
+        }
+        
+        // Scale effect berdasarkan kecepatan
+        const scaleEnd = Math.max(0.3, 0.8 - (speed / 2000));
+        
+        console.log(`Hiding card with natural animation: speed=${speed.toFixed(0)}, dir=(${finalDirX.toFixed(2)}, ${finalDirY.toFixed(2)})`);
+        
+        // Apply animation
+        card.style.transition = `transform ${duration}s ${easing}, opacity ${duration * 0.8}s ease`;
+        card.style.opacity = '0.7';
+        
+        setTimeout(() => {
+            card.style.transform = `translate(${exitX}px, ${exitY}px) rotate(${rotation}deg) scale(${scaleEnd})`;
+        }, 10);
+        
+        // Setelah animasi selesai, reset kartu
+        setTimeout(() => {
+            card.style.display = 'none';
+            card.classList.remove('card-flipping', 'card-visible', 'card-moving');
+            
+            // Reset posisi untuk next appearance
+            const resetX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
+            const resetY = window.innerHeight + 100;
+            
+            card.style.transition = 'none';
+            card.style.transform = `translate(${resetX}px, ${resetY}px) rotate(0deg) scale(1)`;
+            card.style.opacity = '0';
+            card.style.visibility = 'hidden';
+            card.style.pointerEvents = 'auto';
+            
+            currentCardImage = 1;
+            posX = resetX;
+            posY = resetY;
+            
+            console.log("Card hidden with natural animation");
+        }, duration * 1000 + 50);
+    }
+    
+    // Fungsi lama untuk kompatibilitas
+    function hideCardImmediately() {
+        hideCardWithNaturalAnimation();
     }
     
     function initSensor() {
@@ -920,35 +999,6 @@
         card.style.transform = `translate(${posX}px, ${posY}px)`;
     }
     
-    function hideCardImmediately() {
-        if (showCardTimeout) {
-            clearTimeout(showCardTimeout);
-            showCardTimeout = null;
-        }
-        if (changeCardTimeout) {
-            clearTimeout(changeCardTimeout);
-            changeCardTimeout = null;
-        }
-        
-        // Smooth hide
-        card.style.transition = 'opacity 0.2s ease, transform 0.3s ease';
-        card.style.opacity = '0';
-        
-        setTimeout(() => {
-            card.style.display = 'none';
-            card.style.animation = 'none';
-            card.classList.remove('card-flipping', 'card-visible', 'card-moving');
-            
-            // Reset ke posisi tengah bawah dengan extra margin
-            const cardRect = card.getBoundingClientRect();
-            posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
-            posY = window.innerHeight + card.offsetHeight + 100;
-            card.style.transform = `translate(${posX}px, ${posY}px)`;
-            
-            currentCardImage = 1;
-        }, 200);
-    }
-    
     // Handle window resize
     window.addEventListener('resize', () => {
         if (card.style.display !== 'none') {
@@ -961,7 +1011,6 @@
     
     // Initialize card position
     window.addEventListener('load', () => {
-        // Reset posisi kartu
         card.style.display = 'block';
         card.style.left = '0';
         card.style.top = '0';
@@ -970,18 +1019,15 @@
         card.style.opacity = '0';
         card.style.visibility = 'hidden';
         
-        // Tunggu kartu render
         setTimeout(() => {
             const cardRect = card.getBoundingClientRect();
             const cardWidth = cardRect.width;
             
-            // Posisi awal: tengah bawah layar dengan extra margin
             posX = (window.innerWidth / 2) - (cardWidth / 2);
             posY = window.innerHeight + 100;
             
             updateCardTransform();
             
-            // Sembunyikan kartu
             setTimeout(() => {
                 card.style.display = 'none';
                 loadFromStorage();
