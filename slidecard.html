@@ -324,7 +324,7 @@
     // Initialize card properties
     let posX = window.innerWidth / 2 - card.offsetWidth / 2;
     let posY = window.innerHeight / 2 - card.offsetHeight / 2;
-    let scale = 1; // Tetap 1, karena ukuran sudah besar di CSS
+    let scale = 1;
     let isDragging = false;
     let startX, startY;
     let velocityX = 0;
@@ -358,9 +358,18 @@
     let tapCount = 0;
     let tapTimer = null;
     
-    // Set initial positions (hidden offscreen at bottom)
+    // Set initial positions (hidden offscreen at bottom CENTER)
     card.style.display = 'block';
+    
+    // PERBAIKAN DI SINI: Hitung posisi X yang tepat untuk tengah bawah
+    posX = Math.floor(window.innerWidth / 2 - card.offsetWidth / 2);
     posY = window.innerHeight + card.offsetHeight;
+    
+    console.log("Initial position calculation:");
+    console.log("Window width:", window.innerWidth);
+    console.log("Card width:", card.offsetWidth);
+    console.log("Calculated posX:", posX, "(should be centered)");
+    
     updateCardTransform();
     card.style.display = 'none';
     
@@ -403,30 +412,29 @@
         }
     }, {passive: false});
 
-/* ================= STORAGE ================= */
-const STORAGE_KEYS = {
-    image1: 'magic_card_image_1',
-    image2: 'magic_card_image_2',
-    background: 'magic_card_background'
-};
+    // STORAGE FUNCTIONS - TIDAK DIUBAH
+    const STORAGE_KEYS = {
+        image1: 'magic_card_image_1',
+        image2: 'magic_card_image_2',
+        background: 'magic_card_background'
+    };
 
-function saveToStorage() {
-    localStorage.setItem(STORAGE_KEYS.image1, cardImages.image1);
-    localStorage.setItem(STORAGE_KEYS.image2, cardImages.image2);
-}
+    function saveToStorage() {
+        localStorage.setItem(STORAGE_KEYS.image1, cardImages.image1);
+        localStorage.setItem(STORAGE_KEYS.image2, cardImages.image2);
+    }
 
-function loadFromStorage() {
-    const img1 = localStorage.getItem(STORAGE_KEYS.image1);
-    const img2 = localStorage.getItem(STORAGE_KEYS.image2);
-    const bg  = localStorage.getItem(STORAGE_KEYS.background);
+    function loadFromStorage() {
+        const img1 = localStorage.getItem(STORAGE_KEYS.image1);
+        const img2 = localStorage.getItem(STORAGE_KEYS.image2);
+        const bg  = localStorage.getItem(STORAGE_KEYS.background);
 
-    if (img1) cardImages.image1 = img1;
-    if (img2) cardImages.image2 = img2;
-    if (bg) background.style.backgroundImage = `url(${bg})`;
+        if (img1) cardImages.image1 = img1;
+        if (img2) cardImages.image2 = img2;
+        if (bg) background.style.backgroundImage = `url(${bg})`;
 
-    updatePreviews();
-}
-
+        updatePreviews();
+    }
         
     // Double tap handler
     function handleDoubleTap() {
@@ -469,14 +477,12 @@ function loadFromStorage() {
         }
     }, {passive: false});
 
-    // PERBAIKAN DI SINI: Event touchend untuk kartu
+    // Event touchend untuk kartu
     card.addEventListener('touchend', (e) => {
-        // Reset flag dragging setelah sentuhan selesai
         setTimeout(() => {
             isDragging = false;
         }, 50);
         
-        // PERBAIKAN: Kondisi yang lebih sederhana
         if (card.style.display === 'none' || 
             hasBeenTouched || 
             currentCardImage !== 1) {
@@ -486,12 +492,10 @@ function loadFromStorage() {
         hasBeenTouched = true;
         console.log("Kartu disentuh, timer dimulai...");
 
-        // Clear timeout sebelumnya jika ada
         if (touchToChangeTimeout) {
             clearTimeout(touchToChangeTimeout);
         }
         
-        // Set timeout untuk perubahan kartu
         touchToChangeTimeout = setTimeout(() => {
             console.log("3 detik berlalu, mengubah kartu...");
             transformToImage2();
@@ -564,17 +568,16 @@ function loadFromStorage() {
     
     // Settings functionality
     bgUpload.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+        const file = e.target.files[0];
+        if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        background.style.backgroundImage = `url(${event.target.result})`;
-        localStorage.setItem(STORAGE_KEYS.background, event.target.result);
-    };
-    reader.readAsDataURL(file);
-});
-
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            background.style.backgroundImage = `url(${event.target.result})`;
+            localStorage.setItem(STORAGE_KEYS.background, event.target.result);
+        };
+        reader.readAsDataURL(file);
+    });
     
     // Card upload with image editor
     cardUpload1.addEventListener('change', (e) => handleCardUpload(e, 1));
@@ -593,12 +596,13 @@ function loadFromStorage() {
         }
         
         scale = 1;
-        posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+        // PERBAIKAN: Hitung ulang posisi tengah
+        posX = Math.floor(window.innerWidth / 2 - card.offsetWidth / 2);
         posY = window.innerHeight + card.offsetHeight;
         updateCardTransform();
 
         localStorage.removeItem(STORAGE_KEYS.image1);
-localStorage.removeItem(STORAGE_KEYS.image2);
+        localStorage.removeItem(STORAGE_KEYS.image2);
     });
     
     swapCardsBtn.addEventListener('click', () => {
@@ -629,20 +633,20 @@ localStorage.removeItem(STORAGE_KEYS.image2);
             const reader = new FileReader();
             reader.onload = (event) => {
                 showImageEditor(event.target.result, (editedImage) => {
-    if (imageNumber === 1) {
-        cardImages.image1 = editedImage;
-        preview1.innerHTML = `<img src="${editedImage}">`;
-    } else {
-        cardImages.image2 = editedImage;
-        preview2.innerHTML = `<img src="${editedImage}">`;
-    }
+                    if (imageNumber === 1) {
+                        cardImages.image1 = editedImage;
+                        preview1.innerHTML = `<img src="${editedImage}">`;
+                    } else {
+                        cardImages.image2 = editedImage;
+                        preview2.innerHTML = `<img src="${editedImage}">`;
+                    }
 
-    saveToStorage();
+                    saveToStorage();
 
-    if (card.style.display !== 'none' && currentCardImage === imageNumber) {
-        card.src = editedImage;
-    }
-});
+                    if (card.style.display !== 'none' && currentCardImage === imageNumber) {
+                        card.src = editedImage;
+                    }
+                });
             };
             reader.readAsDataURL(file);
         }
@@ -675,20 +679,29 @@ localStorage.removeItem(STORAGE_KEYS.image2);
         card.style.display = 'block';
         card.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
         
-        posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-        posY = window.innerHeight + card.offsetHeight;
+        // PERBAIKAN UTAMA DI SINI: Pastikan posisi X tepat di tengah
+        const cardRect = card.getBoundingClientRect();
+        posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
+        posY = window.innerHeight + cardRect.height;
+        
+        console.log("Card showing from position:");
+        console.log("posX:", posX, "(centered horizontally)");
+        console.log("posY:", posY, "(below screen)");
+        console.log("Card width:", cardRect.width);
+        console.log("Window center:", window.innerWidth / 2);
+        
         updateCardTransform();
         
-        card.offsetHeight;
+        // Trigger reflow
+        void card.offsetHeight;
         
         setTimeout(() => {
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-            updateCardTransform();
+            // Pindah ke tengah layar
+            posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
+            posY = Math.floor(window.innerHeight / 2 - cardRect.height / 2);
             
-            // changeCardTimeout = setTimeout(() => {
-            //     transformToImage2();
-            // }, 5000);
+            console.log("Card moving to center:", posX, posY);
+            updateCardTransform();
             
             setTimeout(() => {
                 isAnimating = false;
@@ -701,7 +714,7 @@ localStorage.removeItem(STORAGE_KEYS.image2);
         if (card.style.display === 'none') return;
         
         card.classList.remove('card-flipping');
-        card.offsetHeight;
+        void card.offsetHeight;
         
         card.classList.add('card-flipping');
         
@@ -712,7 +725,7 @@ localStorage.removeItem(STORAGE_KEYS.image2);
         
         setTimeout(() => {
             card.classList.remove('card-flipping');
-            hasBeenTouched = false; // Reset untuk sentuhan berikutnya
+            hasBeenTouched = false;
         }, 1000);
     }
     
@@ -870,7 +883,9 @@ localStorage.removeItem(STORAGE_KEYS.image2);
         card.style.display = 'none';
         card.classList.remove('card-flipping');
         
-        posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+        // PERBAIKAN: Reset ke posisi tengah bawah
+        const cardRect = card.getBoundingClientRect();
+        posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
         posY = window.innerHeight + card.offsetHeight;
         updateCardTransform();
         
@@ -880,20 +895,31 @@ localStorage.removeItem(STORAGE_KEYS.image2);
     // Handle window resize
     window.addEventListener('resize', () => {
         if (card.style.display !== 'none') {
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+            const cardRect = card.getBoundingClientRect();
+            posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
+            posY = Math.floor(window.innerHeight / 2 - cardRect.height / 2);
             updateCardTransform();
         }
     });
     
     // Initialize card position
     window.addEventListener('load', () => {
-        posX = window.innerWidth / 2 - card.offsetWidth / 2;
-        posY = window.innerHeight + card.offsetHeight;
-        updateCardTransform();
-        card.style.display = 'none';
-
-        loadFromStorage();
+        // Tunggu sebentar agar gambar kartu selesai load
+        setTimeout(() => {
+            const cardRect = card.getBoundingClientRect();
+            posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
+            posY = window.innerHeight + cardRect.height;
+            
+            console.log("Final initial position:");
+            console.log("Card rect:", cardRect);
+            console.log("posX:", posX);
+            console.log("Window width:", window.innerWidth);
+            console.log("Card should be centered:", (window.innerWidth - cardRect.width) / 2);
+            
+            updateCardTransform();
+            card.style.display = 'none';
+            loadFromStorage();
+        }, 100);
     });
 </script>
 </body>
