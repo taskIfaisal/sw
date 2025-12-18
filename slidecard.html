@@ -42,50 +42,52 @@
             z-index: 1;
         }
         
-        /* PERBAIKAN DI SINI: Hapus semua properti posisi dari CSS kartu */
-#card {
-    position: absolute;
-    width: 100%;
-    max-width: 300px;
-    z-index: 2;
-    user-select: none;
-    -webkit-user-drag: none;
-    touch-action: none;
-    /* HAPUS SEMUA INI:
-    transform-origin: center center;
-    height: auto;
-    transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    backface-visibility: hidden;
-    */
-    
-    /* TAMBAHKAN INI: */
-    left: 0;  /* Reset left position */
-    top: 0;   /* Reset top position */
-    will-change: transform; /* Optimasi animasi */
-}
+        /* PERBAIKAN: Tambah opacity dan visibility untuk hindari flash */
+        #card {
+            position: absolute;
+            width: 100%;
+            max-width: 300px;
+            z-index: 2;
+            user-select: none;
+            -webkit-user-drag: none;
+            touch-action: none;
+            left: 0;
+            top: 0;
+            will-change: transform;
+            
+            /* TAMBAHKAN INI: */
+            opacity: 0; /* Sembunyikan sampai siap */
+            visibility: hidden; /* Double protection */
+        }
 
-/* Pisahkan animasi flip ke class terpisah */
-.card-flipping {
-    animation: flipCard 1s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
-    backface-visibility: hidden;
-}
+        /* Class untuk menampilkan kartu dengan smooth */
+        .card-visible {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
 
-@keyframes flipCard {
-    0% {
-        transform: rotateY(0deg);
-    }
-    50% {
-        transform: rotateY(90deg);
-    }
-    100% {
-        transform: rotateY(0deg);
-    }
-}
+        /* Pisahkan animasi flip ke class terpisah */
+        .card-flipping {
+            animation: flipCard 1s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+            backface-visibility: hidden;
+        }
 
-/* Transisi untuk gerakan biasa */
-.card-moving {
-    transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
+        @keyframes flipCard {
+            0% {
+                transform: rotateY(0deg);
+            }
+            50% {
+                transform: rotateY(90deg);
+            }
+            100% {
+                transform: rotateY(0deg);
+            }
+        }
+
+        /* Transisi untuk gerakan biasa */
+        .card-moving {
+            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
+        }
         
         #settings {
             position: fixed;
@@ -178,10 +180,9 @@
             justify-content: center;
         }
 
-
         .upload-label button {
-    background: #2196F3; /* warna biru sebelumnya */
-}
+            background: #2196F3;
+        }
         
         .editor-container {
             position: relative;
@@ -270,28 +271,21 @@
             <p>Upload two images for card transformation</p>
             
             <div class="image-upload-row">
-                <div class="image-upload-row">
+                <div class="upload-label">
+                    <button onclick="document.getElementById('card-upload-1').click()">
+                        Card Image 1
+                    </button>
+                    <input type="file" id="card-upload-1" accept="image/*" data-index="1">
+                    <div class="upload-preview" id="preview-1"></div>
+                </div>
 
-    <!-- BUTTON CARD IMAGE 1 -->
-    <div class="upload-label">
-        <button onclick="document.getElementById('card-upload-1').click()">
-            Card Image 1
-        </button>
-        <input type="file" id="card-upload-1" accept="image/*" data-index="1">
-        <div class="upload-preview" id="preview-1"></div>
-    </div>
-
-    <!-- BUTTON CARD IMAGE 2 -->
-    <div class="upload-label">
-        <button onclick="document.getElementById('card-upload-2').click()">
-            Card Image 2
-        </button>
-        <input type="file" id="card-upload-2" accept="image/*" data-index="2">
-        <div class="upload-preview" id="preview-2"></div>
-    </div>
-
-</div>
-
+                <div class="upload-label">
+                    <button onclick="document.getElementById('card-upload-2').click()">
+                        Card Image 2
+                    </button>
+                    <input type="file" id="card-upload-2" accept="image/*" data-index="2">
+                    <div class="upload-preview" id="preview-2"></div>
+                </div>
             </div>
             
             <div style="margin-top: 15px;">
@@ -372,17 +366,49 @@
     let tapCount = 0;
     let tapTimer = null;
     
+    // STORAGE FUNCTIONS
+    const STORAGE_KEYS = {
+        image1: 'magic_card_image_1',
+        image2: 'magic_card_image_2',
+        background: 'magic_card_background'
+    };
+
+    function saveToStorage() {
+        localStorage.setItem(STORAGE_KEYS.image1, cardImages.image1);
+        localStorage.setItem(STORAGE_KEYS.image2, cardImages.image2);
+    }
+
+    function loadFromStorage() {
+        const img1 = localStorage.getItem(STORAGE_KEYS.image1);
+        const img2 = localStorage.getItem(STORAGE_KEYS.image2);
+        const bg  = localStorage.getItem(STORAGE_KEYS.background);
+
+        if (img1) cardImages.image1 = img1;
+        if (img2) cardImages.image2 = img2;
+        if (bg) background.style.backgroundImage = `url(${bg})`;
+
+        updatePreviews();
+        
+        // Preload images setelah load
+        setTimeout(preloadImages, 100);
+    }
+
+    function preloadImages() {
+        const images = [cardImages.image1, cardImages.image2];
+        images.forEach(src => {
+            const img = new Image();
+            img.src = src;
+        });
+    }
+
     // Set initial positions (hidden offscreen at bottom CENTER)
     card.style.display = 'block';
+    card.style.opacity = '0';
+    card.style.visibility = 'hidden';
     
-    // PERBAIKAN DI SINI: Hitung posisi X yang tepat untuk tengah bawah
+    // Hitung posisi X yang tepat untuk tengah bawah
     posX = Math.floor(window.innerWidth / 2 - card.offsetWidth / 2);
-    posY = window.innerHeight + card.offsetHeight;
-    
-    console.log("Initial position calculation:");
-    console.log("Window width:", window.innerWidth);
-    console.log("Card width:", card.offsetWidth);
-    console.log("Calculated posX:", posX, "(should be centered)");
+    posY = window.innerHeight + card.offsetHeight + 100; // Extra margin
     
     updateCardTransform();
     card.style.display = 'none';
@@ -425,30 +451,6 @@
             }
         }
     }, {passive: false});
-
-    // STORAGE FUNCTIONS - TIDAK DIUBAH
-    const STORAGE_KEYS = {
-        image1: 'magic_card_image_1',
-        image2: 'magic_card_image_2',
-        background: 'magic_card_background'
-    };
-
-    function saveToStorage() {
-        localStorage.setItem(STORAGE_KEYS.image1, cardImages.image1);
-        localStorage.setItem(STORAGE_KEYS.image2, cardImages.image2);
-    }
-
-    function loadFromStorage() {
-        const img1 = localStorage.getItem(STORAGE_KEYS.image1);
-        const img2 = localStorage.getItem(STORAGE_KEYS.image2);
-        const bg  = localStorage.getItem(STORAGE_KEYS.background);
-
-        if (img1) cardImages.image1 = img1;
-        if (img2) cardImages.image2 = img2;
-        if (bg) background.style.backgroundImage = `url(${bg})`;
-
-        updatePreviews();
-    }
         
     // Double tap handler
     function handleDoubleTap() {
@@ -610,7 +612,7 @@
         }
         
         scale = 1;
-        // PERBAIKAN: Hitung ulang posisi tengah
+        // Hitung ulang posisi tengah
         posX = Math.floor(window.innerWidth / 2 - card.offsetWidth / 2);
         posY = window.innerHeight + card.offsetHeight;
         updateCardTransform();
@@ -672,71 +674,93 @@
     }
     
     function showCardWithTransformation() {
-    hasBeenTouched = false;
+        hasBeenTouched = false;
 
-    if (touchToChangeTimeout) {
-        clearTimeout(touchToChangeTimeout);
-        touchToChangeTimeout = null;
-    }
+        if (touchToChangeTimeout) {
+            clearTimeout(touchToChangeTimeout);
+            touchToChangeTimeout = null;
+        }
 
-    if (isAnimating) return;
-    isAnimating = true;
-    
-    if (showCardTimeout) clearTimeout(showCardTimeout);
-    if (changeCardTimeout) clearTimeout(changeCardTimeout);
-    
-    currentCardImage = 1;
-    card.src = cardImages.image1;
-    card.style.animation = 'none';
-    
-    card.style.display = 'block';
-    
-    // Reset semua posisi CSS sebelum memulai
-    card.style.left = '0';
-    card.style.top = '0';
-    card.style.right = 'auto';
-    card.style.bottom = 'auto';
-    card.style.margin = '0';
-    
-    // Hapus class transisi untuk inisialisasi
-    card.classList.remove('card-moving', 'card-flipping');
-    
-    // Tunggu sebentar untuk reset selesai
-    setTimeout(() => {
-        // Dapatkan ukuran kartu setelah reset
-        const cardRect = card.getBoundingClientRect();
-        const cardWidth = cardRect.width;
-        const cardHeight = cardRect.height;
+        if (isAnimating) return;
+        isAnimating = true;
         
-        // Hitung posisi tengah bawah
-        posX = (window.innerWidth / 2) - (cardWidth / 2);
-        posY = window.innerHeight; // Bawah layar
+        if (showCardTimeout) clearTimeout(showCardTimeout);
+        if (changeCardTimeout) clearTimeout(changeCardTimeout);
         
-        // Apply posisi tanpa transisi
-        card.style.transition = 'none';
-        updateCardTransform();
+        currentCardImage = 1;
+        card.src = cardImages.image1;
+        card.style.animation = 'none';
         
-        // Force reflow
-        void card.offsetHeight;
+        // PERBAIKAN: Sembunyikan dulu SEMUA visual
+        card.style.opacity = '0';
+        card.style.visibility = 'hidden';
+        card.style.display = 'block';
         
-        // Tambahkan class untuk transisi
-        card.classList.add('card-moving');
-        card.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        // Reset semua posisi CSS sebelum memulai
+        card.style.left = '0';
+        card.style.top = '0';
+        card.style.right = 'auto';
+        card.style.bottom = 'auto';
+        card.style.margin = '0';
         
-        // Pindah ke tengah layar
-        setTimeout(() => {
+        // Hapus class transisi untuk inisialisasi
+        card.classList.remove('card-moving', 'card-flipping', 'card-visible');
+        
+        // Tunggu FRAME berikutnya untuk memastikan reset selesai
+        requestAnimationFrame(() => {
+            // Tunggu gambar selesai load (jika ada)
+            if (card.complete) {
+                initCardAnimation();
+            } else {
+                card.onload = initCardAnimation;
+                // Fallback timeout
+                setTimeout(initCardAnimation, 500);
+            }
+        });
+        
+        function initCardAnimation() {
+            // Dapatkan ukuran kartu setelah reset
+            const cardRect = card.getBoundingClientRect();
+            const cardWidth = cardRect.width;
+            const cardHeight = cardRect.height;
+            
+            // Hitung posisi tengah bawah (OFFSCREEN dengan extra margin)
             posX = (window.innerWidth / 2) - (cardWidth / 2);
-            posY = (window.innerHeight / 2) - (cardHeight / 2);
+            posY = window.innerHeight + 100; // JAUH di bawah layar
             
-            updateCardTransform();
+            // Apply posisi tanpa transisi (masih tersembunyi)
+            card.style.transition = 'none';
+            card.style.transform = `translate(${posX}px, ${posY}px)`;
             
-            setTimeout(() => {
-                isAnimating = false;
-                card.classList.remove('card-moving');
-            }, 800);
-        }, 10);
-    }, 10);
-}
+            // Force reflow
+            void card.offsetHeight;
+            
+            // PERBAIKAN: Tampilkan kartu SEBELUM animasi dimulai
+            card.style.opacity = '1';
+            card.style.visibility = 'visible';
+            card.classList.add('card-visible');
+            
+            // Tunggu 1 frame untuk memastikan render
+            requestAnimationFrame(() => {
+                // Tambahkan class untuk transisi
+                card.classList.add('card-moving');
+                card.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+                
+                // Pindah ke tengah layar
+                setTimeout(() => {
+                    posX = (window.innerWidth / 2) - (cardWidth / 2);
+                    posY = (window.innerHeight / 2) - (cardHeight / 2);
+                    
+                    card.style.transform = `translate(${posX}px, ${posY}px)`;
+                    
+                    setTimeout(() => {
+                        isAnimating = false;
+                        card.classList.remove('card-moving');
+                    }, 800);
+                }, 50); // Delay sedikit lebih lama
+            });
+        }
+    }
     
     function transformToImage2() {
         if (card.style.display === 'none') return;
@@ -893,10 +917,8 @@
     }
     
     function updateCardTransform() {
-    // PERBAIKAN: Hanya gunakan translate, tanpa scale jika tidak diperlukan
-    card.style.transform = `translate(${posX}px, ${posY}px)`;
-    console.log("Transform applied:", `translate(${posX}px, ${posY}px)`);
-}
+        card.style.transform = `translate(${posX}px, ${posY}px)`;
+    }
     
     function hideCardImmediately() {
         if (showCardTimeout) {
@@ -908,18 +930,23 @@
             changeCardTimeout = null;
         }
         
-        card.style.transition = 'none';
-        card.style.animation = 'none';
-        card.style.display = 'none';
-        card.classList.remove('card-flipping');
+        // Smooth hide
+        card.style.transition = 'opacity 0.2s ease, transform 0.3s ease';
+        card.style.opacity = '0';
         
-        // PERBAIKAN: Reset ke posisi tengah bawah
-        const cardRect = card.getBoundingClientRect();
-        posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
-        posY = window.innerHeight + card.offsetHeight;
-        updateCardTransform();
-        
-        currentCardImage = 1;
+        setTimeout(() => {
+            card.style.display = 'none';
+            card.style.animation = 'none';
+            card.classList.remove('card-flipping', 'card-visible', 'card-moving');
+            
+            // Reset ke posisi tengah bawah dengan extra margin
+            const cardRect = card.getBoundingClientRect();
+            posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
+            posY = window.innerHeight + card.offsetHeight + 100;
+            card.style.transform = `translate(${posX}px, ${posY}px)`;
+            
+            currentCardImage = 1;
+        }, 200);
     }
     
     // Handle window resize
@@ -934,36 +961,33 @@
     
     // Initialize card position
     window.addEventListener('load', () => {
-    // Reset posisi kartu
-    card.style.display = 'block';
-    card.style.left = '0';
-    card.style.top = '0';
-    card.style.transform = 'translate(0, 0)';
-    card.style.transition = 'none';
-    
-    // Tunggu kartu render
-    setTimeout(() => {
-        const cardRect = card.getBoundingClientRect();
-        const cardWidth = cardRect.width;
+        // Reset posisi kartu
+        card.style.display = 'block';
+        card.style.left = '0';
+        card.style.top = '0';
+        card.style.transform = 'translate(0, 0)';
+        card.style.transition = 'none';
+        card.style.opacity = '0';
+        card.style.visibility = 'hidden';
         
-        // Posisi awal: tengah bawah layar
-        posX = (window.innerWidth / 2) - (cardWidth / 2);
-        posY = window.innerHeight; // Tepat di bawah layar
-        
-        console.log("Initial position on load:");
-        console.log("Card width:", cardWidth);
-        console.log("Window center X:", window.innerWidth / 2);
-        console.log("Calculated posX:", posX);
-        
-        updateCardTransform();
-        
-        // Sembunyikan kartu
+        // Tunggu kartu render
         setTimeout(() => {
-            card.style.display = 'none';
-            loadFromStorage();
+            const cardRect = card.getBoundingClientRect();
+            const cardWidth = cardRect.width;
+            
+            // Posisi awal: tengah bawah layar dengan extra margin
+            posX = (window.innerWidth / 2) - (cardWidth / 2);
+            posY = window.innerHeight + 100;
+            
+            updateCardTransform();
+            
+            // Sembunyikan kartu
+            setTimeout(() => {
+                card.style.display = 'none';
+                loadFromStorage();
+            }, 100);
         }, 100);
-    }, 100);
-});
+    });
 </script>
 </body>
 </html>
