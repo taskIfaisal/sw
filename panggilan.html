@@ -47,6 +47,8 @@
 
   <script>
     const frame = document.getElementById('callFrame');
+    let tapCount = 0;
+    let callTimer = null;
 
     // Auto fullscreen saat load
     function enterFullscreen() {
@@ -70,27 +72,29 @@
         const iframeDoc = frame.contentDocument || frame.contentWindow.document;
         
         if (frame.src.includes('fakecall.html')) {
-          // Timer 7 detik di fakecall.html untuk ke fakekall.html
-          const callTimer = setTimeout(function() {
-            frame.src = "fakekall.html";
-          }, 7000); // 7 detik
+          // Reset tap count saat masuk fakecall.html
+          tapCount = 0;
           
-          // Reset timer jika tap (tap masuk ke fakekall.html)
-          iframeDoc.body.addEventListener('click', function() {
-            clearTimeout(callTimer);
-            // Kembali ke fakekall.html setelah tap
-            setTimeout(function() {
-              frame.src = "fakekall.html";
-            }, 100);
-          });
+          // Event listener untuk tap pertama kali
+          const tapHandler = function() {
+            tapCount++;
+            
+            if (tapCount === 1) {
+              // Setelah tap pertama, mulai timer 7 detik
+              clearTimeout(callTimer);
+              callTimer = setTimeout(function() {
+                frame.src = "fakekall.html";
+              }, 7000); // 7 detik
+              
+              // Hapus event listener setelah tap pertama
+              iframeDoc.body.removeEventListener('click', tapHandler);
+              iframeDoc.body.removeEventListener('touchstart', tapHandler);
+            }
+          };
           
-          iframeDoc.body.addEventListener('touchstart', function() {
-            clearTimeout(callTimer);
-            // Kembali ke fakekall.html setelah tap
-            setTimeout(function() {
-              frame.src = "fakekall.html";
-            }, 100);
-          });
+          // Pasang event listener untuk tap
+          iframeDoc.body.addEventListener('click', tapHandler);
+          iframeDoc.body.addEventListener('touchstart', tapHandler);
           
         } else if (frame.src.includes('fakekall.html')) {
           // Jika di fakekall.html, set timer 30 detik ke fakecall.html
