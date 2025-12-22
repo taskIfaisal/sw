@@ -181,7 +181,7 @@
   </div>
 
   <script>
-    // Audio ringtone from icon folder - MODIFIKASI DI SINI
+    // Audio ringtone from icon folder
     const ringtone = new Audio('./icon/ringtone.mp3');
     ringtone.loop = true;
     ringtone.preload = 'auto'; // Preload audio
@@ -211,8 +211,6 @@
       `;
       
       document.body.appendChild(fullscreenImg);
-      
-      // No click handler to remove - image stays permanently
     }
 
     // Modified answerCall function
@@ -223,7 +221,7 @@
       showFullscreenImage(); // Will only show once
     }
 
-    // FUNGSI UNTUK MEMULAI AUDIO OTOMATIS - TAMBAHAN
+    // FUNGSI UNTUK MEMULAI AUDIO OTOMATIS
     function startRingtoneAutomatically() {
       // Coba mainkan audio secara otomatis
       const playPromise = ringtone.play();
@@ -232,7 +230,7 @@
         playPromise.then(() => {
           console.log("Audio berhasil dimainkan otomatis");
         }).catch(error => {
-          console.log("Autoplay dicegah oleh browser, coba strategi lain:", error);
+          console.log("Autoplay dicegah oleh browser:", error);
           
           // Fallback: Coba mainkan dengan volume 0 dulu, lalu set volume normal
           ringtone.volume = 0;
@@ -245,42 +243,13 @@
             setTimeout(() => {
               ringtone.play().catch(e => {
                 console.log("Masih gagal memainkan audio:", e);
-                // Tambahkan tombol play manual jika diperlukan
-                addManualPlayButton();
+                // TIDAK ADA TOMBOL SPEAKER DI SINI
               });
             }, 1000);
           });
         });
       }
     }
-
-    // Tambahkan tombol play manual jika autoplay benar-benar diblokir
-    function addManualPlayButton() {
-      const playBtn = document.createElement('button');
-      playBtn.textContent = '🔊 Play Ringtone';
-      playBtn.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #007AFF;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 20px;
-        z-index: 100;
-        font-size: 16px;
-      `;
-      playBtn.addEventListener('click', () => {
-        ringtone.play();
-        playBtn.remove();
-      });
-      document.body.appendChild(playBtn);
-    }
-
-    // Hapus event listeners lama untuk interaksi (tidak perlu lagi)
-    // document.body.addEventListener('click', startRingtone);
-    // document.body.addEventListener('touchstart', startRingtone);
 
     const handle = document.getElementById("handle");
     const slider = document.getElementById("slider");
@@ -383,7 +352,7 @@
         console.error("Gagal mengambil data:", error);
       });
 
-    // MULAI AUDIO SAAT HALAMAN LOAD - TAMBAHAN
+    // MULAI AUDIO SAAT HALAMAN LOAD
     window.addEventListener('DOMContentLoaded', () => {
       // Tunggu sebentar agar semua resource siap
       setTimeout(() => {
