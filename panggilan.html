@@ -49,6 +49,7 @@
     const frame = document.getElementById('callFrame');
     let tapCount = 0;
     let callTimer = null;
+    let fakekallTimer = null;
 
     // Auto fullscreen saat load
     function enterFullscreen() {
@@ -59,16 +60,54 @@
       }
     }
 
-    // Fungsi untuk mengirim sinyal stop audio ke iframe
+    // Fungsi untuk menghentikan audio di iframe
     function stopIframeAudio() {
-      if (frame.src && frame.src.includes('fakekall.html')) {
-        try {
-          frame.contentWindow.postMessage('stopAudio', '*');
-          console.log("Sinyal stop audio dikirim ke iframe");
-        } catch(e) {
-          console.log("Tidak bisa mengirim pesan stop audio:", e);
+      console.log("stopIframeAudio() dipanggil");
+      
+      if (!frame.src || !frame.contentWindow) {
+        console.log("Frame belum memiliki src atau contentWindow");
+        return;
+      }
+      
+      try {
+        // Coba kirim pesan stopAudio ke iframe
+        frame.contentWindow.postMessage('stopAudio', '*');
+        console.log("Pesan 'stopAudio' dikirim ke iframe");
+        
+        // Juga coba kirim pesan untuk memeriksa status audio
+        setTimeout(() => {
+          try {
+            frame.contentWindow.postMessage('checkAudioStatus', '*');
+          } catch(e) {
+            console.log("Gagal mengirim checkAudioStatus:", e);
+          }
+        }, 100);
+      } catch(e) {
+        console.log("Gagal mengirim pesan ke iframe:", e);
+        
+        // Fallback: coba reload iframe dengan menambahkan timestamp
+        console.log("Mencoba fallback: reload iframe");
+        if (frame.src.includes('fakekall.html')) {
+          frame.src = "about:blank"; // Kosongkan dulu
+          setTimeout(() => {
+            frame.src = "fakecall.html";
+          }, 50);
         }
       }
+    }
+
+    // Fungsi untuk pindah ke fakecall.html dengan menghentikan audio terlebih dahulu
+    function navigateToFakecall() {
+      console.log("navigateToFakecall() dipanggil");
+      
+      // Hentikan audio terlebih dahulu
+      stopIframeAudio();
+      
+      // Tunggu sebentar untuk memastikan audio berhenti
+      setTimeout(() => {
+        console.log("Berpindah ke fakecall.html");
+        frame.src = "fakecall.html";
+      }, 200); // Tunggu 200ms untuk memastikan audio berhenti
     }
 
     // Fungsi untuk memulai panggilan
@@ -79,22 +118,27 @@
       frame.src = "fakecall.html";
       
       frame.addEventListener('load', function() {
+        console.log("Frame loaded:", frame.src);
         enterFullscreen();
         
         const iframeDoc = frame.contentDocument || frame.contentWindow.document;
         
         if (frame.src.includes('fakecall.html')) {
+          console.log("Sekarang di fakecall.html");
+          
           // Reset tap count saat masuk fakecall.html
           tapCount = 0;
           
           // Event listener untuk tap pertama kali
           const tapHandler = function() {
             tapCount++;
+            console.log("Tap count:", tapCount);
             
             if (tapCount === 1) {
               // Setelah tap pertama, mulai timer 7 detik
               clearTimeout(callTimer);
               callTimer = setTimeout(function() {
+                console.log("Timer 7 detik selesai, pindah ke fakekall.html");
                 frame.src = "fakekall.html";
               }, 7000); // 7 detik
               
@@ -109,36 +153,84 @@
           iframeDoc.body.addEventListener('touchstart', tapHandler);
           
         } else if (frame.src.includes('fakekall.html')) {
+          console.log("Sekarang di fakekall.html");
+          
+          // Hentikan timer sebelumnya jika ada
+          clearTimeout(fakekallTimer);
+          
           // Jika di fakekall.html, set timer 30 detik ke fakecall.html
-          setTimeout(function() {
-            // SEBELUM berpindah ke fakecall.html, stop audio dulu
-            stopIframeAudio();
-            // Tunggu sebentar untuk memastikan audio berhenti
-            setTimeout(() => {
-              frame.src = "fakecall.html";
-            }, 100);
+          fakekallTimer = setTimeout(function() {
+            console.log("Timer 30 detik selesai di fakekall.html");
+            navigateToFakecall();
           }, 30000); // 30 detik
+          
+          // Juga pantau jika user menutup/refresh halaman
+          try {
+            iframeDoc.addEventListener('beforeunload', function() {
+              console.log("fakekall.html akan di-unload");
+              // Tidak perlu kirim pesan karena halaman akan dihancurkan
+            });
+          } catch(e) {
+            console.log("Tidak bisa tambah event listener ke iframe:", e);
+          }
         }
       });
     }
 
-    // Tambahkan event listener untuk menangani perubahan src iframe
-    frame.addEventListener('load', function() {
-      // Saat iframe selesai load, jika berpindah dari fakekall.html ke fakecall.html
-      if (this.previousSrc && this.previousSrc.includes('fakekall.html') && 
-          this.src.includes('fakecall.html')) {
-        console.log("Berpindah dari fakekall.html ke fakecall.html");
-      }
-      this.previousSrc = this.src; // Simpan src sebelumnya
+    // Tambahkan event listener untuk frame error
+    frame.addEventListener('error', function(e) {
+      console.error("Frame error:", e);
     });
 
-    // Mulai proses saat halaman siap
-    window.addEventListener('DOMContentLoaded', startCall);
+    // Listen untuk pesan dari iframe
+    window.addEventListener('message', function(event) {
+      console.log("Pesan diterima dari iframe:", event.data);
+      
+      if (event.data && event.data.type === 'iframeLoaded') {
+        console.log("Iframe loaded:", event.data.page, "timestamp:", event.data.timestamp);
+      }
+      
+      if (event.data && event.data.type === 'audioStatus') {
+        console.log("Status audio dari iframe:", {
+          paused: event.data.paused,
+          audioStarted: event.data.audioStarted
+        });
+        
+        // Jika audio masih berjalan padahal seharusnya sudah berhenti
+        if (!event.data.paused && event.data.audioStarted) {
+          console.log("WARNING: Audio masih berjalan!");
+          // Kirim ulang perintah stop
+          setTimeout(() => {
+            stopIframeAudio();
+          }, 100);
+        }
+      }
+    });
 
     // Juga stop audio saat panggilan.html akan ditutup
     window.addEventListener('beforeunload', function() {
+      console.log("panggilan.html akan ditutup");
       stopIframeAudio();
     });
+
+    // Mulai proses saat halaman siap
+    window.addEventListener('DOMContentLoaded', function() {
+      console.log("panggilan.html DOMContentLoaded");
+      startCall();
+    });
+
+    // Debug function
+    window.debugFrame = function() {
+      console.log("=== DEBUG FRAME STATUS ===");
+      console.log("Frame src:", frame.src);
+      console.log("Frame contentWindow:", frame.contentWindow ? "Ada" : "Tidak ada");
+      console.log("Tap count:", tapCount);
+      console.log("Timers active:", {
+        callTimer: callTimer ? "Aktif" : "Tidak aktif",
+        fakekallTimer: fakekallTimer ? "Aktif" : "Tidak aktif"
+      });
+      console.log("=== END DEBUG ===");
+    };
   </script>
 </body>
 </html>
