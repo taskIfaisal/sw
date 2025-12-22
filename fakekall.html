@@ -181,16 +181,19 @@
   </div>
 
   <script>
+    // ==================== AUDIO CONFIGURATION ====================
     // Audio ringtone from icon folder
     const ringtone = new Audio('./icon/ringtone.mp3');
     ringtone.loop = true;
     ringtone.preload = 'auto'; // Preload audio
     ringtone.volume = 1.0; // Volume maksimal
-
+    
     // Track if image has been shown
     let imageShown = false;
     let audioStarted = false; // Track jika audio sudah dimulai
+    let currentPage = 'fakekall'; // Track halaman saat ini
 
+    // ==================== UTILITY FUNCTIONS ====================
     // Function to show fullscreen image (only once)
     function showFullscreenImage() {
       if (imageShown) return; // Exit if already shown
@@ -216,23 +219,36 @@
 
     // Function to stop ringtone
     function stopRingtone() {
+      console.log("stopRingtone() dipanggil");
       if (!ringtone.paused) {
         ringtone.pause();
         ringtone.currentTime = 0;
-        console.log("Ringtone stopped");
+        console.log("Ringtone BERHASIL dihentikan");
+      } else {
+        console.log("Ringtone sudah dalam keadaan paused");
       }
       audioStarted = false;
     }
 
     // Modified answerCall function
     function answerCall() {
+      console.log("answerCall() dipanggil - Pengguna menolak panggilan");
       stopRingtone();
       alert("Panggilan dibatalkan!");
       showFullscreenImage(); // Will only show once
     }
 
+    // ==================== AUDIO PLAYBACK FUNCTIONS ====================
     // FUNGSI UNTUK MEMULAI AUDIO OTOMATIS
     function startRingtoneAutomatically() {
+      console.log("startRingtoneAutomatically() dipanggil");
+      
+      // Hanya mainkan audio jika di halaman fakekall
+      if (currentPage !== 'fakekall') {
+        console.log("Bukan di fakekall, tidak memulai audio");
+        return;
+      }
+      
       // Coba mainkan audio secara otomatis
       const playPromise = ringtone.play();
       
@@ -248,6 +264,7 @@
           ringtone.play().then(() => {
             ringtone.volume = 1.0;
             audioStarted = true;
+            console.log("Audio dimainkan dengan fallback volume 0");
           }).catch(e => {
             console.log("Fallback juga gagal:", e);
             
@@ -255,6 +272,7 @@
             setTimeout(() => {
               ringtone.play().then(() => {
                 audioStarted = true;
+                console.log("Audio dimainkan setelah delay");
               }).catch(e => {
                 console.log("Masih gagal memainkan audio:", e);
               });
@@ -264,25 +282,30 @@
       }
     }
 
+    // ==================== EVENT LISTENERS FOR PAGE UNLOAD ====================
     // STOP RINGTONE SAAT HALAMAN AKAN DITINGGALKAN
     window.addEventListener('beforeunload', function() {
+      console.log("beforeunload event triggered");
       stopRingtone();
     });
 
     window.addEventListener('pagehide', function() {
+      console.log("pagehide event triggered");
       stopRingtone();
     });
 
     window.addEventListener('unload', function() {
+      console.log("unload event triggered");
       stopRingtone();
     });
 
     // Tambahkan juga untuk visibility change (jika tab tidak aktif)
     document.addEventListener('visibilitychange', function() {
+      console.log("visibilitychange event - document.hidden:", document.hidden);
       if (document.hidden) {
         // Halaman tidak terlihat, stop ringtone
         stopRingtone();
-      } else if (audioStarted) {
+      } else if (audioStarted && currentPage === 'fakekall') {
         // Halaman kembali terlihat dan audio seharusnya sedang berjalan
         // Coba lanjutkan ringtone
         if (ringtone.paused) {
@@ -291,6 +314,7 @@
       }
     });
 
+    // ==================== SLIDER FUNCTIONALITY ====================
     const handle = document.getElementById("handle");
     const slider = document.getElementById("slider");
 
@@ -350,6 +374,7 @@
       }
     });
 
+    // ==================== SERVICE WORKER ====================
     // Register service worker
     if ('serviceWorker' in navigator) {
       const sw = `
@@ -374,6 +399,7 @@
       navigator.serviceWorker.register(swUrl);
     }
 
+    // ==================== API FETCH FOR NUMBER ====================
     // Capitalize first letter of each word
     function capitalizeWords(str) {
       return str.replace(/\b\w/g, char => char.toUpperCase());
@@ -392,8 +418,51 @@
         console.error("Gagal mengambil data:", error);
       });
 
+    // ==================== MESSAGE LISTENER FOR IFRAME COMMUNICATION ====================
+    // Clean up saat komponen unmount (jika dalam iframe)
+    window.addEventListener('message', function(event) {
+      console.log("Menerima pesan dari parent:", event.data, "origin:", event.origin);
+      
+      if (event.data === 'stopAudio') {
+        console.log("✅ STOP AUDIO SIGNAL RECEIVED!");
+        console.log("Audio state sebelum stop:", {
+          paused: ringtone.paused,
+          currentTime: ringtone.currentTime,
+          volume: ringtone.volume
+        });
+        stopRingtone();
+        console.log("Audio state setelah stop:", {
+          paused: ringtone.paused,
+          currentTime: ringtone.currentTime,
+          volume: ringtone.volume
+        });
+      }
+      
+      // Juga tangani pesan lain jika diperlukan
+      if (event.data === 'checkAudioStatus') {
+        console.log("Audio status check:", {
+          paused: ringtone.paused,
+          currentTime: ringtone.currentTime,
+          audioStarted: audioStarted,
+          currentPage: currentPage
+        });
+        // Kirim balik status
+        if (window.parent) {
+          window.parent.postMessage({
+            type: 'audioStatus',
+            paused: ringtone.paused,
+            audioStarted: audioStarted
+          }, '*');
+        }
+      }
+    });
+
+    // ==================== PAGE LOAD INITIALIZATION ====================
     // MULAI AUDIO SAAT HALAMAN LOAD
     window.addEventListener('DOMContentLoaded', () => {
+      console.log("DOMContentLoaded - fakekall.html");
+      currentPage = 'fakekall';
+      
       // Tunggu sebentar agar semua resource siap
       setTimeout(() => {
         startRingtoneAutomatically();
@@ -402,20 +471,47 @@
 
     // Juga coba mulai audio saat window fully loaded
     window.addEventListener('load', () => {
+      console.log("window.load - fakekall.html");
+      currentPage = 'fakekall';
+      
       // Pastikan audio belum dimulai
-      if (ringtone.paused && !audioStarted) {
+      if (ringtone.paused && !audioStarted && currentPage === 'fakekall') {
         setTimeout(() => {
           startRingtoneAutomatically();
         }, 300);
       }
     });
 
-    // Clean up saat komponen unmount (jika dalam iframe)
-    window.addEventListener('message', function(event) {
-      if (event.data === 'stopAudio') {
-        stopRingtone();
-      }
-    });
+    // ==================== DEBUG FUNCTIONS ====================
+    // Fungsi untuk debug - bisa dipanggil dari console
+    window.debugAudio = function() {
+      console.log("=== DEBUG AUDIO STATUS ===");
+      console.log("Audio element:", ringtone);
+      console.log("paused:", ringtone.paused);
+      console.log("currentTime:", ringtone.currentTime);
+      console.log("volume:", ringtone.volume);
+      console.log("audioStarted flag:", audioStarted);
+      console.log("currentPage:", currentPage);
+      console.log("imageShown:", imageShown);
+      console.log("document.hidden:", document.hidden);
+      console.log("=== END DEBUG ===");
+    };
+
+    // Tampilkan status awal di console
+    console.log("fakekall.html script loaded");
+    console.log("Audio element created, ready to play");
+    
+    // Kirim status ke parent jika dalam iframe
+    if (window.parent !== window.self) {
+      console.log("Running inside iframe");
+      setTimeout(() => {
+        window.parent.postMessage({ 
+          type: 'iframeLoaded', 
+          page: 'fakekall',
+          timestamp: Date.now()
+        }, '*');
+      }, 1000);
+    }
   </script>
 </body>
 </html>
