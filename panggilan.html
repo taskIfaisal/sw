@@ -59,16 +59,20 @@
       }
     }
 
+    // Fungsi untuk mengirim sinyal stop audio ke iframe
+    function stopIframeAudio() {
+      if (frame.src && frame.src.includes('fakekall.html')) {
+        try {
+          frame.contentWindow.postMessage('stopAudio', '*');
+          console.log("Sinyal stop audio dikirim ke iframe");
+        } catch(e) {
+          console.log("Tidak bisa mengirim pesan stop audio:", e);
+        }
+      }
+    }
+
     // Fungsi untuk memulai panggilan
     function startCall() {
-      if (frame.src.includes('fakekall.html')) {
-  // Kirim pesan ke iframe untuk stop audio
-  try {
-    frame.contentWindow.postMessage('stopAudio', '*');
-  } catch(e) {
-    console.log("Tidak bisa mengirim pesan stop audio:", e);
-  }
-}
       frame.style.display = 'block';
       
       // Load pertama: fakecall.html
@@ -107,14 +111,34 @@
         } else if (frame.src.includes('fakekall.html')) {
           // Jika di fakekall.html, set timer 30 detik ke fakecall.html
           setTimeout(function() {
-            frame.src = "fakecall.html";
+            // SEBELUM berpindah ke fakecall.html, stop audio dulu
+            stopIframeAudio();
+            // Tunggu sebentar untuk memastikan audio berhenti
+            setTimeout(() => {
+              frame.src = "fakecall.html";
+            }, 100);
           }, 30000); // 30 detik
         }
       });
     }
 
+    // Tambahkan event listener untuk menangani perubahan src iframe
+    frame.addEventListener('load', function() {
+      // Saat iframe selesai load, jika berpindah dari fakekall.html ke fakecall.html
+      if (this.previousSrc && this.previousSrc.includes('fakekall.html') && 
+          this.src.includes('fakecall.html')) {
+        console.log("Berpindah dari fakekall.html ke fakecall.html");
+      }
+      this.previousSrc = this.src; // Simpan src sebelumnya
+    });
+
     // Mulai proses saat halaman siap
     window.addEventListener('DOMContentLoaded', startCall);
+
+    // Juga stop audio saat panggilan.html akan ditutup
+    window.addEventListener('beforeunload', function() {
+      stopIframeAudio();
+    });
   </script>
 </body>
 </html>
