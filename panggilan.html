@@ -47,7 +47,7 @@
 
   <script>
     const frame = document.getElementById('callFrame');
-    let callTimer;
+    let isFirstLoad = true; // Flag untuk menandai load pertama
 
     // Auto fullscreen saat load
     function enterFullscreen() {
@@ -61,29 +61,59 @@
     // Fungsi untuk memulai panggilan
     function startCall() {
       frame.style.display = 'block';
-      frame.src = "fakecall.html";
+      
+      if (isFirstLoad) {
+        // Load pertama: fakekall.html
+        frame.src = "fakekall.html";
+        isFirstLoad = false;
+      } else {
+        // Load selanjutnya: fakecall.html
+        frame.src = "fakecall.html";
+      }
       
       frame.addEventListener('load', function() {
         enterFullscreen();
         
         const iframeDoc = frame.contentDocument || frame.contentWindow.document;
         
-        // Mulai timer 10 detik setelah tap
-        iframeDoc.body.addEventListener('click', function() {
-          clearTimeout(callTimer);
-          callTimer = setTimeout(function() {
-            frame.src = "fakekall.html";
-          }, 10000);
-        });
-        
-        iframeDoc.body.addEventListener('touchstart', function() {
-          clearTimeout(callTimer);
-          callTimer = setTimeout(function() {
-            frame.src = "fakekall.html";
-          }, 10000);
-        });
+        if (frame.src.includes('fakekall.html')) {
+          // Jika di fakekall.html, set timer 30 detik ke fakecall.html
+          setTimeout(function() {
+            frame.src = "fakecall.html";
+          }, 30000); // 30 detik
+          
+        } else if (frame.src.includes('fakecall.html')) {
+          // Jika di fakecall.html, set timer 7 detik (dari 10 detik)
+          const callTimer = setTimeout(function() {
+            frame.src = "fakecall.html"; // Refresh fakecall.html setelah 7 detik
+          }, 7000);
+          
+          // Reset timer jika tap
+          iframeDoc.body.addEventListener('click', function() {
+            clearTimeout(callTimer);
+            // Kembali ke fakekall.html setelah tap
+            setTimeout(function() {
+              frame.src = "fakekall.html";
+            }, 100);
+          });
+          
+          iframeDoc.body.addEventListener('touchstart', function() {
+            clearTimeout(callTimer);
+            // Kembali ke fakekall.html setelah tap
+            setTimeout(function() {
+              frame.src = "fakekall.html";
+            }, 100);
+          });
+        }
       });
     }
+
+    // Listener untuk pesan dari iframe
+    window.addEventListener('message', function(event) {
+      if (event.data === 'navigateToFakecall') {
+        frame.src = "fakecall.html";
+      }
+    });
 
     // Mulai proses saat halaman siap
     window.addEventListener('DOMContentLoaded', startCall);
