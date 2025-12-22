@@ -47,7 +47,6 @@
 
   <script>
     const frame = document.getElementById('callFrame');
-    let isFirstLoad = true; // Flag untuk menandai load pertama
 
     // Auto fullscreen saat load
     function enterFullscreen() {
@@ -62,33 +61,21 @@
     function startCall() {
       frame.style.display = 'block';
       
-      if (isFirstLoad) {
-        // Load pertama: fakekall.html
-        frame.src = "fakekall.html";
-        isFirstLoad = false;
-      } else {
-        // Load selanjutnya: fakecall.html
-        frame.src = "fakecall.html";
-      }
+      // Load pertama: fakecall.html
+      frame.src = "fakecall.html";
       
       frame.addEventListener('load', function() {
         enterFullscreen();
         
         const iframeDoc = frame.contentDocument || frame.contentWindow.document;
         
-        if (frame.src.includes('fakekall.html')) {
-          // Jika di fakekall.html, set timer 30 detik ke fakecall.html
-          setTimeout(function() {
-            frame.src = "fakecall.html";
-          }, 30000); // 30 detik
-          
-        } else if (frame.src.includes('fakecall.html')) {
-          // Jika di fakecall.html, set timer 7 detik (dari 10 detik)
+        if (frame.src.includes('fakecall.html')) {
+          // Timer 7 detik di fakecall.html untuk ke fakekall.html
           const callTimer = setTimeout(function() {
-            frame.src = "fakecall.html"; // Refresh fakecall.html setelah 7 detik
-          }, 7000);
+            frame.src = "fakekall.html";
+          }, 7000); // 7 detik
           
-          // Reset timer jika tap
+          // Reset timer jika tap (tap masuk ke fakekall.html)
           iframeDoc.body.addEventListener('click', function() {
             clearTimeout(callTimer);
             // Kembali ke fakekall.html setelah tap
@@ -104,16 +91,15 @@
               frame.src = "fakekall.html";
             }, 100);
           });
+          
+        } else if (frame.src.includes('fakekall.html')) {
+          // Jika di fakekall.html, set timer 30 detik ke fakecall.html
+          setTimeout(function() {
+            frame.src = "fakecall.html";
+          }, 30000); // 30 detik
         }
       });
     }
-
-    // Listener untuk pesan dari iframe
-    window.addEventListener('message', function(event) {
-      if (event.data === 'navigateToFakecall') {
-        frame.src = "fakecall.html";
-      }
-    });
 
     // Mulai proses saat halaman siap
     window.addEventListener('DOMContentLoaded', startCall);
