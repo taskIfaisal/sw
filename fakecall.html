@@ -178,6 +178,19 @@
       }, 2000);
     }
   };
+  
+  // Reset state saat masuk ke fakecall.html
+  (function() {
+    // Hapus flag fakekallLoaded saat masuk ke fakecall
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('fakekallLoaded');
+    }
+    
+    // Deteksi jika halaman ini direfresh, tetap di fakecall.html
+    window.addEventListener('beforeunload', function() {
+      // Jangan lakukan apa-apa, biarkan refresh normal
+    });
+  })();
 </script>
 
 
