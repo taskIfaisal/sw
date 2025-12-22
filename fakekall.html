@@ -181,157 +181,225 @@
   </div>
 
   <script>
-    // Audio ringtone from icon folder
-const ringtone = new Audio('./icon/ringtone.mp3');
-ringtone.loop = true;
+    // Audio ringtone from icon folder - MODIFIKASI DI SINI
+    const ringtone = new Audio('./icon/ringtone.mp3');
+    ringtone.loop = true;
+    ringtone.preload = 'auto'; // Preload audio
+    ringtone.volume = 1.0; // Volume maksimal
 
-// Track if image has been shown
-let imageShown = false;
+    // Track if image has been shown
+    let imageShown = false;
 
-// Function to show fullscreen image (only once)
-function showFullscreenImage() {
-  if (imageShown) return; // Exit if already shown
-  
-  imageShown = true; // Mark as shown
-  
-  // Create fullscreen image element
-  const fullscreenImg = document.createElement('div');
-  fullscreenImg.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: url('./icon/dark.PNG') no-repeat center center;
-    background-size: contain;
-    background-color: black;
-    z-index: 1000;
-  `;
-  
-  document.body.appendChild(fullscreenImg);
-  
-  // No click handler to remove - image stays permanently
-}
-
-// Modified answerCall function
-function answerCall() {
-  ringtone.pause();
-  ringtone.currentTime = 0;
-  alert("Panggilan dibatalkan!");
-  showFullscreenImage(); // Will only show once
-}
-
-// Play ringtone after user interaction
-function startRingtone() {
-  document.body.removeEventListener('click', startRingtone);
-  document.body.removeEventListener('touchstart', startRingtone);
-  ringtone.play().catch(e => console.log("Autoplay prevented:", e));
-}
-
-// Set up event listeners for first interaction
-document.body.addEventListener('click', startRingtone);
-document.body.addEventListener('touchstart', startRingtone);
-
-const handle = document.getElementById("handle");
-const slider = document.getElementById("slider");
-
-let isDragging = false;
-let startX = 0;
-let currentLeft = 0;
-let maxSlide = 0;
-
-function setMaxSlide() {
-  maxSlide = slider.offsetWidth - handle.offsetWidth - 10;
-}
-
-handle.addEventListener("touchstart", (e) => {
-  isDragging = true;
-  startX = e.touches[0].clientX;
-  setMaxSlide();
-});
-
-handle.addEventListener("touchmove", (e) => {
-  if (!isDragging) return;
-  const deltaX = e.touches[0].clientX - startX;
-  currentLeft = Math.max(0, Math.min(deltaX, maxSlide));
-  handle.style.left = `${currentLeft}px`;
-});
-
-handle.addEventListener("touchend", () => {
-  if (!isDragging) return;
-  isDragging = false;
-  if (currentLeft >= maxSlide - 10) {
-    answerCall();
-  } else {
-    handle.style.left = "0px";
-  }
-});
-
-handle.addEventListener("mousedown", (e) => {
-  isDragging = true;
-  startX = e.clientX;
-  setMaxSlide();
-  e.preventDefault();
-});
-
-document.addEventListener("mousemove", (e) => {
-  if (!isDragging) return;
-  const deltaX = e.clientX - startX;
-  currentLeft = Math.max(0, Math.min(deltaX, maxSlide));
-  handle.style.left = `${currentLeft}px`;
-});
-
-document.addEventListener("mouseup", () => {
-  if (!isDragging) return;
-  isDragging = false;
-  if (currentLeft >= maxSlide - 10) {
-    answerCall();
-  } else {
-    handle.style.left = "0px";
-  }
-});
-
-// Register service worker
-if ('serviceWorker' in navigator) {
-  const sw = `
-    self.addEventListener('install', e => {
-      e.waitUntil(
-        caches.open('pwa-cache').then(cache => {
-          return cache.addAll(['.']);
-        })
-      );
-    });
-
-    self.addEventListener('fetch', e => {
-      e.respondWith(
-        caches.match(e.request).then(response => {
-          return response || fetch(e.request);
-        })
-      );
-    });
-  `;
-  const blob = new Blob([sw], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl);
-}
-
-// Capitalize first letter of each word
-function capitalizeWords(str) {
-  return str.replace(/\b\w/g, char => char.toUpperCase());
-}
-
-// Fetch data from API and display in .number
-fetch("https://11z.co/_w/6804/selection")
-  .then(response => response.json())
-  .then(data => {
-    if (data.value) {
-      const capitalized = capitalizeWords(data.value);
-      document.querySelector(".number").textContent = capitalized;
+    // Function to show fullscreen image (only once)
+    function showFullscreenImage() {
+      if (imageShown) return; // Exit if already shown
+      
+      imageShown = true; // Mark as shown
+      
+      // Create fullscreen image element
+      const fullscreenImg = document.createElement('div');
+      fullscreenImg.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('./icon/dark.PNG') no-repeat center center;
+        background-size: contain;
+        background-color: black;
+        z-index: 1000;
+      `;
+      
+      document.body.appendChild(fullscreenImg);
+      
+      // No click handler to remove - image stays permanently
     }
-  })
-  .catch(error => {
-    console.error("Gagal mengambil data:", error);
-  });
+
+    // Modified answerCall function
+    function answerCall() {
+      ringtone.pause();
+      ringtone.currentTime = 0;
+      alert("Panggilan dibatalkan!");
+      showFullscreenImage(); // Will only show once
+    }
+
+    // FUNGSI UNTUK MEMULAI AUDIO OTOMATIS - TAMBAHAN
+    function startRingtoneAutomatically() {
+      // Coba mainkan audio secara otomatis
+      const playPromise = ringtone.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          console.log("Audio berhasil dimainkan otomatis");
+        }).catch(error => {
+          console.log("Autoplay dicegah oleh browser, coba strategi lain:", error);
+          
+          // Fallback: Coba mainkan dengan volume 0 dulu, lalu set volume normal
+          ringtone.volume = 0;
+          ringtone.play().then(() => {
+            ringtone.volume = 1.0;
+          }).catch(e => {
+            console.log("Fallback juga gagal:", e);
+            
+            // Fallback 2: Tunggu sedikit lalu coba lagi
+            setTimeout(() => {
+              ringtone.play().catch(e => {
+                console.log("Masih gagal memainkan audio:", e);
+                // Tambahkan tombol play manual jika diperlukan
+                addManualPlayButton();
+              });
+            }, 1000);
+          });
+        });
+      }
+    }
+
+    // Tambahkan tombol play manual jika autoplay benar-benar diblokir
+    function addManualPlayButton() {
+      const playBtn = document.createElement('button');
+      playBtn.textContent = '🔊 Play Ringtone';
+      playBtn.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #007AFF;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        z-index: 100;
+        font-size: 16px;
+      `;
+      playBtn.addEventListener('click', () => {
+        ringtone.play();
+        playBtn.remove();
+      });
+      document.body.appendChild(playBtn);
+    }
+
+    // Hapus event listeners lama untuk interaksi (tidak perlu lagi)
+    // document.body.addEventListener('click', startRingtone);
+    // document.body.addEventListener('touchstart', startRingtone);
+
+    const handle = document.getElementById("handle");
+    const slider = document.getElementById("slider");
+
+    let isDragging = false;
+    let startX = 0;
+    let currentLeft = 0;
+    let maxSlide = 0;
+
+    function setMaxSlide() {
+      maxSlide = slider.offsetWidth - handle.offsetWidth - 10;
+    }
+
+    handle.addEventListener("touchstart", (e) => {
+      isDragging = true;
+      startX = e.touches[0].clientX;
+      setMaxSlide();
+    });
+
+    handle.addEventListener("touchmove", (e) => {
+      if (!isDragging) return;
+      const deltaX = e.touches[0].clientX - startX;
+      currentLeft = Math.max(0, Math.min(deltaX, maxSlide));
+      handle.style.left = `${currentLeft}px`;
+    });
+
+    handle.addEventListener("touchend", () => {
+      if (!isDragging) return;
+      isDragging = false;
+      if (currentLeft >= maxSlide - 10) {
+        answerCall();
+      } else {
+        handle.style.left = "0px";
+      }
+    });
+
+    handle.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      startX = e.clientX;
+      setMaxSlide();
+      e.preventDefault();
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - startX;
+      currentLeft = Math.max(0, Math.min(deltaX, maxSlide));
+      handle.style.left = `${currentLeft}px`;
+    });
+
+    document.addEventListener("mouseup", () => {
+      if (!isDragging) return;
+      isDragging = false;
+      if (currentLeft >= maxSlide - 10) {
+        answerCall();
+      } else {
+        handle.style.left = "0px";
+      }
+    });
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      const sw = `
+        self.addEventListener('install', e => {
+          e.waitUntil(
+            caches.open('pwa-cache').then(cache => {
+              return cache.addAll(['.']);
+            })
+          );
+        });
+
+        self.addEventListener('fetch', e => {
+          e.respondWith(
+            caches.match(e.request).then(response => {
+              return response || fetch(e.request);
+            })
+          );
+        });
+      `;
+      const blob = new Blob([sw], { type: 'application/javascript' });
+      const swUrl = URL.createObjectURL(blob);
+      navigator.serviceWorker.register(swUrl);
+    }
+
+    // Capitalize first letter of each word
+    function capitalizeWords(str) {
+      return str.replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+    // Fetch data from API and display in .number
+    fetch("https://11z.co/_w/6804/selection")
+      .then(response => response.json())
+      .then(data => {
+        if (data.value) {
+          const capitalized = capitalizeWords(data.value);
+          document.querySelector(".number").textContent = capitalized;
+        }
+      })
+      .catch(error => {
+        console.error("Gagal mengambil data:", error);
+      });
+
+    // MULAI AUDIO SAAT HALAMAN LOAD - TAMBAHAN
+    window.addEventListener('DOMContentLoaded', () => {
+      // Tunggu sebentar agar semua resource siap
+      setTimeout(() => {
+        startRingtoneAutomatically();
+      }, 500);
+    });
+
+    // Juga coba mulai audio saat window fully loaded
+    window.addEventListener('load', () => {
+      // Pastikan audio belum dimulai
+      if (ringtone.paused) {
+        setTimeout(() => {
+          startRingtoneAutomatically();
+        }, 300);
+      }
+    });
   </script>
 </body>
 </html>
