@@ -61,6 +61,14 @@
 
     // Fungsi untuk memulai panggilan
     function startCall() {
+      if (frame.src.includes('fakekall.html')) {
+  // Kirim pesan ke iframe untuk stop audio
+  try {
+    frame.contentWindow.postMessage('stopAudio', '*');
+  } catch(e) {
+    console.log("Tidak bisa mengirim pesan stop audio:", e);
+  }
+}
       frame.style.display = 'block';
       
       // Load pertama: fakecall.html
