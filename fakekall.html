@@ -189,6 +189,7 @@
 
     // Track if image has been shown
     let imageShown = false;
+    let audioStarted = false; // Track jika audio sudah dimulai
 
     // Function to show fullscreen image (only once)
     function showFullscreenImage() {
@@ -213,10 +214,19 @@
       document.body.appendChild(fullscreenImg);
     }
 
+    // Function to stop ringtone
+    function stopRingtone() {
+      if (!ringtone.paused) {
+        ringtone.pause();
+        ringtone.currentTime = 0;
+        console.log("Ringtone stopped");
+      }
+      audioStarted = false;
+    }
+
     // Modified answerCall function
     function answerCall() {
-      ringtone.pause();
-      ringtone.currentTime = 0;
+      stopRingtone();
       alert("Panggilan dibatalkan!");
       showFullscreenImage(); // Will only show once
     }
@@ -229,6 +239,7 @@
       if (playPromise !== undefined) {
         playPromise.then(() => {
           console.log("Audio berhasil dimainkan otomatis");
+          audioStarted = true;
         }).catch(error => {
           console.log("Autoplay dicegah oleh browser:", error);
           
@@ -236,20 +247,49 @@
           ringtone.volume = 0;
           ringtone.play().then(() => {
             ringtone.volume = 1.0;
+            audioStarted = true;
           }).catch(e => {
             console.log("Fallback juga gagal:", e);
             
             // Fallback 2: Tunggu sedikit lalu coba lagi
             setTimeout(() => {
-              ringtone.play().catch(e => {
+              ringtone.play().then(() => {
+                audioStarted = true;
+              }).catch(e => {
                 console.log("Masih gagal memainkan audio:", e);
-                // TIDAK ADA TOMBOL SPEAKER DI SINI
               });
             }, 1000);
           });
         });
       }
     }
+
+    // STOP RINGTONE SAAT HALAMAN AKAN DITINGGALKAN
+    window.addEventListener('beforeunload', function() {
+      stopRingtone();
+    });
+
+    window.addEventListener('pagehide', function() {
+      stopRingtone();
+    });
+
+    window.addEventListener('unload', function() {
+      stopRingtone();
+    });
+
+    // Tambahkan juga untuk visibility change (jika tab tidak aktif)
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        // Halaman tidak terlihat, stop ringtone
+        stopRingtone();
+      } else if (audioStarted) {
+        // Halaman kembali terlihat dan audio seharusnya sedang berjalan
+        // Coba lanjutkan ringtone
+        if (ringtone.paused) {
+          ringtone.play().catch(e => console.log("Gagal melanjutkan audio:", e));
+        }
+      }
+    });
 
     const handle = document.getElementById("handle");
     const slider = document.getElementById("slider");
@@ -363,10 +403,17 @@
     // Juga coba mulai audio saat window fully loaded
     window.addEventListener('load', () => {
       // Pastikan audio belum dimulai
-      if (ringtone.paused) {
+      if (ringtone.paused && !audioStarted) {
         setTimeout(() => {
           startRingtoneAutomatically();
         }, 300);
+      }
+    });
+
+    // Clean up saat komponen unmount (jika dalam iframe)
+    window.addEventListener('message', function(event) {
+      if (event.data === 'stopAudio') {
+        stopRingtone();
       }
     });
   </script>
