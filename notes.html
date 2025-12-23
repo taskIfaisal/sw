@@ -1,0 +1,852 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <meta name="theme-color" content="#000000">
+
+  <link rel="manifest" href="notespmanifest.json">
+
+  <title>Notes</title>
+
+
+
+  <!-- Inline CSS -->
+
+  <style>
+
+* {
+
+  margin: 0;
+
+  padding: 0;
+
+  box-sizing: border-box;
+
+}
+
+
+
+html, body {
+
+  width: 100%;
+
+  height: 100%;
+
+  background-color: #000;
+
+  overflow: hidden; /* Lock scrolling globally */
+
+  touch-action: none; /* Prevent scrolling */
+
+}
+
+
+
+#app {
+
+  width: 100vw;
+
+  height: 100vh;
+
+  position: relative;
+
+  background-size: cover;
+
+  background-position: center 100%;
+
+  background-repeat: no-repeat;
+
+  background-image: url('notespbg.jpg'); /* Initial background image */
+
+}
+
+
+
+#text-overlay {
+
+  position: absolute;
+
+  bottom: 0;
+
+  width: 100%;
+
+  height: 10%;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+}
+
+
+
+#hidden-input {
+
+  width: 80%;
+
+  padding: 10px;
+
+  font-size: 18px;
+
+  color: transparent;
+
+  background-color: transparent;
+
+  border: none;
+
+  outline: none;
+
+  caret-color: white;
+
+}
+
+
+
+#hidden-button {
+
+  position: absolute;
+
+  top: 0;
+
+  left: 0;
+
+  width: 70px;
+
+  height: 30px;
+
+  background-color: transparent;
+
+  border: none;
+
+  z-index: 10;
+
+}
+
+
+
+#clear-button {
+
+  position: absolute;
+
+  top: 0;
+
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  width: 70px;
+
+  height: 30px;
+
+  background-color: transparent;
+
+  border: none;
+
+  z-index: 10;
+
+}
+
+
+
+#crib-menu {
+
+  position: absolute;
+
+  top: 50px;
+
+  left: 10px;
+
+  width: 90%;
+
+  max-height: 85vh; /* Adjust this value for better visibility */
+
+  background-color: rgba(0, 0, 0, 0.8);
+
+  color: white;
+
+  padding: 10px;
+
+  border-radius: 8px;
+
+  z-index: 20;
+
+  display: none; /* Initially hidden */
+
+  touch-action: none; /* Prevent any touch actions inside the menu */
+
+  column-count: 2; /* Make content split into two columns */
+
+  column-gap: 70px; /* Space between the columns */
+
+}
+
+
+
+#crib-menu ul {
+
+  list-style-type: none;
+
+}
+
+
+
+#crib-menu li {
+
+  margin: 5px 0;
+
+  font-size: 12px; /* Adjust this value to your desired font size */
+
+}
+
+
+
+
+
+.hidden {
+
+  display: none;
+
+}
+
+
+
+#drawing-canvas {
+
+  position: absolute;
+
+  top: 0;
+
+  left: 0;
+
+  width: 100%;
+
+  height: 100%;
+
+}
+
+
+
+
+
+  </style>
+
+</head>
+
+<body>
+
+  <div id="app">
+
+    <canvas id="drawing-canvas"></canvas>
+
+    <div id="text-overlay" class="hidden">
+
+      <input type="text" id="hidden-input" placeholder=" " autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+
+    </div>
+
+    <button id="hidden-button" aria-hidden="true"></button>
+
+    <button id="clear-button" aria-hidden="true"></button> <!-- Invisible button at the top center -->
+
+    <div id="crib-menu">
+
+      <ul>
+
+     <li><strong>- - - ESP - - -</strong></li>
+
+        <li><strong>&#11093;&#65039; CIRCLE:</strong> wonderful</li>
+
+        <li><strong>&#10133; CROSS:</strong> towards</li>
+
+        <li><strong>&#127754; WAVES:</strong> free</li>
+
+        <li><strong>&#128314; TRIANGLE:</strong> fair choice</li>
+
+        <li><strong>&#129000; SQUARE:</strong> fantastic</li>
+
+        <li><strong>&#11088;&#65039; STAR:</strong> finally</li>
+
+    <li><strong>&#12336;&#65039;</strong></li>
+
+        <li><strong>- - - DRAWINGS - - -</strong></li>
+
+        <li><strong>&#129485; STICK FIG:</strong> human</li>
+
+        <li><strong>&#128515; SMILEY:</strong> zoomed</li>
+
+        <li><strong>&#10084;&#65039; HEART:</strong> affectionate</li>
+
+        <li><strong>&#128741;&#65039; BOAT:</strong> serene</li>
+
+        <li><strong>&#127968; HOUSE:</strong> wholesome</li>
+
+        <li><strong>&#128690; BIKE:</strong> movement</li>
+
+        <li><strong>&#128663; CAR:</strong> speed</li>
+
+        <li><strong>&#128642; TRAIN:</strong> momentum</li>
+
+        <li><strong>&#9992;&#65039; PLANE:</strong> take flight</li>
+
+        <li><strong>&#128640; ROCKET:</strong> outer space</li>
+
+         <li><strong>&#9961;&#65039; TABLE:</strong> surface</li>
+
+      <li><strong>&#128250; TV:</strong> visual</li>
+
+       <li><strong>&#128222; PHONE:</strong> communicate</li>
+
+       <li><strong>&#128214; BOOK:</strong> literature</li>
+
+        <li><strong>&#127863; GLASS:</strong> drink from</li>
+
+         <li><strong>&#9999;&#65039; PEN(CIL):</strong> artistic</li>
+
+        <li><strong>&#128272; KEY:</strong> security</li>
+
+        <li><strong>&#9200; CLOCK:</strong> keeping time</li>
+
+        <li><strong>&#128298; KNIFE:</strong> sharp</li>
+
+        <li><strong>&#128299; GUN:</strong> lethal</li>
+
+        <li><strong>&#127795; TREE:</strong> natural</li>
+
+        <li><strong>&#127803; FLOWER:</strong> organic</li>
+
+        <li><strong>&#9728;&#65039; SUN:</strong> painting</li>
+
+        <li><strong>&#127769; MOON:</strong> night sky</li>
+
+        <li><strong>&#127783;&#65039; RAIN:</strong> weather</li>
+
+        <li><strong>&#9889;&#65039; BOLT:</strong> powerful</li>
+
+        <li><strong>&#128054; DOG:</strong> loyal</li>
+
+        <li><strong>&#128049; CAT:</strong> living</li>
+
+         <li><strong>&#128031; FISH:</strong> underwater</li>
+
+        <li><strong>&#129436; BIRD:</strong> in the sky</li>
+
+        <li><strong>&#128125; ALIEN:</strong> weirdly</li>
+
+        <li><strong>&#128123; GHOST:</strong> spooky</li>
+
+       <li><strong>&#128128; SKULL:</strong> morbid</li> 
+
+<li><strong>&#12336;&#65039;</strong></li>
+
+        <li><strong>- - - HECKLERS - - -</strong></li>
+
+        <li><strong>&#128221; SCRIBBLE:</strong> nothing</li>
+
+         <li><strong>&#128405;&#127996; F-U:</strong> offensive</li>
+
+        <li><strong>&#128683; NO:</strong> negative</li>
+
+        <li><strong>&#127814; COCK:</strong> strangely</li>
+
+      </ul>
+
+    </div>
+
+  </div>
+
+
+
+<!-- Inline JavaScript -->
+
+<script>
+
+  document.addEventListener("DOMContentLoaded", () => {
+
+    const app = document.getElementById("app");
+
+    const textOverlay = document.getElementById("text-overlay");
+
+    const hiddenInput = document.getElementById("hidden-input");
+
+    const hiddenButton = document.getElementById("hidden-button");
+
+    const clearButton = document.getElementById("clear-button");
+
+    const cribMenu = document.getElementById("crib-menu");
+
+    const canvas = document.getElementById("drawing-canvas");
+
+    const ctx = canvas.getContext("2d");
+
+
+
+    // Lock orientation to portrait if supported
+
+    try {
+
+      if (screen.orientation && screen.orientation.lock) {
+
+        screen.orientation.lock('portrait');
+
+      }
+
+    } catch (error) {
+
+      // Silently handle the error if locking orientation fails
+
+      // No console error shown
+
+    }
+
+
+
+    // Track the number of consecutive resets
+
+    let resetCount = 0;
+
+
+
+    // Set canvas size to match the app container
+
+    const resizeCanvas = () => {
+
+      canvas.width = app.clientWidth;
+
+      canvas.height = app.clientHeight;
+
+    };
+
+    resizeCanvas();
+
+    window.addEventListener("resize", resizeCanvas);
+
+
+
+    // Toggle crib menu visibility
+
+    hiddenButton.addEventListener("click", () => {
+
+      const isMenuVisible = cribMenu.style.display === "block";
+
+      cribMenu.style.display = isMenuVisible ? "none" : "block";
+
+    });
+
+
+
+    // Drawing state variables
+
+    let isDrawing = false;
+
+    let lastX = 0;
+
+    let lastY = 0;
+
+
+
+    // Start drawing on touch start
+
+    canvas.addEventListener("touchstart", (e) => {
+
+      isDrawing = true;
+
+      const touch = e.touches[0];
+
+      lastX = touch.clientX;
+
+      lastY = touch.clientY;
+
+    });
+
+
+
+    // Draw on touch move
+
+    canvas.addEventListener("touchmove", (e) => {
+
+      if (!isDrawing) return;
+
+      const touch = e.touches[0];
+
+      ctx.strokeStyle = "white";
+
+      ctx.lineWidth = 1.8;
+
+      ctx.lineCap = "round";
+
+      ctx.beginPath();
+
+      ctx.moveTo(lastX, lastY);
+
+      ctx.lineTo(touch.clientX, touch.clientY);
+
+      ctx.stroke();
+
+      lastX = touch.clientX;
+
+      lastY = touch.clientY;
+
+    });
+
+
+
+    // Stop drawing on touch end
+
+    canvas.addEventListener("touchend", () => {
+
+      isDrawing = false;
+
+    });
+
+
+
+    // Clear the canvas when the keyboard opens
+
+    hiddenInput.addEventListener("focus", () => {
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    });
+
+
+
+    // Clear the canvas when the clear button is pressed
+
+    clearButton.addEventListener("click", () => {
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    });
+
+
+
+    // Function to update the background image and close the keyboard
+
+    const updateBackgroundImageAndCloseKeyboard = (imageSrc) => {
+
+  app.style.backgroundImage = `url('${imageSrc}')`; // Corrected this line
+
+  hiddenInput.value = ''; // Clear the input
+
+  hiddenInput.blur(); // Attempt to remove focus
+
+  textOverlay.classList.add("hidden"); // Hide the text overlay
+
+};
+
+
+
+
+
+    // Function to reset background to the original one (notespbg.jpg)
+
+    const resetBackgroundImage = () => {
+
+      app.style.backgroundImage = "url('notespbg.jpg')";
+
+      hiddenInput.value = ''; // Clear the input
+
+      hiddenInput.blur(); // Attempt to remove focus
+
+      textOverlay.classList.add("hidden"); // Hide the text overlay
+
+    };
+
+
+
+    // Reset button functionality (pressed twice in succession)
+
+    clearButton.addEventListener("click", () => {
+
+      resetCount++;
+
+
+
+      // If the reset button is pressed twice in succession, reset the background
+
+      if (resetCount === 2) {
+
+        resetBackgroundImage();
+
+        resetCount = 0; // Reset the count after resetting
+
+      } else {
+
+        setTimeout(() => {
+
+          resetCount = 0; // Reset count after a short delay if not pressed twice
+
+        }, 500); // 500ms delay to catch double press
+
+      }
+
+    });
+
+
+
+
+
+
+
+    // Check for specific keywords and update the image
+
+    const checkKeywords = (text) => {
+
+      if (text.includes("wonderful")) {
+
+        updateBackgroundImageAndCloseKeyboard("circle.jpg");
+
+      } else if (text.includes("towards")) {
+
+        updateBackgroundImageAndCloseKeyboard("cross.jpg");
+
+      } else if (text.includes("free")) {
+
+        updateBackgroundImageAndCloseKeyboard("waves.jpg");
+
+      } else if (text.includes("fantastic")) {
+
+        updateBackgroundImageAndCloseKeyboard("square.jpg");
+
+      } else if (text.includes("finally")) {
+
+        updateBackgroundImageAndCloseKeyboard("star.jpg");
+
+      } else if (text.includes("strangely")) {
+
+        updateBackgroundImageAndCloseKeyboard("cock.jpg");
+
+      } else if (text.includes("serene")) {
+
+        updateBackgroundImageAndCloseKeyboard("boat.jpg");
+
+      } else if (text.includes("wholesome")) {
+
+        updateBackgroundImageAndCloseKeyboard("house.jpg");
+
+      } else if (text.includes("movement")) {
+
+        updateBackgroundImageAndCloseKeyboard("bike.jpg");
+
+      } else if (text.includes("painting")) {
+
+        updateBackgroundImageAndCloseKeyboard("sun.jpg");
+
+      } else if (text.includes("nothing")) {
+
+        updateBackgroundImageAndCloseKeyboard("scribble.jpg");
+
+      } else if (text.includes("negative")) {
+
+        updateBackgroundImageAndCloseKeyboard("no.jpg");
+
+      } else if (text.includes("lady in red")) {
+
+        updateBackgroundImageAndCloseKeyboard("qh.jpg");
+
+      } else if (text.includes("old faithful")) {
+
+        updateBackgroundImageAndCloseKeyboard("as.jpg");
+
+      } else if (text.includes("fave card")) {
+
+        updateBackgroundImageAndCloseKeyboard("7d.jpg");
+
+      } else if (text.includes("speed")) {
+
+        updateBackgroundImageAndCloseKeyboard("car.jpg");
+
+      } else if (text.includes("living")) {
+
+        updateBackgroundImageAndCloseKeyboard("cat.jpg");
+
+      } else if (text.includes("natural")) {
+
+        updateBackgroundImageAndCloseKeyboard("tree.jpg");
+
+      } else if (text.includes("human")) {
+
+        updateBackgroundImageAndCloseKeyboard("stick.jpg");
+
+      } else if (text.includes("zoomed")) {
+
+        updateBackgroundImageAndCloseKeyboard("face.jpg");
+
+      } else if (text.includes("affectionate")) {
+
+        updateBackgroundImageAndCloseKeyboard("heart.jpg");
+
+      } else if (text.includes("organic")) {
+
+        updateBackgroundImageAndCloseKeyboard("flower.jpg");
+
+      } else if (text.includes("weather")) {
+
+        updateBackgroundImageAndCloseKeyboard("rain.jpg");
+
+      } else if (text.includes("drink from")) {
+
+        updateBackgroundImageAndCloseKeyboard("wine.jpg");
+
+      } else if (text.includes("surface")) {
+
+        updateBackgroundImageAndCloseKeyboard("table.jpg");
+
+      } else if (text.includes("underwater")) {
+
+        updateBackgroundImageAndCloseKeyboard("fish.jpg");
+
+      } else if (text.includes("artistic")) {
+
+        updateBackgroundImageAndCloseKeyboard("pencil.jpg");
+
+      } else if (text.includes("night sky")) {
+
+        updateBackgroundImageAndCloseKeyboard("moon.jpg");
+
+      } else if (text.includes("real masterpiece")) {
+
+        updateBackgroundImageAndCloseKeyboard("art.jpg");
+
+      } else if (text.includes("outer space")) {
+
+        updateBackgroundImageAndCloseKeyboard("rocket.jpg");
+
+      } else if (text.includes("offensive")) {
+
+        updateBackgroundImageAndCloseKeyboard("fu.jpg");
+
+      } else if (text.includes("loyal")) {
+
+        updateBackgroundImageAndCloseKeyboard("dog.jpg");
+
+      } else if (text.includes("take flight")) {
+
+        updateBackgroundImageAndCloseKeyboard("plane.jpg");
+
+      } else if (text.includes("in the sky")) {
+
+        updateBackgroundImageAndCloseKeyboard("airborne.jpg");
+
+      } else if (text.includes("weirdly")) {
+
+        updateBackgroundImageAndCloseKeyboard("ufo.jpg");
+
+      } else if (text.includes("spooky")) {
+
+        updateBackgroundImageAndCloseKeyboard("ghost.jpg");
+
+      } else if (text.includes("morbid")) {
+
+        updateBackgroundImageAndCloseKeyboard("skull.jpg");
+
+      } else if (text.includes("powerful")) {
+
+        updateBackgroundImageAndCloseKeyboard("bolt.jpg");
+
+      } else if (text.includes("communicate")) {
+
+        updateBackgroundImageAndCloseKeyboard("phone.jpg");
+
+      } else if (text.includes("literature")) {
+
+        updateBackgroundImageAndCloseKeyboard("book.jpg");
+
+      } else if (text.includes("visual")) {
+
+        updateBackgroundImageAndCloseKeyboard("tv.jpg");
+
+      } else if (text.includes("keeping time")) {
+
+        updateBackgroundImageAndCloseKeyboard("clock.jpg");
+
+      } else if (text.includes("security")) {
+
+        updateBackgroundImageAndCloseKeyboard("key.jpg");
+
+      } else if (text.includes("darren close")) {
+
+        updateBackgroundImageAndCloseKeyboard("darren.mov");
+
+      } else if (text.includes("fair choice")) {
+
+        updateBackgroundImageAndCloseKeyboard("triangle.jpg");
+
+  } else if (text.includes("sharp")) {
+
+        updateBackgroundImageAndCloseKeyboard("sword.jpg");
+
+  } else if (text.includes("lethal")) {
+
+        updateBackgroundImageAndCloseKeyboard("gun.jpg");
+
+  } else if (text.includes("momentum")) {
+
+        updateBackgroundImageAndCloseKeyboard("train.jpg");
+
+   }
+
+    };
+
+
+
+   // Handle input changes using the input event (works for both typing and voice input)
+
+      hiddenInput.addEventListener("input", () => {
+
+        const text = hiddenInput.value.toLowerCase().trim();
+
+        checkKeywords(text);
+
+      });
+
+
+
+    // Close the crib menu when the keyboard closes (blur event)
+
+    hiddenInput.addEventListener("blur", () => {
+
+      if (cribMenu.style.display === "block") {
+
+        cribMenu.style.display = "none"; // Close the menu if it's open
+
+      }
+
+    });
+
+  });
+
+
+
+if ("serviceWorker" in navigator) {
+
+  navigator.serviceWorker.register("/service-worker.js", { scope: "/" })
+
+    .then(() => console.log("Service Worker Registered"))
+
+    .catch((error) => console.error("Service Worker Registration Failed", error));
+
+}
+
+
+
+</script>
+
+
+
+</body>
+
+</html>
