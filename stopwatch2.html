@@ -198,7 +198,6 @@
         @media (max-width: 600px) {
             .time-display {
                 font-size: 23vw;
-                /* Ukuran font lebih besar untuk layar kecil */
             }
         }
     </style>
@@ -243,22 +242,18 @@
         </a>
     </nav>
 
-    <!-- Script tetap -->
     <script>
         let forcedMsList = []; // Daftar angka paksa
         let forcedMsIndex = 0; // Posisi angka paksa sekarang
-        let forcedMs = null; // <- Tambahkan ini
+        let forcedMs = null; // Angka paksa saat ini
         let isForcedMsActive = false;
-
-        // let isForcedMsActive = false;  // Variabel untuk status paksa milidetik
-        // let forcedMs = null;
-        let isStartedOnce = false;  // Flag untuk memeriksa apakah Start sudah pernah ditekan
-
+        let isStartedOnce = false;
         let startTime = 0;
         let elapsedTime = 0;
         let timerInterval;
         let isRunning = false;
         let lapCount = 1;
+        let lapTimestamps = [];
 
         const leftBtn = document.getElementById('leftBtn');
         const rightBtn = document.getElementById('rightBtn');
@@ -267,18 +262,6 @@
         const minEl = document.getElementById('min');
         const secEl = document.getElementById('sec');
         const msEl = document.getElementById('ms');
-
-        let lapTimestamps = [];
-
-        // Fungsi untuk toggle paksa milidetik
-        function toggleForcedMs() {
-            isForcedMsActive = !isForcedMsActive; // Toggle status paksa milidetik
-            if (isForcedMsActive) {
-                alert("Angka paksa milidetik diaktifkan!");
-            } else {
-                alert("Angka paksa milidetik dinonaktifkan.");
-            }
-        }
 
         function formatTime(ms) {
             const totalSeconds = Math.floor(ms / 1000);
@@ -323,13 +306,11 @@
 
         function startTimer() {
             if (isStartedOnce) {
-                // Jika sudah pernah ditekan, paksa milidetik jika ada
                 startTime = Date.now() - elapsedTime;
-                isForcedMsActive = true;  // Paksa milidetik
+                isForcedMsActive = true;
             } else {
-                // Jika pertama kali tekan Start, timer berjalan normal
                 startTime = Date.now() - elapsedTime;
-                isStartedOnce = true; // Set flag jika sudah pernah ditekan
+                isStartedOnce = true;
             }
 
             timerInterval = setInterval(updateTime, 10);
@@ -350,14 +331,15 @@
             clearInterval(timerInterval);
             isRunning = false;
 
-            // Ambil angka paksa dari daftar, kalau masih ada
+            // Ambil angka paksa dari daftar, jika masih ada
             if (forcedMsList.length > 0 && forcedMsIndex < forcedMsList.length) {
-                forcedMs = forcedMsList[forcedMsIndex++];
+                forcedMs = forcedMsList[forcedMsIndex];
+                forcedMsIndex++; // Naikkan index, TANPA LOOPING
             } else {
-                forcedMs = null;
+                forcedMs = null; // Kembali normal
             }
 
-            updateTime(); // tampilkan angka paksa langsung
+            updateTime();
 
             rightBtn.textContent = "Start";
             rightBtn.classList.remove("stop");
@@ -368,15 +350,13 @@
             leftBtn.classList.add("reset");
         }
 
-
-
-
         function resetTimer() {
             elapsedTime = 0;
             lapCount = 1;
             lapTimestamps = [];
             forcedMs = null;
-            isStartedOnce = false; // Reset flag setelah reset
+            forcedMsIndex = 0; // Reset index ke 0
+            isStartedOnce = false;
             minEl.textContent = "00";
             secEl.textContent = "00";
             msEl.textContent = "00";
@@ -386,14 +366,15 @@
         function addLap() {
             let currentElapsed;
 
-            // Stopwatch tidak berjalan, gunakan angka paksa milidetik jika ada
-            if (!isRunning && forcedMsList.length > 0 && forcedMsIndex < forcedMsList.length) {
+            // Ambil angka paksa berikutnya untuk LAP, jika masih ada
+            if (forcedMsList.length > 0 && forcedMsIndex < forcedMsList.length) {
                 forcedMs = forcedMsList[forcedMsIndex];
-                forcedMsIndex = (forcedMsIndex + 1) % forcedMsList.length; // Setelah habis, ulangi
+                forcedMsIndex++; // Naikkan index, TANPA LOOPING
             }
 
+            // Jika stopwatch tidak berjalan DAN ada angka paksa
             if (!isRunning && forcedMs !== null) {
-                currentElapsed = elapsedTime + forcedMs * 10;
+                currentElapsed = Math.floor(elapsedTime / 1000) * 1000 + forcedMs * 10;
             } else {
                 currentElapsed = elapsedTime;
             }
@@ -401,7 +382,7 @@
             const previousElapsed = lapTimestamps.length > 0 ? lapTimestamps[lapTimestamps.length - 1] : 0;
             const lapTime = currentElapsed - previousElapsed;
 
-            lapTimestamps.push(currentElapsed); // Simpan timestamp terbaru
+            lapTimestamps.push(currentElapsed);
 
             const formattedLapTime = formatTime(lapTime);
 
@@ -409,7 +390,7 @@
             lapItem.className = "lap-item";
 
             // Jika ada angka paksa milidetik, tampilkan sesuai dengan angka paksa
-            if (forcedMs !== null) {
+            if (!isRunning && forcedMs !== null) {
                 const formattedTimeWithForcedMs = formattedLapTime.replace(/(\d{2}):(\d{2}),(\d{2})/, `$1:$2,${forcedMs.toString().padStart(2, '0')}`);
                 lapItem.innerHTML = `<span>Lap ${lapCount++}</span><span>${formattedTimeWithForcedMs}</span>`;
             } else {
@@ -419,13 +400,9 @@
             lapItem.dataset.lapTime = lapTime;
             lapList.prepend(lapItem);
 
-            // Update lap terbaru dengan waktu yang benar-benar baru
             updateLapTimes();
         }
 
-
-
-        // Fungsi untuk menyegarkan lap yang telah ditambahkan
         function updateLapTimes() {
             const laps = Array.from(lapList.querySelectorAll('.lap-item'));
             if (laps.length < 2) return;
@@ -463,11 +440,8 @@
 
             forcedMsList = values;
             forcedMsIndex = 0;
-            alert("Empat angka milidetik telah disimpan.");
+            alert("Empat angka milidetik telah disimpan. Akan digunakan untuk 4 kali aksi Stop/Lap berikutnya.");
         });
-
-
-
     </script>
 </body>
 
