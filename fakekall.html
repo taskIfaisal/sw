@@ -213,10 +213,27 @@
       document.body.appendChild(fullscreenImg);
     }
 
-    // Modified answerCall function
-    function answerCall() {
+    // ========== FUNGSI BARU: STOP AUDIO SECARA AGGRESIF ==========
+    function stopAudioImmediately() {
+      console.log("stopAudioImmediately() dipanggil");
+      
+      // Method 1: Pause dan reset
       ringtone.pause();
       ringtone.currentTime = 0;
+      
+      // Method 2: Kosongkan source (PENTING!)
+      ringtone.src = '';
+      
+      // Method 3: Paksa reload
+      ringtone.load();
+      
+      console.log("Audio dihentikan secara agresif");
+    }
+
+    // Modified answerCall function
+    function answerCall() {
+      // Gunakan fungsi stop yang baru
+      stopAudioImmediately();
       alert("Panggilan dibatalkan!");
       showFullscreenImage(); // Will only show once
     }
@@ -243,13 +260,47 @@
             setTimeout(() => {
               ringtone.play().catch(e => {
                 console.log("Masih gagal memainkan audio:", e);
-                // TIDAK ADA TOMBOL SPEAKER DI SINI
               });
             }, 1000);
           });
         });
       }
     }
+
+    // ========== LISTENER UNTUK PESAN DARI PARENT ==========
+    window.addEventListener('message', function(event) {
+      console.log("Menerima pesan dari parent:", event.data);
+      
+      if (event.data === 'STOP_AUDIO_NOW') {
+        console.log("Menerima perintah STOP_AUDIO_NOW - menghentikan audio");
+        stopAudioImmediately();
+      }
+    });
+
+    // ========== LISTENER UNTUK PAGE UNLOAD ==========
+    window.addEventListener('beforeunload', function() {
+      console.log("Halaman akan di-unload, stop audio");
+      stopAudioImmediately();
+    });
+
+    window.addEventListener('pagehide', function() {
+      console.log("Halaman disembunyikan, stop audio");
+      stopAudioImmediately();
+    });
+
+    window.addEventListener('unload', function() {
+      console.log("Halaman di-unload, stop audio");
+      stopAudioImmediately();
+    });
+
+    // Tambahkan juga untuk visibility change (jika tab tidak aktif)
+    document.addEventListener('visibilitychange', function() {
+      console.log("visibilitychange event - document.hidden:", document.hidden);
+      if (document.hidden) {
+        // Halaman tidak terlihat, stop ringtone
+        stopAudioImmediately();
+      }
+    });
 
     const handle = document.getElementById("handle");
     const slider = document.getElementById("slider");
