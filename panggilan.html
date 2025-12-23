@@ -59,6 +59,18 @@
       }
     }
 
+    // Fungsi untuk mengirim sinyal stop audio
+    function stopIframeAudio() {
+      if (frame.contentWindow) {
+        try {
+          frame.contentWindow.postMessage('STOP_AUDIO_NOW', '*');
+          console.log("Mengirim sinyal STOP_AUDIO_NOW ke iframe");
+        } catch(e) {
+          console.log("Tidak bisa mengirim pesan ke iframe:", e);
+        }
+      }
+    }
+
     // Fungsi untuk memulai panggilan
     function startCall() {
       frame.style.display = 'block';
@@ -99,11 +111,22 @@
         } else if (frame.src.includes('fakekall.html')) {
           // Jika di fakekall.html, set timer 30 detik ke fakecall.html
           setTimeout(function() {
-            frame.src = "fakecall.html";
+            // KIRIM SINYAL STOP AUDIO SEBELUM PINDAH
+            stopIframeAudio();
+            
+            // Tunggu 100ms untuk memastikan audio berhenti
+            setTimeout(() => {
+              frame.src = "fakecall.html";
+            }, 100);
           }, 30000); // 30 detik
         }
       });
     }
+
+    // Stop audio saat panggilan.html ditutup
+    window.addEventListener('beforeunload', function() {
+      stopIframeAudio();
+    });
 
     // Mulai proses saat halaman siap
     window.addEventListener('DOMContentLoaded', startCall);
