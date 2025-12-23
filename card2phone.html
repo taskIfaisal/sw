@@ -44,15 +44,15 @@
         
         #card {
             position: absolute;
-            width: auto; /* Biarkan ukuran asli */
-            height: auto; /* Biarkan ukuran asli */
-            max-width: none; /* Hapus batasan maksimum */
-            max-height: none; /* Hapus batasan maksimum */
+            width: 100%;
+            max-width: 200px;
             z-index: 2;
             user-select: none;
             -webkit-user-drag: none;
             touch-action: none;
+            /* Tambahkan ini untuk zoom yang lebih baik */
             transform-origin: center center;
+            height: auto; /* Biarkan tinggi menyesuaikan */
         }
         #settings {
             position: fixed;
@@ -124,6 +124,7 @@
             display: block;
             margin: 0 auto;
             touch-action: none;
+            /* Tambahkan ini untuk zoom yang lebih baik */
             transform-origin: center center;
         }
 
@@ -226,8 +227,8 @@
         let isExiting = false;
 
         // Initialize card properties
-        let posX = window.innerWidth / 2;
-        let posY = window.innerHeight / 2;
+        let posX = window.innerWidth / 2 - card.offsetWidth / 2;
+        let posY = window.innerHeight / 2 - card.offsetHeight / 2;
         let scale = 1;
         let isDragging = false;
         let startX, startY;
@@ -237,11 +238,11 @@
         let lastPosY = 0;
         let lastTime = 0;
         
-        // SENSOR VARIABLES
-        let smoothBeta = 0;
-        let smoothGamma = 0;
-        const sensitivity = 0.5;
-        const smoothing = 0.2;
+        // SENSOR VARIABLES - Ditambahkan
+        let smoothBeta = 0;      // Untuk smoothing beta (tilt depan-belakang)
+        let smoothGamma = 0;     // Untuk smoothing gamma (tilt kiri-kanan)
+        const sensitivity = 0.5; // Sensitivitas gerakan kartu
+        const smoothing = 0.2;   // Smoothing untuk gerakan halus
         let isSensorEnabled = false;
         
         // Set initial positions
@@ -313,7 +314,8 @@
                     posX = newPosX;
                     posY = newPosY;
                     
-                    // TIDAK ADA BATASAN SAAT DRAGGING
+                    // Apply bounds saat dragging juga
+
                     updateCardTransform();
                 }
                 e.preventDefault();
@@ -327,18 +329,18 @@
                 // Check if card is flicked quickly
                 const speedThreshold = 1000; // pixels per second
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+                const outTop    = posY < -card.offsetHeight * scale * 0.4;
+const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
+const outLeft   = posX < -card.offsetWidth * scale * 0.4;
+const outRight  = posX > window.innerWidth - card.offsetWidth * scale * 0.6;
+
+if (outTop || outBottom || outLeft || outRight) {
+    card.style.transition = 'none';
+    hideCard();
+    return;
+}
+
                 
-                // Batas yang sangat longgar untuk ukuran asli
-                const outTop = posY < -card.offsetHeight * scale + 10;
-                const outBottom = posY > window.innerHeight - 10;
-                const outLeft = posX < -card.offsetWidth * scale + 10;
-                const outRight = posX > window.innerWidth - 10;
-                
-                if (outTop || outBottom || outLeft || outRight) {
-                    card.style.transition = 'none';
-                    hideCard();
-                    return;
-                }
             }
         });
         
@@ -433,8 +435,8 @@
                     posX += smoothGamma * sensitivity;
                     posY += smoothBeta * sensitivity;
                     
-                    // TIDAK ADA BATASAN UNTUK UKURAN ASLI
-                    // Biarkan gambar bergerak bebas
+                    // PASTIKAN KARTU TIDAK KELUAR DARI BATAS LAYAR
+                    applyBounds();
                     updateCardTransform();
                 }
                 
@@ -444,9 +446,21 @@
             animate();
         }
         
-        // ===== FUNGSI BATAS DIHAPUS =====
-        // Tidak ada applyBounds() karena gambar bebas bergerak
-        
+        function applyBounds() {
+            // Hitung ukuran kartu yang sudah discale
+            const cardWidth = card.offsetWidth * scale;
+            const cardHeight = card.offsetHeight * scale;
+            
+            // PERBAIKAN: Hitung batas dengan benar
+            const minX = 0;
+            const maxX = window.innerWidth - cardWidth;
+            const minY = 0;
+            const maxY = window.innerHeight - cardHeight;
+            
+            // Terapkan batas dengan benar
+            posX = Math.max(minX, Math.min(maxX, posX));
+            posY = Math.max(minY, Math.min(maxY, posY));
+        }
         // ===== END SENSOR IMPLEMENTATION =====
         
         // Image Editor Function
@@ -532,16 +546,17 @@
         }
         
         function showCard() {
-            // Reset to center position - TANPA PENYESUAIAN UKURAN
-            posX = window.innerWidth / 2;
-            posY = window.innerHeight / 2;
+            // Reset to center position
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
             card.style.display = 'block';
         }
         
         // Handle window resize
         window.addEventListener('resize', () => {
-            // Tetap di posisi relatif yang sama
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
         });
     </script>
