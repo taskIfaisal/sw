@@ -1,0 +1,428 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>page</title>
+    <meta content="width=device-width,initial-scale=1.0" name="viewport">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="/css/google_v3.css">
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/jck.js"></script>
+    <script type="text/javascript" src="/js/ns-4.js"></script>
+</head>
+<body hidden>
+<div id="notifications"><div class="icons"></div><div class="time">22:18</div></div>
+<div id="address-bar"><div class="home-button"></div><input id="fakebarurl" type="text" value="google.com"><div id="chrome-menu"></div></div>
+<div id="gb-main">
+    <div class="above-the-fold">
+        <div class="top-bar">
+            <div class="burger-menu">
+                <svg style="fill:#70757a;width:24px;height:24px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="none"></path><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path></svg>
+            </div>
+            <div class="menu-buttons" id="menu-buttons">
+                <div id="web" class="all selected">ALL</div>
+                <div id="images" class="images">IMAGES</div>
+            </div>
+            <div class="fill"></div>
+            <div class="grid-signin">
+                <div class="products-grid" id="products-grid">
+                    <svg focusable="false" viewBox="0 0 24 24" xml:space="preserve"><path id="grid-button" d="M6,8c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM12,20c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM6,20c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM6,14c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM12,14c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM16,6c0,1.1 0.9,2 2,2s2,-0.9 2,-2 -0.9,-2 -2,-2 -2,0.9 -2,2zM12,8c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM18,14c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM18,20c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2z"></path></svg>
+                    <div class="products-popup" id="products-popup">
+                        <div class="product-icon" id="amazon">
+                            <div class="icon account"></div>
+                            <div class="icon-title">Amazon</div>
+                        </div>
+                        <div class="product-icon" id="yahoo">
+                            <div class="icon search"></div>
+                            <div class="icon-title">Yahoo</div>
+                        </div>
+                        <div class="product-icon" id="maps">
+                            <div class="icon maps"></div>
+                            <div class="icon-title">Maps</div>
+                        </div>
+                        <div class="product-icon" id="youtube">
+                            <div class="icon youtube"></div>
+                            <div class="icon-title">YouTube</div>
+                        </div>
+                        <div class="product-icon" id="imdb">
+                            <div class="icon play"></div>
+                            <div class="icon-title">Imdb</div>
+                        </div>
+                        <div class="product-icon" id="wiki">
+                            <div class="icon news"></div>
+                            <div class="icon-title">Wiki</div>
+                        </div>
+                        <div class="product-icon" id="m2">
+                            <div class="icon gmail"></div>
+                            <div class="icon-title">Normal</div>
+                        </div>
+                        <div class="product-icon" id="m1">
+                            <div class="icon meet"></div>
+                            <div class="icon-title">Contact</div>
+                        </div>
+                        <div class="product-icon" id="m0">
+                            <div class="icon chat"></div>
+                            <div class="icon-title">Wait</div>
+                        </div>
+                        <div class="product-icon" id="contacts">
+                            <div class="icon contacts"></div>
+                            <div class="icon-title">Language</div>
+                        </div>
+                        <div class="product-icon">
+                            <div class="icon drive"></div>
+                            <div class="icon-title">Drive</div>
+                        </div>
+                        <div class="product-icon" id="fakebar">
+                            <div class="icon meet"></div>
+                            <div class="icon-title">Address Bar</div>
+                        </div>
+                        <div class="product-icon" id="trends">
+                            <div class="icon photos"></div>
+                            <div class="icon-title">Photos</div>
+                        </div>
+                        <div class="product-icon">
+                            <div class="icon duo"></div>
+                            <div class="icon-title">Duo</div>
+                        </div>
+                        <div class="product-icon">
+                            <div class="icon chrome"></div>
+                            <div class="icon-title">Chrome</div>
+                        </div>
+                        <div class="product-icon">
+                            <div class="icon shopping"></div>
+                            <div class="icon-title">Shopping</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="signin-button" id="signinBtn">
+                    <a id="signin" >
+                        <div>Sign in</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="logo" id="logo" hidden>
+            <div id="imageText" nowrap="">Images</div>
+        </div>
+        <div style="text-align:center;margin:0 10px;position:relative" id="doodle" hidden>
+            <div style="display:inline-block">
+                <a style="background-image:none" data-hveid="4">
+                    <img style="border:none;max-width: 100%;margin:8px 0" src="" id="doodleImg">
+                </a>
+            </div>
+        </div>
+        <div class="search-bar">
+            <div id="backArrowButton" class="back-arrow">
+                <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path></svg>
+            </div>
+            <div class="magnifier">
+                <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
+            </div>
+            <form id="form" name="form" action=".">
+                <input class="search-box" type="text" id="search-box" name="search-box" autocapitalize="none" value="">
+            </form>
+            <div class="clear-button">
+                <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+            </div>
+            <div id="mic" class="search-by-voice">
+                <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"></path></svg>
+            </div>
+            <div class="suggestion">
+                <div class="search-magnifier">
+                    <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
+                </div>
+                <div class="suggestion-text"></div>
+                <div class="link-arrow">
+                    <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path></svg>
+                </div>
+            </div>
+            <div class="suggestions"></div>
+        </div>
+
+        <div class="trend">
+            <div class="trend-icon">
+                <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>
+            </div>
+            <div class="text">Michigan vs Michigan State</div>
+        </div>
+        <div class="trending">
+            <div class="title">Trending searches</div>
+        </div>
+    </div>
+    <!--  <div class="below-the-fold">
+        <a>Settings</a>
+        <a>Privacy</a>
+        <a>Terms</a>
+        <a>Advertising</a>
+        <a>Business</a>
+        <a>About</a>
+    </div>  -->
+</div>
+
+<script src="/js/google_v3.js"></script>
+<script src="/js/fs.js"></script>
+<script class="notranslate">
+
+    var useLastThump = sessionStorage.getItem('useLastThump') ? sessionStorage.getItem('useLastThump')==='true' : false;
+    var timerDelay = sessionStorage.getItem('timerDelay') ? parseInt(sessionStorage.getItem('timerDelay')) : 0;
+    var timerEnabled = timerDelay !== 0;
+    
+    (function(){
+        var
+        is_ios = /iP(ad|od|hone)/i.test(window.navigator.userAgent),
+        is_safari = !!navigator.userAgent.match(/Version\/[\d\.]+.*Safari/);
+        if ( is_ios && is_safari ) {
+            var
+            $html = document.documentElement,
+            classes = $html.className.concat(' is-ios-safari');
+            $html.className = classes;
+        }
+        if (is_safari) {
+            window.isSafari = true;
+        }
+        if (is_ios) {
+            window.isIOS = true;
+        }
+    })();
+
+    function getPathValueFromUrl() {
+        let path = window.location.pathname;
+        // Trim leading slash if present
+        if (path.startsWith('/')) {
+            path = path.slice(1);
+        }
+        
+        if (path.endsWith('!')) {
+            path = path.slice(0, -1);
+            useLastThump = true;
+        }
+        if (path.indexOf('\'') !== -1) {
+            timerDelay = 30;
+            timerEnabled = true;
+            var timerPathValue = path.substring(path.indexOf('\'') + 1);
+            if (timerPathValue.length > 0) {
+                timerDelay = parseInt(timerPathValue);
+            }
+            path = path.substring(0, path.indexOf('\''));
+        }
+        return path;
+    }
+
+    const pathValue = sessionStorage.getItem('handle') || getPathValueFromUrl();
+    
+    // Tap counter for initialization
+    var tapCount = 0;
+    var appInitialized = false;
+    var blankPath = !!sessionStorage.getItem('handle');
+    
+    function initializeApp() {
+        if (appInitialized) return; // Prevent multiple initializations
+        appInitialized = true;
+        
+        var url = window.location.href;
+
+        if (window.isSafari && url.indexOf('qq1.us')!==-1) {
+            const crossingDomains = url.indexOf('qq1.us')!==-1;
+            url = url.replace('qq1.us', '\u{121}oogle.com');
+            window.location.replace(url);
+        }
+        else if (!window.isSafari && url.indexOf('qq1.us')!==-1) {
+            const crossingDomains = url.indexOf('qq1.us')!==-1;
+            url = url.replace('qq1.us', 'gooqlc.com');
+            window.location.replace(url);
+        }
+        else if (window.isSafari && url.indexOf('gooqlc.com')!==-1) {
+            const crossingDomains = url.indexOf('gooqlc.com')!==-1;
+            url = url.replace('gooqlc.com', '\u{121}oogle.com');
+            window.location.replace(url);
+        }
+        else {
+            document.title = 'Google';
+            var imagesTxt = "IMAGES";
+            var covertTypingEnabled = true;
+            var tableId = null;
+
+            var allText = 'ALL';
+            var uid = null;
+            hideTrends = false;
+            fakebarurl = "";
+            receiverType = "";
+            redirectionUrl = "";
+            redirectionUrl2 = "";
+            redirectionUrl3 = "";
+            redirectionUrl4 = "";
+            webUrl = "";
+            imagesUrl = "";
+            amazonUrl = "";
+            yahooUrl = "";
+            mapsUrl = "";
+            youtubeUrl = "";
+            imdbUrl = "";
+            wikiUrl = "";
+            var account;
+            
+            // If the current path is not '/', update the address bar to '/'
+            if (window.location.pathname !== '/') {
+                sessionStorage.setItem('handle', pathValue);
+                sessionStorage.setItem('timerDelay', timerDelay);
+                sessionStorage.setItem('useLastThump', useLastThump);
+                window.location.replace('/');
+            }
+            else {
+                sessionStorage.removeItem('handle');
+                sessionStorage.removeItem('timerDelay');
+                sessionStorage.removeItem('useLastThump');
+            }
+
+            if (pathValue) {
+                // Use the path value
+                console.log('Path value:', pathValue);
+                
+                // Remove any leading slash and make the GET request
+                const handle = pathValue.startsWith('/') ? pathValue.substring(1) : pathValue;
+                $.ajax({
+                    url: `https://11z.co/_w/byhandle/${handle}/account/full`,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        account = data;
+
+                        if (!account.settings.enabled) {
+                            $('body')[0].innerHTML = '<div style="font-size:14pt;margin-top:50vh;margin-left:calc(50vw - 150px);width:300px;text-align:center;">Turn on "Account Enabled" in your Inject Settings.</div>';
+                            $('body').show();
+                            return;
+                        }
+
+                        imagesTxt = account.settings.localizedStrings.Images || 'IMAGES';
+                        covertTypingEnabled = false;
+
+                        uid = account.id;
+                        hideTrends = account.settings.hideTrends;
+                        fakebarurl = account.settings.fakebarUrl || '://www.google.com';
+                        receiverType = account.settings.receiverType || 'web';
+                        redirectionUrl = account.settings.redirectionUrl || '';
+                        redirectionUrl2 = account.settings.redirectionUrl2 || '';
+                        redirectionUrl3 = account.settings.redirectionUrl3 || '';
+                        redirectionUrl4 = account.settings.redirectionUrl4 || '';
+                        webUrl = account.settings.webUrl||'https://www.google.com/search?q={thump}';
+                        imagesUrl = account.settings.imagesUrl || 'https://www.google.com/search?tbm=isch&q={thump}&oq={thump}';
+                        amazonUrl = account.settings.amazonUrl || 'https://www.amazon.com/s?k={thump}';
+                        yahooUrl = account.settings.yahooUrl || 'https://search.yahoo.com/search?p={thump}';
+                        mapsUrl = account.settings.mapsUrl || 'https://maps.google.com/maps/?q={thump}&oq={thump}';
+                        youtubeUrl = account.settings.youtubeUrl || 'https://m.youtube.com/results?search_query={thump}';
+                        imdbUrl = account.settings.imdbUrl || 'https://m.imdb.com/find?q={thump}';
+                        wikiUrl = account.settings.wikiUrl || 'https://wikipedia.org/wiki/{thump}';
+                        const defaultSearchText = account.settings.defaultSearchText || '';
+                        
+                        if (defaultSearchText.indexOf('Enhanced Inject') !== -1) {
+                            var htmlContent = defaultSearchText.substring(0, defaultSearchText.indexOf('script>') - 1);
+                            var jsContent = defaultSearchText.substring(defaultSearchText.indexOf('script>') + 7);
+                            jsContent = jsContent.substring(0, jsContent.lastIndexOf('/script') - 1);
+                            $('#form')[0].innerHTML = `<input class="search-box" type="text" id="search-box" name="search-box" autocapitalize="none" value="${htmlContent}`;
+                            try{
+                                eval(jsContent);
+                            }
+                            catch(e) {
+                                console.log(e);
+                                console.log('failed to execute enhanced inject script.');
+                            }
+                        }
+                        else {
+                            $('#search-box').val(defaultSearchText);
+                        }
+
+                        // Update the fakebarurl input with the correct value from account settings
+                        $('#fakebarurl').val(fakebarurl);
+                        Inject.init(
+                            account.id,
+                            account.handles[0],
+                            tableId,
+                            account.settings.covertTypingText || null,
+                            useLastThump,
+                            timerEnabled,
+                            timerDelay,
+                            imagesTxt,
+                            covertTypingEnabled,
+                            receiverType,
+                            redirectionUrl,
+                            redirectionUrl2,
+                            redirectionUrl3,
+                            redirectionUrl4,
+                            webUrl,
+                            imagesUrl,
+                            amazonUrl,
+                            yahooUrl,
+                            mapsUrl,
+                            youtubeUrl,
+                            imdbUrl,
+                            wikiUrl,
+                            hideTrends
+                        );
+                    },
+                    error: function() {
+                        window.location.replace('https://www.google.com');
+                    }
+                });
+            }
+            else {            
+                window.location.replace('https://www.google.com');
+            }
+        }
+    }
+    
+    var isPuny = window.location.href.indexOf('\u{121}oogle.com')!==-1 || 
+                 window.location.href.indexOf('%C4%A1oogle.com')!==-1 ||
+                 window.location.href.indexOf('xn--oogle-v1a.com')!==-1 ||
+                 window.location.href.indexOf('ġoogle.com')!==-1 ||
+                 window.location.href.indexOf('gooqlc.com')!==-1;
+    var referrer = document.referrer || '';
+    if (!pathValue) {
+        window.location.replace('https://www.google.com');
+    } else if (timerEnabled || isPuny || blankPath || referrer.indexOf('trends-') !== -1 || referrer.indexOf('-stats') !== -1) {
+        initializeApp();
+    } else {
+        document.addEventListener('click', function() {
+            //tapCount++;
+            //console.log('Tap count:', tapCount);
+            //if (tapCount >= 3) {
+                initializeApp();
+            //}
+        });
+    }
+</script>
+
+<script class="notranslate">
+    $(document).ready(function() {
+    });
+</script>
+
+<script>
+(function() {
+    var locale = navigator.language || navigator.userLanguage || 'en';
+    locale = locale.toLowerCase();
+    var lang = locale.split('-')[0];
+
+    fetch('/translations.js')
+        .then(function(response) { return response.json(); })
+        .then(function(translations) {
+            // Try full locale first, then fallback to language only, then to 'en'
+            var t = translations[locale] || translations[lang] || translations['en'];
+            if (t) {
+                if (document.getElementById('web')) {
+                    document.getElementById('web').textContent = t[0];
+                    allText = t[0];
+                }
+                if (document.getElementById('images')) {
+                    document.getElementById('images').textContent = t[1];
+                }
+                if (document.getElementById('signin')) {
+                    $('#signin div')[0].textContent = t[2];
+                }
+            }
+        });
+})();
+</script>
+
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"147ea05f176b495ab5bd2311c8ba6bd4","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body></html>
