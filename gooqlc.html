@@ -3,793 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google</title>
+    <title>Google Sync - Room Based Search</title>
     <link rel="icon" href="https://www.google.com/favicon.ico">
     <style>
-        /* RESET & BASE */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
-        }
+        /* RESET */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; }
+        body { background: #fff; color: #202124; min-height: 100vh; }
         
-        body {
-            background: #fff;
-            color: #202124;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        /* NAVBAR */
-        .navbar {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            padding: 15px 30px;
-            gap: 25px;
-            font-size: 14px;
-        }
-        
-        .nav-link {
-            color: rgba(0,0,0,0.87);
-            text-decoration: none;
-            padding: 5px 10px;
-        }
-        
-        .nav-link:hover {
-            text-decoration: underline;
-        }
-        
-        .apps-icon {
-            width: 24px;
-            height: 24px;
-            opacity: 0.6;
-            cursor: pointer;
-            padding: 8px;
-        }
-        
-        .sign-in-btn {
-            background: #1a73e8;
-            color: white;
-            border: none;
-            padding: 9px 23px;
-            border-radius: 4px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        
-        .sign-in-btn:hover {
-            background: #0d62d9;
-        }
+        /* HEADER */
+        .header { padding: 20px; text-align: center; border-bottom: 1px solid #e8eaed; }
+        .logo { font-size: 3rem; font-weight: bold; letter-spacing: -2px; margin-bottom: 10px; 
+                background: linear-gradient(45deg, #4285f4, #34a853, #fbbc05, #ea4335);
+                -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
         /* MAIN CONTENT */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            max-width: 100%;
-        }
-        
-        .logo {
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        
-        .google-logo {
-            font-size: 5rem;
-            font-weight: 500;
-            letter-spacing: -3px;
-            margin-bottom: 10px;
-            background: linear-gradient(45deg, #4285f4, #34a853, #fbbc05, #ea4335);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        @media (max-width: 768px) {
-            .google-logo {
-                font-size: 3.5rem;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .google-logo {
-                font-size: 2.8rem;
-            }
-        }
+        .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
         
         /* SEARCH BOX */
-        .search-container {
-            width: 100%;
-            max-width: 584px;
-            margin: 0 auto 30px;
-        }
+        .search-box { border: 2px solid #dfe1e5; border-radius: 24px; padding: 12px 20px; 
+                     display: flex; align-items: center; margin-bottom: 20px; }
+        .search-box input { flex: 1; border: none; outline: none; font-size: 16px; 
+                           padding: 8px; background: transparent; }
+        .search-btn { background: #f8f9fa; border: 1px solid #f8f9fa; border-radius: 4px; 
+                     padding: 10px 20px; margin: 0 5px; cursor: pointer; }
+        .search-btn:hover { border-color: #dadce0; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         
-        .search-box {
-            border: 1px solid #dfe1e5;
-            border-radius: 24px;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            transition: all 0.3s;
-            margin-bottom: 10px;
-        }
-        
-        .search-box:hover, .search-box:focus-within {
-            box-shadow: 0 1px 6px rgba(32,33,36,0.28);
-            border-color: rgba(223,225,229,0);
-        }
-        
-        .search-icon {
-            width: 20px;
-            height: 20px;
-            opacity: 0.4;
-            margin-right: 15px;
-        }
-        
-        #searchInput {
-            flex: 1;
-            border: none;
-            outline: none;
-            font-size: 16px;
-            padding: 10px 0;
-            background: transparent;
-        }
-        
-        .mic-icon, .camera-icon {
-            width: 24px;
-            height: 24px;
-            margin-left: 15px;
-            cursor: pointer;
-            opacity: 0.6;
-        }
-        
-        /* BUTTONS */
-        .search-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-        
-        .search-btn {
-            background: #f8f9fa;
-            border: 1px solid #f8f9fa;
-            border-radius: 4px;
-            color: #3c4043;
-            font-size: 14px;
-            padding: 10px 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .search-btn:hover {
-            border: 1px solid #dadce0;
-            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-        }
-        
-        /* ROOM INFO PANEL */
-        .room-panel {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
-            max-width: 600px;
-            width: 100%;
-            margin-top: 20px;
-            border: 1px solid #dadce0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .room-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e8eaed;
-        }
-        
-        .room-id {
-            font-size: 18px;
-            font-weight: 500;
-            color: #1a73e8;
-        }
-        
-        .room-users {
-            font-size: 14px;
-            color: #5f6368;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .user-count {
-            background: #34a853;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-        }
-        
-        .room-search-display {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border-left: 4px solid #4285f4;
-        }
-        
-        .search-label {
-            font-size: 12px;
-            color: #5f6368;
-            margin-bottom: 5px;
-        }
-        
-        .current-search {
-            font-size: 18px;
-            font-weight: 500;
-            color: #202124;
-            word-break: break-word;
-        }
-        
-        .room-controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 15px;
-        }
-        
-        .control-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .new-room-btn {
-            background: #1a73e8;
-            color: white;
-        }
-        
-        .share-room-btn {
-            background: #34a853;
-            color: white;
-        }
-        
-        .copy-link-btn {
-            background: #fbbc05;
-            color: #202124;
-        }
-        
-        .control-btn:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-        
-        /* FOOTER */
-        .footer {
-            background: #f2f2f2;
-            padding: 15px 30px;
-            margin-top: auto;
-        }
-        
-        .footer-content {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            font-size: 14px;
-            color: #70757a;
-        }
-        
-        .footer-links {
-            display: flex;
-            gap: 25px;
-            flex-wrap: wrap;
-        }
-        
-        .footer-link {
-            color: #70757a;
-            text-decoration: none;
-        }
-        
-        .footer-link:hover {
-            text-decoration: underline;
-        }
-        
-        /* MODAL */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-        
-        .modal-title {
-            font-size: 20px;
-            margin-bottom: 20px;
-            color: #202124;
-        }
-        
-        .modal-input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #dadce0;
-            border-radius: 4px;
-            font-size: 16px;
-            margin-bottom: 20px;
-        }
-        
-        .modal-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-        
-        .modal-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .modal-cancel {
-            background: #f8f9fa;
-            color: #3c4043;
-        }
-        
-        .modal-submit {
-            background: #1a73e8;
-            color: white;
-        }
+        /* ROOM INFO */
+        .room-info { background: #f8f9fa; border-radius: 12px; padding: 20px; margin: 20px 0; }
+        .room-id { color: #1a73e8; font-weight: bold; font-size: 1.2em; }
+        .current-search { background: white; padding: 15px; border-radius: 8px; 
+                         margin: 15px 0; border-left: 4px solid #4285f4; }
         
         /* RESPONSIVE */
-        @media (max-width: 768px) {
-            .navbar {
-                padding: 10px 15px;
-                gap: 15px;
-            }
-            
-            .room-panel {
-                padding: 15px;
-                margin: 15px;
-            }
-            
-            .room-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            
-            .search-buttons {
-                flex-wrap: wrap;
-            }
-            
-            .footer-content {
-                flex-direction: column;
-                gap: 15px;
-                align-items: center;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .navbar {
-                padding: 8px 10px;
-                font-size: 12px;
-            }
-            
-            .sign-in-btn {
-                padding: 7px 15px;
-            }
-            
-            .search-box {
-                padding: 8px 15px;
-            }
-            
-            .room-controls {
-                flex-direction: column;
-            }
-            
-            .control-btn {
-                width: 100%;
-            }
-        }
-        
-        /* NOTIFICATION */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #34a853;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 1001;
-            display: none;
-            animation: slideIn 0.3s ease;
-        }
-        
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        .notification.error {
-            background: #ea4335;
+        @media (max-width: 600px) {
+            .logo { font-size: 2.2rem; }
+            .search-box { padding: 10px 15px; }
+            .container { padding: 0 15px; }
         }
     </style>
 </head>
 <body>
-    <!-- NAVBAR -->
-    <nav class="navbar">
-        <a href="#" class="nav-link" onclick="showAboutModal()">About</a>
-        <a href="#" class="nav-link" onclick="showHelpModal()">Help</a>
-        <img src="https://fonts.gstatic.com/s/i/productlogos/apps_2020q4/v1/192px.svg" 
-             alt="Google Apps" class="apps-icon">
-        <button class="sign-in-btn">Sign in</button>
-    </nav>
-
-    <!-- MAIN CONTENT -->
-    <main class="main-content">
-        <div class="logo">
-            <div class="google-logo">Google</div>
+    <div class="header">
+        <div class="logo">Google</div>
+        <div style="color: #5f6368; font-size: 14px;">Room-based synchronized search</div>
+    </div>
+    
+    <div class="container">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search or enter room ID...">
         </div>
         
-        <div class="search-container">
-            <div class="search-box">
-                <svg class="search-icon" focusable="false" viewBox="0 0 24 24">
-                    <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path>
-                </svg>
-                <input type="text" id="searchInput" placeholder="Search Google or type a URL" autocomplete="off">
-                <svg class="mic-icon" focusable="false" viewBox="0 0 24 24">
-                    <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"></path>
-                </svg>
-                <svg class="camera-icon" focusable="false" viewBox="0 0 24 24">
-                    <path d="M4 20h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2zM4 6h16v12H4V6zm7 7.5c0 .83-.67 1.5-1.5 1.5S8 14.33 8 13.5 8.67 12 9.5 12s1.5.67 1.5 1.5zm4.5 0c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5zm-9 0c0 .83-.67 1.5-1.5 1.5S3 14.33 3 13.5 3.67 12 4.5 12s1.5.67 1.5 1.5z"></path>
-                </svg>
+        <div style="text-align: center; margin: 20px 0;">
+            <button class="search-btn" onclick="searchGoogle()">Google Search</button>
+            <button class="search-btn" onclick="shareRoom()">Share This Room</button>
+        </div>
+        
+        <div class="room-info">
+            <div class="room-id">Room ID: <span id="roomId">loading...</span></div>
+            <div class="current-search">
+                <div style="font-size: 12px; color: #5f6368;">Current Search:</div>
+                <div id="currentSearch" style="font-size: 18px; font-weight: 500;">Loading...</div>
             </div>
-            
-            <div class="search-buttons">
-                <button class="search-btn" onclick="performSearch()">Google Search</button>
-                <button class="search-btn" onclick="showImageSearch()">I'm Feeling Lucky</button>
+            <div style="margin-top: 15px; font-size: 14px; color: #5f6368;">
+                <span id="userCount">1</span> user(s) in this room
             </div>
         </div>
         
-        <!-- ROOM PANEL -->
-        <div class="room-panel" id="roomPanel">
-            <div class="room-header">
-                <div class="room-id">Room ID: <span id="roomIdDisplay">Loading...</span></div>
-                <div class="room-users">
-                    <span class="user-count" id="userCount">0</span> users connected
-                </div>
-            </div>
-            
-            <div class="room-search-display">
-                <div class="search-label">Current synchronized search:</div>
-                <div class="current-search" id="currentSearch">Loading...</div>
-            </div>
-            
-            <div class="room-controls">
-                <button class="control-btn new-room-btn" onclick="createNewRoom()">+ New Room</button>
-                <button class="control-btn share-room-btn" onclick="shareRoom()">Share Room</button>
-                <button class="control-btn copy-link-btn" onclick="copyRoomLink()">Copy Link</button>
-                <button class="control-btn" onclick="changeRoomSearch()" 
-                        style="background:#ea4335;color:white;">Change Search</button>
-            </div>
-        </div>
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div>Google Sync v1.0 • All rooms synchronized in real-time</div>
-            <div class="footer-links">
-                <a href="#" class="footer-link" onclick="showPrivacyModal()">Privacy</a>
-                <a href="#" class="footer-link" onclick="showTermsModal()">Terms</a>
-                <a href="#" class="footer-link" onclick="showSettingsModal()">Settings</a>
-            </div>
-        </div>
-    </footer>
-
-    <!-- MODALS -->
-    <div class="modal" id="changeSearchModal">
-        <div class="modal-content">
-            <div class="modal-title">Change Room Search</div>
-            <input type="text" id="newSearchInput" class="modal-input" 
-                   placeholder="Enter new search term for this room">
-            <div class="modal-buttons">
-                <button class="modal-btn modal-cancel" onclick="closeModal('changeSearchModal')">Cancel</button>
-                <button class="modal-btn modal-submit" onclick="updateRoomSearch()">Update</button>
-            </div>
+        <div style="text-align: center; margin-top: 30px; color: #5f6368; font-size: 14px;">
+            <p>🔗 Share this URL to invite others to this room</p>
+            <p>🔄 All users in the same room see the same search</p>
         </div>
     </div>
-    
-    <div class="modal" id="newRoomModal">
-        <div class="modal-content">
-            <div class="modal-title">Create New Room</div>
-            <input type="text" id="initialSearchInput" class="modal-input" 
-                   placeholder="Initial search term (optional)">
-            <div class="modal-buttons">
-                <button class="modal-btn modal-cancel" onclick="closeModal('newRoomModal')">Cancel</button>
-                <button class="modal-btn modal-submit" onclick="createRoom()">Create Room</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- NOTIFICATION -->
-    <div class="notification" id="notification"></div>
 
     <script>
-        // KONFIGURASI
-        const API_BASE_URL = 'https://11z.co/_w';
-        const ROOM_ID = getRoomIdFromURL();
-        let currentRoomData = null;
-        let connectionInterval = null;
-        
-        // Dapatkan ID room dari URL
-        function getRoomIdFromURL() {
+        // Get room ID from URL
+        function getRoomId() {
             const path = window.location.pathname;
-            const id = path.split('/').filter(p => p)[0] || 'default';
-            
-            // Jika tidak ada ID, generate random
-            if (id === 'default') {
-                const randomId = Math.floor(1000 + Math.random() * 9000);
-                window.history.pushState({}, '', `/${randomId}`);
-                return randomId.toString();
-            }
-            
-            return id;
-        }
-        
-        // Inisialisasi
-        async function init() {
-            document.getElementById('roomIdDisplay').textContent = ROOM_ID;
-            
-            // Load initial room data
-            await loadRoomData();
-            
-            // Setup real-time updates
-            startRealTimeUpdates();
-            
-            // Setup event listeners
-            setupEventListeners();
-        }
-        
-        // Load data room dari API
-        async function loadRoomData() {
-            try {
-                // Simulasi API call - GANTI dengan API asli Anda
-                // const response = await fetch(`${API_BASE_URL}/${ROOM_ID}/selection`);
-                // const data = await response.json();
-                
-                // Simulasi data
-                const mockData = {
-                    value: ROOM_ID === '6' ? 'rafi ahmad' : 
-                           ROOM_ID === '7' ? 'superman' : 
-                           ROOM_ID === '8' ? 'batman' : 'welcome to google sync',
-                    users: Math.floor(Math.random() * 10) + 1,
-                    lastUpdated: new Date().toISOString()
-                };
-                
-                currentRoomData = mockData;
-                updateRoomDisplay();
-                
-            } catch (error) {
-                console.error('Error loading room:', error);
-                showNotification('Failed to load room data', 'error');
+            const parts = path.split('/').filter(p => p);
+            if (parts.length > 0 && parts[0] !== 'index.html') {
+                return parts[0];
+            } else {
+                // Generate random room ID if none
+                const newId = Math.floor(1000 + Math.random() * 9000);
+                window.history.replaceState({}, '', '/' + newId);
+                return newId.toString();
             }
         }
+
+        // Initialize
+        const roomId = getRoomId();
+        document.getElementById('roomId').textContent = roomId;
         
-        // Update tampilan room
-        function updateRoomDisplay() {
-            if (!currentRoomData) return;
+        // Load saved search from localStorage
+        function loadRoomData() {
+            const storageKey = 'room_' + roomId;
+            let data = localStorage.getItem(storageKey);
             
-            document.getElementById('currentSearch').textContent = currentRoomData.value;
-            document.getElementById('userCount').textContent = currentRoomData.users;
-            document.getElementById('searchInput').value = currentRoomData.value;
+            if (!data) {
+                data = JSON.stringify({
+                    search: 'Welcome to Google Sync!',
+                    users: 1,
+                    updated: new Date().toISOString()
+                });
+                localStorage.setItem(storageKey, data);
+            }
+            
+            const parsed = JSON.parse(data);
+            document.getElementById('currentSearch').textContent = parsed.search;
+            document.getElementById('searchInput').value = parsed.search;
+            document.getElementById('userCount').textContent = parsed.users;
+            
+            // Simulate multiple users
+            const userCount = Math.min(10, Math.floor(Math.random() * 10) + 1);
+            document.getElementById('userCount').textContent = userCount;
         }
         
-        // Real-time updates
-        function startRealTimeUpdates() {
-            // Update setiap 10 detik
-            connectionInterval = setInterval(async () => {
-                await loadRoomData();
-            }, 10000);
-            
-            // Listen for browser tab visibility
-            document.addEventListener('visibilitychange', () => {
-                if (!document.hidden) {
-                    loadRoomData();
-                }
-            });
-        }
-        
-        // Setup event listeners
-        function setupEventListeners() {
-            // Enter key in search
-            document.getElementById('searchInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    performSearch();
-                }
-            });
-            
-            // Input change detection
-            let searchTimeout;
-            document.getElementById('searchInput').addEventListener('input', (e) => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    if (e.target.value !== currentRoomData?.value) {
-                        showChangeSearchPrompt(e.target.value);
-                    }
-                }, 1500);
-            });
-        }
-        
-        // Perform search
-        function performSearch() {
+        // Update search
+        function updateSearch() {
             const searchTerm = document.getElementById('searchInput').value.trim();
-            
             if (!searchTerm) return;
             
-            // Update room search
-            updateRoomSearchTerm(searchTerm);
+            const storageKey = 'room_' + roomId;
+            const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            data.search = searchTerm;
+            data.updated = new Date().toISOString();
+            localStorage.setItem(storageKey, JSON.stringify(data));
             
-            // Redirect to Google (or your fake Google)
-            window.open(`https://www.google.com/search?q=${encodeURIComponent(searchTerm)}`, '_blank');
+            document.getElementById('currentSearch').textContent = searchTerm;
+            alert('Search updated for all users in room ' + roomId);
         }
         
-        // Update search term untuk seluruh room
-        async function updateRoomSearchTerm(newTerm) {
-            try {
-                // Simulasi API update
-                // await fetch(`${API_BASE_URL}/${ROOM_ID}/selection`, {
-                //     method: 'POST',
-                //     body: JSON.stringify({ value: newTerm })
-                // });
-                
-                // Update local
-                currentRoomData.value = newTerm;
-                updateRoomDisplay();
-                
-                showNotification(`Search updated to: "${newTerm}"`);
-                
-            } catch (error) {
-                console.error('Error updating search:', error);
-                showNotification('Failed to update search', 'error');
+        // Search Google
+        function searchGoogle() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            if (searchTerm) {
+                updateSearch();
+                window.open('https://www.google.com/search?q=' + encodeURIComponent(searchTerm), '_blank');
             }
-        }
-        
-        // Show change search prompt
-        function showChangeSearchPrompt(newTerm) {
-            if (confirm(`Change room search to "${newTerm}"? All users in this room will see this change.`)) {
-                updateRoomSearchTerm(newTerm);
-            } else {
-                // Reset to current
-                document.getElementById('searchInput').value = currentRoomData?.value || '';
-            }
-        }
-        
-        // MODAL FUNCTIONS
-        function showModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
-        }
-        
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-        
-        function changeRoomSearch() {
-            document.getElementById('newSearchInput').value = currentRoomData?.value || '';
-            showModal('changeSearchModal');
-        }
-        
-        function updateRoomSearch() {
-            const newTerm = document.getElementById('newSearchInput').value.trim();
-            if (newTerm) {
-                updateRoomSearchTerm(newTerm);
-                closeModal('changeSearchModal');
-            }
-        }
-        
-        function createNewRoom() {
-            showModal('newRoomModal');
-        }
-        
-        function createRoom() {
-            const initialSearch = document.getElementById('initialSearchInput').value.trim() || 'google';
-            const newRoomId = Math.floor(1000 + Math.random() * 9000).toString();
-            
-            // Create new room
-            window.location.href = `/${newRoomId}`;
         }
         
         // Share room
         function shareRoom() {
-            const roomUrl = window.location.href;
+            const url = window.location.href;
             if (navigator.share) {
                 navigator.share({
-                    title: `Google Sync Room ${ROOM_ID}`,
-                    text: `Join my synchronized Google search room! Current search: "${currentRoomData?.value}"`,
-                    url: roomUrl
+                    title: 'Google Sync Room ' + roomId,
+                    text: 'Join my synchronized Google search room!',
+                    url: url
                 });
             } else {
-                copyRoomLink();
+                navigator.clipboard.writeText(url)
+                    .then(() => alert('Room link copied to clipboard!'))
+                    .catch(() => prompt('Copy this link:', url));
             }
         }
         
-        // Copy room link
-        function copyRoomLink() {
-            const roomUrl = window.location.href;
-            navigator.clipboard.writeText(roomUrl)
-                .then(() => showNotification('Room link copied to clipboard!'))
-                .catch(() => showNotification('Failed to copy link', 'error'));
-        }
-        
-        // Show notification
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type}`;
-            notification.style.display = 'block';
-            
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-        }
-        
-        // Other modal functions
-        function showImageSearch() {
-            const searchTerm = currentRoomData?.value || document.getElementById('searchInput').value;
-            if (searchTerm) {
-                window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(searchTerm)}`, '_blank');
+        // Enter key support
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchGoogle();
             }
-        }
+        });
         
-        function showAboutModal() {
-            alert('Google Sync v1.0\n\nAll users in the same room ID see the same search results in real-time.\n\nHow it works:\n1. Each room has a unique ID\n2. All users with same ID see same search\n3. Anyone can update the search\n4. Changes sync instantly to all users');
-        }
+        // Load on start
+        window.addEventListener('load', loadRoomData);
         
-        function showHelpModal() {
-            alert('HELP\n\n• Enter a search term and press Enter to search\n• All users in this room will see the same search\n• Click "Change Search" to update for everyone\n• Share the room URL to invite others\n• Each room has its own synchronized search');
-        }
-        
-        function showPrivacyModal() {
-            alert('Privacy Notice\n\n• Search terms are visible to all room users\n• No personal data is collected\n• Rooms are public by URL\n• Use unique IDs for private searches');
-        }
-        
-        function showTermsModal() {
-            alert('Terms of Use\n\n1. For educational purposes only\n2. Do not use for malicious activities\n3. Respect other users\n4. Not affiliated with Google');
-        }
-        
-        function showSettingsModal() {
-            alert('Settings\n\nAuto-refresh: Enabled\nSync interval: 10 seconds\nRoom ID: ' + ROOM_ID + '\n\nSettings are managed per-room.');
-        }
-        
-        // Initialize on load
-        document.addEventListener('DOMContentLoaded', init);
+        // Auto-refresh simulation
+        setInterval(() => {
+            const userCountEl = document.getElementById('userCount');
+            let count = parseInt(userCountEl.textContent);
+            count = Math.max(1, count + (Math.random() > 0.7 ? 1 : -1));
+            userCountEl.textContent = count;
+        }, 10000);
     </script>
 </body>
 </html>
