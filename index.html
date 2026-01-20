@@ -249,7 +249,7 @@
     </div>
 
     <div class="buttons">
-        <div class="button reset" id="leftBtn">Reset</div>
+        <div class="button reset" id="leftBtn">Lap</div>
         <div class="indicator-dots">
             <span class="indicator-dot dot-white"></span>
             <span class="indicator-dot dot-grey"></span>
@@ -279,6 +279,62 @@
     </nav>
 
     <script>
+        // Deteksi bahasa sistem
+        const systemLanguage = navigator.language || navigator.userLanguage || 'en-US';
+        const isIndonesian = systemLanguage.startsWith('id');
+        const isEnglish = systemLanguage.startsWith('en');
+        
+        // Terjemahan berdasarkan bahasa
+        const translations = {
+            'id': {
+                // Tombol
+                'start': 'Mulai',
+                'stop': 'Berhenti',
+                'lap': 'Putaran',
+                'reset': 'Atur Ulang',
+                
+                // Alert dan prompt
+                'forcedMsEnabled': 'Angka paksa milidetik diaktifkan!',
+                'forcedMsDisabled': 'Angka paksa milidetik dinonaktifkan.',
+                'enterMilliseconds': 'Masukkan angka milidetik (pisahkan dengan koma jika lebih dari satu):',
+                'enterValidNumbers': 'Masukkan minimal satu angka antara 00 dan 99.',
+                'numbersSaved': 'angka milidetik telah disimpan.',
+                
+                // Lap
+                'lapText': 'Putaran'
+            },
+            'en': {
+                // Buttons
+                'start': 'Start',
+                'stop': 'Stop',
+                'lap': 'Lap',
+                'reset': 'Reset',
+                
+                // Alerts and prompts
+                'forcedMsEnabled': 'Forced milliseconds enabled!',
+                'forcedMsDisabled': 'Forced milliseconds disabled.',
+                'enterMilliseconds': 'Enter milliseconds (separate with commas if more than one):',
+                'enterValidNumbers': 'Enter at least one number between 00 and 99.',
+                'numbersSaved': 'millisecond numbers have been saved.',
+                
+                // Lap
+                'lapText': 'Lap'
+            }
+        };
+        
+        // Pilih bahasa berdasarkan deteksi
+        let lang = 'en';
+        if (isIndonesian) {
+            lang = 'id';
+        } else if (isEnglish) {
+            lang = 'en';
+        }
+        
+        // Fungsi untuk mendapatkan teks terjemahan
+        function t(key) {
+            return translations[lang][key] || translations['en'][key];
+        }
+
         let forcedMsList = [];
         let forcedMsIndex = 0;
         let forcedMs = null;
@@ -305,9 +361,16 @@
         let lastClickTime = 0;
         const DOUBLE_CLICK_DELAY = 300; // ms
 
-        leftBtn.textContent = "Lap";
+        // Inisialisasi teks tombol berdasarkan bahasa
+        leftBtn.textContent = t('lap');
         leftBtn.classList.remove("reset");
         leftBtn.classList.add("lap");
+        
+        rightBtn.textContent = t('start');
+        rightBtn.classList.add("start");
+
+        // Update title berdasarkan bahasa
+        document.title = lang === 'id' ? 'Stopwatch' : 'Stopwatch';
 
         // Fungsi untuk mengecek apakah waktu adalah 00:00,00
         function isZeroTime() {
@@ -327,9 +390,9 @@
         function toggleForcedMs() {
             isForcedMsActive = !isForcedMsActive;
             if (isForcedMsActive) {
-                alert("Angka paksa milidetik diaktifkan!");
+                alert(t('forcedMsEnabled'));
             } else {
-                alert("Angka paksa milidetik dinonaktifkan.");
+                alert(t('forcedMsDisabled'));
             }
         }
 
@@ -386,11 +449,11 @@
             timerInterval = setInterval(updateTime, 10);
             isRunning = true;
 
-            rightBtn.textContent = "Stop";
+            rightBtn.textContent = t('stop');
             rightBtn.classList.remove("start");
             rightBtn.classList.add("stop");
 
-            leftBtn.textContent = "Lap";
+            leftBtn.textContent = t('lap');
             leftBtn.classList.remove("reset");
             leftBtn.classList.add("lap");
 
@@ -412,11 +475,11 @@
 
             updateTime();
 
-            rightBtn.textContent = "Start";
+            rightBtn.textContent = t('start');
             rightBtn.classList.remove("stop");
             rightBtn.classList.add("start");
 
-            leftBtn.textContent = "Reset";
+            leftBtn.textContent = t('reset');
             leftBtn.classList.remove("lap");
             leftBtn.classList.add("reset");
 
@@ -435,11 +498,11 @@
             msEl.textContent = "00";
             lapList.innerHTML = '';
 
-            rightBtn.textContent = "Start";
+            rightBtn.textContent = t('start');
             rightBtn.classList.remove("stop");
             rightBtn.classList.add("start");
 
-            leftBtn.textContent = "Lap";
+            leftBtn.textContent = t('lap');
             leftBtn.classList.remove("reset");
             leftBtn.classList.add("lap");
 
@@ -465,7 +528,8 @@
 
             const lapItem = document.createElement("div");
             lapItem.className = "lap-item";
-            lapItem.innerHTML = `<span>Lap ${lapCount++}</span><span>${formattedLapTime}</span>`;
+            // Gunakan terjemahan untuk teks "Lap"
+            lapItem.innerHTML = `<span>${t('lapText')} ${lapCount++}</span><span>${formattedLapTime}</span>`;
             lapItem.dataset.lapTime = lapTime;
 
             lapList.prepend(lapItem);
@@ -501,13 +565,13 @@
 
         // Fungsi untuk membuka prompt paksa milidetik
         function openForcedMsPrompt() {
-            const input = prompt("Masukkan angka milidetik (pisahkan dengan koma jika lebih dari satu):");
+            const input = prompt(t('enterMilliseconds'));
             if (!input) return;
 
             const values = input.split(",").map(v => parseInt(v.trim())).filter(v => !isNaN(v) && v >= 0 && v <= 99);
 
             if (values.length === 0) {
-                alert("Masukkan minimal satu angka antara 00 dan 99.");
+                alert(t('enterValidNumbers'));
                 return;
             }
 
@@ -517,7 +581,7 @@
             // Update opacity setelah mengatur forcedMs
             updateLeftButtonOpacity();
             
-            alert(`${values.length} angka milidetik telah disimpan.`);
+            alert(`${values.length} ${t('numbersSaved')}`);
         }
 
         // Event listener untuk double click pada milidetik
@@ -560,6 +624,10 @@
 
         // Inisialisasi opacity awal (waktu 00:00,00)
         updateLeftButtonOpacity();
+        
+        // Log bahasa yang terdeteksi (untuk debugging)
+        console.log('System language detected:', systemLanguage);
+        console.log('Using language:', lang);
     </script>
 </body>
 
