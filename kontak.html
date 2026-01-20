@@ -3,54 +3,62 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Auto Save Number</title>
+<title>Simpan Kontak CSV</title>
 
 <style>
-  body {
-    margin: 0;
-    height: 100vh;
-    background: #000;
-    color: #0f0;
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-  }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background:#000;
+  color:#fff;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
 
-  .box {
-    padding: 20px;
-    border: 1px solid #0f0;
-    border-radius: 12px;
-  }
+.box {
+  text-align:center;
+}
 
-  .number {
-    font-size: 22px;
-    margin-top: 10px;
-  }
+button {
+  padding:15px 25px;
+  font-size:18px;
+  border:none;
+  border-radius:12px;
+  background:#0a84ff;
+  color:white;
+}
 </style>
 </head>
+
 <body>
 
 <div class="box">
-  <div id="status">Menyimpan nomor...</div>
-  <div class="number" id="number"></div>
+  <h2>Save Contact</h2>
+  <button onclick="saveCSV()">Simpan Kontak</button>
 </div>
 
 <script>
-  const FORCE_NUMBER = "082194025366";
-  const KEY = "saved_phone_number";
+function saveCSV() {
+  const name = "Bidiono";
+  const phone = "082194025366";
 
-  // simpan otomatis jika belum ada
-  if (!localStorage.getItem(KEY)) {
-    localStorage.setItem(KEY, FORCE_NUMBER);
-    document.getElementById("status").textContent = "Nomor berhasil disimpan";
-  } else {
-    document.getElementById("status").textContent = "Nomor sudah tersimpan sebelumnya";
-  }
+  const csvContent = 
+`Name,Phone
+${name},${phone}`;
 
-  document.getElementById("number").textContent =
-    "📞 " + localStorage.getItem(KEY);
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "kontak.csv";
+  document.body.appendChild(a);
+  a.click();
+
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 </script>
 
 </body>
