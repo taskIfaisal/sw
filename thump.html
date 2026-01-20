@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Inject</title>
+    <link href="/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/navbar-fixed-top.css" rel="stylesheet">
+    <style type="text/css">
+        * { -webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+        input { -webkit-user-select: auto !important; -khtml-user-select: auto !important; -moz-user-select: auto !important; -ms-user-select: auto !important; user-select: auto !important; }
+        .thump-center {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .center-btn {
+            min-width: 200px;
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .center-btn:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .card-display {
+            text-align: center;
+            margin: 20px 0 25px 0;
+        }
+        .card-text {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .button-row {
+            margin-bottom: 10px;
+        }
+    </style>
+    <script>
+        // Variabel untuk menyimpan kartu yang dipilih
+        var currentCard = "Ace";
+        var currentSuit = "♠";
+        var currentSuitColor = "black";
+        var isJoker = false;
+        var lastSelectedSuit = "♠";
+        var lastSelectedSuitColor = "black";
+        
+        // Data kartu
+        var cardValues = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"];
+        var suitSymbols = ["♠", "♥", "♣", "♦"];
+        var suitColors = ["black", "red", "black", "red"];
+        
+        // Fungsi untuk mengubah angka/kartu
+        function selectCard(cardIndex) {
+            if (cardIndex === 13) {
+                // Joker
+                isJoker = true;
+                currentCard = "Joker";
+                updateDisplay();
+            } else {
+                // Kartu biasa
+                isJoker = false;
+                currentCard = cardValues[cardIndex];
+                
+                // Gunakan suit terakhir yang dipilih
+                if (lastSelectedSuit) {
+                    currentSuit = lastSelectedSuit;
+                    currentSuitColor = lastSelectedSuitColor;
+                }
+                updateDisplay();
+            }
+        }
+        
+        // Fungsi untuk mengubah suit/lambang
+        function selectSuit(suitIndex) {
+            if (!isJoker) {
+                currentSuit = suitSymbols[suitIndex];
+                currentSuitColor = suitColors[suitIndex];
+                
+                // Simpan suit yang dipilih untuk digunakan nanti
+                lastSelectedSuit = currentSuit;
+                lastSelectedSuitColor = currentSuitColor;
+                
+                updateDisplay();
+            }
+        }
+        
+        // Fungsi untuk memperbarui tampilan
+        function updateDisplay() {
+            var displayElement = document.getElementById("cardDisplay");
+            if (isJoker) {
+                displayElement.innerHTML = "Joker";
+            } else {
+                displayElement.innerHTML = currentCard + " of <span style='color: " + currentSuitColor + "; font-size: 36px;'>" + currentSuit + "</span>";
+            }
+        }
+        
+        // Fungsi untuk tombol THUMP (kosong dulu)
+        function thumpCard() {
+            alert("THUMP! Kartu: " + currentCard + (currentSuit && !isJoker ? " of " + currentSuit : ""));
+        }
+        
+        // Inisialisasi saat halaman dimuat
+        window.onload = function() {
+            updateDisplay();
+        };
+    </script>
+</head>
+
+<body id="b">
+<nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-brand">Card Selector</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <!-- Display kartu di tengah -->
+    <div class="card-display">
+        <div class="card-text" id="cardDisplay">Ace of <span style="color: black; font-size: 36px;">♠</span></div>
+    </div>
+
+    <center>
+        <!-- Tombol angka -->
+        <div class="button-row">
+            <button class="btn btn-default btn-lg" onclick="selectCard(0)"><span style="font-size: x-large;">A</span></button>
+            &nbsp;<button class="btn btn-default btn-lg" onclick="selectCard(1)"><span style="font-size: x-large;">2</span></button>
+            &nbsp;<button class="btn btn-default btn-lg" onclick="selectCard(2)"><span style="font-size: x-large;">3</span></button>
+            &nbsp;<button class="btn btn-default btn-lg" onclick="selectCard(3)"><span style="font-size: x-large;">4</span></button>
+            &nbsp;<button class="btn btn-default btn-lg" onclick="selectCard(4)"><span style="font-size: x-large;">5</span></button>
+        </div>
+        
+        <div class="button-row">
+            <button class="btn btn-default btn-lg" onclick="selectCard(5)"><span style="font-size: x-large;">6</span></button>
+            &nbsp;<button class="btn btn-default btn-lg" onclick="selectCard(6)"><span style="font-size: x-large;">7</span></button>
+            &nbsp;<button class="btn btn-default btn-lg" onclick="selectCard(7)"><span style="font-size: x-large;">8</span></button>
+            &nbsp;<button class="btn btn-default btn-lg" onclick="selectCard(8)"><span style="font-size: x-large;">9</span></button>
+            &nbsp;<button class="btn btn-default btn-lg" onclick="selectCard(9)"><span style="font-size: x-large;">10</span></button>
+        </div>
+        
+        <div class="button-row">
+            <button class="btn btn-default btn-lg" onclick="selectCard(10)"><span style="font-size: x-large;">J</span></button>
+            &nbsp;<button class="btn btn-default btn-lg" onclick="selectCard(11)"><span style="font-size: x-large;">Q</span></button>
+            &nbsp;<button class="btn btn-default btn-lg" onclick="selectCard(12)"><span style="font-size: x-large;">K</span></button>
+            &nbsp;<button class="btn btn-default btn-lg" onclick="selectCard(13)"><span style="font-size: x-large;">Joker</span></button>
+        </div>
+        
+        <!-- Tombol suit -->
+        <div class="button-row">
+            <button class="btn btn-default btn-lg" onclick="selectSuit(0)"><span style="color: black; font-size: x-large;">♠</span></button>
+            &nbsp;<button class="btn btn-default btn-lg" onclick="selectSuit(1)"><span style="color: red; font-size: x-large;">♥</span></button>
+            &nbsp;<button class="btn btn-default btn-lg" onclick="selectSuit(2)"><span style="color: black; font-size: x-large;">♣</span></button>
+            &nbsp;<button class="btn btn-default btn-lg" onclick="selectSuit(3)"><span style="color: red; font-size: x-large;">♦</span></button>
+        </div>
+        
+        <!-- Tombol THUMP di tengah -->
+        <div class="thump-center">
+            <button class="btn btn-primary btn-lg center-btn" onclick="thumpCard()">THUMP</button>
+        </div>
+    </center>
+</div>
+
+</body>
+</html>
