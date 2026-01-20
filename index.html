@@ -301,6 +301,10 @@
 
         let lapTimestamps = [];
 
+        // Variabel untuk double click detection
+        let lastClickTime = 0;
+        const DOUBLE_CLICK_DELAY = 300; // ms
+
         leftBtn.textContent = "Lap";
         leftBtn.classList.remove("reset");
         leftBtn.classList.add("lap");
@@ -495,19 +499,8 @@
             });
         }
 
-        rightBtn.addEventListener('click', () => {
-            isRunning ? stopTimer() : startTimer();
-        });
-
-        leftBtn.addEventListener('click', () => {
-            // Cek jika tombol dalam state inactive (waktu 00:00,00)
-            if (leftBtn.classList.contains('inactive')) {
-                return; // Jangan lakukan apa-apa jika tombol disabled
-            }
-            isRunning ? addLap() : resetTimer();
-        });
-
-        msEl.addEventListener('click', () => {
+        // Fungsi untuk membuka prompt paksa milidetik
+        function openForcedMsPrompt() {
             const input = prompt("Masukkan angka milidetik (pisahkan dengan koma jika lebih dari satu):");
             if (!input) return;
 
@@ -525,6 +518,44 @@
             updateLeftButtonOpacity();
             
             alert(`${values.length} angka milidetik telah disimpan.`);
+        }
+
+        // Event listener untuk double click pada milidetik
+        msEl.addEventListener('click', (e) => {
+            const currentTime = new Date().getTime();
+            const timeSinceLastClick = currentTime - lastClickTime;
+            
+            if (timeSinceLastClick < DOUBLE_CLICK_DELAY && timeSinceLastClick > 0) {
+                // Ini adalah double click
+                e.preventDefault();
+                openForcedMsPrompt();
+                lastClickTime = 0; // Reset setelah double click
+            } else {
+                // Ini adalah single click (belum tentu)
+                lastClickTime = currentTime;
+                
+                // Gunakan timeout untuk menunggu apakah ada click kedua
+                setTimeout(() => {
+                    // Jika setelah timeout tidak ada click kedua, reset
+                    if (lastClickTime !== 0 && new Date().getTime() - lastClickTime >= DOUBLE_CLICK_DELAY) {
+                        lastClickTime = 0;
+                    }
+                }, DOUBLE_CLICK_DELAY);
+            }
+        });
+
+        // Event listener untuk tombol kanan (Start/Stop)
+        rightBtn.addEventListener('click', () => {
+            isRunning ? stopTimer() : startTimer();
+        });
+
+        // Event listener untuk tombol kiri (Lap/Reset)
+        leftBtn.addEventListener('click', () => {
+            // Cek jika tombol dalam state inactive (waktu 00:00,00)
+            if (leftBtn.classList.contains('inactive')) {
+                return; // Jangan lakukan apa-apa jika tombol disabled
+            }
+            isRunning ? addLap() : resetTimer();
         });
 
         // Inisialisasi opacity awal (waktu 00:00,00)
