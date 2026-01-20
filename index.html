@@ -4,53 +4,35 @@
 <head>
     <meta charset="UTF-8">
     <title>Clock</title>
-    <!-- Meta tag untuk mencegah zoom dan scroll di Safari -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="apple-touch-icon" href="./icon/icon-192x192.png">
+    <link rel="apple-touch-startup-image" href="./icon/icon-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Stopwatch">
-    
-    <!-- Icon untuk iOS -->
-    <link rel="apple-touch-icon" href="./icon/icon-192x192.png">
-    <link rel="apple-touch-startup-image" href="./icon/icon-512x512.png">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/icon-192x192.png">
 
     <style>
-        /* RESET DASAR UNTUK MENCEGAH SCROLL */
-        html {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            position: fixed;
-            -webkit-text-size-adjust: 100%;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-user-select: none;
-            user-select: none;
-            touch-action: manipulation;
-        }
-        
+        html,
         body {
             margin: 0;
             padding: 0;
             height: 100%;
-            width: 100%;
-            overflow: hidden;
-            position: fixed;
+            overflow-x: hidden;
             background-color: black;
             color: white;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             box-sizing: border-box;
-            -webkit-overflow-scrolling: auto;
-            overscroll-behavior: none;
-            /* Mencegah rubber band effect di Safari */
-            overscroll-behavior-y: none;
+            /* PERUBAHAN: Tambahkan overflow-y: hidden dan position: fixed */
+            overflow-y: hidden;
+            position: fixed;
+            width: 100%;
         }
 
         *,
         *::before,
         *::after {
             box-sizing: inherit;
-            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -191,12 +173,11 @@
             margin-top: 2vh;
             flex-grow: 1;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
             padding-bottom: 70px;
-            /* Mengizinkan scroll hanya di dalam container */
+            /* PERUBAHAN: Tambahkan overscroll-behavior untuk mencegah rubber band */
             overscroll-behavior: contain;
         }
-
+        
         .lap-item {
             display: flex;
             justify-content: space-between;
@@ -217,7 +198,6 @@
             position: fixed;
             bottom: 0;
             left: 0;
-            z-index: 1000;
         }
 
         .nav-item {
@@ -263,27 +243,6 @@
                 font-size: 23vw;
             }
         }
-
-        /* Mencegah highlight biru di iOS */
-        *:focus {
-            outline: none;
-        }
-        
-        /* Mencegah long-press menu di iOS */
-        * {
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-        
-        /* Kecuali untuk teks yang perlu di-select */
-        .lap-item span {
-            -webkit-user-select: text;
-            user-select: text;
-        }
     </style>
 </head>
 
@@ -327,59 +286,36 @@
     </nav>
 
     <script>
-        // ========== MENCEGAH SCROLL/RUBBER BAND DI SAFARI ==========
+        // ========== PERUBAHAN: Kode untuk mencegah scroll ==========
+        // Tambahkan kode ini di AWAL script sebelum kode lainnya
         
-        // 1. Mencegah touchmove default di seluruh body
+        // 1. Mencegah touchmove default (pull-to-refresh di iOS)
         document.addEventListener('touchmove', function(e) {
-            // Hanya izinkan scroll di lap-list-container
+            // Biarkan scroll hanya di lap-list-container
             if (e.target.closest('.lap-list-container')) {
                 return;
             }
-            // Untuk area lain, cegah default behavior
+            // Untuk area lain, cegah scroll
             e.preventDefault();
         }, { passive: false });
         
-        // 2. Mencegah pull-to-refresh dengan mencegah touchstart pada beberapa elemen
-        document.addEventListener('touchstart', function(e) {
-            // Jika sentuhan dimulai di area yang tidak boleh discroll
-            if (!e.target.closest('.lap-list-container')) {
-                // Untuk browser yang mendukung, hentikan propagasi
-                if (e.cancelable) {
-                    e.preventDefault();
-                }
-            }
-        }, { passive: false });
-        
-        // 3. Mencegah scroll wheel di desktop
+        // 2. Mencegah wheel scroll di desktop
         document.addEventListener('wheel', function(e) {
             if (!e.target.closest('.lap-list-container')) {
                 e.preventDefault();
             }
         }, { passive: false });
         
-        // 4. Mencegah context menu (long press) yang bisa menyebabkan scroll
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-            return false;
-        });
+        // 3. Set height body agar tidak ada overflow
+        function setBodyHeight() {
+            document.body.style.height = window.innerHeight + 'px';
+        }
         
-        // 5. Mencegah drag & drop behavior
-        document.addEventListener('dragstart', function(e) {
-            e.preventDefault();
-            return false;
-        });
+        // Set height awal dan saat resize
+        setBodyHeight();
+        window.addEventListener('resize', setBodyHeight);
         
-        // 6. Lock body position
-        document.body.style.position = 'fixed';
-        document.body.style.top = '0';
-        document.body.style.left = '0';
-        document.body.style.right = '0';
-        document.body.style.bottom = '0';
-        document.body.style.width = '100%';
-        document.body.style.height = '100%';
-        document.body.style.overflow = 'hidden';
-
-        // ========== KODE STOPWATCH ASLI ==========
+        // ========== KODE STOPWATCH ASLI (TIDAK BERUBAH) ==========
         
         // Deteksi bahasa sistem
         const systemLanguage = navigator.language || navigator.userLanguage || 'en-US';
@@ -762,15 +698,6 @@
         // Log bahasa yang terdeteksi (untuk debugging)
         console.log('System language detected:', systemLanguage);
         console.log('Using language:', lang);
-        console.log('Safari scroll prevention active');
-        
-        // Handle resize untuk memastikan tidak ada scroll
-        window.addEventListener('resize', function() {
-            document.body.style.height = window.innerHeight + 'px';
-        });
-        
-        // Set initial height
-        document.body.style.height = window.innerHeight + 'px';
     </script>
 </body>
 
