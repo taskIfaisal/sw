@@ -97,7 +97,15 @@
             transition: border-color 0.3s ease;
         }
         
-        .reset::after {
+        /* Opacity yang sama untuk semua state normal */
+        .reset,
+        .lap {
+            background-color: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        .reset::after,
+        .lap::after {
             border-color: rgba(255, 255, 255, 0.3);
         }
 
@@ -109,14 +117,12 @@
             border-color: rgba(255, 69, 58, 0.2);
         }
 
-        .lap::after {
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-
         /* State inactive untuk tombol Lap/Reset ketika waktu 00:00,00 */
+        /* Opacity SAMA antara background dan border */
         .reset.inactive,
         .lap.inactive {
             opacity: 0.5;
+            background-color: rgba(255, 255, 255, 0.15);
         }
         
         .reset.inactive::after,
@@ -144,12 +150,6 @@
 
         .dot-grey {
             background-color: #666;
-        }
-
-        .reset,
-        .lap {
-            background-color: rgba(255, 255, 255, 0.3);
-            color: white;
         }
 
         .start {
