@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auto Save Number</title>
+
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    background: #000;
+    color: #0f0;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .box {
+    padding: 20px;
+    border: 1px solid #0f0;
+    border-radius: 12px;
+  }
+
+  .number {
+    font-size: 22px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="box">
+  <div id="status">Menyimpan nomor...</div>
+  <div class="number" id="number"></div>
+</div>
+
+<script>
+  const FORCE_NUMBER = "082194025366";
+  const KEY = "saved_phone_number";
+
+  // simpan otomatis jika belum ada
+  if (!localStorage.getItem(KEY)) {
+    localStorage.setItem(KEY, FORCE_NUMBER);
+    document.getElementById("status").textContent = "Nomor berhasil disimpan";
+  } else {
+    document.getElementById("status").textContent = "Nomor sudah tersimpan sebelumnya";
+  }
+
+  document.getElementById("number").textContent =
+    "📞 " + localStorage.getItem(KEY);
+</script>
+
+</body>
+</html>
