@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -83,6 +82,7 @@
             cursor: pointer;
             user-select: none;
             position: relative;
+            transition: opacity 0.3s ease;
         }
 
         .button::after {
@@ -94,8 +94,9 @@
             bottom: -4px;
             border-radius: 50%;
             border: 2px solid;
+            transition: border-color 0.3s ease;
         }
-
+        
         .reset::after {
             border-color: rgba(255, 255, 255, 0.3);
         }
@@ -110,6 +111,17 @@
 
         .lap::after {
             border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* State inactive untuk tombol Lap/Reset ketika waktu 00:00,00 */
+        .reset.inactive,
+        .lap.inactive {
+            opacity: 0.5;
+        }
+        
+        .reset.inactive::after,
+        .lap.inactive::after {
+            border-color: rgba(255, 255, 255, 0.15);
         }
 
         .indicator-dots {
@@ -167,7 +179,6 @@
             font-size: 1rem;
             font-weight: 500;
             color: white;
-            /* Default color for all laps */
         }
 
         .bottom-nav {
@@ -214,12 +225,10 @@
 
         .lap-item.fastest {
             color: #3cd14b;
-            /* Green for fastest */
         }
 
         .lap-item.slowest {
             color: #FF453A;
-            /* Red for slowest */
         }
 
         @media (max-width: 600px) {
@@ -296,6 +305,21 @@
         leftBtn.classList.remove("reset");
         leftBtn.classList.add("lap");
 
+        // Fungsi untuk mengecek apakah waktu adalah 00:00,00
+        function isZeroTime() {
+            const totalTime = elapsedTime + (forcedMs !== null ? forcedMs * 10 : 0);
+            return totalTime === 0;
+        }
+
+        // Fungsi untuk mengupdate opacity tombol kiri (Lap/Reset)
+        function updateLeftButtonOpacity() {
+            if (isZeroTime()) {
+                leftBtn.classList.add('inactive');
+            } else {
+                leftBtn.classList.remove('inactive');
+            }
+        }
+
         function toggleForcedMs() {
             isForcedMsActive = !isForcedMsActive;
             if (isForcedMsActive) {
@@ -332,6 +356,9 @@
             secEl.textContent = seconds;
             msEl.textContent = milliseconds;
 
+            // Update opacity tombol kiri
+            updateLeftButtonOpacity();
+
             if (lapList.firstChild && lapTimestamps.length > 0) {
                 let lapTime;
                 if (!isRunning && forcedMs !== null) {
@@ -363,6 +390,9 @@
             leftBtn.classList.remove("reset");
             leftBtn.classList.add("lap");
 
+            // Update opacity saat mulai
+            updateLeftButtonOpacity();
+
             if (lapCount === 1) addLap();
         }
 
@@ -385,6 +415,9 @@
             leftBtn.textContent = "Reset";
             leftBtn.classList.remove("lap");
             leftBtn.classList.add("reset");
+
+            // Update opacity saat stop
+            updateLeftButtonOpacity();
         }
 
         function resetTimer() {
@@ -405,6 +438,9 @@
             leftBtn.textContent = "Lap";
             leftBtn.classList.remove("reset");
             leftBtn.classList.add("lap");
+
+            // Update opacity saat reset (waktu menjadi 00:00,00)
+            updateLeftButtonOpacity();
         }
 
         function addLap() {
@@ -464,6 +500,10 @@
         });
 
         leftBtn.addEventListener('click', () => {
+            // Cek jika tombol dalam state inactive (waktu 00:00,00)
+            if (leftBtn.classList.contains('inactive')) {
+                return; // Jangan lakukan apa-apa jika tombol disabled
+            }
             isRunning ? addLap() : resetTimer();
         });
 
@@ -480,8 +520,15 @@
 
             forcedMsList = values;
             forcedMsIndex = 0;
+            
+            // Update opacity setelah mengatur forcedMs
+            updateLeftButtonOpacity();
+            
             alert(`${values.length} angka milidetik telah disimpan.`);
         });
+
+        // Inisialisasi opacity awal (waktu 00:00,00)
+        updateLeftButtonOpacity();
     </script>
 </body>
 
