@@ -198,6 +198,11 @@
             position: fixed;
             bottom: 0;
             left: 0;
+            /* PERUBAHAN: Tambahkan border-top dan perbaiki z-index */
+            border-top: 1px solid #333;
+            z-index: 1000;
+            /* Pastikan benar-benar di bawah */
+            padding-bottom: env(safe-area-inset-bottom); /* Untuk iPhone dengan notch */
         }
 
         .nav-item {
@@ -207,12 +212,16 @@
             font-size: 12px;
             text-decoration: none;
             color: #aaa;
+            /* PERUBAHAN: Atur padding/margin untuk posisi yang lebih baik */
+            padding: 8px 0;
         }
 
         .nav-label {
             font-size: 10px;
             font-weight: 400;
             text-align: center;
+            /* PERUBAHAN: Atur margin untuk posisi label */
+            margin-top: 2px;
         }
 
         .nav-icon {
@@ -223,7 +232,8 @@
             background-repeat: no-repeat;
             background-position: center;
             display: block;
-            margin-bottom: 3px;
+            /* PERUBAHAN: Kurangi margin-bottom agar icon lebih dekat ke label */
+            margin-bottom: 2px;
         }
 
         .nav-item.active {
@@ -241,6 +251,17 @@
         @media (max-width: 600px) {
             .time-display {
                 font-size: 23vw;
+            }
+            /* PERUBAHAN: Untuk layar kecil, atur ulang bottom-nav */
+            .bottom-nav {
+                height: 55px;
+            }
+            .nav-icon {
+                width: 22px;
+                height: 22px;
+            }
+            .nav-label {
+                font-size: 9px;
             }
         }
     </style>
@@ -314,6 +335,18 @@
         // Set height awal dan saat resize
         setBodyHeight();
         window.addEventListener('resize', setBodyHeight);
+        
+        // 4. PERUBAHAN: Atur bottom-nav untuk layar dengan safe area (iPhone dengan notch)
+        function adjustBottomNavForSafeArea() {
+            const bottomNav = document.querySelector('.bottom-nav');
+            if (CSS.supports('padding-bottom: env(safe-area-inset-bottom)')) {
+                // Untuk perangkat dengan safe area (iPhone X dan baru)
+                bottomNav.style.paddingBottom = 'env(safe-area-inset-bottom)';
+            }
+        }
+        
+        // Panggil setelah DOM siap
+        document.addEventListener('DOMContentLoaded', adjustBottomNavForSafeArea);
         
         // ========== KODE STOPWATCH ASLI (TIDAK BERUBAH) ==========
         
