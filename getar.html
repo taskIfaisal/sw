@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permainan Getar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .status {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .status.good {
+            background: rgba(46, 204, 113, 0.3);
+            border: 2px solid #2ecc71;
+        }
+        
+        .status.bad {
+            background: rgba(231, 76, 60, 0.3);
+            border: 2px solid #e74c3c;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 480px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .btn {
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-getar {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            color: #333;
+        }
+        
+        .btn-pola {
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            color: #333;
+        }
+        
+        .btn-morse {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            color: #333;
+        }
+        
+        .btn-tebak {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: #333;
+        }
+        
+        .btn-toggle {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            grid-column: span 2;
+        }
+        
+        @media (max-width: 480px) {
+            .btn-toggle {
+                grid-column: span 1;
+            }
+        }
+        
+        .btn-toggle.active {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        }
+        
+        .btn-stop {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+        }
+        
+        .pattern-display {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .game-area {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .pattern-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .result {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .result.correct {
+            background: rgba(46, 204, 113, 0.3);
+            color: #2ecc71;
+        }
+        
+        .result.wrong {
+            background: rgba(231, 76, 60, 0.3);
+            color: #e74c3c;
+        }
+        
+        .vibration-icon {
+            font-size: 1.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #ffd700;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        footer {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Permainan Getar</h1>
+        <p class="subtitle">Rasakan getaran dan tebak polanya!</p>
+        
+        <div id="statusDisplay" class="status">
+            Memeriksa dukungan getar...
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-getar" id="btnVibrate">
+                <span class="vibration-icon">📳</span> Getar Sekali
+            </button>
+            
+            <button class="btn btn-pola" id="btnPattern">
+                <span class="vibration-icon">🎵</span> Getar Pola
+            </button>
+            
+            <button class="btn btn-morse" id="btnMorse">
+                <span class="vibration-icon">🔤</span> Kode Morse
+            </button>
+            
+            <button class="btn btn-tebak" id="btnGame">
+                <span class="vibration-icon">🎯</span> Game Tebak
+            </button>
+            
+            <button class="btn btn-toggle" id="btnToggle">
+                🔄 Aktifkan Getar
+            </button>
+            
+            <button class="btn btn-stop" id="btnStop">
+                ⏹️ Hentikan Getar
+            </button>
+        </div>
+        
+        <div class="pattern-display" id="patternDisplay">
+            Pola getar akan muncul di sini...
+        </div>
+        
+        <div class="game-area" id="gameArea" style="display: none;">
+            <h3>🎮 Game: Tebak Pola Getar</h3>
+            <p>Tebak pola getar yang Anda rasakan!</p>
+            <div id="gamePatternDisplay" class="pattern-display">
+                Dengarkan getarannya...
+            </div>
+            <input type="text" class="pattern-input" id="patternInput" placeholder="Masukkan pola (contoh: 100,200,100)">
+            <button class="btn btn-tebak" id="btnCheck">Periksa Jawaban</button>
+            <div id="gameResult" class="result"></div>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 Cara Bermain:</h3>
+            <ul>
+                <li><strong>Getar Sekali:</strong> Getar tunggal 500ms</li>
+                <li><strong>Getar Pola:</strong> Getar dengan pola tertentu</li>
+                <li><strong>Kode Morse:</strong> Rasakan kode morse "SOS" (···---···)</li>
+                <li><strong>Game Tebak:</strong> Tebak pola getar yang diberikan</li>
+                <li><strong>Aktif/Nonaktif:</strong> Kontrol fitur getar</li>
+                <li><strong>Hentikan:</strong> Hentikan getaran yang sedang berjalan</li>
+            </ul>
+            <p><strong>Catatan:</strong> Game ini memerlukan perangkat yang mendukung Vibration API (biasanya smartphone). Desktop tidak akan bergetar.</p>
+        </div>
+    </div>
+    
+    <footer>
+        Dibuat dengan ❤️ menggunakan Web Vibration API
+    </footer>
+
+    <script>
+        // Cek dukungan Vibration API
+        const isVibrationSupported = 'vibrate' in navigator;
+        const statusDisplay = document.getElementById('statusDisplay');
+        const patternDisplay = document.getElementById('patternDisplay');
+        const gameArea = document.getElementById('gameArea');
+        const gamePatternDisplay = document.getElementById('gamePatternDisplay');
+        const patternInput = document.getElementById('patternInput');
+        const gameResult = document.getElementById('gameResult');
+        
+        // Status getar
+        let vibrationEnabled = true;
+        let currentGamePattern = [];
+        
+        // Inisialisasi
+        function init() {
+            if (isVibrationSupported) {
+                statusDisplay.textContent = "✅ Perangkat Anda mendukung fitur getar!";
+                statusDisplay.className = "status good";
+            } else {
+                statusDisplay.textContent = "❌ Maaf, perangkat Anda tidak mendukung fitur getar. Coba buka di smartphone.";
+                statusDisplay.className = "status bad";
+                vibrationEnabled = false;
+                document.getElementById('btnToggle').textContent = "Getar Tidak Didukung";
+                document.getElementById('btnToggle').disabled = true;
+            }
+            
+            updateToggleButton();
+        }
+        
+        // Fungsi getar
+        function vibrate(pattern) {
+            if (!isVibrationSupported || !vibrationEnabled) {
+                console.log("Getar dinonaktifkan atau tidak didukung");
+                return false;
+            }
+            
+            try {
+                navigator.vibrate(pattern);
+                return true;
+            } catch (error) {
+                console.error("Error saat getar:", error);
+                return false;
+            }
+        }
+        
+        // Fungsi hentikan getar
+        function stopVibration() {
+            if (isVibrationSupported) {
+                navigator.vibrate(0);
+                patternDisplay.textContent = "Getaran dihentikan";
+            }
+        }
+        
+        // Update tombol toggle
+        function updateToggleButton() {
+            const btnToggle = document.getElementById('btnToggle');
+            if (vibrationEnabled) {
+                btnToggle.innerHTML = "✅ Getar AKTIF";
+                btnToggle.classList.add('active');
+            } else {
+                btnToggle.innerHTML = "❌ Getar NONAKTIF";
+                btnToggle.classList.remove('active');
+            }
+        }
+        
+        // Toggle getar aktif/nonaktif
+        function toggleVibration() {
+            if (!isVibrationSupported) return;
+            
+            vibrationEnabled = !vibrationEnabled;
+            updateToggleButton();
+            
+            // Getar konfirmasi jika diaktifkan
+            if (vibrationEnabled) {
+                vibrate(100);
+                patternDisplay.textContent = "Getar diaktifkan! ✅";
+            } else {
+                patternDisplay.textContent = "Getar dinonaktifkan ❌";
+            }
+        }
+        
+        // Getar sekali
+        function vibrateOnce() {
+            const pattern = 500;
+            const success = vibrate(pattern);
+            if (success) {
+                patternDisplay.textContent = `Getar sekali: ${pattern}ms`;
+            } else {
+                patternDisplay.textContent = "Gagal getar. Pastikan getar aktif!";
+            }
+        }
+        
+        // Getar dengan pola
+        function vibratePattern() {
+            // Pola: getar 200ms, jeda 100ms, getar 300ms, jeda 50ms, getar 400ms
+            const pattern = [200, 100, 300, 50, 400];
+            const success = vibrate(pattern);
+            if (success) {
+                patternDisplay.textContent = `Pola: [${pattern.join(', ')}]`;
+            }
+        }
+        
+        // Getar kode morse "SOS"
+        function vibrateMorse() {
+            // Kode Morse untuk "SOS": ... --- ...
+            // Titik (.) = getar pendek (100ms)
+            // Garis (-) = getar panjang (300ms)
+            // Jeda antara simbol = 100ms
+            // Jeda antara huruf = 300ms
+            
+            // S = ... (3 titik)
+            const sPattern = [100, 100, 100, 100, 100, 100];
+            // O = --- (3 garis)
+            const oPattern = [300, 100, 300, 100, 300];
+            // Gabungkan: S O S
+            const pattern = [...sPattern, 300, ...oPattern, 300, ...sPattern];
+            
+            const success = vibrate(pattern);
+            if (success) {
+                patternDisplay.textContent = "Kode Morse: SOS (··· --- ···)";
+            }
+        }
+        
+        // Mulai game tebak pola
+        function startGame() {
+            if (!vibrationEnabled) {
+                alert("Aktifkan getar terlebih dahulu untuk bermain!");
+                return;
+            }
+            
+            // Buat pola acak untuk game
+            currentGamePattern = generateRandomPattern();
+            gamePatternDisplay.textContent = "Dengarkan getarannya...";
+            patternInput.value = "";
+            gameResult.textContent = "";
+            gameArea.style.display = "block";
+            
+            // Mainkan pola
+            setTimeout(() => {
+                vibrate(currentGamePattern);
+                gamePatternDisplay.textContent = `Pola diputar! Tebak polanya...`;
+            }, 1000);
+        }
+        
+        // Generate pola acak
+        function generateRandomPattern() {
+            const length = Math.floor(Math.random() * 3) + 2; // 2-4 getaran
+            const pattern = [];
+            
+            for (let i = 0; i < length; i++) {
+                // Durasi getar antara 100-500ms
+                const vibration = Math.floor(Math.random() * 400) + 100;
+                pattern.push(vibration);
+                
+                // Tambah jeda kecuali elemen terakhir
+                if (i < length - 1) {
+                    const pause = Math.floor(Math.random() * 200) + 50;
+                    pattern.push(pause);
+                }
+            }
+            
+            return pattern;
+        }
+        
+        // Periksa jawaban game
+        function checkAnswer() {
+            const userInput = patternInput.value.trim();
+            
+            if (!userInput) {
+                gameResult.textContent = "Masukkan pola terlebih dahulu!";
+                gameResult.className = "result wrong";
+                return;
+            }
+            
+            // Parse input user
+            const userPattern = userInput.split(',').map(num => {
+                const parsed = parseInt(num.trim());
+                return isNaN(parsed) ? 0 : parsed;
+            }).filter(num => num > 0);
+            
+            // Bandingkan dengan pola asli (toleransi ±50ms)
+            let isCorrect = true;
+            if (userPattern.length !== currentGamePattern.length) {
+                isCorrect = false;
+            } else {
+                for (let i = 0; i < userPattern.length; i++) {
+                    if (Math.abs(userPattern[i] - currentGamePattern[i]) > 50) {
+                        isCorrect = false;
+                        break;
+                    }
+                }
+            }
+            
+            // Tampilkan hasil
+            if (isCorrect) {
+                gameResult.textContent = "✅ Benar! Pola Anda tepat!";
+                gameResult.className = "result correct";
+                // Getar sukses
+                vibrate([100, 50, 100, 50, 100]);
+            } else {
+                gameResult.textContent = `❌ Salah! Pola yang benar: [${currentGamePattern.join(', ')}]`;
+                gameResult.className = "result wrong";
+                // Getar gagal
+                vibrate([300]);
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('btnVibrate').addEventListener('click', vibrateOnce);
+        document.getElementById('btnPattern').addEventListener('click', vibratePattern);
+        document.getElementById('btnMorse').addEventListener('click', vibrateMorse);
+        document.getElementById('btnGame').addEventListener('click', startGame);
+        document.getElementById('btnToggle').addEventListener('click', toggleVibration);
+        document.getElementById('btnStop').addEventListener('click', stopVibration);
+        document.getElementById('btnCheck').addEventListener('click', checkAnswer);
+        
+        // Tekan Enter di input untuk check answer
+        patternInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+        
+        // Inisialisasi saat halaman dimuat
+        window.addEventListener('DOMContentLoaded', init);
+        
+        // Tambahkan animasi saat hover tombol
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                if (this.id !== 'btnToggle' && vibrationEnabled) {
+                    vibrate(30); // Getar pendek saat hover
+                }
+            });
+        });
+    </script>
+</body>
+</html>
