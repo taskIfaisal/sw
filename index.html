@@ -262,19 +262,19 @@
     <nav class="bottom-nav">
         <a href="#" class="nav-item">
             <span class="nav-icon" style="--icon-url: url('./icon/world-clock1.png');"></span>
-            <span class="nav-label">World Clock</span>
+            <span class="nav-label" id="navWorldClock">World Clock</span>
         </a>
         <a href="#" class="nav-item">
             <span class="nav-icon" style="--icon-url: url('./icon/alarms2.png');"></span>
-            <span class="nav-label">Alarms</span>
+            <span class="nav-label" id="navAlarms">Alarms</span>
         </a>
         <a href="#" class="nav-item active">
             <span class="nav-icon" style="--icon-url: url('./icon/stopwatch-icon2.png');"></span>
-            <span class="nav-label">Stopwatch</span>
+            <span class="nav-label" id="navStopwatch">Stopwatch</span>
         </a>
         <a href="#" class="nav-item">
             <span class="nav-icon" style="--icon-url: url('./icon/timers2.png');"></span>
-            <span class="nav-label">Timers</span>
+            <span class="nav-label" id="navTimers">Timers</span>
         </a>
     </nav>
 
@@ -301,7 +301,13 @@
                 'numbersSaved': 'angka milidetik telah disimpan.',
                 
                 // Lap
-                'lapText': 'Putaran'
+                'lapText': 'Putaran',
+                
+                // Bottom Navigation
+                'worldClock': 'Jam Dunia',
+                'alarms': 'Alarm',
+                'stopwatch': 'Stopwatch',
+                'timers': 'Timer'
             },
             'en': {
                 // Buttons
@@ -318,7 +324,13 @@
                 'numbersSaved': 'millisecond numbers have been saved.',
                 
                 // Lap
-                'lapText': 'Lap'
+                'lapText': 'Lap',
+                
+                // Bottom Navigation
+                'worldClock': 'World Clock',
+                'alarms': 'Alarms',
+                'stopwatch': 'Stopwatch',
+                'timers': 'Timers'
             }
         };
         
@@ -355,22 +367,42 @@
         const secEl = document.getElementById('sec');
         const msEl = document.getElementById('ms');
 
+        // Elemen untuk bottom navigation
+        const navWorldClock = document.getElementById('navWorldClock');
+        const navAlarms = document.getElementById('navAlarms');
+        const navStopwatch = document.getElementById('navStopwatch');
+        const navTimers = document.getElementById('navTimers');
+
         let lapTimestamps = [];
 
         // Variabel untuk double click detection
         let lastClickTime = 0;
         const DOUBLE_CLICK_DELAY = 300; // ms
 
-        // Inisialisasi teks tombol berdasarkan bahasa
-        leftBtn.textContent = t('lap');
-        leftBtn.classList.remove("reset");
-        leftBtn.classList.add("lap");
-        
-        rightBtn.textContent = t('start');
-        rightBtn.classList.add("start");
+        // Fungsi untuk menginisialisasi semua teks berdasarkan bahasa
+        function initializeLanguage() {
+            // Tombol stopwatch
+            leftBtn.textContent = t('lap');
+            rightBtn.textContent = t('start');
+            
+            // Bottom navigation
+            navWorldClock.textContent = t('worldClock');
+            navAlarms.textContent = t('alarms');
+            navStopwatch.textContent = t('stopwatch');
+            navTimers.textContent = t('timers');
+            
+            // Update title
+            document.title = t('stopwatch');
+            
+            // Update kelas tombol
+            leftBtn.classList.remove("reset");
+            leftBtn.classList.add("lap");
+            rightBtn.classList.remove("stop");
+            rightBtn.classList.add("start");
+        }
 
-        // Update title berdasarkan bahasa
-        document.title = lang === 'id' ? 'Stopwatch' : 'Stopwatch';
+        // Panggil fungsi inisialisasi bahasa
+        initializeLanguage();
 
         // Fungsi untuk mengecek apakah waktu adalah 00:00,00
         function isZeroTime() {
