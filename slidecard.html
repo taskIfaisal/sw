@@ -236,11 +236,42 @@
         #sensor-permission.hidden {
             display: none;
         }
+        
+        /* TITIK INDIKATOR KARTU AKAN MUNCUL - SANGAT KECIL DAN SAMAR */
+        #card-indicator {
+            position: fixed;
+            bottom: 5px; /* Pojok kanan bawah */
+            right: 5px;
+            width: 1px; /* Sangat kecil */
+            height: 1px; /* Sangat kecil */
+            background-color: rgba(255, 255, 255, 0.15); /* Sangat transparan */
+            border-radius: 50%;
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+            pointer-events: none; /* Tidak bisa diklik */
+            box-shadow: 0 0 1px rgba(255, 255, 255, 0.1); /* Efek glow minimal */
+        }
+        
+        #card-indicator.visible {
+            opacity: 1;
+            visibility: visible;
+            animation: subtlePulse 1.5s infinite alternate;
+        }
+        
+        @keyframes subtlePulse {
+            0% { opacity: 0.1; }
+            100% { opacity: 0.2; }
+        }
     </style>
 </head>
 <body>
     <div id="background"></div>
     <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
+    
+    <!-- TITIK INDIKATOR BARU -->
+    <div id="card-indicator"></div>
     
     <div id="settings">
         <h2>Magic Card Settings</h2>
@@ -314,6 +345,7 @@
     const sensorPermissionBtn = document.getElementById('sensor-permission');
     const preview1 = document.getElementById('preview-1');
     const preview2 = document.getElementById('preview-2');
+    const cardIndicator = document.getElementById('card-indicator'); // Element baru
 
     // Initialize card properties
     let posX = window.innerWidth / 2 - card.offsetWidth / 2;
@@ -351,6 +383,9 @@
     // Double tap detection variables
     let tapCount = 0;
     let tapTimer = null;
+    
+    // Indikator timeout
+    let indicatorTimeout = null;
     
     // STORAGE FUNCTIONS
     const STORAGE_KEYS = {
@@ -437,10 +472,11 @@
         }
     }, {passive: false});
         
-    // Double tap handler
+    // Double tap handler - MODIFIED: Menambahkan indikator
     function handleDoubleTap() {
         console.log("Double tap detected!");
         
+        // Bersihkan semua timeout yang ada
         if (showCardTimeout) {
             clearTimeout(showCardTimeout);
             showCardTimeout = null;
@@ -449,10 +485,36 @@
             clearTimeout(changeCardTimeout);
             changeCardTimeout = null;
         }
+        if (indicatorTimeout) {
+            clearTimeout(indicatorTimeout);
+            hideIndicator();
+        }
         
+        // Tampilkan indikator titik kecil 1 detik sebelum kartu muncul
+        indicatorTimeout = setTimeout(() => {
+            showIndicator();
+        }, 4000); // 5 detik total - 1 detik = 4 detik untuk indikator
+        
+        // Tampilkan kartu setelah 5 detik
         showCardTimeout = setTimeout(() => {
+            hideIndicator(); // Sembunyikan indikator
             showCardWithTransformation();
         }, 5000);
+    }
+    
+    // Fungsi untuk menampilkan indikator titik kecil
+    function showIndicator() {
+        cardIndicator.classList.add('visible');
+        console.log("Indicator shown - card will appear in 1 second");
+    }
+    
+    // Fungsi untuk menyembunyikan indikator
+    function hideIndicator() {
+        cardIndicator.classList.remove('visible');
+        if (indicatorTimeout) {
+            clearTimeout(indicatorTimeout);
+            indicatorTimeout = null;
+        }
     }
     
     // Card dragging functionality
@@ -753,8 +815,6 @@
         }, 1000);
     }
     
-    // ===== FUNGSI BARU: hideCardImmediately =====
-    // Diambil dari code kedua dan menggantikan hideCardWithNaturalAnimation
     function hideCardImmediately() {
         if (showCardTimeout) {
             clearTimeout(showCardTimeout);
@@ -763,6 +823,10 @@
         if (changeCardTimeout) {
             clearTimeout(changeCardTimeout);
             changeCardTimeout = null;
+        }
+        if (indicatorTimeout) {
+            clearTimeout(indicatorTimeout);
+            hideIndicator();
         }
         
         card.style.transition = 'none';
@@ -778,10 +842,6 @@
         
         currentCardImage = 1;
     }
-    
-    // Hapus fungsi lama yang tidak digunakan
-    // function hideCardWithNaturalAnimation() { ... } 
-    // (dihapus dari code)
     
     function initSensor() {
         if (typeof DeviceOrientationEvent?.requestPermission === "function") {
