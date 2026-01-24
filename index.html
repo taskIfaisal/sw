@@ -1,704 +1,1115 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>Clock</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="apple-touch-icon" href="./icon/icon-192x192.png">
-    <link rel="apple-touch-startup-image" href="./icon/icon-512x512.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magic Card Trick</title>
+    
+    <!-- ========== PWA META TAGS ========== -->
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="./manifest.json">
+    <meta name="description" content="Magic Card Trick - A magical card transformation app">
+    <!-- =================================== -->
+    
+    <link rel="apple-touch-icon" href="./icon/slide-512x512.png">
+    <link rel="apple-touch-startup-image" href="./icon/slide-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Stopwatch">
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon/icon-192x192.png">
-
+    <meta name="apple-mobile-web-app-title" content="Slide Card">
+    <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon/slide-512x512.png">
+    
     <style>
-        html,
-        body {
+        html, body {
             margin: 0;
             padding: 0;
-            height: 100%;
-            overflow-x: hidden;
+            width: 100vw;
+            height: 100vh;
+            font-family: 'SF Pro Display', sans-serif;
             background-color: black;
+            background-size: cover;
+            background-position: center;
             color: white;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            box-sizing: border-box;
-            /* PERUBAHAN: Tambahkan overflow-y: hidden dan position: fixed */
-            overflow-y: hidden;
-            position: fixed;
-            width: 100%;
-        }
-
-        *,
-        *::before,
-        *::after {
-            box-sizing: inherit;
-        }
-
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-        }
-
-        .time-display {
-            display: flex;
-            font-size: 20vw;
-            font-weight: 200;
-            margin: 24vh 0 15.5vh;
-            line-height: 1.1;
-            letter-spacing: -0.5px;
-            font-feature-settings: "tnum";
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-        }
-
-        .time-part {
-            display: inline-block;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .time-part.separator {
-            margin: 0 0.05em;
-            font-size: 0.8em;
-            transform: translateY(-5%);
-        }
-
-        .buttons {
-            display: flex;
-            justify-content: space-between;
-            padding: 0 5vw;
-            width: 100%;
-            max-width: 400px;
-            margin-bottom: 2vh;
-        }
-
-        .button {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            cursor: pointer;
-            user-select: none;
+            overflow: hidden;
+            touch-action: none;
             position: relative;
-            transition: opacity 0.3s ease;
         }
 
-        .button::after {
-            content: '';
+        * {
+            box-sizing: border-box;
+        }
+        
+        #background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+        }
+        
+        #card {
             position: absolute;
-            top: -4px;
-            left: -4px;
-            right: -4px;
-            bottom: -4px;
-            border-radius: 50%;
-            border: 2px solid;
-            transition: border-color 0.3s ease;
+            width: 100%;
+            max-width: 300px;
+            z-index: 2;
+            user-select: none;
+            -webkit-user-drag: none;
+            touch-action: none;
+            left: 0;
+            top: 0;
+            will-change: transform;
+            opacity: 0;
+            visibility: hidden;
+            transform-origin: center;
+        }
+
+        .card-visible {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        .card-flipping {
+            animation: flipCard 1s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+            backface-visibility: hidden;
+        }
+
+        @keyframes flipCard {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(90deg); }
+            100% { transform: rotateY(0deg); }
+        }
+
+        .card-moving {
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
         }
         
-        /* Opacity yang sama untuk semua state normal */
-        .reset,
-        .lap {
-            background-color: rgba(51, 51, 51, 1);
+        #settings {
+            position: fixed;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 3;
+            transition: top 0.5s ease;
             color: white;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
         }
         
-        .reset::after,
-        .lap::after {
-            border-color: rgba(51, 51, 51, 1);
-        }
-
-        .start::after {
-            border-color: rgba(49, 164, 61, 0.3);
-        }
-
-        .stop::after {
-            border-color: rgba(255, 69, 58, 0.2);
-        }
-
-        /* State inactive untuk tombol Lap/Reset ketika waktu 00:00,00 */
-        /* Opacity SAMA antara background dan border */
-        .reset.inactive,
-        .lap.inactive {
-            opacity: 0.5;
-            background-color: rgba(44, 44, 46, 1);
+        .setting-section {
+            margin-bottom: 20px;
         }
         
-        .reset.inactive::after,
-        .lap.inactive::after {
-            border-color: rgba(44, 44, 46, 1);
-        }
-
-        .indicator-dots {
+        .image-upload-row {
             display: flex;
             gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .upload-preview {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #666;
+            border-radius: 5px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #333;
+        }
+        
+        .upload-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .file-upload {
+            background: #2196F3;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            display: inline-block;
+            cursor: pointer;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .image-editor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
         }
 
-        .indicator-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background-color: gray;
-        }
-
-        .dot-white {
-            background-color: white;
-        }
-
-        .dot-grey {
-            background-color: #666;
-        }
-
-        .start {
-            background-color: rgba(49, 164, 61, 0.3);
-            color: #3cd14b;
-        }
-
-        .stop {
-            background-color: rgba(255, 69, 58, 0.2);
-            color: #FF453A;
-        }
-
-        .lap-list-container {
-            width: 90%;
-            max-width: 400px;
-            border-top: 1px solid #333;
-            margin-top: 2vh;
-            flex-grow: 1;
-            overflow-y: auto;
-            padding-bottom: 70px;
-            /* PERUBAHAN: Tambahkan overscroll-behavior untuk mencegah rubber band */
-            overscroll-behavior: contain;
+        .upload-label button {
+            background: #2196F3;
         }
         
-        .lap-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #222;
-            font-size: 1rem;
-            font-weight: 500;
-            color: white;
+        .editor-container {
+            position: relative;
+            width: 90%;
+            height: 70%;
+            margin: 20px;
         }
 
-        .bottom-nav {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            width: 100%;
-            height: 60px;
-            background-color: black;
-            position: fixed;
+        #editing-card {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+            margin: 0 auto;
+            touch-action: none;
+            transform-origin: center center;
+        }
+
+        .editor-controls {
+            position: absolute;
             bottom: 0;
-            left: 0;
+            width: 100%;
+            text-align: center;
+            padding: 15px 0;
+            background: rgba(0,0,0,0.7);
         }
 
-        .nav-item {
+        .editor-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .editor-buttons button {
+            min-width: 100px;
+        }
+
+        #cancel-edit {
+            background: #f44336;
+        }
+        
+        #sensor-permission {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            font-size: 24px;
+            z-index: 9999;
+            border: none;
             display: flex;
             flex-direction: column;
             align-items: center;
-            font-size: 12px;
-            text-decoration: none;
-            color: #aaa;
-        }
-
-        .nav-label {
-            font-size: 10px;
-            font-weight: 400;
+            justify-content: center;
+            backdrop-filter: blur(10px);
             text-align: center;
+            padding: 20px;
+            cursor: pointer;
         }
-
-        .nav-icon {
-            width: 25px;
-            height: 25px;
-            background-image: var(--icon-url);
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+        
+        #sensor-permission.hidden {
+            display: none;
+        }
+        
+        /* TITIK INDIKATOR - LOGIKA SEDERHANA SEJERNIH POSSIBLE */
+        #card-indicator {
+            position: fixed;
+            bottom: 8px;
+            right: 8px;
+            width: 1px;
+            height: 1px;
+            background-color: #FFFFFF;
+            border-radius: 50%;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        #card-indicator.visible {
+            opacity: 1;
+        }
+        
+        /* ========== PWA INSTALL BUTTON ========== */
+        #install-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 100;
+            font-size: 14px;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        #install-button.visible {
             display: block;
-            margin-bottom: 3px;
         }
-
-        .nav-item.active {
-            color: #ffa500;
+        
+        #install-button:hover {
+            background: #1976D2;
         }
-
-        .lap-item.fastest {
-            color: #3cd14b;
-        }
-
-        .lap-item.slowest {
-            color: #FF453A;
-        }
-
-        @media (max-width: 600px) {
-            .time-display {
-                font-size: 23vw;
-            }
-        }
+        /* ======================================= */
     </style>
 </head>
-
 <body>
-    <div class="time-display" id="time">
-        <span class="time-part number" id="min">00</span>
-        <span class="time-part separator">:</span>
-        <span class="time-part number" id="sec">00</span>
-        <span class="time-part separator">,</span>
-        <span class="time-part number" id="ms">00</span>
-    </div>
-
-    <div class="buttons">
-        <div class="button reset" id="leftBtn">Lap</div>
-        <div class="indicator-dots">
-            <span class="indicator-dot dot-white"></span>
-            <span class="indicator-dot dot-grey"></span>
+    <!-- ========== PWA INSTALL BUTTON ========== -->
+    <button id="install-button" class="hidden">
+        📲 Install App
+    </button>
+    
+    <div id="background"></div>
+    <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
+    
+    <!-- TITIK INDIKATOR -->
+    <div id="card-indicator"></div>
+    
+    <div id="settings">
+        <h2>Magic Card Settings</h2>
+        
+        <div class="setting-section">
+            <h3>Background Image</h3>
+            <label class="file-upload">
+                Choose Background
+                <input type="file" id="bg-upload" accept="image/*">
+            </label>
         </div>
-        <div class="button start" id="rightBtn">Start</div>
+        
+        <div class="setting-section">
+            <h3>Card Images</h3>
+            <p>Upload two images for card transformation</p>
+            
+            <div class="image-upload-row">
+                <div class="upload-label">
+                    <button onclick="document.getElementById('card-upload-1').click()">
+                        Card Image 1
+                    </button>
+                    <input type="file" id="card-upload-1" accept="image/*" data-index="1">
+                    <div class="upload-preview" id="preview-1"></div>
+                </div>
+
+                <div class="upload-label">
+                    <button onclick="document.getElementById('card-upload-2').click()">
+                        Card Image 2
+                    </button>
+                    <input type="file" id="card-upload-2" accept="image/*" data-index="2">
+                    <div class="upload-preview" id="preview-2"></div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <button id="default-cards">Use Default Cards</button>
+                <button id="swap-cards">Swap Images 1↔2</button>
+            </div>
+            
+            <div style="margin-top: 15px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px;">
+                <small>
+                    <strong>How it works:</strong><br>
+                    1. Double tap to summon card<br>
+                    2. Card shows Image 1<br>
+                    3. After 5 seconds, card flips to Image 2
+                </small>
+            </div>
+        </div>
+        
+        <div class="setting-section">
+            <button id="close-settings">Save & Close</button>
+        </div>
     </div>
-
-    <div class="lap-list-container" id="lapList"></div>
-
-    <nav class="bottom-nav">
-        <a href="#" class="nav-item">
-            <span class="nav-icon" style="--icon-url: url('./icon/world-clock1.png');"></span>
-            <span class="nav-label" id="navWorldClock">World Clock</span>
-        </a>
-        <a href="#" class="nav-item">
-            <span class="nav-icon" style="--icon-url: url('./icon/alarms2.png');"></span>
-            <span class="nav-label" id="navAlarms">Alarms</span>
-        </a>
-        <a href="#" class="nav-item active">
-            <span class="nav-icon" style="--icon-url: url('./icon/stopwatch-icon2.png');"></span>
-            <span class="nav-label" id="navStopwatch">Stopwatch</span>
-        </a>
-        <a href="#" class="nav-item">
-            <span class="nav-icon" style="--icon-url: url('./icon/timers2.png');"></span>
-            <span class="nav-label" id="navTimers">Timers</span>
-        </a>
-    </nav>
+    
+    <button id="sensor-permission" class="hidden">
+        Allow Motion Sensor Access<br>
+        <small>(Tap to enable tilt controls)</small>
+    </button>
 
     <script>
-        // ========== PERUBAHAN: Kode untuk mencegah scroll ==========
-        // Tambahkan kode ini di AWAL script sebelum kode lainnya
+    // ========== PWA INSTALL FUNCTIONALITY ==========
+    let deferredPrompt;
+    const installButton = document.getElementById('install-button');
+    
+    // Event listener for beforeinstallprompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('PWA install prompt available');
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later
+        deferredPrompt = e;
         
-        // 1. Mencegah touchmove default (pull-to-refresh di iOS)
-        document.addEventListener('touchmove', function(e) {
-            // Biarkan scroll hanya di lap-list-container
-            if (e.target.closest('.lap-list-container')) {
-                return;
+        // Show install button
+        installButton.classList.add('visible');
+        
+        // Auto hide after 10 seconds
+        setTimeout(() => {
+            installButton.classList.remove('visible');
+        }, 10000);
+    });
+    
+    // Install button click handler
+    installButton.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        
+        // Show the install prompt
+        deferredPrompt.prompt();
+        
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        console.log(`User response to the install prompt: ${outcome}`);
+        
+        // Hide the install button
+        installButton.classList.remove('visible');
+        
+        // Clear the deferredPrompt variable
+        deferredPrompt = null;
+    });
+    
+    // Detect if app is already installed
+    window.addEventListener('appinstalled', () => {
+        console.log('PWA was installed');
+        installButton.classList.remove('visible');
+        deferredPrompt = null;
+        
+        // Show success message
+        alert('✅ Magic Card Trick installed successfully! You can now find it on your home screen.');
+    });
+    
+    // Check if app is running in standalone mode (already installed)
+    if (window.matchMedia('(display-mode: standalone)').matches || 
+        window.navigator.standalone === true) {
+        console.log('App is running in standalone mode');
+        installButton.classList.remove('visible');
+    }
+    // ================================================
+    
+    // Elements
+    const background = document.getElementById('background');
+    const card = document.getElementById('card');
+    const settings = document.getElementById('settings');
+    const bgUpload = document.getElementById('bg-upload');
+    const cardUpload1 = document.getElementById('card-upload-1');
+    const cardUpload2 = document.getElementById('card-upload-2');
+    const defaultCardsBtn = document.getElementById('default-cards');
+    const swapCardsBtn = document.getElementById('swap-cards');
+    const closeSettingsBtn = document.getElementById('close-settings');
+    const sensorPermissionBtn = document.getElementById('sensor-permission');
+    const preview1 = document.getElementById('preview-1');
+    const preview2 = document.getElementById('preview-2');
+    const cardIndicator = document.getElementById('card-indicator');
+
+    // Initialize card properties
+    let posX = window.innerWidth / 2 - card.offsetWidth / 2;
+    let posY = window.innerHeight / 2 - card.offsetHeight / 2;
+    let scale = 1;
+    let isDragging = false;
+    let startX, startY;
+    let velocityX = 0;
+    let velocityY = 0;
+    let lastPosX = 0;
+    let lastPosY = 0;
+    let lastTime = 0;
+    
+    // Card images storage
+    let cardImages = {
+        image1: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png",
+        image2: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image2.png"
+    };
+    let currentCardImage = 1;
+    
+    // SENSOR VARIABLES
+    let smoothBeta = 0;
+    let smoothGamma = 0;
+    const sensitivity = 0.5;
+    const smoothing = 0.2;
+    let isSensorEnabled = false;
+    
+    // Animation and timing control
+    let isAnimating = false;
+    let showCardTimeout = null;
+    let changeCardTimeout = null;
+    let touchToChangeTimeout = null;
+    let hasBeenTouched = false;
+    
+    // Double tap detection variables
+    let tapCount = 0;
+    let tapTimer = null;
+    
+    // LOGIKA TITIK DARI CODE PERTAMA - DIPERBAIKI
+    let indicatorTimeout = null;
+    let cardAppearTimeout = null;
+    
+    // STORAGE FUNCTIONS
+    const STORAGE_KEYS = {
+        image1: 'magic_card_image_1',
+        image2: 'magic_card_image_2',
+        background: 'magic_card_background'
+    };
+
+    function saveToStorage() {
+        localStorage.setItem(STORAGE_KEYS.image1, cardImages.image1);
+        localStorage.setItem(STORAGE_KEYS.image2, cardImages.image2);
+    }
+
+    function loadFromStorage() {
+        const img1 = localStorage.getItem(STORAGE_KEYS.image1);
+        const img2 = localStorage.getItem(STORAGE_KEYS.image2);
+        const bg  = localStorage.getItem(STORAGE_KEYS.background);
+
+        if (img1) cardImages.image1 = img1;
+        if (img2) cardImages.image2 = img2;
+        if (bg) background.style.backgroundImage = `url(${bg})`;
+
+        updatePreviews();
+        
+        // Preload images setelah load
+        setTimeout(preloadImages, 100);
+    }
+
+    function preloadImages() {
+        const images = [cardImages.image1, cardImages.image2];
+        images.forEach(src => {
+            const img = new Image();
+            img.src = src;
+        });
+    }
+
+    // Set initial positions
+    card.style.display = 'block';
+    card.style.opacity = '0';
+    card.style.visibility = 'hidden';
+    
+    posX = Math.floor(window.innerWidth / 2 - card.offsetWidth / 2);
+    posY = window.innerHeight + card.offsetHeight + 100;
+    
+    updateCardTransform();
+    card.style.display = 'none';
+    
+    // Initialize previews
+    updatePreviews();
+    
+    // Initialize sensor
+    initSensor();
+    
+    // Touch events for swipe up to open settings
+    let startYPos = 0;
+    document.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            startYPos = e.touches[0].clientY;
+        }
+        
+        // Double tap detection
+        if (e.touches.length === 1 && !isDragging) {
+            tapCount++;
+            
+            if (tapCount === 1) {
+                tapTimer = setTimeout(() => {
+                    tapCount = 0;
+                }, 300);
+            } else if (tapCount === 2) {
+                clearTimeout(tapTimer);
+                handleDoubleTap();
+                tapCount = 0;
             }
-            // Untuk area lain, cegah scroll
-            e.preventDefault();
-        }, { passive: false });
-        
-        // 2. Mencegah wheel scroll di desktop
-        document.addEventListener('wheel', function(e) {
-            if (!e.target.closest('.lap-list-container')) {
+        }
+    }, {passive: false});
+    
+    document.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2) {
+            const currentY = e.touches[0].clientY;
+            if (currentY - startYPos > 100) {
                 e.preventDefault();
+                settings.style.top = '0';
             }
-        }, { passive: false });
-        
-        // 3. Set height body agar tidak ada overflow
-        function setBodyHeight() {
-            document.body.style.height = window.innerHeight + 'px';
         }
+    }, {passive: false});
+    
+    // ===== LOGIKA TITIK YANG DIPINJAM DARI CODE PERTAMA =====
+    function handleDoubleTap() {
+        console.log("Double tap detected!");
         
-        // Set height awal dan saat resize
-        setBodyHeight();
-        window.addEventListener('resize', setBodyHeight);
+        // HAPUS SEMUA TIMEOUT SEBELUMNYA (LOGIKA CLEANUP)
+        clearAllTimeouts();
+        hideIndicator();
         
-        // ========== KODE STOPWATCH ASLI (TIDAK BERUBAH) ==========
+        // Total waktu: 5 detik
+        const totalDelay = 5000; // 5 detik
+        const indicatorDelay = 4000; // Tampilkan titik 1 detik sebelum kartu muncul
         
-        // Deteksi bahasa sistem
-        const systemLanguage = navigator.language || navigator.userLanguage || 'en-US';
-        const isIndonesian = systemLanguage.startsWith('id');
-        const isEnglish = systemLanguage.startsWith('en');
+        // Tampilkan titik 1 detik sebelum kartu muncul
+        indicatorTimeout = setTimeout(() => {
+            showIndicator();
+        }, indicatorDelay);
         
-        // Terjemahan berdasarkan bahasa
-        const translations = {
-            'id': {
-                // Tombol
-                'start': 'Mulai',
-                'stop': 'Hentikan',
-                'lap': 'Putaran',
-                'reset': 'Ulangi',
-                
-                // Alert dan prompt
-                'forcedMsEnabled': 'Angka paksa milidetik diaktifkan!',
-                'forcedMsDisabled': 'Angka paksa milidetik dinonaktifkan.',
-                'enterMilliseconds': 'Masukkan angka milidetik (pisahkan dengan koma jika lebih dari satu):',
-                'enterValidNumbers': 'Masukkan minimal satu angka antara 00 dan 99.',
-                'numbersSaved': 'angka milidetik telah disimpan.',
-                
-                // Lap
-                'lapText': 'Putaran',
-                
-                // Bottom Navigation
-                'worldClock': 'Jam Dunia',
-                'alarms': 'Alarm',
-                'stopwatch': 'Stopwatch',
-                'timers': 'Timer'
-            },
-            'en': {
-                // Buttons
-                'start': 'Start',
-                'stop': 'Stop',
-                'lap': 'Lap',
-                'reset': 'Reset',
-                
-                // Alerts and prompts
-                'forcedMsEnabled': 'Forced milliseconds enabled!',
-                'forcedMsDisabled': 'Forced milliseconds disabled.',
-                'enterMilliseconds': 'Enter milliseconds (separate with commas if more than one):',
-                'enterValidNumbers': 'Enter at least one number between 00 and 99.',
-                'numbersSaved': 'millisecond numbers have been saved.',
-                
-                // Lap
-                'lapText': 'Lap',
-                
-                // Bottom Navigation
-                'worldClock': 'World Clock',
-                'alarms': 'Alarms',
-                'stopwatch': 'Stopwatch',
-                'timers': 'Timers'
-            }
-        };
-        
-        // Pilih bahasa berdasarkan deteksi
-        let lang = 'en';
-        if (isIndonesian) {
-            lang = 'id';
-        } else if (isEnglish) {
-            lang = 'en';
+        // Tampilkan kartu setelah 5 detik
+        cardAppearTimeout = setTimeout(() => {
+            hideIndicator();
+            showCardWithTransformation();
+        }, totalDelay);
+    }
+    
+    // Fungsi untuk membersihkan semua timeout
+    function clearAllTimeouts() {
+        if (showCardTimeout) {
+            clearTimeout(showCardTimeout);
+            showCardTimeout = null;
         }
-        
-        // Fungsi untuk mendapatkan teks terjemahan
-        function t(key) {
-            return translations[lang][key] || translations['en'][key];
+        if (changeCardTimeout) {
+            clearTimeout(changeCardTimeout);
+            changeCardTimeout = null;
         }
-
-        let forcedMsList = [];
-        let forcedMsIndex = 0;
-        let forcedMs = null;
-        let isForcedMsActive = false;
-        let isStartedOnce = false;
-
-        let startTime = 0;
-        let elapsedTime = 0;
-        let timerInterval;
-        let isRunning = false;
-        let lapCount = 1;
-
-        const leftBtn = document.getElementById('leftBtn');
-        const rightBtn = document.getElementById('rightBtn');
-        const lapList = document.getElementById('lapList');
-
-        const minEl = document.getElementById('min');
-        const secEl = document.getElementById('sec');
-        const msEl = document.getElementById('ms');
-
-        // Elemen untuk bottom navigation
-        const navWorldClock = document.getElementById('navWorldClock');
-        const navAlarms = document.getElementById('navAlarms');
-        const navStopwatch = document.getElementById('navStopwatch');
-        const navTimers = document.getElementById('navTimers');
-
-        let lapTimestamps = [];
-
-        // Variabel untuk double click detection
-        let lastClickTime = 0;
-        const DOUBLE_CLICK_DELAY = 300; // ms
-
-        // Fungsi untuk menginisialisasi semua teks berdasarkan bahasa
-        function initializeLanguage() {
-            // Tombol stopwatch
-            leftBtn.textContent = t('lap');
-            rightBtn.textContent = t('start');
+        if (indicatorTimeout) {
+            clearTimeout(indicatorTimeout);
+            indicatorTimeout = null;
+        }
+        if (cardAppearTimeout) {
+            clearTimeout(cardAppearTimeout);
+            cardAppearTimeout = null;
+        }
+        if (touchToChangeTimeout) {
+            clearTimeout(touchToChangeTimeout);
+            touchToChangeTimeout = null;
+        }
+    }
+    
+    // Fungsi untuk menampilkan indikator (SIMPLE - langsung opacity 1)
+    function showIndicator() {
+        cardIndicator.classList.add('visible');
+        console.log("Indicator shown - card will appear in 1 second");
+    }
+    
+    // Fungsi untuk menyembunyikan indikator (SIMPLE - langsung opacity 0)
+    function hideIndicator() {
+        cardIndicator.classList.remove('visible');
+    }
+    
+    // ===== FUNGSI LAINNYA TETAP SAMA =====
+    
+    // Card dragging functionality
+    card.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            isDragging = true;
+            startX = e.touches[0].clientX - posX;
+            startY = e.touches[0].clientY - posY;
+            velocityX = 0;
+            velocityY = 0;
+            lastPosX = posX;
+            lastPosY = posY;
+            lastTime = Date.now();
+            card.style.transition = 'none';
+            card.style.animation = 'none';
+            e.preventDefault();
             
-            // Bottom navigation
-            navWorldClock.textContent = t('worldClock');
-            navAlarms.textContent = t('alarms');
-            navStopwatch.textContent = t('stopwatch');
-            navTimers.textContent = t('timers');
-            
-            // Update title
-            document.title = t('stopwatch');
-            
-            // Update kelas tombol
-            leftBtn.classList.remove("reset");
-            leftBtn.classList.add("lap");
-            rightBtn.classList.remove("stop");
-            rightBtn.classList.add("start");
-        }
-
-        // Panggil fungsi inisialisasi bahasa
-        initializeLanguage();
-
-        // Fungsi untuk mengecek apakah waktu adalah 00:00,00
-        function isZeroTime() {
-            const totalTime = elapsedTime + (forcedMs !== null ? forcedMs * 10 : 0);
-            return totalTime === 0;
-        }
-
-        // Fungsi untuk mengupdate opacity tombol kiri (Lap/Reset)
-        function updateLeftButtonOpacity() {
-            if (isZeroTime()) {
-                leftBtn.classList.add('inactive');
-            } else {
-                leftBtn.classList.remove('inactive');
+            tapCount = 0;
+            if (tapTimer) {
+                clearTimeout(tapTimer);
+                tapTimer = null;
             }
         }
+    }, {passive: false});
 
-        function toggleForcedMs() {
-            isForcedMsActive = !isForcedMsActive;
-            if (isForcedMsActive) {
-                alert(t('forcedMsEnabled'));
-            } else {
-                alert(t('forcedMsDisabled'));
-            }
+    // Event touchend untuk kartu
+    card.addEventListener('touchend', (e) => {
+        setTimeout(() => {
+            isDragging = false;
+        }, 50);
+        
+        if (card.style.display === 'none' || 
+            hasBeenTouched || 
+            currentCardImage !== 1) {
+            return;
         }
+        
+        hasBeenTouched = true;
+        console.log("Kartu disentuh, timer dimulai...");
 
-        function formatTime(ms) {
-            const totalSeconds = Math.floor(ms / 1000);
-            const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
-            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
-            const milliseconds = Math.floor((ms % 1000) / 10).toString().padStart(2, '0');
-            return `${minutes}:${seconds},${milliseconds}`;
+        if (touchToChangeTimeout) {
+            clearTimeout(touchToChangeTimeout);
         }
-
-        function updateTime() {
+        
+        touchToChangeTimeout = setTimeout(() => {
+            console.log("3 detik berlalu, mengubah kartu...");
+            transformToImage2();
+        }, 3000);
+    });
+    
+    document.addEventListener('touchmove', (e) => {
+        if (isDragging && e.touches.length === 1) {
             const now = Date.now();
-            elapsedTime = now - startTime;
-
-            const totalSeconds = Math.floor(elapsedTime / 1000);
-            const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
-            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
-
-            let milliseconds;
-            if (!isRunning && forcedMs !== null) {
-                milliseconds = forcedMs.toString().padStart(2, '0');
-            } else {
-                milliseconds = Math.floor((elapsedTime % 1000) / 10).toString().padStart(2, '0');
-            }
-
-            minEl.textContent = minutes;
-            secEl.textContent = seconds;
-            msEl.textContent = milliseconds;
-
-            // Update opacity tombol kiri
-            updateLeftButtonOpacity();
-
-            if (lapList.firstChild && lapTimestamps.length > 0) {
-                let lapTime;
-                if (!isRunning && forcedMs !== null) {
-                    lapTime = Math.floor(elapsedTime / 1000) * 1000 + forcedMs * 10 - lapTimestamps[lapTimestamps.length - 1];
-                } else {
-                    lapTime = elapsedTime - lapTimestamps[lapTimestamps.length - 1];
+            const deltaTime = now - lastTime;
+            
+            if (deltaTime > 0) {
+                const newPosX = e.touches[0].clientX - startX;
+                const newPosY = e.touches[0].clientY - startY;
+                
+                velocityX = (newPosX - lastPosX) / deltaTime * 1000;
+                velocityY = (newPosY - lastPosY) / deltaTime * 1000;
+                
+                lastPosX = newPosX;
+                lastPosY = newPosY;
+                lastTime = now;
+                
+                posX = newPosX;
+                posY = newPosY;
+                
+                updateCardTransform();
+                
+                const cardRect = card.getBoundingClientRect();
+                const exitThreshold = 30;
+                
+                // Check jika kartu sudah keluar layar
+                if (cardRect.bottom < -exitThreshold || 
+                    cardRect.top > window.innerHeight + exitThreshold ||
+                    cardRect.right < -exitThreshold || 
+                    cardRect.left > window.innerWidth + exitThreshold) {
+                    
+                    hideCardImmediately();
+                    isDragging = false;
+                    return;
                 }
-                lapList.firstChild.querySelector('span:last-child').textContent = formatTime(lapTime);
             }
+            e.preventDefault();
         }
-
-        function startTimer() {
-            if (isStartedOnce) {
-                startTime = Date.now() - elapsedTime;
-                isForcedMsActive = true;
-            } else {
-                startTime = Date.now() - elapsedTime;
-                isStartedOnce = true;
-            }
-
-            timerInterval = setInterval(updateTime, 10);
-            isRunning = true;
-
-            rightBtn.textContent = t('stop');
-            rightBtn.classList.remove("start");
-            rightBtn.classList.add("stop");
-
-            leftBtn.textContent = t('lap');
-            leftBtn.classList.remove("reset");
-            leftBtn.classList.add("lap");
-
-            // Update opacity saat mulai
-            updateLeftButtonOpacity();
-
-            if (lapCount === 1) addLap();
-        }
-
-        function stopTimer() {
-            clearInterval(timerInterval);
-            isRunning = false;
-
-            if (forcedMsList.length > 0 && forcedMsIndex < forcedMsList.length) {
-                forcedMs = forcedMsList[forcedMsIndex++];
-            } else {
-                forcedMs = null;
-            }
-
-            updateTime();
-
-            rightBtn.textContent = t('start');
-            rightBtn.classList.remove("stop");
-            rightBtn.classList.add("start");
-
-            leftBtn.textContent = t('reset');
-            leftBtn.classList.remove("lap");
-            leftBtn.classList.add("reset");
-
-            // Update opacity saat stop
-            updateLeftButtonOpacity();
-        }
-
-        function resetTimer() {
-            elapsedTime = 0;
-            lapCount = 1;
-            lapTimestamps = [];
-            forcedMs = null;
-            isStartedOnce = false;
-            minEl.textContent = "00";
-            secEl.textContent = "00";
-            msEl.textContent = "00";
-            lapList.innerHTML = '';
-
-            rightBtn.textContent = t('start');
-            rightBtn.classList.remove("stop");
-            rightBtn.classList.add("start");
-
-            leftBtn.textContent = t('lap');
-            leftBtn.classList.remove("reset");
-            leftBtn.classList.add("lap");
-
-            // Update opacity saat reset (waktu menjadi 00:00,00)
-            updateLeftButtonOpacity();
-        }
-
-        function addLap() {
-            let currentElapsed;
-
-            if (!isRunning && forcedMs !== null) {
-                currentElapsed = elapsedTime + forcedMs * 10;
-            } else {
-                currentElapsed = elapsedTime;
-            }
-
-            const previousElapsed = lapTimestamps.length > 0 ? lapTimestamps[lapTimestamps.length - 1] : 0;
-            const lapTime = currentElapsed - previousElapsed;
-
-            lapTimestamps.push(currentElapsed);
-
-            const formattedLapTime = formatTime(lapTime);
-
-            const lapItem = document.createElement("div");
-            lapItem.className = "lap-item";
-            // Gunakan terjemahan untuk teks "Lap"
-            lapItem.innerHTML = `<span>${t('lapText')} ${lapCount++}</span><span>${formattedLapTime}</span>`;
-            lapItem.dataset.lapTime = lapTime;
-
-            lapList.prepend(lapItem);
-
-            updateLapTimes();
-        }
-
-        function updateLapTimes() {
-            const laps = Array.from(lapList.querySelectorAll('.lap-item'));
-
-            // Only color laps when there are at least 3 laps
-            if (laps.length < 3) {
-                laps.forEach(lap => {
-                    lap.classList.remove('fastest', 'slowest');
-                });
+    }, {passive: false});
+    
+    document.addEventListener('touchend', (e) => {
+        if (isDragging) {
+            isDragging = false;
+            card.style.transition = '';
+            
+            const speedThreshold = 1000;
+            const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+            
+            const cardRect = card.getBoundingClientRect();
+            const exitThreshold = 50;
+            
+            // Check jika kartu sudah keluar layar atau dilempar cepat
+            if (cardRect.bottom < -exitThreshold || 
+                cardRect.top > window.innerHeight + exitThreshold ||
+                cardRect.right < -exitThreshold || 
+                cardRect.left > window.innerWidth + exitThreshold ||
+                currentSpeed > speedThreshold) {
+                
+                hideCardImmediately();
                 return;
             }
+            
+            applyBounds();
+            updateCardTransform();
+        }
+    });
+    
+    // Settings functionality
+    bgUpload.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-            const lapTimes = laps.map(lap => parseInt(lap.dataset.lapTime));
-            const fastestTime = Math.min(...lapTimes);
-            const slowestTime = Math.max(...lapTimes);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            background.style.backgroundImage = `url(${event.target.result})`;
+            localStorage.setItem(STORAGE_KEYS.background, event.target.result);
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    // Card upload with image editor
+    cardUpload1.addEventListener('change', (e) => handleCardUpload(e, 1));
+    cardUpload2.addEventListener('change', (e) => handleCardUpload(e, 2));
+    
+    defaultCardsBtn.addEventListener('click', () => {
+        cardImages = {
+            image1: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png",
+            image2: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image2.png"
+        };
+        updatePreviews();
+        
+        if (card.style.display !== 'none') {
+            card.src = cardImages.image1;
+            currentCardImage = 1;
+        }
+        
+        scale = 1;
+        posX = Math.floor(window.innerWidth / 2 - card.offsetWidth / 2);
+        posY = window.innerHeight + card.offsetHeight;
+        updateCardTransform();
 
-            laps.forEach(lap => {
-                lap.classList.remove('fastest', 'slowest');
-                const time = parseInt(lap.dataset.lapTime);
-                if (time === fastestTime) {
-                    lap.classList.add('fastest');
-                } else if (time === slowestTime) {
-                    lap.classList.add('slowest');
-                }
+        localStorage.removeItem(STORAGE_KEYS.image1);
+        localStorage.removeItem(STORAGE_KEYS.image2);
+    });
+    
+    swapCardsBtn.addEventListener('click', () => {
+        const temp = cardImages.image1;
+        cardImages.image1 = cardImages.image2;
+        cardImages.image2 = temp;
+        
+        updatePreviews();
+        
+        if (card.style.display !== 'none') {
+            if (currentCardImage === 1) {
+                card.src = cardImages.image1;
+            } else {
+                card.src = cardImages.image2;
+            }
+        }
+    });
+    
+    closeSettingsBtn.addEventListener('click', () => {
+        settings.style.top = '-100%';
+    });
+    
+    function handleCardUpload(e, imageNumber) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                showImageEditor(event.target.result, (editedImage) => {
+                    if (imageNumber === 1) {
+                        cardImages.image1 = editedImage;
+                        preview1.innerHTML = `<img src="${editedImage}">`;
+                    } else {
+                        cardImages.image2 = editedImage;
+                        preview2.innerHTML = `<img src="${editedImage}">`;
+                    }
+
+                    saveToStorage();
+
+                    if (card.style.display !== 'none' && currentCardImage === imageNumber) {
+                        card.src = editedImage;
+                    }
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    function updatePreviews() {
+        preview1.innerHTML = `<img src="${cardImages.image1}" alt="Card 1">`;
+        preview2.innerHTML = `<img src="${cardImages.image2}" alt="Card 2">`;
+    }
+    
+    function showCardWithTransformation() {
+        hasBeenTouched = false;
+
+        if (touchToChangeTimeout) {
+            clearTimeout(touchToChangeTimeout);
+            touchToChangeTimeout = null;
+        }
+
+        if (isAnimating) return;
+        isAnimating = true;
+        
+        // Bersihkan timeout yang mungkin masih ada
+        clearAllTimeouts();
+        
+        currentCardImage = 1;
+        card.src = cardImages.image1;
+        card.style.animation = 'none';
+        
+        card.style.opacity = '0';
+        card.style.visibility = 'hidden';
+        card.style.display = 'block';
+        
+        card.style.left = '0';
+        card.style.top = '0';
+        card.style.right = 'auto';
+        card.style.bottom = 'auto';
+        card.style.margin = '0';
+        
+        card.classList.remove('card-moving', 'card-flipping', 'card-visible');
+        
+        requestAnimationFrame(() => {
+            if (card.complete) {
+                initCardAnimation();
+            } else {
+                card.onload = initCardAnimation;
+                setTimeout(initCardAnimation, 500);
+            }
+        });
+        
+        function initCardAnimation() {
+            const cardRect = card.getBoundingClientRect();
+            const cardWidth = cardRect.width;
+            const cardHeight = cardRect.height;
+            
+            posX = (window.innerWidth / 2) - (cardWidth / 2);
+            posY = window.innerHeight + 100;
+            
+            card.style.transition = 'none';
+            card.style.transform = `translate(${posX}px, ${posY}px)`;
+            
+            void card.offsetHeight;
+            
+            card.style.opacity = '1';
+            card.style.visibility = 'visible';
+            card.classList.add('card-visible');
+            
+            requestAnimationFrame(() => {
+                card.classList.add('card-moving');
+                card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+                
+                setTimeout(() => {
+                    posX = (window.innerWidth / 2) - (cardWidth / 2);
+                    posY = (window.innerHeight / 2) - (cardHeight / 2);
+                    
+                    card.style.transform = `translate(${posX}px, ${posY}px)`;
+                    
+                    setTimeout(() => {
+                        isAnimating = false;
+                        card.classList.remove('card-moving');
+                    }, 800);
+                }, 50);
             });
         }
-
-        // Fungsi untuk membuka prompt paksa milidetik
-        function openForcedMsPrompt() {
-            const input = prompt(t('enterMilliseconds'));
-            if (!input) return;
-
-            const values = input.split(",").map(v => parseInt(v.trim())).filter(v => !isNaN(v) && v >= 0 && v <= 99);
-
-            if (values.length === 0) {
-                alert(t('enterValidNumbers'));
-                return;
-            }
-
-            forcedMsList = values;
-            forcedMsIndex = 0;
-            
-            // Update opacity setelah mengatur forcedMs
-            updateLeftButtonOpacity();
-            
-            alert(`${values.length} ${t('numbersSaved')}`);
-        }
-
-        // Event listener untuk double click pada milidetik
-        msEl.addEventListener('click', (e) => {
-            const currentTime = new Date().getTime();
-            const timeSinceLastClick = currentTime - lastClickTime;
-            
-            if (timeSinceLastClick < DOUBLE_CLICK_DELAY && timeSinceLastClick > 0) {
-                // Ini adalah double click
-                e.preventDefault();
-                openForcedMsPrompt();
-                lastClickTime = 0; // Reset setelah double click
-            } else {
-                // Ini adalah single click (belum tentu)
-                lastClickTime = currentTime;
-                
-                // Gunakan timeout untuk menunggu apakah ada click kedua
-                setTimeout(() => {
-                    // Jika setelah timeout tidak ada click kedua, reset
-                    if (lastClickTime !== 0 && new Date().getTime() - lastClickTime >= DOUBLE_CLICK_DELAY) {
-                        lastClickTime = 0;
-                    }
-                }, DOUBLE_CLICK_DELAY);
-            }
-        });
-
-        // Event listener untuk tombol kanan (Start/Stop)
-        rightBtn.addEventListener('click', () => {
-            isRunning ? stopTimer() : startTimer();
-        });
-
-        // Event listener untuk tombol kiri (Lap/Reset)
-        leftBtn.addEventListener('click', () => {
-            // Cek jika tombol dalam state inactive (waktu 00:00,00)
-            if (leftBtn.classList.contains('inactive')) {
-                return; // Jangan lakukan apa-apa jika tombol disabled
-            }
-            isRunning ? addLap() : resetTimer();
-        });
-
-        // Inisialisasi opacity awal (waktu 00:00,00)
-        updateLeftButtonOpacity();
+    }
+    
+    function transformToImage2() {
+        if (card.style.display === 'none') return;
         
-        // Log bahasa yang terdeteksi (untuk debugging)
-        console.log('System language detected:', systemLanguage);
-        console.log('Using language:', lang);
-    </script>
-</body>
+        card.classList.remove('card-flipping');
+        void card.offsetHeight;
+        
+        card.classList.add('card-flipping');
+        
+        setTimeout(() => {
+            currentCardImage = 2;
+            card.src = cardImages.image2;
+        }, 500);
+        
+        setTimeout(() => {
+            card.classList.remove('card-flipping');
+            hasBeenTouched = false;
+        }, 1000);
+    }
+    
+    function hideCardImmediately() {
+        clearAllTimeouts();
+        hideIndicator();
+        
+        card.style.transition = 'none';
+        card.style.animation = 'none';
+        card.style.display = 'none';
+        card.classList.remove('card-flipping');
+        
+        // Reset ke posisi tengah bawah
+        const cardRect = card.getBoundingClientRect();
+        posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
+        posY = window.innerHeight + card.offsetHeight;
+        updateCardTransform();
+        
+        currentCardImage = 1;
+    }
+    
+    function initSensor() {
+        if (typeof DeviceOrientationEvent?.requestPermission === "function") {
+            sensorPermissionBtn.classList.remove('hidden');
+            
+            sensorPermissionBtn.onclick = async () => {
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission === "granted") {
+                        sensorPermissionBtn.classList.add('hidden');
+                        startSensor();
+                    }
+                } catch (error) {
+                    console.error("Error requesting permission:", error);
+                    sensorPermissionBtn.innerHTML = "Error requesting permission.<br>Try refreshing the page.";
+                }
+            };
+        } else {
+            startSensor();
+        }
+    }
+    
+    function startSensor() {
+        isSensorEnabled = true;
+        window.addEventListener("deviceorientation", handleDeviceOrientation);
+        startSensorAnimation();
+    }
+    
+    function handleDeviceOrientation(e) {
+        if (!card.style.display || card.style.display === 'none' || isDragging) return;
 
+        const beta = Math.max(-45, Math.min(45, e.beta || 0));
+        const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
+
+        smoothBeta += (beta - smoothBeta) * smoothing;
+        smoothGamma += (gamma - smoothGamma) * smoothing;
+    }
+    
+    function startSensorAnimation() {
+        function animate() {
+            if (isSensorEnabled && !isDragging && card.style.display !== 'none') {
+                posX += smoothGamma * sensitivity;
+                posY += smoothBeta * sensitivity;
+                
+                applyBounds();
+                updateCardTransform();
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    }
+    
+    function applyBounds() {
+        const cardWidth = card.offsetWidth * scale;
+        const cardHeight = card.offsetHeight * scale;
+        
+        const padding = 10;
+        const minX = padding;
+        const maxX = window.innerWidth - cardWidth - padding;
+        const minY = padding;
+        const maxY = window.innerHeight - cardHeight - padding;
+        
+        posX = Math.max(minX, Math.min(maxX, posX));
+        posY = Math.max(minY, Math.min(maxY, posY));
+    }
+    
+    function showImageEditor(imageSrc, callback) {
+        const editor = document.createElement('div');
+        editor.className = 'image-editor';
+        editor.innerHTML = `
+            <div class="editor-container">
+                <img id="editing-card" src="${imageSrc}" alt="Card being edited">
+                <div class="editor-controls">
+                    <div style="color:white; margin-bottom:10px;">Pinch to zoom</div>
+                    <div class="editor-buttons">
+                        <button id="save-edit">Save</button>
+                        <button id="cancel-edit">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(editor);
+        
+        const editingCard = document.getElementById('editing-card');
+        const saveBtn = document.getElementById('save-edit');
+        const cancelBtn = document.getElementById('cancel-edit');
+        
+        let currentScale = 1;
+        let startDistance = 0;
+        
+        editingCard.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                startDistance = getDistance(
+                    e.touches[0].clientX, e.touches[0].clientY,
+                    e.touches[1].clientX, e.touches[1].clientY
+                );
+            }
+        }, {passive: false});
+        
+        editingCard.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const currentDistance = getDistance(
+                    e.touches[0].clientX, e.touches[0].clientY,
+                    e.touches[1].clientX, e.touches[1].clientY
+                );
+                
+                if (startDistance > 0) {
+                    currentScale = Math.max(0.3, Math.min(3, currentDistance / startDistance));
+                    editingCard.style.transform = `scale(${currentScale})`;
+                }
+            }
+        }, {passive: false});
+        
+        editingCard.addEventListener('touchend', () => {
+            startDistance = 0;
+        }, {passive: false});
+        
+        saveBtn.addEventListener('click', () => {
+            document.body.removeChild(editor);
+            callback(imageSrc);
+        });
+        
+        cancelBtn.addEventListener('click', () => {
+            document.body.removeChild(editor);
+        });
+    }
+    
+    function getDistance(x1, y1, x2, y2) {
+        return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    }
+    
+    function updateCardTransform() {
+        card.style.transform = `translate(${posX}px, ${posY}px)`;
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        if (card.style.display !== 'none') {
+            const cardRect = card.getBoundingClientRect();
+            posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
+            posY = Math.floor(window.innerHeight / 2 - cardRect.height / 2);
+            updateCardTransform();
+        }
+    });
+    
+    // Initialize card position
+    window.addEventListener('load', () => {
+        card.style.display = 'block';
+        card.style.left = '0';
+        card.style.top = '0';
+        card.style.transform = 'translate(0, 0)';
+        card.style.transition = 'none';
+        card.style.opacity = '0';
+        card.style.visibility = 'hidden';
+        
+        setTimeout(() => {
+            const cardRect = card.getBoundingClientRect();
+            const cardWidth = cardRect.width;
+            
+            posX = (window.innerWidth / 2) - (cardWidth / 2);
+            posY = window.innerHeight + 100;
+            
+            updateCardTransform();
+            
+            setTimeout(() => {
+                card.style.display = 'none';
+                loadFromStorage();
+            }, 100);
+        }, 100);
+    });
+</script>
+</body>
 </html>
