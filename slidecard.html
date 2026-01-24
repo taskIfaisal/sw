@@ -75,7 +75,7 @@
         }
 
         .card-moving {
-            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
+             transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
         }
         
         #settings {
@@ -785,7 +785,7 @@
             
             requestAnimationFrame(() => {
                 card.classList.add('card-moving');
-                card.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+                card.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
                 
                 setTimeout(() => {
                     posX = (window.innerWidth / 2) - (cardWidth / 2);
