@@ -1,7 +1,7 @@
 const CACHE_NAME = 'magic-card-v1';
 const urlsToCache = [
   './',
-  './slidecardroid.html',
+  './index.html',
   './icon/slide-512x512.png',
   './icon/slide-192x192.png'
 ];
