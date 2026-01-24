@@ -18,6 +18,7 @@
     <meta name="apple-mobile-web-app-title" content="Slide Card">
     <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/slide-512x512.png">
+    
     <style>
         html, body {
             margin: 0;
@@ -82,7 +83,7 @@
         }
 
         .card-moving {
-             transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
         }
         
         #settings {
@@ -262,9 +263,40 @@
         #card-indicator.visible {
             opacity: 1;
         }
+        
+        /* ========== PWA INSTALL BUTTON ========== */
+        #install-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 100;
+            font-size: 14px;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        #install-button.visible {
+            display: block;
+        }
+        
+        #install-button:hover {
+            background: #1976D2;
+        }
+        /* ======================================= */
     </style>
 </head>
 <body>
+    <!-- ========== PWA INSTALL BUTTON ========== -->
+    <button id="install-button" class="hidden">
+        📲 Install App
+    </button>
+    
     <div id="background"></div>
     <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
     
@@ -330,6 +362,64 @@
     </button>
 
     <script>
+    // ========== PWA INSTALL FUNCTIONALITY ==========
+    let deferredPrompt;
+    const installButton = document.getElementById('install-button');
+    
+    // Event listener for beforeinstallprompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('PWA install prompt available');
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later
+        deferredPrompt = e;
+        
+        // Show install button
+        installButton.classList.add('visible');
+        
+        // Auto hide after 10 seconds
+        setTimeout(() => {
+            installButton.classList.remove('visible');
+        }, 10000);
+    });
+    
+    // Install button click handler
+    installButton.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        
+        // Show the install prompt
+        deferredPrompt.prompt();
+        
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        console.log(`User response to the install prompt: ${outcome}`);
+        
+        // Hide the install button
+        installButton.classList.remove('visible');
+        
+        // Clear the deferredPrompt variable
+        deferredPrompt = null;
+    });
+    
+    // Detect if app is already installed
+    window.addEventListener('appinstalled', () => {
+        console.log('PWA was installed');
+        installButton.classList.remove('visible');
+        deferredPrompt = null;
+        
+        // Show success message
+        alert('✅ Magic Card Trick installed successfully! You can now find it on your home screen.');
+    });
+    
+    // Check if app is running in standalone mode (already installed)
+    if (window.matchMedia('(display-mode: standalone)').matches || 
+        window.navigator.standalone === true) {
+        console.log('App is running in standalone mode');
+        installButton.classList.remove('visible');
+    }
+    // ================================================
+    
     // Elements
     const background = document.getElementById('background');
     const card = document.getElementById('card');
