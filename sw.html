@@ -3,9 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Stopwatch</title>
+    <title>Clock</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
     <link rel="apple-touch-icon" href="./icon/icon-192x192.png">
     <link rel="apple-touch-startup-image" href="./icon/icon-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -24,6 +23,10 @@
             color: white;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             box-sizing: border-box;
+            /* PERUBAHAN: Tambahkan overflow-y: hidden dan position: fixed */
+            overflow-y: hidden;
+            position: fixed;
+            width: 100%;
         }
 
         *,
@@ -73,24 +76,67 @@
         }
 
         .button {
-            width: 20vw;
-            height: 20vw;
-            min-width: 70px;
-            min-height: 70px;
-            max-width: 90px;
-            max-height: 90px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
+            font-size: 1rem;
             cursor: pointer;
             user-select: none;
+            position: relative;
+            transition: opacity 0.3s ease;
+        }
+
+        .button::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border-radius: 50%;
+            border: 2px solid;
+            transition: border-color 0.3s ease;
+        }
+        
+        /* Opacity yang sama untuk semua state normal */
+        .reset,
+        .lap {
+            background-color: rgba(51, 51, 51, 1);
+            color: white;
+        }
+        
+        .reset::after,
+        .lap::after {
+            border-color: rgba(51, 51, 51, 1);
+        }
+
+        .start::after {
+            border-color: rgba(49, 164, 61, 0.3);
+        }
+
+        .stop::after {
+            border-color: rgba(255, 69, 58, 0.2);
+        }
+
+        /* State inactive untuk tombol Lap/Reset ketika waktu 00:00,00 */
+        /* Opacity SAMA antara background dan border */
+        .reset.inactive,
+        .lap.inactive {
+            opacity: 0.5;
+            background-color: rgba(44, 44, 46, 1);
+        }
+        
+        .reset.inactive::after,
+        .lap.inactive::after {
+            border-color: rgba(44, 44, 46, 1);
         }
 
         .indicator-dots {
             display: flex;
-            gap: 6px;
+            gap: 10px;
             align-items: center;
             justify-content: center;
         }
@@ -108,12 +154,6 @@
 
         .dot-grey {
             background-color: #666;
-        }
-
-        .reset,
-        .lap {
-            background-color: rgba(255, 255, 255, 0.3);
-            color: white;
         }
 
         .start {
@@ -134,8 +174,10 @@
             flex-grow: 1;
             overflow-y: auto;
             padding-bottom: 70px;
+            /* PERUBAHAN: Tambahkan overscroll-behavior untuk mencegah rubber band */
+            overscroll-behavior: contain;
         }
-
+        
         .lap-item {
             display: flex;
             justify-content: space-between;
@@ -143,6 +185,7 @@
             border-bottom: 1px solid #222;
             font-size: 1rem;
             font-weight: 500;
+            color: white;
         }
 
         .bottom-nav {
@@ -198,7 +241,6 @@
         @media (max-width: 600px) {
             .time-display {
                 font-size: 23vw;
-                /* Ukuran font lebih besar untuk layar kecil */
             }
         }
     </style>
@@ -214,7 +256,7 @@
     </div>
 
     <div class="buttons">
-        <div class="button reset" id="leftBtn">Reset</div>
+        <div class="button reset" id="leftBtn">Lap</div>
         <div class="indicator-dots">
             <span class="indicator-dot dot-white"></span>
             <span class="indicator-dot dot-grey"></span>
@@ -227,32 +269,127 @@
     <nav class="bottom-nav">
         <a href="#" class="nav-item">
             <span class="nav-icon" style="--icon-url: url('./icon/world-clock1.png');"></span>
-            <span class="nav-label">World Clock</span>
+            <span class="nav-label" id="navWorldClock">World Clock</span>
         </a>
         <a href="#" class="nav-item">
             <span class="nav-icon" style="--icon-url: url('./icon/alarms2.png');"></span>
-            <span class="nav-label">Alarms</span>
+            <span class="nav-label" id="navAlarms">Alarms</span>
         </a>
         <a href="#" class="nav-item active">
             <span class="nav-icon" style="--icon-url: url('./icon/stopwatch-icon2.png');"></span>
-            <span class="nav-label">Stopwatch</span>
+            <span class="nav-label" id="navStopwatch">Stopwatch</span>
         </a>
         <a href="#" class="nav-item">
             <span class="nav-icon" style="--icon-url: url('./icon/timers2.png');"></span>
-            <span class="nav-label">Timers</span>
+            <span class="nav-label" id="navTimers">Timers</span>
         </a>
     </nav>
 
-    <!-- Script tetap -->
     <script>
-        let forcedMsList = []; // Daftar angka paksa
-        let forcedMsIndex = 0; // Posisi angka paksa sekarang
-        let forcedMs = null; // <- Tambahkan ini
-        let isForcedMsActive = false;
+        // ========== PERUBAHAN: Kode untuk mencegah scroll ==========
+        // Tambahkan kode ini di AWAL script sebelum kode lainnya
+        
+        // 1. Mencegah touchmove default (pull-to-refresh di iOS)
+        document.addEventListener('touchmove', function(e) {
+            // Biarkan scroll hanya di lap-list-container
+            if (e.target.closest('.lap-list-container')) {
+                return;
+            }
+            // Untuk area lain, cegah scroll
+            e.preventDefault();
+        }, { passive: false });
+        
+        // 2. Mencegah wheel scroll di desktop
+        document.addEventListener('wheel', function(e) {
+            if (!e.target.closest('.lap-list-container')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // 3. Set height body agar tidak ada overflow
+        function setBodyHeight() {
+            document.body.style.height = window.innerHeight + 'px';
+        }
+        
+        // Set height awal dan saat resize
+        setBodyHeight();
+        window.addEventListener('resize', setBodyHeight);
+        
+        // ========== KODE STOPWATCH ASLI (TIDAK BERUBAH) ==========
+        
+        // Deteksi bahasa sistem
+        const systemLanguage = navigator.language || navigator.userLanguage || 'en-US';
+        const isIndonesian = systemLanguage.startsWith('id');
+        const isEnglish = systemLanguage.startsWith('en');
+        
+        // Terjemahan berdasarkan bahasa
+        const translations = {
+            'id': {
+                // Tombol
+                'start': 'Mulai',
+                'stop': 'Hentikan',
+                'lap': 'Putaran',
+                'reset': 'Ulangi',
+                
+                // Alert dan prompt
+                'forcedMsEnabled': 'Angka paksa milidetik diaktifkan!',
+                'forcedMsDisabled': 'Angka paksa milidetik dinonaktifkan.',
+                'enterMilliseconds': 'Masukkan angka milidetik (pisahkan dengan koma jika lebih dari satu):',
+                'enterValidNumbers': 'Masukkan minimal satu angka antara 00 dan 99.',
+                'numbersSaved': 'angka milidetik telah disimpan.',
+                
+                // Lap
+                'lapText': 'Putaran',
+                
+                // Bottom Navigation
+                'worldClock': 'Jam Dunia',
+                'alarms': 'Alarm',
+                'stopwatch': 'Stopwatch',
+                'timers': 'Timer'
+            },
+            'en': {
+                // Buttons
+                'start': 'Start',
+                'stop': 'Stop',
+                'lap': 'Lap',
+                'reset': 'Reset',
+                
+                // Alerts and prompts
+                'forcedMsEnabled': 'Forced milliseconds enabled!',
+                'forcedMsDisabled': 'Forced milliseconds disabled.',
+                'enterMilliseconds': 'Enter milliseconds (separate with commas if more than one):',
+                'enterValidNumbers': 'Enter at least one number between 00 and 99.',
+                'numbersSaved': 'millisecond numbers have been saved.',
+                
+                // Lap
+                'lapText': 'Lap',
+                
+                // Bottom Navigation
+                'worldClock': 'World Clock',
+                'alarms': 'Alarms',
+                'stopwatch': 'Stopwatch',
+                'timers': 'Timers'
+            }
+        };
+        
+        // Pilih bahasa berdasarkan deteksi
+        let lang = 'en';
+        if (isIndonesian) {
+            lang = 'id';
+        } else if (isEnglish) {
+            lang = 'en';
+        }
+        
+        // Fungsi untuk mendapatkan teks terjemahan
+        function t(key) {
+            return translations[lang][key] || translations['en'][key];
+        }
 
-        // let isForcedMsActive = false;  // Variabel untuk status paksa milidetik
-        // let forcedMs = null;
-        let isStartedOnce = false;  // Flag untuk memeriksa apakah Start sudah pernah ditekan
+        let forcedMsList = [];
+        let forcedMsIndex = 0;
+        let forcedMs = null;
+        let isForcedMsActive = false;
+        let isStartedOnce = false;
 
         let startTime = 0;
         let elapsedTime = 0;
@@ -268,15 +405,64 @@
         const secEl = document.getElementById('sec');
         const msEl = document.getElementById('ms');
 
+        // Elemen untuk bottom navigation
+        const navWorldClock = document.getElementById('navWorldClock');
+        const navAlarms = document.getElementById('navAlarms');
+        const navStopwatch = document.getElementById('navStopwatch');
+        const navTimers = document.getElementById('navTimers');
+
         let lapTimestamps = [];
 
-        // Fungsi untuk toggle paksa milidetik
-        function toggleForcedMs() {
-            isForcedMsActive = !isForcedMsActive; // Toggle status paksa milidetik
-            if (isForcedMsActive) {
-                alert("Angka paksa milidetik diaktifkan!");
+        // Variabel untuk double click detection
+        let lastClickTime = 0;
+        const DOUBLE_CLICK_DELAY = 300; // ms
+
+        // Fungsi untuk menginisialisasi semua teks berdasarkan bahasa
+        function initializeLanguage() {
+            // Tombol stopwatch
+            leftBtn.textContent = t('lap');
+            rightBtn.textContent = t('start');
+            
+            // Bottom navigation
+            navWorldClock.textContent = t('worldClock');
+            navAlarms.textContent = t('alarms');
+            navStopwatch.textContent = t('stopwatch');
+            navTimers.textContent = t('timers');
+            
+            // Update title
+            document.title = t('stopwatch');
+            
+            // Update kelas tombol
+            leftBtn.classList.remove("reset");
+            leftBtn.classList.add("lap");
+            rightBtn.classList.remove("stop");
+            rightBtn.classList.add("start");
+        }
+
+        // Panggil fungsi inisialisasi bahasa
+        initializeLanguage();
+
+        // Fungsi untuk mengecek apakah waktu adalah 00:00,00
+        function isZeroTime() {
+            const totalTime = elapsedTime + (forcedMs !== null ? forcedMs * 10 : 0);
+            return totalTime === 0;
+        }
+
+        // Fungsi untuk mengupdate opacity tombol kiri (Lap/Reset)
+        function updateLeftButtonOpacity() {
+            if (isZeroTime()) {
+                leftBtn.classList.add('inactive');
             } else {
-                alert("Angka paksa milidetik dinonaktifkan.");
+                leftBtn.classList.remove('inactive');
+            }
+        }
+
+        function toggleForcedMs() {
+            isForcedMsActive = !isForcedMsActive;
+            if (isForcedMsActive) {
+                alert(t('forcedMsEnabled'));
+            } else {
+                alert(t('forcedMsDisabled'));
             }
         }
 
@@ -298,10 +484,8 @@
 
             let milliseconds;
             if (!isRunning && forcedMs !== null) {
-                // Gunakan angka paksa saat stopwatch berhenti
                 milliseconds = forcedMs.toString().padStart(2, '0');
             } else {
-                // Stopwatch berjalan normal
                 milliseconds = Math.floor((elapsedTime % 1000) / 10).toString().padStart(2, '0');
             }
 
@@ -309,7 +493,9 @@
             secEl.textContent = seconds;
             msEl.textContent = milliseconds;
 
-            // Update lap yang terakhir dengan waktu yang baru
+            // Update opacity tombol kiri
+            updateLeftButtonOpacity();
+
             if (lapList.firstChild && lapTimestamps.length > 0) {
                 let lapTime;
                 if (!isRunning && forcedMs !== null) {
@@ -323,25 +509,26 @@
 
         function startTimer() {
             if (isStartedOnce) {
-                // Jika sudah pernah ditekan, paksa milidetik jika ada
                 startTime = Date.now() - elapsedTime;
-                isForcedMsActive = true;  // Paksa milidetik
+                isForcedMsActive = true;
             } else {
-                // Jika pertama kali tekan Start, timer berjalan normal
                 startTime = Date.now() - elapsedTime;
-                isStartedOnce = true; // Set flag jika sudah pernah ditekan
+                isStartedOnce = true;
             }
 
             timerInterval = setInterval(updateTime, 10);
             isRunning = true;
 
-            rightBtn.textContent = "Stop";
+            rightBtn.textContent = t('stop');
             rightBtn.classList.remove("start");
             rightBtn.classList.add("stop");
 
-            leftBtn.textContent = "Lap";
+            leftBtn.textContent = t('lap');
             leftBtn.classList.remove("reset");
             leftBtn.classList.add("lap");
+
+            // Update opacity saat mulai
+            updateLeftButtonOpacity();
 
             if (lapCount === 1) addLap();
         }
@@ -350,47 +537,51 @@
             clearInterval(timerInterval);
             isRunning = false;
 
-            // Ambil angka paksa dari daftar, kalau masih ada
             if (forcedMsList.length > 0 && forcedMsIndex < forcedMsList.length) {
                 forcedMs = forcedMsList[forcedMsIndex++];
             } else {
                 forcedMs = null;
             }
 
-            updateTime(); // tampilkan angka paksa langsung
+            updateTime();
 
-            rightBtn.textContent = "Start";
+            rightBtn.textContent = t('start');
             rightBtn.classList.remove("stop");
             rightBtn.classList.add("start");
 
-            leftBtn.textContent = "Reset";
+            leftBtn.textContent = t('reset');
             leftBtn.classList.remove("lap");
             leftBtn.classList.add("reset");
+
+            // Update opacity saat stop
+            updateLeftButtonOpacity();
         }
-
-
-
 
         function resetTimer() {
             elapsedTime = 0;
             lapCount = 1;
             lapTimestamps = [];
             forcedMs = null;
-            isStartedOnce = false; // Reset flag setelah reset
+            isStartedOnce = false;
             minEl.textContent = "00";
             secEl.textContent = "00";
             msEl.textContent = "00";
             lapList.innerHTML = '';
+
+            rightBtn.textContent = t('start');
+            rightBtn.classList.remove("stop");
+            rightBtn.classList.add("start");
+
+            leftBtn.textContent = t('lap');
+            leftBtn.classList.remove("reset");
+            leftBtn.classList.add("lap");
+
+            // Update opacity saat reset (waktu menjadi 00:00,00)
+            updateLeftButtonOpacity();
         }
 
         function addLap() {
             let currentElapsed;
-
-            // Stopwatch tidak berjalan, gunakan angka paksa milidetik jika ada
-            if (!isRunning && forcedMsList.length > 0 && forcedMsIndex < forcedMsList.length) {
-                forcedMs = forcedMsList[forcedMsIndex];
-                forcedMsIndex = (forcedMsIndex + 1) % forcedMsList.length; // Setelah habis, ulangi
-            }
 
             if (!isRunning && forcedMs !== null) {
                 currentElapsed = elapsedTime + forcedMs * 10;
@@ -401,34 +592,31 @@
             const previousElapsed = lapTimestamps.length > 0 ? lapTimestamps[lapTimestamps.length - 1] : 0;
             const lapTime = currentElapsed - previousElapsed;
 
-            lapTimestamps.push(currentElapsed); // Simpan timestamp terbaru
+            lapTimestamps.push(currentElapsed);
 
             const formattedLapTime = formatTime(lapTime);
 
             const lapItem = document.createElement("div");
             lapItem.className = "lap-item";
-
-            // Jika ada angka paksa milidetik, tampilkan sesuai dengan angka paksa
-            if (forcedMs !== null) {
-                const formattedTimeWithForcedMs = formattedLapTime.replace(/(\d{2}):(\d{2}),(\d{2})/, `$1:$2,${forcedMs.toString().padStart(2, '0')}`);
-                lapItem.innerHTML = `<span>Lap ${lapCount++}</span><span>${formattedTimeWithForcedMs}</span>`;
-            } else {
-                lapItem.innerHTML = `<span>Lap ${lapCount++}</span><span>${formattedLapTime}</span>`;
-            }
-
+            // Gunakan terjemahan untuk teks "Lap"
+            lapItem.innerHTML = `<span>${t('lapText')} ${lapCount++}</span><span>${formattedLapTime}</span>`;
             lapItem.dataset.lapTime = lapTime;
+
             lapList.prepend(lapItem);
 
-            // Update lap terbaru dengan waktu yang benar-benar baru
             updateLapTimes();
         }
 
-
-
-        // Fungsi untuk menyegarkan lap yang telah ditambahkan
         function updateLapTimes() {
             const laps = Array.from(lapList.querySelectorAll('.lap-item'));
-            if (laps.length < 2) return;
+
+            // Only color laps when there are at least 3 laps
+            if (laps.length < 3) {
+                laps.forEach(lap => {
+                    lap.classList.remove('fastest', 'slowest');
+                });
+                return;
+            }
 
             const lapTimes = laps.map(lap => parseInt(lap.dataset.lapTime));
             const fastestTime = Math.min(...lapTimes);
@@ -437,37 +625,79 @@
             laps.forEach(lap => {
                 lap.classList.remove('fastest', 'slowest');
                 const time = parseInt(lap.dataset.lapTime);
-                if (time === fastestTime) lap.classList.add('fastest');
-                if (time === slowestTime) lap.classList.add('slowest');
+                if (time === fastestTime) {
+                    lap.classList.add('fastest');
+                } else if (time === slowestTime) {
+                    lap.classList.add('slowest');
+                }
             });
         }
 
-        rightBtn.addEventListener('click', () => {
-            isRunning ? stopTimer() : startTimer();
-        });
-
-        leftBtn.addEventListener('click', () => {
-            isRunning ? addLap() : resetTimer();
-        });
-
-        msEl.addEventListener('click', () => {
-            const input = prompt("Masukkan 4 angka milidetik sulap, pisahkan dengan koma (contoh: 12,31,45,77):");
+        // Fungsi untuk membuka prompt paksa milidetik
+        function openForcedMsPrompt() {
+            const input = prompt(t('enterMilliseconds'));
             if (!input) return;
 
             const values = input.split(",").map(v => parseInt(v.trim())).filter(v => !isNaN(v) && v >= 0 && v <= 99);
 
-            if (values.length !== 4) {
-                alert("Masukkan tepat 4 angka antara 00 dan 99.");
+            if (values.length === 0) {
+                alert(t('enterValidNumbers'));
                 return;
             }
 
             forcedMsList = values;
             forcedMsIndex = 0;
-            alert("Empat angka milidetik telah disimpan.");
+            
+            // Update opacity setelah mengatur forcedMs
+            updateLeftButtonOpacity();
+            
+            alert(`${values.length} ${t('numbersSaved')}`);
+        }
+
+        // Event listener untuk double click pada milidetik
+        msEl.addEventListener('click', (e) => {
+            const currentTime = new Date().getTime();
+            const timeSinceLastClick = currentTime - lastClickTime;
+            
+            if (timeSinceLastClick < DOUBLE_CLICK_DELAY && timeSinceLastClick > 0) {
+                // Ini adalah double click
+                e.preventDefault();
+                openForcedMsPrompt();
+                lastClickTime = 0; // Reset setelah double click
+            } else {
+                // Ini adalah single click (belum tentu)
+                lastClickTime = currentTime;
+                
+                // Gunakan timeout untuk menunggu apakah ada click kedua
+                setTimeout(() => {
+                    // Jika setelah timeout tidak ada click kedua, reset
+                    if (lastClickTime !== 0 && new Date().getTime() - lastClickTime >= DOUBLE_CLICK_DELAY) {
+                        lastClickTime = 0;
+                    }
+                }, DOUBLE_CLICK_DELAY);
+            }
         });
 
+        // Event listener untuk tombol kanan (Start/Stop)
+        rightBtn.addEventListener('click', () => {
+            isRunning ? stopTimer() : startTimer();
+        });
 
+        // Event listener untuk tombol kiri (Lap/Reset)
+        leftBtn.addEventListener('click', () => {
+            // Cek jika tombol dalam state inactive (waktu 00:00,00)
+            if (leftBtn.classList.contains('inactive')) {
+                return; // Jangan lakukan apa-apa jika tombol disabled
+            }
+            isRunning ? addLap() : resetTimer();
+        });
 
+        // Inisialisasi opacity awal (waktu 00:00,00)
+        updateLeftButtonOpacity();
+        
+        // Log bahasa yang terdeteksi (untuk debugging)
+        console.log('System language detected:', systemLanguage);
+        console.log('Using language:', lang);
     </script>
 </body>
 
