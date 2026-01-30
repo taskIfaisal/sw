@@ -177,22 +177,6 @@
         #sensor-permission.hidden {
             display: none;
         }
-        
-        /* Status indicator - ditambahkan tanpa mengubah tampilan */
-        #save-status {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.7);
-            color: #4CAF50;
-            padding: 5px 10px;
-            border-radius: 3px;
-            font-size: 12px;
-            z-index: 4;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
     </style>
 </head>
 <body>
@@ -228,9 +212,6 @@
         Allow Motion Sensor Access<br>
         <small>(Tap to enable tilt controls)</small>
     </button>
-    
-    <!-- Save Status Indicator -->
-    <div id="save-status">Saved</div>
 
     <script>
         // Elements
@@ -242,7 +223,6 @@
         const defaultCardBtn = document.getElementById('default-card');
         const closeSettingsBtn = document.getElementById('close-settings');
         const sensorPermissionBtn = document.getElementById('sensor-permission');
-        const saveStatus = document.getElementById('save-status');
 
         let isExiting = false;
 
@@ -265,96 +245,11 @@
         const smoothing = 0.2;   // Smoothing untuk gerakan halus
         let isSensorEnabled = false;
         
-        // ===== LOCAL STORAGE SETUP =====
-        const STORAGE_KEY = 'magic_card_data';
-        let autoSaveTimeout = null;
-        
-        // Load saved data on startup
-        loadFromStorage();
-        
         // Set initial positions
         updateCardTransform();
         
         // Initialize sensor
         initSensor();
-        
-        // ===== LOCAL STORAGE FUNCTIONS =====
-        function loadFromStorage() {
-            try {
-                const savedData = localStorage.getItem(STORAGE_KEY);
-                if (savedData) {
-                    const data = JSON.parse(savedData);
-                    
-                    // Load background
-                    if (data.background) {
-                        background.style.backgroundImage = `url(${data.background})`;
-                    }
-                    
-                    // Load card image
-                    if (data.cardImage) {
-                        card.src = data.cardImage;
-                    }
-                    
-                    // Load position and scale
-                    if (data.position) {
-                        posX = data.position.x || posX;
-                        posY = data.position.y || posY;
-                        scale = data.position.scale || scale;
-                    }
-                    
-                    // Load sensor state
-                    if (data.sensorEnabled !== undefined) {
-                        isSensorEnabled = data.sensorEnabled;
-                    }
-                    
-                    console.log('Loaded from storage');
-                }
-            } catch (error) {
-                console.error('Error loading from storage:', error);
-            }
-        }
-        
-        function saveToStorage() {
-            try {
-                const data = {
-                    background: background.style.backgroundImage.replace('url("', '').replace('")', ''),
-                    cardImage: card.src,
-                    position: {
-                        x: posX,
-                        y: posY,
-                        scale: scale
-                    },
-                    sensorEnabled: isSensorEnabled
-                };
-                
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-                
-                // Show save status
-                showSaveStatus();
-            } catch (error) {
-                console.error('Error saving to storage:', error);
-            }
-        }
-        
-        function autoSave() {
-            if (autoSaveTimeout) {
-                clearTimeout(autoSaveTimeout);
-            }
-            autoSaveTimeout = setTimeout(() => {
-                saveToStorage();
-            }, 500); // Debounce 500ms
-        }
-        
-        function showSaveStatus() {
-            saveStatus.style.opacity = '1';
-            saveStatus.textContent = 'Saved';
-            saveStatus.style.color = '#4CAF50';
-            
-            setTimeout(() => {
-                saveStatus.style.opacity = '0';
-            }, 1500);
-        }
-        // ===== END LOCAL STORAGE FUNCTIONS =====
         
         // Touch events for swipe up to open settings
         let startYPos = 0;
@@ -420,8 +315,7 @@
                     posY = newPosY;
                     
                     // Apply bounds saat dragging juga
-                    applyBounds();
-                    
+
                     updateCardTransform();
                 }
                 e.preventDefault();
@@ -432,22 +326,19 @@
             if (isDragging) {
                 isDragging = false;
                 
-                // Save position when dragging ends
-                autoSave();
-                
                 // Check if card is flicked quickly
                 const speedThreshold = 1000; // pixels per second
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
                 const outTop    = posY < -card.offsetHeight * scale * 0.4;
-                const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
-                const outLeft   = posX < -card.offsetWidth * scale * 0.4;
-                const outRight  = posX > window.innerWidth - card.offsetWidth * scale * 0.6;
+const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
+const outLeft   = posX < -card.offsetWidth * scale * 0.4;
+const outRight  = posX > window.innerWidth - card.offsetWidth * scale * 0.6;
 
-                if (outTop || outBottom || outLeft || outRight) {
-                    card.style.transition = 'none';
-                    hideCard();
-                    return;
-                }
+if (outTop || outBottom || outLeft || outRight) {
+    card.style.transition = 'none';
+    hideCard();
+    return;
+}
 
                 
             }
@@ -460,7 +351,6 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     background.style.backgroundImage = `url(${event.target.result})`;
-                    autoSave(); // Auto save when background changes
                 };
                 reader.readAsDataURL(file);
             }
@@ -477,7 +367,6 @@
                         // Reset scale when new image is loaded
                         scale = 1;
                         updateCardTransform();
-                        autoSave(); // Auto save when card changes
                     });
                 };
                 reader.readAsDataURL(file);
@@ -489,12 +378,10 @@
             // Reset scale when default image is loaded
             scale = 1;
             updateCardTransform();
-            autoSave(); // Auto save when default card is set
         });
         
         closeSettingsBtn.addEventListener('click', () => {
             settings.style.top = '-100%';
-            autoSave(); // Auto save when settings are closed
         });
         
         // ===== SENSOR IMPLEMENTATION =====
@@ -509,7 +396,6 @@
                         if (permission === "granted") {
                             sensorPermissionBtn.classList.add('hidden');
                             startSensor();
-                            autoSave(); // Save sensor permission state
                         }
                     } catch (error) {
                         console.error("Error requesting permission:", error);
@@ -526,7 +412,6 @@
             isSensorEnabled = true;
             window.addEventListener("deviceorientation", handleDeviceOrientation);
             startSensorAnimation();
-            autoSave(); // Save sensor state
         }
         
         function handleDeviceOrientation(e) {
@@ -553,9 +438,6 @@
                     // PASTIKAN KARTU TIDAK KELUAR DARI BATAS LAYAR
                     applyBounds();
                     updateCardTransform();
-                    
-                    // Auto-save when sensor moves the card (debounced)
-                    autoSave();
                 }
                 
                 requestAnimationFrame(animate);
@@ -661,7 +543,6 @@
         
         function hideCard() {
             card.style.display = 'none';
-            autoSave(); // Auto save when card is hidden
         }
         
         function showCard() {
@@ -670,7 +551,6 @@
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
             card.style.display = 'block';
-            autoSave(); // Auto save when card is shown
         }
         
         // Handle window resize
@@ -678,12 +558,6 @@
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
-            autoSave(); // Auto save on resize
-        });
-        
-        // Save before page unload
-        window.addEventListener('beforeunload', () => {
-            saveToStorage();
         });
     </script>
 </body>
