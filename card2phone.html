@@ -50,8 +50,9 @@
             user-select: none;
             -webkit-user-drag: none;
             touch-action: none;
+            /* Tambahkan ini untuk zoom yang lebih baik */
             transform-origin: center center;
-            height: auto;
+            height: auto; /* Biarkan tinggi menyesuaikan */
         }
         #settings {
             position: fixed;
@@ -123,6 +124,7 @@
             display: block;
             margin: 0 auto;
             touch-action: none;
+            /* Tambahkan ini untuk zoom yang lebih baik */
             transform-origin: center center;
         }
 
@@ -176,26 +178,20 @@
             display: none;
         }
         
-        /* Reset and Save buttons */
-        .storage-controls {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        #reset-settings {
-            background: #ff9800;
-        }
-        
-        #clear-storage {
-            background: #f44336;
-        }
-        
-        #auto-save-status {
-            margin-top: 10px;
-            font-size: 12px;
+        /* Status indicator - ditambahkan tanpa mengubah tampilan */
+        #save-status {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
             color: #4CAF50;
-            opacity: 0.8;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            z-index: 4;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -222,15 +218,6 @@
             <button id="default-card">Use Default Card</button>
         </div>
         
-        <div class="setting-section storage-controls">
-            <h3>Storage Settings</h3>
-            <button id="save-settings">Save Current Settings</button>
-            <button id="load-settings">Load Saved Settings</button>
-            <button id="reset-settings">Reset to Default</button>
-            <button id="clear-storage">Clear All Storage</button>
-            <div id="auto-save-status">Auto-save: Enabled</div>
-        </div>
-        
         <div class="setting-section">
             <button id="close-settings">Save & Close</button>
         </div>
@@ -241,6 +228,9 @@
         Allow Motion Sensor Access<br>
         <small>(Tap to enable tilt controls)</small>
     </button>
+    
+    <!-- Save Status Indicator -->
+    <div id="save-status">Saved</div>
 
     <script>
         // Elements
@@ -252,16 +242,9 @@
         const defaultCardBtn = document.getElementById('default-card');
         const closeSettingsBtn = document.getElementById('close-settings');
         const sensorPermissionBtn = document.getElementById('sensor-permission');
-        
-        // Storage elements
-        const saveSettingsBtn = document.getElementById('save-settings');
-        const loadSettingsBtn = document.getElementById('load-settings');
-        const resetSettingsBtn = document.getElementById('reset-settings');
-        const clearStorageBtn = document.getElementById('clear-storage');
-        const autoSaveStatus = document.getElementById('auto-save-status');
+        const saveStatus = document.getElementById('save-status');
 
         let isExiting = false;
-        let autoSaveEnabled = true;
 
         // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
@@ -275,146 +258,103 @@
         let lastPosY = 0;
         let lastTime = 0;
         
-        // SENSOR VARIABLES
-        let smoothBeta = 0;
-        let smoothGamma = 0;
-        const sensitivity = 0.5;
-        const smoothing = 0.2;
+        // SENSOR VARIABLES - Ditambahkan
+        let smoothBeta = 0;      // Untuk smoothing beta (tilt depan-belakang)
+        let smoothGamma = 0;     // Untuk smoothing gamma (tilt kiri-kanan)
+        const sensitivity = 0.5; // Sensitivitas gerakan kartu
+        const smoothing = 0.2;   // Smoothing untuk gerakan halus
         let isSensorEnabled = false;
         
-        // Storage keys
-        const STORAGE_KEYS = {
-            BACKGROUND: 'magic_card_background',
-            CARD_IMAGE: 'magic_card_image',
-            CARD_POSITION: 'magic_card_position',
-            CARD_SCALE: 'magic_card_scale',
-            SENSOR_ENABLED: 'magic_card_sensor'
-        };
+        // ===== LOCAL STORAGE SETUP =====
+        const STORAGE_KEY = 'magic_card_data';
+        let autoSaveTimeout = null;
+        
+        // Load saved data on startup
+        loadFromStorage();
         
         // Set initial positions
         updateCardTransform();
         
-        // Load saved settings on startup
-        loadAllSettings();
-        
         // Initialize sensor
         initSensor();
         
-        // ===== LOCALSTORAGE FUNCTIONS =====
-        function saveAllSettings() {
-            if (!autoSaveEnabled) return;
-            
+        // ===== LOCAL STORAGE FUNCTIONS =====
+        function loadFromStorage() {
             try {
-                // Save background
-                const bgStyle = background.style.backgroundImage;
-                if (bgStyle && bgStyle !== 'none') {
-                    localStorage.setItem(STORAGE_KEYS.BACKGROUND, bgStyle);
+                const savedData = localStorage.getItem(STORAGE_KEY);
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    
+                    // Load background
+                    if (data.background) {
+                        background.style.backgroundImage = `url(${data.background})`;
+                    }
+                    
+                    // Load card image
+                    if (data.cardImage) {
+                        card.src = data.cardImage;
+                    }
+                    
+                    // Load position and scale
+                    if (data.position) {
+                        posX = data.position.x || posX;
+                        posY = data.position.y || posY;
+                        scale = data.position.scale || scale;
+                    }
+                    
+                    // Load sensor state
+                    if (data.sensorEnabled !== undefined) {
+                        isSensorEnabled = data.sensorEnabled;
+                    }
+                    
+                    console.log('Loaded from storage');
                 }
-                
-                // Save card image
-                localStorage.setItem(STORAGE_KEYS.CARD_IMAGE, card.src);
-                
-                // Save position and scale
-                const positionData = {
-                    x: posX,
-                    y: posY,
-                    scale: scale
+            } catch (error) {
+                console.error('Error loading from storage:', error);
+            }
+        }
+        
+        function saveToStorage() {
+            try {
+                const data = {
+                    background: background.style.backgroundImage.replace('url("', '').replace('")', ''),
+                    cardImage: card.src,
+                    position: {
+                        x: posX,
+                        y: posY,
+                        scale: scale
+                    },
+                    sensorEnabled: isSensorEnabled
                 };
-                localStorage.setItem(STORAGE_KEYS.CARD_POSITION, JSON.stringify(positionData));
                 
-                // Save sensor state
-                localStorage.setItem(STORAGE_KEYS.SENSOR_ENABLED, isSensorEnabled.toString());
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
                 
-                console.log('Settings saved to localStorage');
-                showAutoSaveMessage('Settings saved!');
+                // Show save status
+                showSaveStatus();
             } catch (error) {
-                console.error('Error saving to localStorage:', error);
+                console.error('Error saving to storage:', error);
             }
         }
         
-        function loadAllSettings() {
-            try {
-                // Load background
-                const savedBg = localStorage.getItem(STORAGE_KEYS.BACKGROUND);
-                if (savedBg) {
-                    background.style.backgroundImage = savedBg;
-                }
-                
-                // Load card image
-                const savedCard = localStorage.getItem(STORAGE_KEYS.CARD_IMAGE);
-                if (savedCard) {
-                    card.src = savedCard;
-                }
-                
-                // Load position and scale
-                const savedPosition = localStorage.getItem(STORAGE_KEYS.CARD_POSITION);
-                if (savedPosition) {
-                    const positionData = JSON.parse(savedPosition);
-                    posX = positionData.x || posX;
-                    posY = positionData.y || posY;
-                    scale = positionData.scale || scale;
-                    updateCardTransform();
-                }
-                
-                // Load sensor state
-                const savedSensor = localStorage.getItem(STORAGE_KEYS.SENSOR_ENABLED);
-                if (savedSensor !== null) {
-                    isSensorEnabled = savedSensor === 'true';
-                }
-                
-                console.log('Settings loaded from localStorage');
-            } catch (error) {
-                console.error('Error loading from localStorage:', error);
+        function autoSave() {
+            if (autoSaveTimeout) {
+                clearTimeout(autoSaveTimeout);
             }
+            autoSaveTimeout = setTimeout(() => {
+                saveToStorage();
+            }, 500); // Debounce 500ms
         }
         
-        function resetToDefault() {
-            // Clear all saved settings
-            Object.values(STORAGE_KEYS).forEach(key => {
-                localStorage.removeItem(key);
-            });
-            
-            // Reset to default values
-            background.style.backgroundImage = '';
-            card.src = "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png";
-            posX = window.innerWidth / 2 - card.offsetWidth / 2;
-            posY = window.innerHeight / 2 - card.offsetHeight / 2;
-            scale = 1;
-            isSensorEnabled = false;
-            
-            updateCardTransform();
-            showAutoSaveMessage('Reset to default!');
-        }
-        
-        function clearAllStorage() {
-            if (confirm('Are you sure you want to clear all saved settings?')) {
-                localStorage.clear();
-                resetToDefault();
-                showAutoSaveMessage('All storage cleared!');
-            }
-        }
-        
-        function toggleAutoSave() {
-            autoSaveEnabled = !autoSaveEnabled;
-            autoSaveStatus.textContent = `Auto-save: ${autoSaveEnabled ? 'Enabled' : 'Disabled'}`;
-            autoSaveStatus.style.color = autoSaveEnabled ? '#4CAF50' : '#f44336';
-            showAutoSaveMessage(`Auto-save ${autoSaveEnabled ? 'enabled' : 'disabled'}`);
-        }
-        
-        function showAutoSaveMessage(message) {
-            autoSaveStatus.textContent = message;
-            autoSaveStatus.style.opacity = '1';
-            autoSaveStatus.style.color = '#4CAF50';
+        function showSaveStatus() {
+            saveStatus.style.opacity = '1';
+            saveStatus.textContent = 'Saved';
+            saveStatus.style.color = '#4CAF50';
             
             setTimeout(() => {
-                if (autoSaveEnabled) {
-                    autoSaveStatus.textContent = 'Auto-save: Enabled';
-                    autoSaveStatus.style.color = '#4CAF50';
-                }
-                autoSaveStatus.style.opacity = '0.8';
-            }, 2000);
+                saveStatus.style.opacity = '0';
+            }, 1500);
         }
-        // ===== END LOCALSTORAGE FUNCTIONS =====
+        // ===== END LOCAL STORAGE FUNCTIONS =====
         
         // Touch events for swipe up to open settings
         let startYPos = 0;
@@ -479,6 +419,9 @@
                     posX = newPosX;
                     posY = newPosY;
                     
+                    // Apply bounds saat dragging juga
+                    applyBounds();
+                    
                     updateCardTransform();
                 }
                 e.preventDefault();
@@ -490,10 +433,10 @@
                 isDragging = false;
                 
                 // Save position when dragging ends
-                saveAllSettings();
+                autoSave();
                 
                 // Check if card is flicked quickly
-                const speedThreshold = 1000;
+                const speedThreshold = 1000; // pixels per second
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
                 const outTop    = posY < -card.offsetHeight * scale * 0.4;
                 const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
@@ -505,6 +448,8 @@
                     hideCard();
                     return;
                 }
+
+                
             }
         });
         
@@ -515,7 +460,7 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     background.style.backgroundImage = `url(${event.target.result})`;
-                    saveAllSettings(); // Save when background changes
+                    autoSave(); // Auto save when background changes
                 };
                 reader.readAsDataURL(file);
             }
@@ -529,9 +474,10 @@
                 reader.onload = (event) => {
                     showImageEditor(event.target.result, (editedImage) => {
                         card.src = editedImage;
+                        // Reset scale when new image is loaded
                         scale = 1;
                         updateCardTransform();
-                        saveAllSettings(); // Save when card changes
+                        autoSave(); // Auto save when card changes
                     });
                 };
                 reader.readAsDataURL(file);
@@ -540,43 +486,20 @@
         
         defaultCardBtn.addEventListener('click', () => {
             card.src = "https://deckofcardsapi.com/static/img/AS.png";
+            // Reset scale when default image is loaded
             scale = 1;
             updateCardTransform();
-            saveAllSettings(); // Save when default card is set
+            autoSave(); // Auto save when default card is set
         });
         
         closeSettingsBtn.addEventListener('click', () => {
             settings.style.top = '-100%';
-            saveAllSettings(); // Save when settings are closed
-        });
-        
-        // Storage buttons event listeners
-        saveSettingsBtn.addEventListener('click', () => {
-            saveAllSettings();
-            showAutoSaveMessage('Settings manually saved!');
-        });
-        
-        loadSettingsBtn.addEventListener('click', () => {
-            loadAllSettings();
-            showAutoSaveMessage('Settings loaded!');
-        });
-        
-        resetSettingsBtn.addEventListener('click', resetToDefault);
-        clearStorageBtn.addEventListener('click', clearAllStorage);
-        
-        // Double tap auto-save status to toggle auto-save
-        let lastAutoSaveTap = 0;
-        autoSaveStatus.addEventListener('click', () => {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastAutoSaveTap;
-            if (tapLength < 300 && tapLength > 0) {
-                toggleAutoSave();
-            }
-            lastAutoSaveTap = currentTime;
+            autoSave(); // Auto save when settings are closed
         });
         
         // ===== SENSOR IMPLEMENTATION =====
         function initSensor() {
+            // Cek apakah perlu permission (untuk iOS)
             if (typeof DeviceOrientationEvent?.requestPermission === "function") {
                 sensorPermissionBtn.classList.remove('hidden');
                 
@@ -586,7 +509,7 @@
                         if (permission === "granted") {
                             sensorPermissionBtn.classList.add('hidden');
                             startSensor();
-                            saveAllSettings(); // Save sensor permission
+                            autoSave(); // Save sensor permission state
                         }
                     } catch (error) {
                         console.error("Error requesting permission:", error);
@@ -594,6 +517,7 @@
                     }
                 };
             } else {
+                // Untuk browser yang tidak memerlukan permission
                 startSensor();
             }
         }
@@ -602,29 +526,36 @@
             isSensorEnabled = true;
             window.addEventListener("deviceorientation", handleDeviceOrientation);
             startSensorAnimation();
+            autoSave(); // Save sensor state
         }
         
         function handleDeviceOrientation(e) {
+            // Hanya proses jika kartu terlihat dan tidak sedang didrag
             if (!card.style.display || card.style.display === 'none' || isDragging) return;
 
+            // Batasi nilai beta dan gamma antara -45 sampai 45 derajat
             const beta = Math.max(-45, Math.min(45, e.beta || 0));
             const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
 
+            // Smoothing untuk gerakan yang lebih halus
             smoothBeta += (beta - smoothBeta) * smoothing;
             smoothGamma += (gamma - smoothGamma) * smoothing;
         }
         
         function startSensorAnimation() {
             function animate() {
+                // Hanya gerakkan kartu jika sensor enabled dan tidak sedang didrag
                 if (isSensorEnabled && !isDragging && card.style.display !== 'none') {
+                    // Gerakkan kartu berdasarkan nilai sensor
                     posX += smoothGamma * sensitivity;
                     posY += smoothBeta * sensitivity;
                     
+                    // PASTIKAN KARTU TIDAK KELUAR DARI BATAS LAYAR
                     applyBounds();
                     updateCardTransform();
                     
-                    // Auto-save when sensor moves card (debounced)
-                    debouncedSave();
+                    // Auto-save when sensor moves the card (debounced)
+                    autoSave();
                 }
                 
                 requestAnimationFrame(animate);
@@ -634,32 +565,25 @@
         }
         
         function applyBounds() {
+            // Hitung ukuran kartu yang sudah discale
             const cardWidth = card.offsetWidth * scale;
             const cardHeight = card.offsetHeight * scale;
             
+            // PERBAIKAN: Hitung batas dengan benar
             const minX = 0;
             const maxX = window.innerWidth - cardWidth;
             const minY = 0;
             const maxY = window.innerHeight - cardHeight;
             
+            // Terapkan batas dengan benar
             posX = Math.max(minX, Math.min(maxX, posX));
             posY = Math.max(minY, Math.min(maxY, posY));
         }
         // ===== END SENSOR IMPLEMENTATION =====
         
-        // Debounced save function to prevent too many saves
-        let saveTimeout;
-        function debouncedSave() {
-            if (saveTimeout) clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-                if (autoSaveEnabled) {
-                    saveAllSettings();
-                }
-            }, 1000);
-        }
-        
         // Image Editor Function
         function showImageEditor(imageSrc, callback) {
+            // Create editor modal
             const editor = document.createElement('div');
             editor.className = 'image-editor';
             editor.innerHTML = `
@@ -684,6 +608,7 @@
             let currentScale = 1;
             let startDistance = 0;
             
+            // Zoom with pinch gesture
             editingCard.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 2) {
                     e.preventDefault();
@@ -713,9 +638,10 @@
                 startDistance = 0;
             }, {passive: false});
             
+            // Save/cancel buttons
             saveBtn.addEventListener('click', () => {
                 document.body.removeChild(editor);
-                callback(imageSrc);
+                callback(imageSrc); // Return the original image (scaling is handled by CSS)
             });
             
             cancelBtn.addEventListener('click', () => {
@@ -735,15 +661,16 @@
         
         function hideCard() {
             card.style.display = 'none';
-            saveAllSettings(); // Save when card is hidden
+            autoSave(); // Auto save when card is hidden
         }
         
         function showCard() {
+            // Reset to center position
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
             card.style.display = 'block';
-            saveAllSettings(); // Save when card is shown
+            autoSave(); // Auto save when card is shown
         }
         
         // Handle window resize
@@ -751,20 +678,13 @@
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
-            saveAllSettings(); // Save on resize
+            autoSave(); // Auto save on resize
         });
         
         // Save before page unload
         window.addEventListener('beforeunload', () => {
-            saveAllSettings();
+            saveToStorage();
         });
-        
-        // Auto-save every 30 seconds as backup
-        setInterval(() => {
-            if (autoSaveEnabled) {
-                saveAllSettings();
-            }
-        }, 30000);
     </script>
 </body>
 </html>
