@@ -50,9 +50,8 @@
             user-select: none;
             -webkit-user-drag: none;
             touch-action: none;
-            /* Tambahkan ini untuk zoom yang lebih baik */
             transform-origin: center center;
-            height: auto; /* Biarkan tinggi menyesuaikan */
+            height: auto;
         }
         #settings {
             position: fixed;
@@ -124,7 +123,6 @@
             display: block;
             margin: 0 auto;
             touch-action: none;
-            /* Tambahkan ini untuk zoom yang lebih baik */
             transform-origin: center center;
         }
 
@@ -388,9 +386,6 @@
                     posX = newPosX;
                     posY = newPosY;
                     
-                    // Apply bounds saat dragging juga
-                    applyBounds();
-                    
                     updateCardTransform();
                 }
                 e.preventDefault();
@@ -401,24 +396,25 @@
             if (isDragging) {
                 isDragging = false;
                 
-                // Save when dragging ends
-                autoSave();
-                
                 // Check if card is flicked quickly
                 const speedThreshold = 1000; // pixels per second
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+                
+                // PERUBAHAN: Kembalikan batas untuk bisa ditarik keluar
                 const outTop    = posY < -card.offsetHeight * scale * 0.4;
                 const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
                 const outLeft   = posX < -card.offsetWidth * scale * 0.4;
                 const outRight  = posX > window.innerWidth - card.offsetWidth * scale * 0.6;
 
+                // Jika kartu ditarik keluar layar
                 if (outTop || outBottom || outLeft || outRight) {
                     card.style.transition = 'none';
                     hideCard();
                     return;
                 }
-
                 
+                // Jika tidak keluar layar, simpan posisinya
+                autoSave();
             }
         });
         
@@ -429,7 +425,7 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     background.style.backgroundImage = `url(${event.target.result})`;
-                    autoSave(); // Save when background changes
+                    autoSave();
                 };
                 reader.readAsDataURL(file);
             }
@@ -443,10 +439,9 @@
                 reader.onload = (event) => {
                     showImageEditor(event.target.result, (editedImage) => {
                         card.src = editedImage;
-                        // Reset scale when new image is loaded
                         scale = 1;
                         updateCardTransform();
-                        autoSave(); // Save when card changes
+                        autoSave();
                     });
                 };
                 reader.readAsDataURL(file);
@@ -455,20 +450,18 @@
         
         defaultCardBtn.addEventListener('click', () => {
             card.src = "https://deckofcardsapi.com/static/img/AS.png";
-            // Reset scale when default image is loaded
             scale = 1;
             updateCardTransform();
-            autoSave(); // Save when default card is set
+            autoSave();
         });
         
         closeSettingsBtn.addEventListener('click', () => {
             settings.style.top = '-100%';
-            autoSave(); // Save when settings are closed
+            autoSave();
         });
         
         // ===== SENSOR IMPLEMENTATION =====
         function initSensor() {
-            // Cek apakah perlu permission (untuk iOS)
             if (typeof DeviceOrientationEvent?.requestPermission === "function") {
                 sensorPermissionBtn.classList.remove('hidden');
                 
@@ -485,7 +478,6 @@
                     }
                 };
             } else {
-                // Untuk browser yang tidak memerlukan permission
                 startSensor();
             }
         }
@@ -497,31 +489,22 @@
         }
         
         function handleDeviceOrientation(e) {
-            // Hanya proses jika kartu terlihat dan tidak sedang didrag
             if (!card.style.display || card.style.display === 'none' || isDragging) return;
 
-            // Batasi nilai beta dan gamma antara -45 sampai 45 derajat
             const beta = Math.max(-45, Math.min(45, e.beta || 0));
             const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
 
-            // Smoothing untuk gerakan yang lebih halus
             smoothBeta += (beta - smoothBeta) * smoothing;
             smoothGamma += (gamma - smoothGamma) * smoothing;
         }
         
         function startSensorAnimation() {
             function animate() {
-                // Hanya gerakkan kartu jika sensor enabled dan tidak sedang didrag
                 if (isSensorEnabled && !isDragging && card.style.display !== 'none') {
-                    // Gerakkan kartu berdasarkan nilai sensor
                     posX += smoothGamma * sensitivity;
                     posY += smoothBeta * sensitivity;
                     
-                    // PASTIKAN KARTU TIDAK KELUAR DARI BATAS LAYAR
-                    applyBounds();
                     updateCardTransform();
-                    
-                    // Auto-save when sensor moves the card
                     autoSave();
                 }
                 
@@ -531,26 +514,39 @@
             animate();
         }
         
-        function applyBounds() {
-            // Hitung ukuran kartu yang sudah discale
-            const cardWidth = card.offsetWidth * scale;
-            const cardHeight = card.offsetHeight * scale;
-            
-            // PERBAIKAN: Hitung batas dengan benar
-            const minX = 0;
-            const maxX = window.innerWidth - cardWidth;
-            const minY = 0;
-            const maxY = window.innerHeight - cardHeight;
-            
-            // Terapkan batas dengan benar
-            posX = Math.max(minX, Math.min(maxX, posX));
-            posY = Math.max(minY, Math.min(maxY, posY));
+        // Helper functions
+        function updateCardTransform() {
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
         }
-        // ===== END SENSOR IMPLEMENTATION =====
+        
+        function hideCard() {
+            card.style.display = 'none';
+            autoSave();
+        }
+        
+        function showCard() {
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+            updateCardTransform();
+            card.style.display = 'block';
+            autoSave();
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+            updateCardTransform();
+            autoSave();
+        });
+        
+        // Save before page unload
+        window.addEventListener('beforeunload', () => {
+            saveToStorage();
+        });
         
         // Image Editor Function
         function showImageEditor(imageSrc, callback) {
-            // Create editor modal
             const editor = document.createElement('div');
             editor.className = 'image-editor';
             editor.innerHTML = `
@@ -575,7 +571,6 @@
             let currentScale = 1;
             let startDistance = 0;
             
-            // Zoom with pinch gesture
             editingCard.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 2) {
                     e.preventDefault();
@@ -605,10 +600,9 @@
                 startDistance = 0;
             }, {passive: false});
             
-            // Save/cancel buttons
             saveBtn.addEventListener('click', () => {
                 document.body.removeChild(editor);
-                callback(imageSrc); // Return the original image (scaling is handled by CSS)
+                callback(imageSrc);
             });
             
             cancelBtn.addEventListener('click', () => {
@@ -616,42 +610,9 @@
             });
         }
         
-        // Helper function to calculate distance between two points
         function getDistance(x1, y1, x2, y2) {
             return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
         }
-        
-        // Helper functions
-        function updateCardTransform() {
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
-        
-        function hideCard() {
-            card.style.display = 'none';
-            autoSave(); // Save when card is hidden
-        }
-        
-        function showCard() {
-            // Reset to center position
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-            updateCardTransform();
-            card.style.display = 'block';
-            autoSave(); // Save when card is shown
-        }
-        
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-            updateCardTransform();
-            autoSave(); // Save on resize
-        });
-        
-        // Save before page unload
-        window.addEventListener('beforeunload', () => {
-            saveToStorage();
-        });
     </script>
 </body>
 </html>
