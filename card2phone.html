@@ -245,11 +245,85 @@
         const smoothing = 0.2;   // Smoothing untuk gerakan halus
         let isSensorEnabled = false;
         
+        // ===== LOCAL STORAGE SETUP =====
+        const STORAGE_KEYS = {
+            BACKGROUND: 'magic_card_background',
+            CARD_IMAGE: 'magic_card_image',
+            CARD_POSITION: 'magic_card_position',
+            CARD_SCALE: 'magic_card_scale'
+        };
+        
+        // Load saved data on startup
+        loadFromStorage();
+        
         // Set initial positions
         updateCardTransform();
         
         // Initialize sensor
         initSensor();
+        
+        // ===== LOCAL STORAGE FUNCTIONS =====
+        function loadFromStorage() {
+            try {
+                // Load background image
+                const savedBackground = localStorage.getItem(STORAGE_KEYS.BACKGROUND);
+                if (savedBackground) {
+                    background.style.backgroundImage = `url(${savedBackground})`;
+                }
+                
+                // Load card image
+                const savedCardImage = localStorage.getItem(STORAGE_KEYS.CARD_IMAGE);
+                if (savedCardImage) {
+                    card.src = savedCardImage;
+                }
+                
+                // Load card position
+                const savedPosition = localStorage.getItem(STORAGE_KEYS.CARD_POSITION);
+                if (savedPosition) {
+                    const position = JSON.parse(savedPosition);
+                    posX = position.x || posX;
+                    posY = position.y || posY;
+                }
+                
+                // Load card scale
+                const savedScale = localStorage.getItem(STORAGE_KEYS.CARD_SCALE);
+                if (savedScale) {
+                    scale = parseFloat(savedScale) || scale;
+                }
+            } catch (error) {
+                console.error('Error loading from storage:', error);
+            }
+        }
+        
+        function saveToStorage() {
+            try {
+                // Save background image
+                const bgStyle = background.style.backgroundImage;
+                if (bgStyle && bgStyle !== 'none') {
+                    const bgUrl = bgStyle.replace('url("', '').replace('")', '');
+                    localStorage.setItem(STORAGE_KEYS.BACKGROUND, bgUrl);
+                }
+                
+                // Save card image
+                if (card.src) {
+                    localStorage.setItem(STORAGE_KEYS.CARD_IMAGE, card.src);
+                }
+                
+                // Save card position
+                const position = { x: posX, y: posY };
+                localStorage.setItem(STORAGE_KEYS.CARD_POSITION, JSON.stringify(position));
+                
+                // Save card scale
+                localStorage.setItem(STORAGE_KEYS.CARD_SCALE, scale.toString());
+            } catch (error) {
+                console.error('Error saving to storage:', error);
+            }
+        }
+        
+        function autoSave() {
+            saveToStorage();
+        }
+        // ===== END LOCAL STORAGE FUNCTIONS =====
         
         // Touch events for swipe up to open settings
         let startYPos = 0;
@@ -315,7 +389,8 @@
                     posY = newPosY;
                     
                     // Apply bounds saat dragging juga
-
+                    applyBounds();
+                    
                     updateCardTransform();
                 }
                 e.preventDefault();
@@ -326,19 +401,22 @@
             if (isDragging) {
                 isDragging = false;
                 
+                // Save when dragging ends
+                autoSave();
+                
                 // Check if card is flicked quickly
                 const speedThreshold = 1000; // pixels per second
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
                 const outTop    = posY < -card.offsetHeight * scale * 0.4;
-const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
-const outLeft   = posX < -card.offsetWidth * scale * 0.4;
-const outRight  = posX > window.innerWidth - card.offsetWidth * scale * 0.6;
+                const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
+                const outLeft   = posX < -card.offsetWidth * scale * 0.4;
+                const outRight  = posX > window.innerWidth - card.offsetWidth * scale * 0.6;
 
-if (outTop || outBottom || outLeft || outRight) {
-    card.style.transition = 'none';
-    hideCard();
-    return;
-}
+                if (outTop || outBottom || outLeft || outRight) {
+                    card.style.transition = 'none';
+                    hideCard();
+                    return;
+                }
 
                 
             }
@@ -351,6 +429,7 @@ if (outTop || outBottom || outLeft || outRight) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     background.style.backgroundImage = `url(${event.target.result})`;
+                    autoSave(); // Save when background changes
                 };
                 reader.readAsDataURL(file);
             }
@@ -367,6 +446,7 @@ if (outTop || outBottom || outLeft || outRight) {
                         // Reset scale when new image is loaded
                         scale = 1;
                         updateCardTransform();
+                        autoSave(); // Save when card changes
                     });
                 };
                 reader.readAsDataURL(file);
@@ -378,10 +458,12 @@ if (outTop || outBottom || outLeft || outRight) {
             // Reset scale when default image is loaded
             scale = 1;
             updateCardTransform();
+            autoSave(); // Save when default card is set
         });
         
         closeSettingsBtn.addEventListener('click', () => {
             settings.style.top = '-100%';
+            autoSave(); // Save when settings are closed
         });
         
         // ===== SENSOR IMPLEMENTATION =====
@@ -438,6 +520,9 @@ if (outTop || outBottom || outLeft || outRight) {
                     // PASTIKAN KARTU TIDAK KELUAR DARI BATAS LAYAR
                     applyBounds();
                     updateCardTransform();
+                    
+                    // Auto-save when sensor moves the card
+                    autoSave();
                 }
                 
                 requestAnimationFrame(animate);
@@ -543,6 +628,7 @@ if (outTop || outBottom || outLeft || outRight) {
         
         function hideCard() {
             card.style.display = 'none';
+            autoSave(); // Save when card is hidden
         }
         
         function showCard() {
@@ -551,6 +637,7 @@ if (outTop || outBottom || outLeft || outRight) {
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
             card.style.display = 'block';
+            autoSave(); // Save when card is shown
         }
         
         // Handle window resize
@@ -558,6 +645,12 @@ if (outTop || outBottom || outLeft || outRight) {
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
+            autoSave(); // Save on resize
+        });
+        
+        // Save before page unload
+        window.addEventListener('beforeunload', () => {
+            saveToStorage();
         });
     </script>
 </body>
