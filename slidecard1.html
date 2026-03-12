@@ -564,14 +564,22 @@
     initSensor();
     
     // ===== FUNGSI DARI CODE 2 =====
-    function updateEditorImageScale() {
-        const scale = editorSizeSlider.value / 100;
-        editorCardImage.style.transform = `scale(${scale})`;
-        editorSizePercentage.textContent = editorSizeSlider.value + '%';
-        if (editorCurrentScale) {
-            editorCurrentScale.textContent = editorSizeSlider.value;
-        }
+function updateEditorImageScale() {
+    // Nilai slider asli (50-200)
+    const sliderValue = editorSizeSlider.value;
+    
+    // Kalikan dengan faktor 1.2 agar 100% = 120%
+    const scaledValue = sliderValue * 1.2;
+    const scale = scaledValue / 100; // Konversi ke desimal
+    
+    editorCardImage.style.transform = `scale(${scale})`;
+    
+    // Tampilkan persentase sesuai slider (tetap 100, 120, dst)
+    editorSizePercentage.textContent = sliderValue + '%';
+    if (editorCurrentScale) {
+        editorCurrentScale.textContent = sliderValue;
     }
+}
 
     // Event listener untuk slider editor
     editorSizeSlider.addEventListener('input', updateEditorImageScale);
