@@ -4,13 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Magic Card Trick</title>
-    
-    <!-- ========== PWA META TAGS ========== -->
-    <meta name="theme-color" content="#000000">
-    <link rel="manifest" href="./manifest.json">
-    <meta name="description" content="Magic Card Trick - A magical card transformation app">
-    <!-- =================================== -->
-    
     <link rel="apple-touch-icon" href="./icon/slide-512x512.png">
     <link rel="apple-touch-startup-image" href="./icon/slide-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,7 +11,6 @@
     <meta name="apple-mobile-web-app-title" content="Slide Card">
     <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/slide-512x512.png">
-    
     <style>
         html, body {
             margin: 0;
@@ -83,7 +75,7 @@
         }
 
         .card-moving {
-            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
+             transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
         }
         
         #settings {
@@ -263,40 +255,109 @@
         #card-indicator.visible {
             opacity: 1;
         }
-        
-        /* ========== PWA INSTALL BUTTON ========== */
-        #install-button {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #2196F3;
+
+        /* ===== STYLE DARI CODE 2 ===== */
+        .image-editor-panel {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .image-editor-panel h3 {
+            margin: 0 0 15px 0;
             color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            z-index: 100;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        /* Frame gambar - style dari code 2 */
+        .editor-frame {
+            width: 100%;
+            max-width: 280px;
+            height: 200px;
+            margin: 0 auto 16px auto;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #333;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .editor-frame-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.2s ease;
+            transform-origin: center;
+            margin-top: 40px;
+        }
+
+        /* Panel kontrol - style dari code 2 */
+        .editor-control-panel {
+            width: 100%;
+        }
+
+        .editor-size-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
             font-size: 14px;
-            display: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            color: #fff;
         }
-        
-        #install-button.visible {
-            display: block;
+
+        .editor-size-label span:last-child {
+            background: #4CAF50;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
         }
-        
-        #install-button:hover {
-            background: #1976D2;
+
+        .editor-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #444;
+            border-radius: 2px;
+            outline: none;
         }
-        /* ======================================= */
+
+        .editor-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4CAF50;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .editor-slider::-webkit-slider-thumb:hover {
+            background: #45a049;
+        }
+
+        .editor-size-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0 16px 0;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .editor-dimensions {
+            text-align: center;
+            font-size: 13px;
+            color: #ccc;
+            padding-top: 12px;
+            border-top: 1px solid #444;
+            margin-bottom: 16px;
+        }
     </style>
 </head>
 <body>
-    <!-- ========== PWA INSTALL BUTTON ========== -->
-    <button id="install-button" class="hidden">
-        📲 Install App
-    </button>
-    
     <div id="background"></div>
     <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
     
@@ -305,6 +366,45 @@
     
     <div id="settings">
         <h2>Magic Card Settings</h2>
+        
+        <!-- ===== IMAGE EDITOR DARI CODE 2 ===== -->
+        <div class="image-editor-panel">
+            <h3>🎴 Atur Ukuran Kartu Image 1</h3>
+            
+            <!-- Frame gambar - mengambil gambar dari card image 1 -->
+            <div class="editor-frame" id="editorFrame">
+                <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png" 
+                     alt="Card Image 1" 
+                     class="editor-frame-image" 
+                     id="editorCardImage">
+            </div>
+
+            <!-- Panel kontrol slider -->
+            <div class="editor-control-panel">
+                <div class="editor-size-label">
+                    <span>Ukuran gambar</span>
+                    <span id="editorSizePercentage">100%</span>
+                </div>
+
+                <input type="range" 
+                       min="50" 
+                       max="200" 
+                       value="100" 
+                       class="editor-slider" 
+                       id="editorSizeSlider">
+
+                <div class="editor-size-info">
+                    <span>50%</span>
+                    <span>200%</span>
+                </div>
+
+                <div class="editor-dimensions">
+                    <span>Frame: 280 x 200px</span>
+                    <span style="margin: 0 8px;">•</span>
+                    <span>Skala: <span id="editorCurrentScale">100</span>%</span>
+                </div>
+            </div>
+        </div>
         
         <div class="setting-section">
             <h3>Background Image</h3>
@@ -362,64 +462,6 @@
     </button>
 
     <script>
-    // ========== PWA INSTALL FUNCTIONALITY ==========
-    let deferredPrompt;
-    const installButton = document.getElementById('install-button');
-    
-    // Event listener for beforeinstallprompt
-    window.addEventListener('beforeinstallprompt', (e) => {
-        console.log('PWA install prompt available');
-        // Prevent Chrome 67 and earlier from automatically showing the prompt
-        e.preventDefault();
-        // Stash the event so it can be triggered later
-        deferredPrompt = e;
-        
-        // Show install button
-        installButton.classList.add('visible');
-        
-        // Auto hide after 10 seconds
-        setTimeout(() => {
-            installButton.classList.remove('visible');
-        }, 10000);
-    });
-    
-    // Install button click handler
-    installButton.addEventListener('click', async () => {
-        if (!deferredPrompt) return;
-        
-        // Show the install prompt
-        deferredPrompt.prompt();
-        
-        // Wait for the user to respond to the prompt
-        const { outcome } = await deferredPrompt.userChoice;
-        
-        console.log(`User response to the install prompt: ${outcome}`);
-        
-        // Hide the install button
-        installButton.classList.remove('visible');
-        
-        // Clear the deferredPrompt variable
-        deferredPrompt = null;
-    });
-    
-    // Detect if app is already installed
-    window.addEventListener('appinstalled', () => {
-        console.log('PWA was installed');
-        installButton.classList.remove('visible');
-        deferredPrompt = null;
-        
-        // Show success message
-        alert('✅ Magic Card Trick installed successfully! You can now find it on your home screen.');
-    });
-    
-    // Check if app is running in standalone mode (already installed)
-    if (window.matchMedia('(display-mode: standalone)').matches || 
-        window.navigator.standalone === true) {
-        console.log('App is running in standalone mode');
-        installButton.classList.remove('visible');
-    }
-    // ================================================
-    
     // Elements
     const background = document.getElementById('background');
     const card = document.getElementById('card');
@@ -434,6 +476,12 @@
     const preview1 = document.getElementById('preview-1');
     const preview2 = document.getElementById('preview-2');
     const cardIndicator = document.getElementById('card-indicator');
+    
+    // ===== ELEMEN DARI CODE 2 =====
+    const editorCardImage = document.getElementById('editorCardImage');
+    const editorSizeSlider = document.getElementById('editorSizeSlider');
+    const editorSizePercentage = document.getElementById('editorSizePercentage');
+    const editorCurrentScale = document.getElementById('editorCurrentScale');
 
     // Initialize card properties
     let posX = window.innerWidth / 2 - card.offsetWidth / 2;
@@ -493,7 +541,10 @@
         const img2 = localStorage.getItem(STORAGE_KEYS.image2);
         const bg  = localStorage.getItem(STORAGE_KEYS.background);
 
-        if (img1) cardImages.image1 = img1;
+        if (img1) {
+            cardImages.image1 = img1;
+            editorCardImage.src = img1; // Update editor image
+        }
         if (img2) cardImages.image2 = img2;
         if (bg) background.style.backgroundImage = `url(${bg})`;
 
@@ -527,6 +578,18 @@
     
     // Initialize sensor
     initSensor();
+    
+    // ===== FUNGSI DARI CODE 2 =====
+    function updateEditorImageScale() {
+        const scale = editorSizeSlider.value / 100;
+        editorCardImage.style.transform = `scale(${scale})`;
+        editorSizePercentage.textContent = editorSizeSlider.value + '%';
+        editorCurrentScale.textContent = editorSizeSlider.value;
+    }
+
+    // Event listener untuk slider editor
+    editorSizeSlider.addEventListener('input', updateEditorImageScale);
+    updateEditorImageScale();
     
     // Touch events for swipe up to open settings
     let startYPos = 0;
@@ -758,6 +821,7 @@
             image1: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png",
             image2: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image2.png"
         };
+        editorCardImage.src = cardImages.image1; // Update editor image
         updatePreviews();
         
         if (card.style.display !== 'none') {
@@ -779,6 +843,7 @@
         cardImages.image1 = cardImages.image2;
         cardImages.image2 = temp;
         
+        editorCardImage.src = cardImages.image1; // Update editor image
         updatePreviews();
         
         if (card.style.display !== 'none') {
@@ -803,6 +868,7 @@
                     if (imageNumber === 1) {
                         cardImages.image1 = editedImage;
                         preview1.innerHTML = `<img src="${editedImage}">`;
+                        editorCardImage.src = editedImage; // Update editor image
                     } else {
                         cardImages.image2 = editedImage;
                         preview2.innerHTML = `<img src="${editedImage}">`;
@@ -993,7 +1059,7 @@
         const cardWidth = card.offsetWidth * scale;
         const cardHeight = card.offsetHeight * scale;
         
-        const padding = 10;
+        const padding = 0;
         const minX = padding;
         const maxX = window.innerWidth - cardWidth - padding;
         const minY = padding;
