@@ -555,7 +555,7 @@
     
     initSensor();
     
-    // ===== FUNGSI DARI CODE 2 =====
+    // ===== FUNGSI DARI CODE 2 - TANPA FAKTOR 1.2 =====
     function updateEditorImageScale() {
         // Nilai slider asli (50-200)
         const sliderValue = editorSizeSlider.value;
@@ -563,9 +563,9 @@
         // Simpan nilai slider ke variabel global
         editorScaleValue = sliderValue;
         
-        // EDITOR: Kalikan dengan faktor 1.2 agar 100% = 120%
-        // slider 100 = scale 1.2, slider 120 = scale 1.44, slider 200 = scale 2.4
-        const scale = (sliderValue * 1.2) / 100;
+        // EDITOR: Langsung pakai nilai slider (HAPUS faktor 1.2)
+        // slider 100 = scale 1.0, slider 120 = scale 1.2, slider 200 = scale 2.0
+        const scale = sliderValue / 100;
         
         editorCardImage.style.transform = `scale(${scale})`;
         
