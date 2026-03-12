@@ -880,8 +880,8 @@
         card.src = cardImages.image1;
         card.style.animation = 'none';
         
-        // Terapkan skala dari slider editor DENGAN faktor 1.2
-        const cardScale = (editorScaleValue * 1.2) / 100;
+        // Terapkan skala dari slider editor (TANPA faktor 1.2 karena editor sudah pakai 1.2)
+        const cardScale = editorScaleValue / 100;
         
         card.style.opacity = '0';
         card.style.visibility = 'hidden';
@@ -968,8 +968,8 @@
         card.style.display = 'none';
         card.classList.remove('card-flipping');
         
-        // Reset ke posisi tengah bawah dengan skala yang benar
-        const currentScale = (editorScaleValue * 1.2) / 100;
+        // Reset ke posisi tengah bawah dengan skala yang benar (TANPA faktor 1.2)
+        const currentScale = editorScaleValue / 100;
         const cardRect = card.getBoundingClientRect();
         posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
         posY = window.innerHeight + card.offsetHeight;
@@ -1032,7 +1032,7 @@
     }
     
     function applyBounds() {
-        const currentScale = (editorScaleValue * 1.2) / 100;
+        const currentScale = editorScaleValue / 100;
         const cardWidth = card.offsetWidth * currentScale;
         const cardHeight = card.offsetHeight * currentScale;
         
@@ -1115,7 +1115,7 @@
     }
     
     function updateCardTransform() {
-        const currentScale = (editorScaleValue * 1.2) / 100;
+        const currentScale = editorScaleValue / 100;
         card.style.transform = `translate(${posX}px, ${posY}px) scale(${currentScale})`;
     }
     
