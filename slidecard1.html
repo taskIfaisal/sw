@@ -88,13 +88,14 @@
             z-index: 3;
             transition: top 0.5s ease;
             color: white;
-            padding: 20px;
+            padding: 20px 0; /* Hilangkan padding kiri-kanan */
             box-sizing: border-box;
             overflow-y: auto;
         }
         
         .setting-section {
             margin-bottom: 20px;
+            padding: 0 20px; /* Tambah padding untuk konten */
         }
         
         .image-upload-row {
@@ -258,29 +259,30 @@
 
         /* ===== STYLE DARI CODE 2 - TANPA BORDER DAN BACKGROUND ===== */
         .image-editor-panel {
+            width: 100%; /* Full width */
             margin-bottom: 20px;
         }
 
         .image-editor-panel h3 {
-            margin: 0 0 15px 0;
+            margin: 0 0 15px 20px; /* Tambah margin kiri */
             color: white;
             font-size: 16px;
             font-weight: 500;
         }
 
-        /* Frame gambar - style dari code 2 */
+        /* Frame gambar - FULL WIDTH KIRI KANAN */
         .editor-frame {
-            width: 100%;
-            max-width: 280px;
-            height: 200px;
-            margin: 0 auto 16px auto;
+            width: 100%; /* Full width */
+            height: 250px; /* Lebih besar dari sebelumnya */
             border: 2px solid #4CAF50;
-            border-radius: 8px;
-            overflow: hidden;
             background: #333;
             display: flex;
             justify-content: center;
             align-items: flex-start;
+            overflow: hidden;
+            border-left: none; /* Hilangkan border kiri */
+            border-right: none; /* Hilangkan border kanan */
+            border-radius: 0; /* Hilangkan border radius */
         }
 
         .editor-frame-image {
@@ -289,12 +291,13 @@
             object-fit: contain;
             transition: transform 0.2s ease;
             transform-origin: center;
-            margin-top: 60px;
+            margin-top: 70px; /* Naikkan sedikit karena frame lebih besar */
         }
 
         /* Panel kontrol - style dari code 2 */
         .editor-control-panel {
             width: 100%;
+            padding: 0 20px; /* Padding kiri-kanan untuk konten */
         }
 
         .editor-size-label {
@@ -352,7 +355,7 @@
     <div id="card-indicator"></div>
     
     <div id="settings">
-        <h2>Magic Card Settings</h2>
+        <h2 style="padding: 0 20px;">Magic Card Settings</h2>
 
         <div class="setting-section">
             <h3>Background Image</h3>
@@ -399,11 +402,11 @@
             </div>
         </div>
 
-        <!-- ===== IMAGE EDITOR DARI CODE 2 - TANPA BORDER ===== -->
+        <!-- ===== IMAGE EDITOR DARI CODE 2 - FULL WIDTH ===== -->
         <div class="image-editor-panel">
             <h3>🎴 Atur Ukuran Kartu Image 1</h3>
             
-            <!-- Frame gambar - mengambil gambar dari card image 1 -->
+            <!-- Frame gambar full width kiri-kanan -->
             <div class="editor-frame" id="editorFrame">
                 <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png" 
                      alt="Card Image 1" 
