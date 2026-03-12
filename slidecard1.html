@@ -563,9 +563,9 @@
         // Simpan nilai slider ke variabel global
         editorScaleValue = sliderValue;
         
-        // Kalikan dengan faktor 1.2 agar 100% = 120%
-        const scaledValue = sliderValue * 1.2;
-        const scale = scaledValue / 100;
+        // EDITOR: Kalikan dengan faktor 1.2 agar 100% = 120%
+        // slider 100 = scale 1.2, slider 120 = scale 1.44, slider 200 = scale 2.4
+        const scale = (sliderValue * 1.2) / 100;
         
         editorCardImage.style.transform = `scale(${scale})`;
         
@@ -880,7 +880,8 @@
         card.src = cardImages.image1;
         card.style.animation = 'none';
         
-        // Terapkan skala dari slider editor (TANPA faktor 1.2 karena editor sudah pakai 1.2)
+        // KARTU UTAMA: Langsung pakai nilai slider sebagai persentase
+        // slider 100 = scale 1.0, slider 120 = scale 1.2, slider 200 = scale 2.0
         const cardScale = editorScaleValue / 100;
         
         card.style.opacity = '0';
@@ -968,7 +969,7 @@
         card.style.display = 'none';
         card.classList.remove('card-flipping');
         
-        // Reset ke posisi tengah bawah dengan skala yang benar (TANPA faktor 1.2)
+        // KARTU UTAMA: Langsung pakai nilai slider
         const currentScale = editorScaleValue / 100;
         const cardRect = card.getBoundingClientRect();
         posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
@@ -1032,6 +1033,7 @@
     }
     
     function applyBounds() {
+        // KARTU UTAMA: Langsung pakai nilai slider
         const currentScale = editorScaleValue / 100;
         const cardWidth = card.offsetWidth * currentScale;
         const cardHeight = card.offsetHeight * currentScale;
@@ -1115,6 +1117,7 @@
     }
     
     function updateCardTransform() {
+        // KARTU UTAMA: Langsung pakai nilai slider
         const currentScale = editorScaleValue / 100;
         card.style.transform = `translate(${posX}px, ${posY}px) scale(${currentScale})`;
     }
