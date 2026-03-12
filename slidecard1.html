@@ -366,46 +366,7 @@
     
     <div id="settings">
         <h2>Magic Card Settings</h2>
-        
-        <!-- ===== IMAGE EDITOR DARI CODE 2 ===== -->
-        <div class="image-editor-panel">
-            <h3>🎴 Atur Ukuran Kartu Image 1</h3>
-            
-            <!-- Frame gambar - mengambil gambar dari card image 1 -->
-            <div class="editor-frame" id="editorFrame">
-                <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png" 
-                     alt="Card Image 1" 
-                     class="editor-frame-image" 
-                     id="editorCardImage">
-            </div>
 
-            <!-- Panel kontrol slider -->
-            <div class="editor-control-panel">
-                <div class="editor-size-label">
-                    <span>Ukuran gambar</span>
-                    <span id="editorSizePercentage">100%</span>
-                </div>
-
-                <input type="range" 
-                       min="50" 
-                       max="200" 
-                       value="100" 
-                       class="editor-slider" 
-                       id="editorSizeSlider">
-
-                <div class="editor-size-info">
-                    <span>50%</span>
-                    <span>200%</span>
-                </div>
-
-                <div class="editor-dimensions">
-                    <span>Frame: 280 x 200px</span>
-                    <span style="margin: 0 8px;">•</span>
-                    <span>Skala: <span id="editorCurrentScale">100</span>%</span>
-                </div>
-            </div>
-        </div>
-        
         <div class="setting-section">
             <h3>Background Image</h3>
             <label class="file-upload">
@@ -448,6 +409,45 @@
                     2. Card shows Image 1<br>
                     3. After 5 seconds, card flips to Image 2
                 </small>
+            </div>
+        </div>
+
+        <!-- ===== IMAGE EDITOR DARI CODE 2 ===== -->
+        <div class="image-editor-panel">
+            <h3>🎴 Atur Ukuran Kartu Image 1</h3>
+            
+            <!-- Frame gambar - mengambil gambar dari card image 1 -->
+            <div class="editor-frame" id="editorFrame">
+                <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png" 
+                     alt="Card Image 1" 
+                     class="editor-frame-image" 
+                     id="editorCardImage">
+            </div>
+
+            <!-- Panel kontrol slider -->
+            <div class="editor-control-panel">
+                <div class="editor-size-label">
+                    <span>Ukuran gambar</span>
+                    <span id="editorSizePercentage">100%</span>
+                </div>
+
+                <input type="range" 
+                       min="50" 
+                       max="200" 
+                       value="100" 
+                       class="editor-slider" 
+                       id="editorSizeSlider">
+
+                <div class="editor-size-info">
+                    <span>50%</span>
+                    <span>200%</span>
+                </div>
+
+                <div class="editor-dimensions">
+                    <span>Frame: 280 x 200px</span>
+                    <span style="margin: 0 8px;">•</span>
+                    <span>Skala: <span id="editorCurrentScale">100</span>%</span>
+                </div>
             </div>
         </div>
         
