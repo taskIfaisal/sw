@@ -256,13 +256,9 @@
             opacity: 1;
         }
 
-        /* ===== STYLE DARI CODE 2 ===== */
+        /* ===== STYLE DARI CODE 2 - TANPA BORDER DAN BACKGROUND ===== */
         .image-editor-panel {
-            background: rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 16px;
             margin-bottom: 20px;
-            backdrop-filter: blur(10px);
         }
 
         .image-editor-panel h3 {
@@ -293,7 +289,7 @@
             object-fit: contain;
             transition: transform 0.2s ease;
             transform-origin: center;
-            margin-top: 40px;
+            margin-top: 60px;
         }
 
         /* Panel kontrol - style dari code 2 */
@@ -345,15 +341,6 @@
             margin: 8px 0 16px 0;
             font-size: 12px;
             color: #aaa;
-        }
-
-        .editor-dimensions {
-            text-align: center;
-            font-size: 13px;
-            color: #ccc;
-            padding-top: 12px;
-            border-top: 1px solid #444;
-            margin-bottom: 16px;
         }
     </style>
 </head>
@@ -412,7 +399,7 @@
             </div>
         </div>
 
-        <!-- ===== IMAGE EDITOR DARI CODE 2 ===== -->
+        <!-- ===== IMAGE EDITOR DARI CODE 2 - TANPA BORDER ===== -->
         <div class="image-editor-panel">
             <h3>🎴 Atur Ukuran Kartu Image 1</h3>
             
@@ -441,12 +428,6 @@
                 <div class="editor-size-info">
                     <span>50%</span>
                     <span>200%</span>
-                </div>
-
-                <div class="editor-dimensions">
-                    <span>Frame: 280 x 200px</span>
-                    <span style="margin: 0 8px;">•</span>
-                    <span>Skala: <span id="editorCurrentScale">100</span>%</span>
                 </div>
             </div>
         </div>
@@ -584,7 +565,9 @@
         const scale = editorSizeSlider.value / 100;
         editorCardImage.style.transform = `scale(${scale})`;
         editorSizePercentage.textContent = editorSizeSlider.value + '%';
-        editorCurrentScale.textContent = editorSizeSlider.value;
+        if (editorCurrentScale) {
+            editorCurrentScale.textContent = editorSizeSlider.value;
+        }
     }
 
     // Event listener untuk slider editor
