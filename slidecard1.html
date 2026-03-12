@@ -616,17 +616,16 @@
         clearAllTimeouts();
         hideIndicator();
         
-        // Pastikan kartu menggunakan skala terbaru dari editor DENGAN faktor 1.2
-        const currentScale = (editorScaleValue * 1.2) / 100;
-        card.style.transform = `scale(${currentScale})`;
-        
+        // Total waktu: 5 detik
         const totalDelay = 5000;
         const indicatorDelay = 4000;
         
+        // Tampilkan titik 1 detik sebelum kartu muncul
         indicatorTimeout = setTimeout(() => {
             showIndicator();
         }, indicatorDelay);
         
+        // Tampilkan kartu setelah 5 detik
         cardAppearTimeout = setTimeout(() => {
             hideIndicator();
             showCardWithTransformation();
@@ -969,6 +968,7 @@
         card.style.display = 'none';
         card.classList.remove('card-flipping');
         
+        // Reset ke posisi tengah bawah dengan skala yang benar
         const currentScale = (editorScaleValue * 1.2) / 100;
         const cardRect = card.getBoundingClientRect();
         posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
