@@ -457,15 +457,16 @@
     const editorCardImage = document.getElementById('editorCardImage');
     const editorSizeSlider = document.getElementById('editorSizeSlider');
     const editorSizePercentage = document.getElementById('editorSizePercentage');
-    const editorCurrentScale = document.getElementById('editorCurrentScale');
 
-    // ===== VARIABEL GLOBAL UNTUK SKALA =====
+    // ===== VARIABEL GLOBAL =====
     let editorScaleValue = 100; // Default 100%
+    let originalCardWidth = 0;
+    let originalCardHeight = 0;
+    let maxAllowedScale = 200; // Default max 200%
 
     // Initialize card properties
-    let posX = window.innerWidth / 2 - card.offsetWidth / 2;
-    let posY = window.innerHeight / 2 - card.offsetHeight / 2;
-    let scale = 1;
+    let posX = 0;
+    let posY = 0;
     let isDragging = false;
     let startX, startY;
     let velocityX = 0;
@@ -510,6 +511,196 @@
         background: 'magic_card_background'
     };
 
+    // ===== FUNGSI UPDATE UKURAN CARD =====
+    function updateCardDimensions() {
+        if (originalCardWidth === 0) {
+            // Gunakan naturalWidth jika tersedia
+            originalCardWidth = card.naturalWidth || card.width || 300;
+            originalCardHeight = card.naturalHeight || card.height || 400;
+        }
+        
+        // Hitung maksimum scale yang diizinkan (agar kartu tidak melebihi layar)
+        const maxScaleByWidth = window.innerWidth / originalCardWidth;
+        const maxScaleByHeight = window.innerHeight / originalCardHeight;
+        const maxScale = Math.min(maxScaleByWidth, maxScaleByHeight);
+        
+        // Hitung maxAllowedScale dalam persen (max 200%)
+        maxAllowedScale = Math.min(200, Math.floor(maxScale * 100));
+        
+        // Update slider max
+        editorSizeSlider.max = maxAllowedScale;
+        
+        // Jika nilai slider melebihi maxAllowedScale, sesuaikan
+        if (editorScaleValue > maxAllowedScale) {
+            editorScaleValue = maxAllowedScale;
+            editorSizeSlider.value = maxAllowedScale;
+            editorSizePercentage.textContent = maxAllowedScale + '%';
+            updateEditorImageScale();
+        }
+    }
+
+    // ===== FUNGSI DARI CODE 2 =====
+    function updateEditorImageScale() {
+        let sliderValue = parseInt(editorSizeSlider.value);
+        
+        // Validasi nilai slider
+        if (originalCardWidth > 0 && originalCardHeight > 0) {
+            const maxScaleByWidth = window.innerWidth / originalCardWidth;
+            const maxScaleByHeight = window.innerHeight / originalCardHeight;
+            const theoreticalMax = Math.min(maxScaleByWidth, maxScaleByHeight) * 100;
+            
+            if (sliderValue > theoreticalMax) {
+                sliderValue = Math.floor(theoreticalMax);
+                editorSizeSlider.value = sliderValue;
+            }
+        }
+        
+        // Simpan nilai slider ke variabel global
+        editorScaleValue = sliderValue;
+        
+        // Update editor preview
+        const scale = sliderValue / 100;
+        editorCardImage.style.transform = `scale(${scale})`;
+        editorSizePercentage.textContent = sliderValue + '%';
+        
+        // Update posisi kartu utama jika sedang tampil
+        if (card.style.display !== 'none' && !isAnimating) {
+            // Pertahankan posisi relatif terhadap tengah
+            const cardScale = editorScaleValue / 100;
+            const currentWidth = originalCardWidth * cardScale;
+            const currentHeight = originalCardHeight * cardScale;
+            
+            // Hitung posisi tengah baru
+            const newCenterX = (window.innerWidth / 2) - (currentWidth / 2);
+            const newCenterY = (window.innerHeight / 2) - (currentHeight / 2);
+            
+            // Animasi transisi ukuran
+            card.style.transition = 'transform 0.2s ease';
+            posX = newCenterX;
+            posY = newCenterY;
+            updateCardTransform();
+            
+            setTimeout(() => {
+                card.style.transition = '';
+            }, 200);
+        }
+    }
+
+    editorSizeSlider.addEventListener('input', updateEditorImageScale);
+
+    // ===== FUNGSI APPLY BOUNDS YANG KONSISTEN =====
+    function applyBounds() {
+        const cardScale = editorScaleValue / 100;
+        
+        // Gunakan ukuran asli untuk perhitungan yang akurat
+        const currentCardWidth = originalCardWidth * cardScale;
+        const currentCardHeight = originalCardHeight * cardScale;
+        
+        // Batasan yang konsisten untuk SEMUA ukuran
+        const minX = 0;
+        const maxX = Math.max(0, window.innerWidth - currentCardWidth);
+        const minY = 0;
+        const maxY = Math.max(0, window.innerHeight - currentCardHeight);
+        
+        // Terapkan batasan
+        posX = Math.max(minX, Math.min(maxX, posX));
+        posY = Math.max(minY, Math.min(maxY, posY));
+    }
+
+    // ===== FUNGSI UPDATE TRANSFORM =====
+    function updateCardTransform() {
+        const cardScale = editorScaleValue / 100;
+        card.style.transform = `translate(${posX}px, ${posY}px) scale(${cardScale})`;
+    }
+
+    // ===== FUNGSI SHOW CARD YANG DIPERBAIKI =====
+    function showCardWithTransformation() {
+        hasBeenTouched = false;
+
+        if (touchToChangeTimeout) {
+            clearTimeout(touchToChangeTimeout);
+            touchToChangeTimeout = null;
+        }
+
+        if (isAnimating) return;
+        isAnimating = true;
+        
+        clearAllTimeouts();
+        
+        currentCardImage = 1;
+        card.src = cardImages.image1;
+        card.style.animation = 'none';
+        
+        const cardScale = editorScaleValue / 100;
+        
+        // Update dimensi card
+        updateCardDimensions();
+        
+        card.style.opacity = '0';
+        card.style.visibility = 'hidden';
+        card.style.display = 'block';
+        
+        card.style.left = '0';
+        card.style.top = '0';
+        card.style.right = 'auto';
+        card.style.bottom = 'auto';
+        card.style.margin = '0';
+        
+        card.classList.remove('card-moving', 'card-flipping', 'card-visible');
+        
+        // Set scale dulu
+        card.style.transform = `scale(${cardScale})`;
+        
+        requestAnimationFrame(() => {
+            if (card.complete) {
+                initCardAnimation();
+            } else {
+                card.onload = initCardAnimation;
+                setTimeout(initCardAnimation, 500);
+            }
+        });
+        
+        function initCardAnimation() {
+            // Hitung ukuran dengan scale
+            const currentCardWidth = originalCardWidth * cardScale;
+            const currentCardHeight = originalCardHeight * cardScale;
+            
+            // Hitung posisi tengah yang AKURAT
+            const centerX = (window.innerWidth / 2) - (currentCardWidth / 2);
+            const centerY = (window.innerHeight / 2) - (currentCardHeight / 2);
+            
+            // Set posX dan posY ke tengah
+            posX = centerX;
+            posY = centerY;
+            
+            // Animasi muncul dari bawah
+            card.style.transition = 'none';
+            card.style.transform = `translate(${centerX}px, ${window.innerHeight + 100}px) scale(${cardScale})`;
+            
+            void card.offsetHeight;
+            
+            card.style.opacity = '1';
+            card.style.visibility = 'visible';
+            card.classList.add('card-visible');
+            
+            requestAnimationFrame(() => {
+                card.classList.add('card-moving');
+                card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+                
+                setTimeout(() => {
+                    // Gerak ke tengah
+                    card.style.transform = `translate(${centerX}px, ${centerY}px) scale(${cardScale})`;
+                    
+                    setTimeout(() => {
+                        isAnimating = false;
+                        card.classList.remove('card-moving');
+                    }, 800);
+                }, 50);
+            });
+        }
+    }
+
+    // ===== FUNGSI LAINNYA (SAMA SEPERTI SEBELUMNYA) =====
     function saveToStorage() {
         localStorage.setItem(STORAGE_KEYS.image1, cardImages.image1);
         localStorage.setItem(STORAGE_KEYS.image2, cardImages.image2);
@@ -540,44 +731,11 @@
         });
     }
 
-    // Set initial positions
-    card.style.display = 'block';
-    card.style.opacity = '0';
-    card.style.visibility = 'hidden';
-    
-    posX = Math.floor(window.innerWidth / 2 - card.offsetWidth / 2);
-    posY = window.innerHeight + card.offsetHeight + 100;
-    
-    updateCardTransform();
-    card.style.display = 'none';
-    
-    updatePreviews();
-    
-    initSensor();
-    
-    // ===== FUNGSI DARI CODE 2 - TANPA FAKTOR 1.2 =====
-    function updateEditorImageScale() {
-        // Nilai slider asli (50-200)
-        const sliderValue = editorSizeSlider.value;
-        
-        // Simpan nilai slider ke variabel global
-        editorScaleValue = sliderValue;
-        
-        // EDITOR: Langsung pakai nilai slider (HAPUS faktor 1.2)
-        // slider 100 = scale 1.0, slider 120 = scale 1.2, slider 200 = scale 2.0
-        const scale = sliderValue / 100;
-        
-        editorCardImage.style.transform = `scale(${scale})`;
-        
-        editorSizePercentage.textContent = sliderValue + '%';
-        if (editorCurrentScale) {
-            editorCurrentScale.textContent = sliderValue;
-        }
+    function updatePreviews() {
+        preview1.innerHTML = `<img src="${cardImages.image1}" alt="Card 1">`;
+        preview2.innerHTML = `<img src="${cardImages.image2}" alt="Card 2">`;
     }
 
-    editorSizeSlider.addEventListener('input', updateEditorImageScale);
-    updateEditorImageScale();
-    
     // Touch events
     let startYPos = 0;
     document.addEventListener('touchstart', (e) => {
@@ -729,6 +887,8 @@
                 posX = newPosX;
                 posY = newPosY;
                 
+                // Terapkan bounds saat drag
+                applyBounds();
                 updateCardTransform();
                 
                 const cardRect = card.getBoundingClientRect();
@@ -802,10 +962,11 @@
             currentCardImage = 1;
         }
         
-        scale = 1;
-        posX = Math.floor(window.innerWidth / 2 - card.offsetWidth / 2);
-        posY = window.innerHeight + card.offsetHeight;
-        updateCardTransform();
+        // Reset ukuran
+        editorScaleValue = 100;
+        editorSizeSlider.value = 100;
+        editorSizePercentage.textContent = '100%';
+        updateEditorImageScale();
 
         localStorage.removeItem(STORAGE_KEYS.image1);
         localStorage.removeItem(STORAGE_KEYS.image2);
@@ -852,92 +1013,19 @@
                     if (card.style.display !== 'none' && currentCardImage === imageNumber) {
                         card.src = editedImage;
                     }
+                    
+                    // Update dimensi untuk card baru
+                    const tempImg = new Image();
+                    tempImg.onload = function() {
+                        originalCardWidth = this.width;
+                        originalCardHeight = this.height;
+                        updateCardDimensions();
+                        updateEditorImageScale();
+                    };
+                    tempImg.src = editedImage;
                 });
             };
             reader.readAsDataURL(file);
-        }
-    }
-    
-    function updatePreviews() {
-        preview1.innerHTML = `<img src="${cardImages.image1}" alt="Card 1">`;
-        preview2.innerHTML = `<img src="${cardImages.image2}" alt="Card 2">`;
-    }
-    
-    function showCardWithTransformation() {
-        hasBeenTouched = false;
-
-        if (touchToChangeTimeout) {
-            clearTimeout(touchToChangeTimeout);
-            touchToChangeTimeout = null;
-        }
-
-        if (isAnimating) return;
-        isAnimating = true;
-        
-        clearAllTimeouts();
-        
-        currentCardImage = 1;
-        card.src = cardImages.image1;
-        card.style.animation = 'none';
-        
-        // KARTU UTAMA: Langsung pakai nilai slider sebagai persentase
-        // slider 100 = scale 1.0, slider 120 = scale 1.2, slider 200 = scale 2.0
-        const cardScale = editorScaleValue / 100;
-        
-        card.style.opacity = '0';
-        card.style.visibility = 'hidden';
-        card.style.display = 'block';
-        
-        card.style.left = '0';
-        card.style.top = '0';
-        card.style.right = 'auto';
-        card.style.bottom = 'auto';
-        card.style.margin = '0';
-        
-        card.classList.remove('card-moving', 'card-flipping', 'card-visible');
-        
-        requestAnimationFrame(() => {
-            if (card.complete) {
-                initCardAnimation();
-            } else {
-                card.onload = initCardAnimation;
-                setTimeout(initCardAnimation, 500);
-            }
-        });
-        
-        function initCardAnimation() {
-            const cardRect = card.getBoundingClientRect();
-            const cardWidth = cardRect.width;
-            const cardHeight = cardRect.height;
-            
-            posX = (window.innerWidth / 2) - (cardWidth / 2);
-            posY = window.innerHeight + 100;
-            
-            card.style.transition = 'none';
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${cardScale})`;
-            
-            void card.offsetHeight;
-            
-            card.style.opacity = '1';
-            card.style.visibility = 'visible';
-            card.classList.add('card-visible');
-            
-            requestAnimationFrame(() => {
-                card.classList.add('card-moving');
-                card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
-                
-                setTimeout(() => {
-                    posX = (window.innerWidth / 2) - (cardWidth / 2);
-                    posY = (window.innerHeight / 2) - (cardHeight / 2);
-                    
-                    card.style.transform = `translate(${posX}px, ${posY}px) scale(${cardScale})`;
-                    
-                    setTimeout(() => {
-                        isAnimating = false;
-                        card.classList.remove('card-moving');
-                    }, 800);
-                }, 50);
-            });
         }
     }
     
@@ -968,13 +1056,6 @@
         card.style.animation = 'none';
         card.style.display = 'none';
         card.classList.remove('card-flipping');
-        
-        // KARTU UTAMA: Langsung pakai nilai slider
-        const currentScale = editorScaleValue / 100;
-        const cardRect = card.getBoundingClientRect();
-        posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
-        posY = window.innerHeight + card.offsetHeight;
-        card.style.transform = `translate(${posX}px, ${posY}px) scale(${currentScale})`;
         
         currentCardImage = 1;
     }
@@ -1030,22 +1111,6 @@
         }
         
         animate();
-    }
-    
-    function applyBounds() {
-        // KARTU UTAMA: Langsung pakai nilai slider
-        const currentScale = editorScaleValue / 100;
-        const cardWidth = card.offsetWidth * currentScale;
-        const cardHeight = card.offsetHeight * currentScale;
-        
-        const padding = 0;
-        const minX = padding;
-        const maxX = window.innerWidth - cardWidth - padding;
-        const minY = padding;
-        const maxY = window.innerHeight - cardHeight - padding;
-        
-        posX = Math.max(minX, Math.min(maxX, posX));
-        posY = Math.max(minY, Math.min(maxY, posY));
     }
     
     function showImageEditor(imageSrc, callback) {
@@ -1116,20 +1181,28 @@
         return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
     }
     
-    function updateCardTransform() {
-        // KARTU UTAMA: Langsung pakai nilai slider
-        const currentScale = editorScaleValue / 100;
-        card.style.transform = `translate(${posX}px, ${posY}px) scale(${currentScale})`;
-    }
-    
     window.addEventListener('resize', () => {
+        updateCardDimensions();
         if (card.style.display !== 'none') {
-            const cardRect = card.getBoundingClientRect();
-            posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
-            posY = Math.floor(window.innerHeight / 2 - cardRect.height / 2);
+            const cardScale = editorScaleValue / 100;
+            const currentCardWidth = originalCardWidth * cardScale;
+            const currentCardHeight = originalCardHeight * cardScale;
+            
+            posX = (window.innerWidth / 2) - (currentCardWidth / 2);
+            posY = (window.innerHeight / 2) - (currentCardHeight / 2);
+            
+            applyBounds();
             updateCardTransform();
         }
     });
+    
+    // Inisialisasi saat card dimuat
+    card.onload = function() {
+        originalCardWidth = this.naturalWidth || this.width || 300;
+        originalCardHeight = this.naturalHeight || this.height || 400;
+        updateCardDimensions();
+        updateEditorImageScale();
+    };
     
     window.addEventListener('load', () => {
         card.style.display = 'block';
@@ -1140,11 +1213,18 @@
         card.style.opacity = '0';
         card.style.visibility = 'hidden';
         
+        // Panggil onload manual
+        if (card.complete) {
+            originalCardWidth = card.naturalWidth || card.width || 300;
+            originalCardHeight = card.naturalHeight || card.height || 400;
+            updateCardDimensions();
+        }
+        
         setTimeout(() => {
-            const cardRect = card.getBoundingClientRect();
-            const cardWidth = cardRect.width;
+            const cardScale = editorScaleValue / 100;
+            const currentCardWidth = originalCardWidth * cardScale;
             
-            posX = (window.innerWidth / 2) - (cardWidth / 2);
+            posX = (window.innerWidth / 2) - (currentCardWidth / 2);
             posY = window.innerHeight + 100;
             
             updateCardTransform();
