@@ -53,7 +53,47 @@
             /* Tambahkan ini untuk zoom yang lebih baik */
             transform-origin: center center;
             height: auto; /* Biarkan tinggi menyesuaikan */
+            transition: max-width 0.2s ease; /* Smooth transition saat ukuran berubah */
         }
+
+        /* Style untuk slider card size */
+        .size-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        input[type=range] {
+            -webkit-appearance: none;
+            height: 5px;
+            background: linear-gradient(to right, #4CAF50, #2196F3);
+            border-radius: 5px;
+            outline: none;
+            flex: 1;
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #4CAF50;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        #size-value {
+            min-width: 50px;
+            text-align: center;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
         #settings {
             position: fixed;
             top: -100%;
@@ -71,6 +111,9 @@
         
         .setting-section {
             margin-bottom: 20px;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
         }
         
         button {
@@ -81,6 +124,7 @@
             margin: 5px;
             border-radius: 5px;
             cursor: pointer;
+            font-weight: bold;
         }
         
         input[type="file"] {
@@ -90,10 +134,11 @@
         .file-upload {
             background: #2196F3;
             color: white;
-            padding: 10px;
+            padding: 10px 15px;
             border-radius: 5px;
             display: inline-block;
             cursor: pointer;
+            font-weight: bold;
         }
 
         /* Editor Modal Styles */
@@ -183,10 +228,20 @@
     <div id="background"></div>
     <img id="card" src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Magic Ball">
     <div id="settings">
-        <h2>Magic Card Settings</h2>
+        <h2>✨ Magic Card Settings</h2>
+        
+        <!-- CARD SIZE SLIDER SECTION -->
+        <div class="setting-section">
+            <h3>📏 Card Size</h3>
+            <div class="size-control">
+                <input type="range" id="card-size-slider" min="100" max="400" value="200" step="5">
+                <span id="size-value">200px</span>
+            </div>
+            <small>Adjust card size (100px - 400px)</small>
+        </div>
         
         <div class="setting-section">
-            <h3>Background Image</h3>
+            <h3>🖼️ Background Image</h3>
             <label class="file-upload">
                 Choose Background
                 <input type="file" id="bg-upload" accept="image/*">
@@ -194,7 +249,7 @@
         </div>
         
         <div class="setting-section">
-            <h3>Card Image</h3>
+            <h3>🎴 Card Image</h3>
             <label class="file-upload">
                 Choose Card
                 <input type="file" id="card-upload" accept="image/*">
@@ -203,7 +258,7 @@
         </div>
         
         <div class="setting-section">
-            <button id="close-settings">Save & Close</button>
+            <button id="close-settings">💾 Save & Close</button>
         </div>
     </div>
     
@@ -223,6 +278,10 @@
         const defaultCardBtn = document.getElementById('default-card');
         const closeSettingsBtn = document.getElementById('close-settings');
         const sensorPermissionBtn = document.getElementById('sensor-permission');
+        
+        // Card size elements
+        const cardSizeSlider = document.getElementById('card-size-slider');
+        const sizeValue = document.getElementById('size-value');
 
         let isExiting = false;
 
@@ -238,11 +297,11 @@
         let lastPosY = 0;
         let lastTime = 0;
         
-        // SENSOR VARIABLES - Ditambahkan
-        let smoothBeta = 0;      // Untuk smoothing beta (tilt depan-belakang)
-        let smoothGamma = 0;     // Untuk smoothing gamma (tilt kiri-kanan)
-        const sensitivity = 0.5; // Sensitivitas gerakan kartu
-        const smoothing = 0.2;   // Smoothing untuk gerakan halus
+        // SENSOR VARIABLES
+        let smoothBeta = 0;
+        let smoothGamma = 0;
+        const sensitivity = 0.5;
+        const smoothing = 0.2;
         let isSensorEnabled = false;
         
         // ===== LOCAL STORAGE SETUP =====
@@ -250,6 +309,42 @@
         
         // Load saved data on startup
         loadFromStorage();
+        
+        // ===== CARD SIZE CONTROL =====
+        // Load saved size or use default 200
+        let currentCardSize = parseInt(localStorage.getItem('card_size')) || 200;
+        
+        // Apply initial size
+        card.style.maxWidth = currentCardSize + 'px';
+        sizeValue.textContent = currentCardSize + 'px';
+        cardSizeSlider.value = currentCardSize;
+        
+        // Slider event listener
+        cardSizeSlider.addEventListener('input', (e) => {
+            const newSize = e.target.value;
+            sizeValue.textContent = newSize + 'px';
+            card.style.maxWidth = newSize + 'px';
+            
+            // Update posisi kartu jika sedang muncul
+            if (card.style.display !== 'none') {
+                // Simpan posisi proporsional
+                const oldWidth = card.offsetWidth;
+                setTimeout(() => {
+                    const newWidth = card.offsetWidth;
+                    // Sesuaikan posisi X agar kartu tetap di area yang sama
+                    posX = posX - (newWidth - oldWidth) / 2;
+                    applyBounds();
+                    updateCardTransform();
+                }, 10);
+            }
+        });
+
+        // Save size when change
+        cardSizeSlider.addEventListener('change', (e) => {
+            localStorage.setItem('card_size', e.target.value);
+            currentCardSize = parseInt(e.target.value);
+            autoSave();
+        });
         
         // Set initial positions
         updateCardTransform();
@@ -273,6 +368,15 @@
                     if (data.cardImage) {
                         card.src = data.cardImage;
                     }
+                }
+                
+                // Load card size (jika ada di storage terpisah)
+                const savedSize = localStorage.getItem('card_size');
+                if (savedSize) {
+                    currentCardSize = parseInt(savedSize);
+                    card.style.maxWidth = currentCardSize + 'px';
+                    cardSizeSlider.value = currentCardSize;
+                    sizeValue.textContent = currentCardSize + 'px';
                 }
             } catch (error) {
                 console.error('Error loading from storage:', error);
@@ -361,7 +465,7 @@
                     posY = newPosY;
                     
                     // Apply bounds saat dragging juga
-
+                    applyBounds();
                     updateCardTransform();
                 }
                 e.preventDefault();
@@ -376,17 +480,15 @@
                 const speedThreshold = 1000; // pixels per second
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
                 const outTop    = posY < -card.offsetHeight * scale * 0.4;
-const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
-const outLeft   = posX < -card.offsetWidth * scale * 0.4;
-const outRight  = posX > window.innerWidth - card.offsetWidth * scale * 0.6;
+                const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
+                const outLeft   = posX < -card.offsetWidth * scale * 0.4;
+                const outRight  = posX > window.innerWidth - card.offsetWidth * scale * 0.6;
 
-if (outTop || outBottom || outLeft || outRight) {
-    card.style.transition = 'none';
-    hideCard();
-    return;
-}
-
-                
+                if (outTop || outBottom || outLeft || outRight) {
+                    card.style.transition = 'none';
+                    hideCard();
+                    return;
+                }
             }
         });
         
