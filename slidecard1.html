@@ -392,33 +392,33 @@
         }
 
         /* FRAME PREVIEW UNTUK KARTU UTAMA */
-        .preview-frame-container {
-            margin: 20px 0;
-            text-align: center;
-        }
-        
-        .preview-label {
-            color: #4CAF50;
-            font-size: 14px;
-            margin-bottom: 8px;
-            text-align: left;
-        }
-        
-        .editor-frame {
-            width: 100%;
-            max-width: 400px;
-            height: 280px;
-            border-top: 2px solid #4CAF50;
-            border-bottom: 2px solid #4CAF50;
-            border-left: none;
-            border-right: none;
-            background: #222;
-            overflow: hidden;
-            margin: 0 auto;
-            position: relative;
-            display: flex;
-            justify-content: center;
-        }
+.preview-frame-container {
+    margin: 20px 0;
+    width: 100%; /* Full width container */
+}
+
+.preview-label {
+    color: #4CAF50;
+    font-size: 14px;
+    margin-bottom: 8px;
+    padding-left: 0; /* Rata kiri tanpa padding */
+}
+
+.editor-frame {
+    width: 100%; /* Full width - sampai pinggiran HP */
+    height: 280px;
+    border-top: 2px solid #4CAF50;
+    border-bottom: 2px solid #4CAF50;
+    border-left: none; /* Tidak ada border kiri */
+    border-right: none; /* Tidak ada border kanan */
+    background: #222;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin: 0; /* Hilangkan margin */
+    box-sizing: border-box;
+}
         
         #main-card-preview {
             position: absolute;
