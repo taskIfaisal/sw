@@ -310,6 +310,51 @@
             padding: 15px;
             font-size: 16px;
         }
+
+        /* ===== FRAME PREVIEW UNTUK KARTU UTAMA - FULL WIDTH ===== */
+        .preview-frame-container {
+            margin: 20px -20px; /* Negatif margin untuk tembus padding settings */
+            width: 100vw; /* Full viewport width */
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+        }
+        
+        .preview-label {
+            color: #4CAF50;
+            font-size: 14px;
+            margin-bottom: 8px;
+            padding-left: 20px; /* Padding kembali untuk label */
+        }
+        
+        .editor-frame {
+            width: 100vw; /* Full viewport width - sampai pinggir HP */
+            height: 280px;
+            border-top: 2px solid #4CAF50;
+            border-bottom: 2px solid #4CAF50;
+            border-left: none; /* Tanpa border kiri */
+            border-right: none; /* Tanpa border kanan */
+            background: #222;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        
+        #main-card-preview {
+            position: absolute;
+            width: auto;
+            height: auto;
+            max-width: none;
+            max-height: none;
+            object-fit: contain;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -334,6 +379,14 @@
             </label>
             <!-- TOMOL DEFAULT CARD DIUBAH MENJADI GITHUB ALBUM -->
             <button id="github-album-btn">📁 GitHub Cards Album</button>
+        </div>
+
+        <!-- ===== FRAME PREVIEW KARTU UTAMA - DITEMPATKAN DI ATAS SLIDER ===== -->
+        <div class="preview-frame-container">
+            <div class="preview-label">🔮 PREVIEW KARTU UTAMA</div>
+            <div class="editor-frame">
+                <img id="main-card-preview" src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Main Card Preview">
+            </div>
         </div>
 
         <!-- CARD SIZE SLIDER SECTION (TAMBAHAN BARU) -->
@@ -371,6 +424,9 @@
         // Card size elements
         const cardSizeSlider = document.getElementById('card-size-slider');
         const sizeValue = document.getElementById('size-value');
+        
+        // Preview element untuk kartu utama
+        const mainCardPreview = document.getElementById('main-card-preview');
 
         // GitHub API URL
         const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/cards';
@@ -416,11 +472,36 @@
         sizeValue.textContent = currentCardSize + 'px';
         cardSizeSlider.value = currentCardSize;
         
+        // Update preview card size
+        function updatePreviewCardSize() {
+            // Atur ukuran preview kartu utama sesuai dengan ukuran slider
+            mainCardPreview.style.width = currentCardSize + 'px';
+            mainCardPreview.style.height = 'auto';
+            // Posisikan sedikit turun (30px dari atas frame)
+            mainCardPreview.style.position = 'absolute';
+            mainCardPreview.style.top = '30px';
+            mainCardPreview.style.left = '50%';
+            mainCardPreview.style.transform = 'translateX(-50%)';
+        }
+        
+        // Update preview dengan image card saat ini
+        function updateMainCardPreview() {
+            mainCardPreview.src = card.src;
+        }
+        
+        // Panggil fungsi untuk mengatur posisi awal preview
+        updatePreviewCardSize();
+        updateMainCardPreview();
+        
         // Slider event listener
         cardSizeSlider.addEventListener('input', (e) => {
             const newSize = e.target.value;
             sizeValue.textContent = newSize + 'px';
             card.style.maxWidth = newSize + 'px';
+            
+            // Update ukuran preview kartu utama secara real-time
+            currentCardSize = parseInt(newSize);
+            updatePreviewCardSize();
             
             // Update posisi kartu jika sedang muncul
             if (card.style.display !== 'none') {
@@ -511,6 +592,9 @@
                     // Update card image
                     card.src = selectedImage;
                     
+                    // Update preview card utama
+                    updateMainCardPreview();
+                    
                     // Reset scale when new image is loaded
                     scale = 1;
                     updateCardTransform();
@@ -588,6 +672,10 @@
                     // Load card image
                     if (data.cardImage) {
                         card.src = data.cardImage;
+                        // Update preview setelah card dimuat
+                        setTimeout(() => {
+                            updateMainCardPreview();
+                        }, 100);
                     }
                 }
                 
@@ -598,6 +686,7 @@
                     card.style.maxWidth = currentCardSize + 'px';
                     cardSizeSlider.value = currentCardSize;
                     sizeValue.textContent = currentCardSize + 'px';
+                    updatePreviewCardSize();
                 }
             } catch (error) {
                 console.error('Error loading from storage:', error);
@@ -733,6 +822,8 @@
                 reader.onload = (event) => {
                     showImageEditor(event.target.result, (editedImage) => {
                         card.src = editedImage;
+                        // Update preview card utama
+                        updateMainCardPreview();
                         // Reset scale when new image is loaded
                         scale = 1;
                         updateCardTransform();
@@ -937,6 +1028,11 @@
         // Pre-load gambar GitHub di background
         window.addEventListener('load', () => {
             loadGithubImages();
+            // Pastikan preview update setelah load
+            setTimeout(() => {
+                updateMainCardPreview();
+                updatePreviewCardSize();
+            }, 200);
         });
     </script>
 </body>
