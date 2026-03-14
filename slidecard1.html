@@ -393,33 +393,37 @@
 
         /* FRAME PREVIEW UNTUK KARTU UTAMA */
 .preview-frame-container {
-    margin: 20px 0;
-    width: 100%; /* Full width container */
+    margin: 20px -20px; /* Negatif margin untuk menembus padding settings */
+    width: 100vw; /* Lebar penuh viewport */
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
 }
 
 .preview-label {
     color: #4CAF50;
     font-size: 14px;
     margin-bottom: 8px;
-    padding-left: 0; /* Rata kiri tanpa padding */
+    padding-left: 20px; /* Kembalikan padding untuk label */
 }
 
 .editor-frame {
-    width: 100%; /* Full width - sampai pinggiran HP */
+    width: 100vw; /* Full viewport width */
     height: 280px;
     border-top: 2px solid #4CAF50;
     border-bottom: 2px solid #4CAF50;
-    border-left: none; /* Tidak ada border kiri */
-    border-right: none; /* Tidak ada border kanan */
+    border-left: none;
+    border-right: none;
     background: #222;
     overflow: hidden;
     position: relative;
     display: flex;
     justify-content: center;
-    margin: 0; /* Hilangkan margin */
+    margin: 0;
     box-sizing: border-box;
-}
-        
+}       
         #main-card-preview {
             position: absolute;
             width: auto;
