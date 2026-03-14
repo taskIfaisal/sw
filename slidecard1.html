@@ -390,6 +390,99 @@
             padding: 15px;
             font-size: 16px;
         }
+
+        /* ===== STYLE DARI CODE 2 ===== */
+        .image-editor-panel {
+            width: 100%;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px 0;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .image-editor-panel h3 {
+            margin: 0 0 15px 20px;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        /* Frame gambar - style dari code 2 */
+        .editor-frame {
+            width: 100%;
+            height: 280px;
+            border: 2px solid #4CAF50;
+            background: #333;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow: hidden;
+            border-left: none;
+            border-right: none;
+            border-radius: 0;
+        }
+
+        .editor-frame-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.2s ease;
+            transform-origin: center;
+            margin-top: 140px;
+        }
+
+        /* Panel kontrol - style dari code 2 */
+        .editor-control-panel {
+            width: 100%;
+            padding: 0 20px;
+        }
+
+        .editor-size-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .editor-size-label span:last-child {
+            background: #4CAF50;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .editor-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #444;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .editor-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4CAF50;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .editor-slider::-webkit-slider-thumb:hover {
+            background: #45a049;
+        }
+
+        .editor-size-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0 16px 0;
+            font-size: 12px;
+            color: #aaa;
+        }
     </style>
 </head>
 <body>
@@ -442,7 +535,7 @@
                 <button id="swap-cards">Swap Images 1↔2</button>
             </div>
 
-            <!-- CARD SIZE SLIDER SECTION -->
+            <!-- CARD SIZE SLIDER SECTION (untuk max-width card) -->
             <div class="setting-section">
                 <h3>Card Size</h3>
                 <div style="display: flex; align-items: center;">
@@ -459,6 +552,40 @@
                     2. Card shows Image 1<br>
                     3. After 5 seconds, card flips to Image 2
                 </small>
+            </div>
+        </div>
+
+        <!-- ===== CODE 2: IMAGE EDITOR PANEL - DITEMPATKAN DI BAWAH SAVE & CLOSE ===== -->
+        <div class="image-editor-panel">
+            <h3>🎴 Atur Ukuran Kartu Image 1 (Skala)</h3>
+            
+            <!-- Frame gambar preview - menggunakan gambar dari cardImages.image1 -->
+            <div class="editor-frame" id="editorFrame">
+                <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png" 
+                     alt="Card Image 1 Preview" 
+                     class="editor-frame-image" 
+                     id="editorCardImage">
+            </div>
+
+            <!-- Panel kontrol slider untuk skala -->
+            <div class="editor-control-panel">
+                <div class="editor-size-label">
+                    <span>Ukuran gambar (skala)</span>
+                    <span id="editorSizePercentage">100%</span>
+                </div>
+
+                <input type="range" 
+                       min="50" 
+                       max="200" 
+                       value="100"
+                       class="editor-slider" 
+                       id="editorSizeSlider">
+
+                <div class="editor-size-info">
+                    <span>50%</span>
+                    <span>200%</span>
+                </div>
+                <small style="color: #aaa; display: block; text-align: center; margin-top: 5px;">Mengatur skala kartu utama (sinkron dengan preview)</small>
             </div>
         </div>
         
@@ -491,6 +618,11 @@
     // Card size elements
     const cardSizeSlider = document.getElementById('card-size-slider');
     const sizeValue = document.getElementById('size-value');
+
+    // ===== ELEMEN DARI CODE 2 =====
+    const editorCardImage = document.getElementById('editorCardImage');
+    const editorSizeSlider = document.getElementById('editorSizeSlider');
+    const editorSizePercentage = document.getElementById('editorSizePercentage');
 
     // GitHub API URL
     const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/cards';
@@ -547,8 +679,12 @@
         image1: 'magic_card_image_1',
         image2: 'magic_card_image_2',
         background: 'magic_card_background',
-        cardSize: 'magic_card_size'
+        cardSize: 'magic_card_size',
+        cardScale: 'magic_card_scale' // Untuk menyimpan skala dari slider
     };
+
+    // ===== VARIABEL UNTUK SKALA DARI CODE 2 =====
+    let cardScaleValue = 100; // Default 100%
 
     // ===== CARD SIZE CONTROL =====
     let currentCardSize = parseInt(localStorage.getItem(STORAGE_KEYS.cardSize)) || 350;
@@ -575,6 +711,49 @@
         currentCardSize = parseInt(e.target.value);
     });
 
+    // ===== FUNGSI DARI CODE 2 =====
+    function updateEditorImageScale() {
+        // Nilai slider asli (50-200)
+        const sliderValue = editorSizeSlider.value;
+        
+        // Simpan nilai slider ke variabel global untuk kartu utama
+        cardScaleValue = sliderValue;
+        localStorage.setItem(STORAGE_KEYS.cardScale, sliderValue);
+        
+        // Langsung pakai nilai slider untuk skala
+        const scale = sliderValue / 100;
+        
+        // Update preview di editor
+        editorCardImage.style.transform = `scale(${scale})`;
+        
+        // Update persentase
+        editorSizePercentage.textContent = sliderValue + '%';
+        
+        // Jika kartu sedang tampil, update ukurannya dengan skala baru
+        if (card.style.display !== 'none' && !isAnimating && !isDragging) {
+            // Simpan posisi tengah saat ini
+            const cardRect = card.getBoundingClientRect();
+            const centerX = cardRect.left + cardRect.width/2;
+            const centerY = cardRect.top + cardRect.height/2;
+            
+            // Update transform dengan skala baru
+            updateCardTransform();
+        }
+    }
+
+    // Event listener untuk slider editor
+    editorSizeSlider.addEventListener('input', updateEditorImageScale);
+    
+    // Load skala dari storage jika ada
+    const savedScale = localStorage.getItem(STORAGE_KEYS.cardScale);
+    if (savedScale) {
+        editorSizeSlider.value = savedScale;
+        cardScaleValue = parseInt(savedScale);
+    }
+    
+    // Inisialisasi preview editor
+    updateEditorImageScale();
+
     function saveToStorage() {
         localStorage.setItem(STORAGE_KEYS.image1, cardImages.image1);
         localStorage.setItem(STORAGE_KEYS.image2, cardImages.image2);
@@ -599,6 +778,9 @@
 
         updatePreviews();
         
+        // Update gambar di editor preview
+        editorCardImage.src = cardImages.image1;
+        
         setTimeout(preloadImages, 100);
     }
 
@@ -608,6 +790,9 @@
         
         if (preview1Img) preview1Img.src = cardImages.image1;
         if (preview2Img) preview2Img.src = cardImages.image2;
+        
+        // Update gambar di editor preview
+        editorCardImage.src = cardImages.image1;
     }
 
     function preloadImages() {
@@ -637,24 +822,32 @@
     
     // ===== FUNGSI UNTUK ALBUM GITHUB =====
     async function loadGithubImages() {
-        try {
-            const response = await fetch(GITHUB_API_URL);
-            if (!response.ok) throw new Error('Failed to fetch');
-            
-            const data = await response.json();
-            
-            // Filter hanya file gambar (png, jpg, jpeg, gif)
-            githubImages = data.filter(file => {
-                const ext = file.name.split('.').pop().toLowerCase();
-                return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
+    try {
+        const response = await fetch(GITHUB_API_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        
+        const data = await response.json();
+        
+        // Filter hanya file gambar
+        githubImages = data.filter(file => {
+            const ext = file.name.split('.').pop().toLowerCase();
+            return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
+        });
+        
+        // SORTING: Dari kecil ke besar (ascending)
+        githubImages.sort((a, b) => {
+            return a.name.localeCompare(b.name, undefined, { 
+                numeric: true,  // Menganggap angka sebagai angka
+                sensitivity: 'base' 
             });
-            
-            return githubImages;
-        } catch (error) {
-            console.error('Error loading GitHub images:', error);
-            return [];
-        }
+        });
+        
+        return githubImages;
+    } catch (error) {
+        console.error('Error loading GitHub images:', error);
+        return [];
     }
+}
     
     function showGithubModal(cardTarget) {
         activeCardTarget = cardTarget;
@@ -1078,6 +1271,9 @@
         card.src = cardImages.image1;
         card.style.animation = 'none';
         
+        // Gunakan skala dari slider editor
+        const currentScale = cardScaleValue / 100;
+        
         card.style.opacity = '0';
         card.style.visibility = 'hidden';
         card.style.display = 'block';
@@ -1104,11 +1300,15 @@
             const cardWidth = cardRect.width;
             const cardHeight = cardRect.height;
             
-            posX = (window.innerWidth / 2) - (cardWidth / 2);
+            // Hitung posisi dengan mempertimbangkan skala
+            const scaledWidth = cardWidth * currentScale;
+            const scaledHeight = cardHeight * currentScale;
+            
+            posX = (window.innerWidth / 2) - (scaledWidth / 2);
             posY = window.innerHeight + 100;
             
             card.style.transition = 'none';
-            card.style.transform = `translate(${posX}px, ${posY}px)`;
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${currentScale})`;
             
             void card.offsetHeight;
             
@@ -1121,10 +1321,11 @@
                 card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
                 
                 setTimeout(() => {
-                    posX = (window.innerWidth / 2) - (cardWidth / 2);
-                    posY = (window.innerHeight / 2) - (cardHeight / 2);
+                    // Pindah ke tengah dengan skala
+                    posX = (window.innerWidth / 2) - (scaledWidth / 2);
+                    posY = (window.innerHeight / 2) - (scaledHeight / 2);
                     
-                    card.style.transform = `translate(${posX}px, ${posY}px)`;
+                    card.style.transform = `translate(${posX}px, ${posY}px) scale(${currentScale})`;
                     
                     setTimeout(() => {
                         isAnimating = false;
@@ -1163,11 +1364,12 @@
         card.style.display = 'none';
         card.classList.remove('card-flipping');
         
-        // Reset ke posisi tengah bawah
+        // Reset ke posisi tengah bawah dengan skala saat ini
+        const currentScale = cardScaleValue / 100;
         const cardRect = card.getBoundingClientRect();
         posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
         posY = window.innerHeight + card.offsetHeight;
-        updateCardTransform();
+        card.style.transform = `translate(${posX}px, ${posY}px) scale(${currentScale})`;
         
         currentCardImage = 1;
     }
@@ -1226,8 +1428,9 @@
     }
     
     function applyBounds() {
-        const cardWidth = card.offsetWidth * scale;
-        const cardHeight = card.offsetHeight * scale;
+        const currentScale = cardScaleValue / 100;
+        const cardWidth = card.offsetWidth * currentScale;
+        const cardHeight = card.offsetHeight * currentScale;
         
         const padding = 0;
         const minX = padding;
@@ -1308,15 +1511,20 @@
     }
     
     function updateCardTransform() {
-        card.style.transform = `translate(${posX}px, ${posY}px)`;
+        const currentScale = cardScaleValue / 100;
+        card.style.transform = `translate(${posX}px, ${posY}px) scale(${currentScale})`;
     }
     
     // Handle window resize
     window.addEventListener('resize', () => {
         if (card.style.display !== 'none') {
+            const currentScale = cardScaleValue / 100;
             const cardRect = card.getBoundingClientRect();
-            posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
-            posY = Math.floor(window.innerHeight / 2 - cardRect.height / 2);
+            const scaledWidth = cardRect.width * currentScale;
+            const scaledHeight = cardRect.height * currentScale;
+            
+            posX = Math.floor(window.innerWidth / 2 - scaledWidth / 2);
+            posY = Math.floor(window.innerHeight / 2 - scaledHeight / 2);
             updateCardTransform();
         }
     });
