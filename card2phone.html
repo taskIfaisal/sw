@@ -214,7 +214,7 @@
             display: none;
         }
 
-        /* Style untuk modal album GitHub */
+        /* Style untuk modal album GitHub - Diperbarui dengan folder system */
         .github-modal {
             position: fixed;
             top: 0;
@@ -249,7 +249,73 @@
             margin: 0;
             padding: 8px 15px;
         }
+
+        .folder-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .back-button:hover {
+            background: #45a049;
+        }
         
+        /* Albums grid untuk folder */
+        .albums-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .album-item {
+            background: #222;
+            padding: 20px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #444;
+            text-align: center;
+            aspect-ratio: 1/1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .album-item:hover {
+            background: #333;
+            transform: scale(1.05);
+            border-color: #4CAF50;
+        }
+        
+        .album-item:active {
+            transform: scale(0.95);
+        }
+        
+        .album-item .folder-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .album-item .folder-name {
+            font-size: 14px;
+            word-break: break-word;
+        }
+        
+        /* Image grid - 3 kolom untuk gambar */
         .image-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -417,7 +483,7 @@
         const settings = document.getElementById('settings');
         const bgUpload = document.getElementById('bg-upload');
         const cardUpload = document.getElementById('card-upload');
-        const githubAlbumBtn = document.getElementById('github-album-btn'); // Ganti dari defaultCardBtn
+        const githubAlbumBtn = document.getElementById('github-album-btn');
         const closeSettingsBtn = document.getElementById('close-settings');
         const sensorPermissionBtn = document.getElementById('sensor-permission');
         
@@ -428,11 +494,11 @@
         // Preview element untuk kartu utama
         const mainCardPreview = document.getElementById('main-card-preview');
 
-        // GitHub API URL
-        const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/cards';
+        // GitHub API URL - Diubah ke folder images untuk struktur folder
+        const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/images';
         
-        // State untuk album
-        let githubImages = [];
+        // State untuk album dengan folder system
+        let currentFolder = null; // null berarti di root (menampilkan folder)
         let selectedImage = null;
         let modalElement = null;
 
@@ -529,37 +595,64 @@
         // Initialize sensor
         initSensor();
         
-        // ===== FUNGSI UNTUK ALBUM GITHUB =====
-        async function loadGithubImages() {
-    try {
-        const response = await fetch(GITHUB_API_URL);
-        if (!response.ok) throw new Error('Failed to fetch');
+        // ===== FUNGSI UNTUK ALBUM GITHUB DENGAN FOLDER SYSTEM =====
+        async function loadRootFolders() {
+            try {
+                const response = await fetch(GITHUB_API_URL);
+                if (!response.ok) throw new Error('Failed to fetch');
+                
+                const data = await response.json();
+                
+                // Filter hanya folder (type = "dir")
+                const folders = data.filter(item => item.type === "dir");
+                
+                // Sorting folder berdasarkan nama
+                folders.sort((a, b) => {
+                    return a.name.localeCompare(b.name, undefined, { 
+                        numeric: true,
+                        sensitivity: 'base' 
+                    });
+                });
+                
+                return folders;
+            } catch (error) {
+                console.error('Error loading root folders:', error);
+                return [];
+            }
+        }
         
-        const data = await response.json();
-        
-        // Filter hanya file gambar
-        githubImages = data.filter(file => {
-            const ext = file.name.split('.').pop().toLowerCase();
-            return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
-        });
-        
-        // SORTING: Dari kecil ke besar (ascending)
-        githubImages.sort((a, b) => {
-            return a.name.localeCompare(b.name, undefined, { 
-                numeric: true,  // Menganggap angka sebagai angka
-                sensitivity: 'base' 
-            });
-        });
-        
-        return githubImages;
-    } catch (error) {
-        console.error('Error loading GitHub images:', error);
-        return [];
-    }
-}
+        async function loadFolderContents(folderName) {
+            try {
+                const folderUrl = `${GITHUB_API_URL}/${folderName}`;
+                const response = await fetch(folderUrl);
+                if (!response.ok) throw new Error('Failed to fetch folder');
+                
+                const data = await response.json();
+                
+                // Filter hanya file gambar
+                const images = data.filter(file => {
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
+                });
+                
+                // Sorting gambar berdasarkan nama
+                images.sort((a, b) => {
+                    return a.name.localeCompare(b.name, undefined, { 
+                        numeric: true,
+                        sensitivity: 'base' 
+                    });
+                });
+                
+                return images;
+            } catch (error) {
+                console.error('Error loading folder contents:', error);
+                return [];
+            }
+        }
         
         function showGithubModal() {
             selectedImage = null;
+            currentFolder = null; // Reset ke root
             
             // Buat modal
             modalElement = document.createElement('div');
@@ -569,8 +662,8 @@
                     <h3>📁 Pilih Gambar dari GitHub</h3>
                     <button id="close-modal">✕</button>
                 </div>
-                <div class="image-grid" id="modal-image-grid">
-                    <div class="loading">Loading images from GitHub...</div>
+                <div id="modal-content">
+                    <div class="loading">Loading folders from GitHub...</div>
                 </div>
                 <div class="modal-footer">
                     <button id="modal-apply" class="apply-btn" disabled>Pilih gambar dulu</button>
@@ -606,56 +699,111 @@
                 }
             });
             
-            // Load dan render gambar
-            renderGithubModal();
+            // Tampilkan folder-folder
+            renderFolders();
         }
         
-        async function renderGithubModal() {
-            const gridElement = document.getElementById('modal-image-grid');
+        async function renderFolders() {
+            const contentElement = document.getElementById('modal-content');
             
-            if (githubImages.length === 0) {
-                // Load dari API jika belum ada
-                await loadGithubImages();
-            }
+            const folders = await loadRootFolders();
             
-            if (githubImages.length === 0) {
-                gridElement.innerHTML = '<div class="error-msg">Gagal memuat gambar dari GitHub</div>';
+            if (folders.length === 0) {
+                contentElement.innerHTML = '<div class="error-msg">Tidak ada folder ditemukan</div>';
                 return;
             }
             
-            let html = '';
-            githubImages.forEach((img, index) => {
-                const downloadUrl = img.download_url || `https://raw.githubusercontent.com/taskIfaisal/sw/main/${img.path}`;
+            let html = '<div class="albums-grid">';
+            
+            folders.forEach(folder => {
+                html += `
+                    <div class="album-item" onclick="window.openFolder('${folder.name}')">
+                        <div class="folder-icon">📁</div>
+                        <div class="folder-name">${folder.name}</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            contentElement.innerHTML = html;
+        }
+        
+        // Fungsi untuk membuka folder - dibuat global agar bisa dipanggil dari onclick
+        window.openFolder = async function(folderName) {
+            currentFolder = folderName;
+            selectedImage = null;
+            
+            // Disable apply button
+            const applyBtn = document.getElementById('modal-apply');
+            applyBtn.disabled = true;
+            applyBtn.textContent = 'Pilih gambar dulu';
+            
+            const contentElement = document.getElementById('modal-content');
+            contentElement.innerHTML = '<div class="loading">Loading images...</div>';
+            
+            const images = await loadFolderContents(folderName);
+            
+            if (images.length === 0) {
+                contentElement.innerHTML = `
+                    <div class="folder-header">
+                        <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
+                        <h3>${folderName}</h3>
+                    </div>
+                    <div class="error-msg">Tidak ada gambar dalam folder ini</div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div class="folder-header">
+                    <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
+                    <h3>${folderName}</h3>
+                </div>
+                <div class="image-grid">
+            `;
+            
+            images.forEach(img => {
+                const downloadUrl = img.download_url || `https://raw.githubusercontent.com/taskIfaisal/sw/main/images/${folderName}/${img.name}`;
                 
                 html += `
-                    <div class="grid-item" data-url="${downloadUrl}" data-index="${index}">
+                    <div class="grid-item" data-url="${downloadUrl}">
                         <img src="${downloadUrl}" alt="${img.name}" loading="lazy">
                     </div>
                 `;
             });
             
-            gridElement.innerHTML = html;
+            html += '</div>';
+            contentElement.innerHTML = html;
             
-            // Tambahkan event listener ke setiap grid item
+            // Tambahkan event listener ke grid items
             document.querySelectorAll('.grid-item').forEach(item => {
                 item.addEventListener('click', () => {
-                    // Hapus selected dari semua item
                     document.querySelectorAll('.grid-item').forEach(i => {
                         i.classList.remove('selected');
                     });
                     
-                    // Tambahkan selected ke item yang diklik
                     item.classList.add('selected');
                     selectedImage = item.dataset.url;
                     
-                    // Enable apply button
                     const applyBtn = document.getElementById('modal-apply');
                     applyBtn.disabled = false;
                     applyBtn.textContent = `Apply Gambar`;
                     applyBtn.style.background = '#4CAF50';
                 });
             });
-        }
+        };
+        
+        // Fungsi untuk kembali ke daftar folder - dibuat global
+        window.goBackToFolders = function() {
+            currentFolder = null;
+            selectedImage = null;
+            
+            const applyBtn = document.getElementById('modal-apply');
+            applyBtn.disabled = true;
+            applyBtn.textContent = 'Pilih gambar dulu';
+            
+            renderFolders();
+        };
         
         // ===== LOCAL STORAGE FUNCTIONS =====
         function loadFromStorage() {
@@ -834,7 +982,7 @@
             }
         });
         
-        // GitHub Album button - menggantikan default card button
+        // GitHub Album button - dengan folder system
         githubAlbumBtn.addEventListener('click', () => {
             showGithubModal();
         });
@@ -1025,9 +1173,9 @@
             saveToStorage();
         });
 
-        // Pre-load gambar GitHub di background
+        // Pre-load root folders di background
         window.addEventListener('load', () => {
-            loadGithubImages();
+            loadRootFolders();
             // Pastikan preview update setelah load
             setTimeout(() => {
                 updateMainCardPreview();
