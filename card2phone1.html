@@ -53,6 +53,20 @@
             /* Tambahkan ini untuk zoom yang lebih baik */
             transform-origin: center center;
             height: auto; /* Biarkan tinggi menyesuaikan */
+            /* Untuk efek fade */
+            transition: opacity 0.5s ease;
+            opacity: 1;
+        }
+        
+        /* Class untuk efek fade in/out */
+        .card-fade-hidden {
+            opacity: 0 !important;
+            pointer-events: none; /* Biar tidak bisa di-tap saat hidden */
+        }
+        
+        .card-fade-visible {
+            opacity: 1 !important;
+            pointer-events: auto;
         }
 
         /* Style untuk slider card size */
@@ -130,6 +144,59 @@
             border-radius: 5px;
             display: inline-block;
             cursor: pointer;
+        }
+
+        /* Toggle Switch Styles */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin: 10px 0;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #4CAF50;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .effect-description {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 5px;
         }
 
         /* Editor Modal Styles */
@@ -447,6 +514,19 @@
             <button id="github-album-btn">📁 GitHub Cards Album</button>
         </div>
 
+        <!-- ===== EFFECT SHADOW TOGGLE ===== -->
+        <div class="setting-section">
+            <h3>Effect Shadow</h3>
+            <label class="toggle-switch">
+                <input type="checkbox" id="shadow-effect" checked>
+                <span class="toggle-slider"></span>
+            </label>
+            <div class="effect-description">
+                ON: Kartu muncul/hilang dengan efek fade (0.5s)<br>
+                OFF: Kartu muncul/hilang langsung (normal)
+            </div>
+        </div>
+
         <!-- ===== FRAME PREVIEW KARTU UTAMA - DITEMPATKAN DI ATAS SLIDER ===== -->
         <div class="preview-frame-container">
             <div class="preview-label">🔮 PREVIEW KARTU UTAMA</div>
@@ -493,6 +573,9 @@
         
         // Preview element untuk kartu utama
         const mainCardPreview = document.getElementById('main-card-preview');
+        
+        // Effect Shadow toggle
+        const shadowEffectCheckbox = document.getElementById('shadow-effect');
 
         // GitHub API URL - Diubah ke folder images untuk struktur folder
         const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/images';
@@ -825,6 +908,11 @@
                             updateMainCardPreview();
                         }, 100);
                     }
+                    
+                    // Load shadow effect setting
+                    if (data.shadowEffect !== undefined) {
+                        shadowEffectCheckbox.checked = data.shadowEffect;
+                    }
                 }
                 
                 // Load card size (jika ada di storage terpisah)
@@ -845,7 +933,8 @@
             try {
                 const data = {
                     background: background.style.backgroundImage.replace('url("', '').replace('")', ''),
-                    cardImage: card.src
+                    cardImage: card.src,
+                    shadowEffect: shadowEffectCheckbox.checked
                 };
                 
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -877,15 +966,24 @@
             }
         }, {passive: false});
         
-        // Double click to show card
+        // Double click/tap to show card
         let lastTap = 0;
         document.addEventListener('touchend', (e) => {
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTap;
             if (tapLength < 300 && tapLength > 0) {
+                // Double tap detected
                 showCard();
             }
             lastTap = currentTime;
+        });
+        
+        // Single tap on card to hide (hanya jika shadow effect ON)
+        card.addEventListener('click', (e) => {
+            e.stopPropagation(); // Mencegah event bubbling
+            if (shadowEffectCheckbox.checked) {
+                hideCard();
+            }
         });
         
         // Card dragging functionality with velocity tracking
@@ -936,13 +1034,14 @@
                 // Check if card is flicked quickly
                 const speedThreshold = 1000; // pixels per second
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+                
+                // Cek apakah kartu keluar batas (flick detection)
                 const outTop    = posY < -card.offsetHeight * scale * 0.4;
                 const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
                 const outLeft   = posX < -card.offsetWidth * scale * 0.4;
                 const outRight  = posX > window.innerWidth - card.offsetWidth * scale * 0.6;
 
                 if (outTop || outBottom || outLeft || outRight) {
-                    card.style.transition = 'none';
                     hideCard();
                     return;
                 }
@@ -990,6 +1089,11 @@
         closeSettingsBtn.addEventListener('click', () => {
             settings.style.top = '-100%';
             autoSave(); // Save when settings are closed
+        });
+        
+        // Shadow effect toggle change
+        shadowEffectCheckbox.addEventListener('change', () => {
+            autoSave();
         });
         
         // ===== SENSOR IMPLEMENTATION =====
@@ -1150,15 +1254,44 @@
         }
         
         function hideCard() {
-            card.style.display = 'none';
+            if (shadowEffectCheckbox.checked) {
+                // Fade out effect
+                card.style.transition = 'opacity 0.5s ease';
+                card.style.opacity = '0';
+                
+                // Setelah fade selesai, baru hide display
+                setTimeout(() => {
+                    card.style.display = 'none';
+                    // Reset opacity untuk next show
+                    card.style.opacity = '1';
+                }, 500);
+            } else {
+                // Langsung hide tanpa efek
+                card.style.display = 'none';
+            }
         }
         
         function showCard() {
             // Reset to center position
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-            updateCardTransform();
-            card.style.display = 'block';
+            
+            if (shadowEffectCheckbox.checked) {
+                // Fade in effect
+                card.style.display = 'block';
+                card.style.opacity = '0';
+                card.style.transition = 'opacity 0.5s ease';
+                
+                // Force reflow untuk memastikan transisi berjalan
+                card.offsetHeight;
+                
+                card.style.opacity = '1';
+                updateCardTransform();
+            } else {
+                // Langsung tampilkan tanpa efek
+                card.style.display = 'block';
+                updateCardTransform();
+            }
         }
         
         // Handle window resize
