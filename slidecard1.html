@@ -461,14 +461,10 @@
 
     // ===== VARIABEL GLOBAL UNTUK SKALA =====
     let editorScaleValue = 100; // Default 100%
-    
-    // ===== VARIABEL UNTUK UKURAN ASLI CARD =====
-    let originalCardWidth = 300; // Default
-    let originalCardHeight = 400; // Default
 
     // Initialize card properties
-    let posX = 0;
-    let posY = 0;
+    let posX = window.innerWidth / 2 - card.offsetWidth / 2;
+    let posY = window.innerHeight / 2 - card.offsetHeight / 2;
     let scale = 1;
     let isDragging = false;
     let startX, startY;
@@ -514,33 +510,6 @@
         background: 'magic_card_background'
     };
 
-    // ===== FUNGSI UNTUK MENDAPATKAN UKURAN CARD SETELAH SCALE =====
-    function getScaledCardDimensions() {
-        const cardScale = editorScaleValue / 100;
-        
-        // Ambil ukuran asli dari atribut atau gunakan nilai default
-        let baseWidth = originalCardWidth;
-        let baseHeight = originalCardHeight;
-        
-        // Fallback ke offset jika originalWidth belum tersedia
-        if (baseWidth === 300 && card.naturalWidth > 0) {
-            baseWidth = card.naturalWidth;
-            baseHeight = card.naturalHeight;
-            originalCardWidth = baseWidth;
-            originalCardHeight = baseHeight;
-        } else if (baseWidth === 300 && card.width > 0) {
-            baseWidth = card.width;
-            baseHeight = card.height;
-            originalCardWidth = baseWidth;
-            originalCardHeight = baseHeight;
-        }
-        
-        return {
-            width: baseWidth * cardScale,
-            height: baseHeight * cardScale
-        };
-    }
-
     function saveToStorage() {
         localStorage.setItem(STORAGE_KEYS.image1, cardImages.image1);
         localStorage.setItem(STORAGE_KEYS.image2, cardImages.image2);
@@ -576,6 +545,9 @@
     card.style.opacity = '0';
     card.style.visibility = 'hidden';
     
+    posX = Math.floor(window.innerWidth / 2 - card.offsetWidth / 2);
+    posY = window.innerHeight + card.offsetHeight + 100;
+    
     updateCardTransform();
     card.style.display = 'none';
     
@@ -591,7 +563,8 @@
         // Simpan nilai slider ke variabel global
         editorScaleValue = sliderValue;
         
-        // EDITOR: Langsung pakai nilai slider
+        // EDITOR: Langsung pakai nilai slider (HAPUS faktor 1.2)
+        // slider 100 = scale 1.0, slider 120 = scale 1.2, slider 200 = scale 2.0
         const scale = sliderValue / 100;
         
         editorCardImage.style.transform = `scale(${scale})`;
@@ -830,9 +803,8 @@
         }
         
         scale = 1;
-        const dims = getScaledCardDimensions();
-        posX = Math.floor(window.innerWidth / 2 - dims.width / 2);
-        posY = window.innerHeight + dims.height;
+        posX = Math.floor(window.innerWidth / 2 - card.offsetWidth / 2);
+        posY = window.innerHeight + card.offsetHeight;
         updateCardTransform();
 
         localStorage.removeItem(STORAGE_KEYS.image1);
@@ -880,14 +852,6 @@
                     if (card.style.display !== 'none' && currentCardImage === imageNumber) {
                         card.src = editedImage;
                     }
-                    
-                    // Update ukuran asli dengan gambar baru
-                    const tempImg = new Image();
-                    tempImg.onload = function() {
-                        originalCardWidth = this.width;
-                        originalCardHeight = this.height;
-                    };
-                    tempImg.src = editedImage;
                 });
             };
             reader.readAsDataURL(file);
@@ -917,6 +881,7 @@
         card.style.animation = 'none';
         
         // KARTU UTAMA: Langsung pakai nilai slider sebagai persentase
+        // slider 100 = scale 1.0, slider 120 = scale 1.2, slider 200 = scale 2.0
         const cardScale = editorScaleValue / 100;
         
         card.style.opacity = '0';
@@ -941,10 +906,9 @@
         });
         
         function initCardAnimation() {
-            // Gunakan fungsi getScaledCardDimensions untuk konsistensi
-            const dims = getScaledCardDimensions();
-            const cardWidth = dims.width;
-            const cardHeight = dims.height;
+            const cardRect = card.getBoundingClientRect();
+            const cardWidth = cardRect.width;
+            const cardHeight = cardRect.height;
             
             posX = (window.innerWidth / 2) - (cardWidth / 2);
             posY = window.innerHeight + 100;
@@ -963,10 +927,8 @@
                 card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
                 
                 setTimeout(() => {
-                    // Hitung ulang posisi tengah dengan ukuran yang konsisten
-                    const currentDims = getScaledCardDimensions();
-                    posX = (window.innerWidth / 2) - (currentDims.width / 2);
-                    posY = (window.innerHeight / 2) - (currentDims.height / 2);
+                    posX = (window.innerWidth / 2) - (cardWidth / 2);
+                    posY = (window.innerHeight / 2) - (cardHeight / 2);
                     
                     card.style.transform = `translate(${posX}px, ${posY}px) scale(${cardScale})`;
                     
@@ -1009,9 +971,9 @@
         
         // KARTU UTAMA: Langsung pakai nilai slider
         const currentScale = editorScaleValue / 100;
-        const dims = getScaledCardDimensions();
-        posX = Math.floor(window.innerWidth / 2 - dims.width / 2);
-        posY = window.innerHeight + dims.height;
+        const cardRect = card.getBoundingClientRect();
+        posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
+        posY = window.innerHeight + card.offsetHeight;
         card.style.transform = `translate(${posX}px, ${posY}px) scale(${currentScale})`;
         
         currentCardImage = 1;
@@ -1071,18 +1033,17 @@
     }
     
     function applyBounds() {
-        // Dapatkan ukuran card setelah scale dengan fungsi yang konsisten
-        const dims = getScaledCardDimensions();
-        const cardWidth = dims.width;
-        const cardHeight = dims.height;
+        // KARTU UTAMA: Langsung pakai nilai slider
+        const currentScale = editorScaleValue / 100;
+        const cardWidth = card.offsetWidth * currentScale;
+        const cardHeight = card.offsetHeight * currentScale;
         
-        // Batasan yang konsisten untuk SEMUA ukuran
-        const minX = 0;
-        const maxX = Math.max(0, window.innerWidth - cardWidth);
-        const minY = 0;
-        const maxY = Math.max(0, window.innerHeight - cardHeight);
+        const padding = 0;
+        const minX = padding;
+        const maxX = window.innerWidth - cardWidth - padding;
+        const minY = padding;
+        const maxY = window.innerHeight - cardHeight - padding;
         
-        // Terapkan batasan
         posX = Math.max(minX, Math.min(maxX, posX));
         posY = Math.max(minY, Math.min(maxY, posY));
     }
@@ -1156,23 +1117,18 @@
     }
     
     function updateCardTransform() {
+        // KARTU UTAMA: Langsung pakai nilai slider
         const currentScale = editorScaleValue / 100;
         card.style.transform = `translate(${posX}px, ${posY}px) scale(${currentScale})`;
     }
     
     window.addEventListener('resize', () => {
         if (card.style.display !== 'none') {
-            const dims = getScaledCardDimensions();
-            posX = Math.floor(window.innerWidth / 2 - dims.width / 2);
-            posY = Math.floor(window.innerHeight / 2 - dims.height / 2);
+            const cardRect = card.getBoundingClientRect();
+            posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
+            posY = Math.floor(window.innerHeight / 2 - cardRect.height / 2);
             updateCardTransform();
         }
-    });
-    
-    // Update ukuran asli saat card dimuat
-    card.addEventListener('load', function() {
-        originalCardWidth = this.naturalWidth || this.width;
-        originalCardHeight = this.naturalHeight || this.height;
     });
     
     window.addEventListener('load', () => {
@@ -1184,15 +1140,9 @@
         card.style.opacity = '0';
         card.style.visibility = 'hidden';
         
-        // Ambil ukuran asli
-        if (card.complete) {
-            originalCardWidth = card.naturalWidth || card.width || 300;
-            originalCardHeight = card.naturalHeight || card.height || 400;
-        }
-        
         setTimeout(() => {
-            const dims = getScaledCardDimensions();
-            const cardWidth = dims.width;
+            const cardRect = card.getBoundingClientRect();
+            const cardWidth = cardRect.width;
             
             posX = (window.innerWidth / 2) - (cardWidth / 2);
             posY = window.innerHeight + 100;
