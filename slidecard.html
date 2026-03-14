@@ -114,7 +114,7 @@
             align-items: center;
             justify-content: center;
             background: #333;
-            cursor: pointer; /* Membuat preview jadi clickable */
+            cursor: pointer;
             transition: border-color 0.2s ease;
         }
         
@@ -126,7 +126,7 @@
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
-            pointer-events: none; /* Mencegah gambar mengganggu klik */
+            pointer-events: none;
         }
         
         .upload-label {
@@ -390,6 +390,50 @@
             padding: 15px;
             font-size: 16px;
         }
+
+        /* FRAME PREVIEW UNTUK KARTU UTAMA */
+.preview-frame-container {
+    margin: 20px -20px; /* Negatif margin untuk menembus padding settings */
+    width: 100vw; /* Lebar penuh viewport */
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+}
+
+.preview-label {
+    color: #4CAF50;
+    font-size: 14px;
+    margin-bottom: 8px;
+    padding-left: 20px; /* Kembalikan padding untuk label */
+}
+
+.editor-frame {
+    width: 100vw; /* Full viewport width */
+    height: 280px;
+    border-top: 2px solid #4CAF50;
+    border-bottom: 2px solid #4CAF50;
+    border-left: none;
+    border-right: none;
+    background: #222;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    box-sizing: border-box;
+}       
+        #main-card-preview {
+            position: absolute;
+            width: auto;
+            height: auto;
+            max-width: none;
+            max-height: none;
+            object-fit: contain;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -442,6 +486,14 @@
                 <button id="swap-cards">Swap Images 1↔2</button>
             </div>
 
+            <!-- FRAME PREVIEW KARTU UTAMA - DITEMPATKAN DI ATAS SLIDER -->
+            <div class="preview-frame-container">
+                <div class="preview-label">🔮 PREVIEW KARTU UTAMA</div>
+                <div class="editor-frame">
+                    <img id="main-card-preview" src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png" alt="Main Card Preview">
+                </div>
+            </div>
+
             <!-- CARD SIZE SLIDER SECTION -->
             <div class="setting-section">
                 <h3>Card Size</h3>
@@ -491,6 +543,9 @@
     // Card size elements
     const cardSizeSlider = document.getElementById('card-size-slider');
     const sizeValue = document.getElementById('size-value');
+    
+    // Preview element untuk kartu utama
+    const mainCardPreview = document.getElementById('main-card-preview');
 
     // GitHub API URL
     const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/cards';
@@ -556,11 +611,30 @@
     card.style.maxWidth = currentCardSize + 'px';
     sizeValue.textContent = currentCardSize + 'px';
     cardSizeSlider.value = currentCardSize;
+    
+    // Update preview card size
+    function updatePreviewCardSize() {
+        // Atur ukuran preview kartu utama sesuai dengan ukuran slider
+        mainCardPreview.style.width = currentCardSize + 'px';
+        mainCardPreview.style.height = 'auto';
+        // Posisikan sedikit turun (30px dari atas frame)
+        mainCardPreview.style.position = 'absolute';
+        mainCardPreview.style.top = '30px';
+        mainCardPreview.style.left = '50%';
+        mainCardPreview.style.transform = 'translateX(-50%)';
+    }
+    
+    // Panggil fungsi untuk mengatur posisi awal preview
+    updatePreviewCardSize();
 
     cardSizeSlider.addEventListener('input', (e) => {
         const newSize = e.target.value;
         sizeValue.textContent = newSize + 'px';
         card.style.maxWidth = newSize + 'px';
+        
+        // Update ukuran preview kartu utama secara real-time
+        currentCardSize = parseInt(newSize);
+        updatePreviewCardSize();
         
         if (card.style.display !== 'none' && !isAnimating) {
             const cardRect = card.getBoundingClientRect();
@@ -595,11 +669,18 @@
             card.style.maxWidth = currentCardSize + 'px';
             cardSizeSlider.value = currentCardSize;
             sizeValue.textContent = currentCardSize + 'px';
+            updatePreviewCardSize();
         }
 
         updatePreviews();
+        updateMainCardPreview();
         
         setTimeout(preloadImages, 100);
+    }
+    
+    // Update preview kartu utama dengan image1
+    function updateMainCardPreview() {
+        mainCardPreview.src = cardImages.image1;
     }
 
     function updatePreviews() {
@@ -608,6 +689,9 @@
         
         if (preview1Img) preview1Img.src = cardImages.image1;
         if (preview2Img) preview2Img.src = cardImages.image2;
+        
+        // Update preview kartu utama
+        updateMainCardPreview();
     }
 
     function preloadImages() {
@@ -637,32 +721,32 @@
     
     // ===== FUNGSI UNTUK ALBUM GITHUB =====
     async function loadGithubImages() {
-    try {
-        const response = await fetch(GITHUB_API_URL);
-        if (!response.ok) throw new Error('Failed to fetch');
-        
-        const data = await response.json();
-        
-        // Filter hanya file gambar
-        githubImages = data.filter(file => {
-            const ext = file.name.split('.').pop().toLowerCase();
-            return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
-        });
-        
-        // SORTING: Dari kecil ke besar (ascending)
-        githubImages.sort((a, b) => {
-            return a.name.localeCompare(b.name, undefined, { 
-                numeric: true,  // Menganggap angka sebagai angka
-                sensitivity: 'base' 
+        try {
+            const response = await fetch(GITHUB_API_URL);
+            if (!response.ok) throw new Error('Failed to fetch');
+            
+            const data = await response.json();
+            
+            // Filter hanya file gambar
+            githubImages = data.filter(file => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
             });
-        });
-        
-        return githubImages;
-    } catch (error) {
-        console.error('Error loading GitHub images:', error);
-        return [];
+            
+            // SORTING: Dari kecil ke besar (ascending)
+            githubImages.sort((a, b) => {
+                return a.name.localeCompare(b.name, undefined, { 
+                    numeric: true,
+                    sensitivity: 'base' 
+                });
+            });
+            
+            return githubImages;
+        } catch (error) {
+            console.error('Error loading GitHub images:', error);
+            return [];
+        }
     }
-}
     
     function showGithubModal(cardTarget) {
         activeCardTarget = cardTarget;
@@ -699,6 +783,7 @@
                 // Update card image sesuai target
                 if (activeCardTarget === 1) {
                     cardImages.image1 = selectedImage;
+                    updateMainCardPreview(); // Update preview kartu utama
                 } else {
                     cardImages.image2 = selectedImage;
                 }
@@ -1009,6 +1094,7 @@
             image2: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image2.png"
         };
         updatePreviews();
+        updateMainCardPreview(); // Update preview kartu utama
         
         if (card.style.display !== 'none') {
             card.src = cardImages.image1;
@@ -1030,6 +1116,7 @@
         cardImages.image2 = temp;
         
         updatePreviews();
+        updateMainCardPreview(); // Update preview kartu utama dengan image1 yang baru
         
         if (card.style.display !== 'none') {
             if (currentCardImage === 1) {
@@ -1052,6 +1139,7 @@
                 showImageEditor(event.target.result, (editedImage) => {
                     if (imageNumber === 1) {
                         cardImages.image1 = editedImage;
+                        updateMainCardPreview(); // Update preview kartu utama
                     } else {
                         cardImages.image2 = editedImage;
                     }
