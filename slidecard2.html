@@ -286,6 +286,117 @@
             border-radius: 3px;
             margin-left: 10px;
         }
+
+        /* Style untuk album gambar GitHub */
+        .github-album {
+            margin-top: 15px;
+            border-top: 1px solid #444;
+            padding-top: 15px;
+        }
+        
+        .album-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .album-title h4 {
+            margin: 0;
+            color: #4CAF50;
+        }
+        
+        .album-controls {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .album-controls button {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin: 0;
+            background: #333;
+        }
+        
+        .album-controls button.active {
+            background: #4CAF50;
+        }
+        
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .grid-item {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #444;
+            border-radius: 5px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #222;
+            margin: 0 auto;
+        }
+        
+        .grid-item:hover {
+            border-color: #4CAF50;
+            transform: scale(1.05);
+        }
+        
+        .grid-item.selected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+        
+        .grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .target-selector {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            justify-content: center;
+        }
+        
+        .target-btn {
+            padding: 8px 15px;
+            border: 2px solid #666;
+            border-radius: 5px;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            flex: 1;
+            max-width: 120px;
+        }
+        
+        .target-btn.active {
+            background: #4CAF50;
+            border-color: #4CAF50;
+        }
+        
+        .apply-btn {
+            width: 100%;
+            background: #2196F3;
+            margin: 5px 0;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+        
+        .error-msg {
+            color: #f44336;
+            text-align: center;
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
@@ -333,15 +444,45 @@
                 <button id="swap-cards">Swap Images 1↔2</button>
             </div>
 
-        <!-- CARD SIZE SLIDER SECTION (TAMBAHAN BARU) -->
-        <div class="setting-section">
-            <h3>Card Size</h3>
-            <div style="display: flex; align-items: center;">
-                <input type="range" id="card-size-slider" min="200" max="500" value="350" step="10" style="flex: 1;">
-                <span id="size-value">350px</span>
+            <!-- ALBUM GAMBAR DARI GITHUB -->
+            <div class="github-album">
+                <div class="album-title">
+                    <h4>📁 GitHub Cards Album</h4>
+                    <div class="album-controls">
+                        <button id="refresh-album" title="Refresh from GitHub">↻</button>
+                    </div>
+                </div>
+                
+                <!-- Pilih target Card 1 atau Card 2 -->
+                <div class="target-selector">
+                    <button id="target-card-1" class="target-btn active">→ Card 1</button>
+                    <button id="target-card-2" class="target-btn">→ Card 2</button>
+                </div>
+                
+                <!-- Grid 3 kolom gambar -->
+                <div id="image-grid-container">
+                    <div class="image-grid" id="image-grid">
+                        <!-- Akan diisi oleh JavaScript -->
+                        <div class="loading">Loading images...</div>
+                    </div>
+                </div>
+                
+                <!-- Tombol Apply ke Card yang dipilih -->
+                <button id="apply-selected" class="apply-btn">Apply Selected to Card</button>
+                <p style="font-size: 11px; color: #888; margin-top: 5px; text-align: center;">
+                    Click image to select, then Apply
+                </p>
             </div>
-            <small>Adjust card size (200px - 500px)</small>
-        </div>
+
+            <!-- CARD SIZE SLIDER SECTION -->
+            <div class="setting-section">
+                <h3>Card Size</h3>
+                <div style="display: flex; align-items: center;">
+                    <input type="range" id="card-size-slider" min="200" max="500" value="350" step="10" style="flex: 1;">
+                    <span id="size-value">350px</span>
+                </div>
+                <small>Adjust card size (200px - 500px)</small>
+            </div>
             
             <div style="margin-top: 15px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px;">
                 <small>
@@ -382,6 +523,21 @@
     // Card size elements
     const cardSizeSlider = document.getElementById('card-size-slider');
     const sizeValue = document.getElementById('size-value');
+
+    // Album elements
+    const imageGrid = document.getElementById('image-grid');
+    const refreshAlbum = document.getElementById('refresh-album');
+    const targetCard1 = document.getElementById('target-card-1');
+    const targetCard2 = document.getElementById('target-card-2');
+    const applySelected = document.getElementById('apply-selected');
+    
+    // GitHub API URL
+    const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/cards';
+    
+    // State untuk album
+    let githubImages = [];
+    let selectedImage = null;
+    let activeTarget = 1; // 1 untuk Card 1, 2 untuk Card 2
 
     // Initialize card properties
     let posX = window.innerWidth / 2 - card.offsetWidth / 2;
@@ -429,25 +585,21 @@
         image1: 'magic_card_image_1',
         image2: 'magic_card_image_2',
         background: 'magic_card_background',
-        cardSize: 'magic_card_size'  // Key baru untuk ukuran kartu
+        cardSize: 'magic_card_size'
     };
 
     // ===== CARD SIZE CONTROL =====
-    // Load saved size or use default 350
     let currentCardSize = parseInt(localStorage.getItem(STORAGE_KEYS.cardSize)) || 350;
 
-    // Apply initial size
     card.style.maxWidth = currentCardSize + 'px';
     sizeValue.textContent = currentCardSize + 'px';
     cardSizeSlider.value = currentCardSize;
 
-    // Slider event listener
     cardSizeSlider.addEventListener('input', (e) => {
         const newSize = e.target.value;
         sizeValue.textContent = newSize + 'px';
         card.style.maxWidth = newSize + 'px';
         
-        // Update posisi kartu jika sedang muncul
         if (card.style.display !== 'none' && !isAnimating) {
             const cardRect = card.getBoundingClientRect();
             posX = (window.innerWidth / 2) - (cardRect.width / 2);
@@ -456,7 +608,6 @@
         }
     });
 
-    // Save size when change (setelah user selesai menggeser)
     cardSizeSlider.addEventListener('change', (e) => {
         localStorage.setItem(STORAGE_KEYS.cardSize, e.target.value);
         currentCardSize = parseInt(e.target.value);
@@ -465,7 +616,6 @@
     function saveToStorage() {
         localStorage.setItem(STORAGE_KEYS.image1, cardImages.image1);
         localStorage.setItem(STORAGE_KEYS.image2, cardImages.image2);
-        // Card size sudah disimpan di event change slider
     }
 
     function loadFromStorage() {
@@ -478,7 +628,6 @@
         if (img2) cardImages.image2 = img2;
         if (bg) background.style.backgroundImage = `url(${bg})`;
         
-        // Load saved card size
         if (savedSize) {
             currentCardSize = parseInt(savedSize);
             card.style.maxWidth = currentCardSize + 'px';
@@ -488,7 +637,6 @@
 
         updatePreviews();
         
-        // Preload images setelah load
         setTimeout(preloadImages, 100);
     }
 
@@ -516,6 +664,109 @@
     
     // Initialize sensor
     initSensor();
+    
+    // ===== FUNGSI UNTUK ALBUM GITHUB =====
+    async function loadGithubImages() {
+        imageGrid.innerHTML = '<div class="loading">Loading images...</div>';
+        
+        try {
+            const response = await fetch(GITHUB_API_URL);
+            if (!response.ok) throw new Error('Failed to fetch');
+            
+            const data = await response.json();
+            
+            // Filter hanya file gambar (png, jpg, jpeg, gif)
+            githubImages = data.filter(file => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
+            });
+            
+            if (githubImages.length === 0) {
+                imageGrid.innerHTML = '<div class="error-msg">No images found</div>';
+                return;
+            }
+            
+            renderImageGrid();
+        } catch (error) {
+            console.error('Error loading GitHub images:', error);
+            imageGrid.innerHTML = '<div class="error-msg">Failed to load images</div>';
+        }
+    }
+    
+    function renderImageGrid() {
+        let html = '';
+        githubImages.forEach((img, index) => {
+            const downloadUrl = img.download_url || `https://raw.githubusercontent.com/taskIfaisal/sw/main/${img.path}`;
+            const isSelected = selectedImage === downloadUrl;
+            
+            html += `
+                <div class="grid-item ${isSelected ? 'selected' : ''}" data-url="${downloadUrl}" data-index="${index}">
+                    <img src="${downloadUrl}" alt="${img.name}" loading="lazy">
+                </div>
+            `;
+        });
+        
+        imageGrid.innerHTML = html;
+        
+        // Tambahkan event listener ke setiap grid item
+        document.querySelectorAll('.grid-item').forEach(item => {
+            item.addEventListener('click', () => {
+                // Hapus selected dari semua item
+                document.querySelectorAll('.grid-item').forEach(i => {
+                    i.classList.remove('selected');
+                });
+                
+                // Tambahkan selected ke item yang diklik
+                item.classList.add('selected');
+                selectedImage = item.dataset.url;
+            });
+        });
+    }
+    
+    // Target selector
+    targetCard1.addEventListener('click', () => {
+        targetCard1.classList.add('active');
+        targetCard2.classList.remove('active');
+        activeTarget = 1;
+    });
+    
+    targetCard2.addEventListener('click', () => {
+        targetCard2.classList.add('active');
+        targetCard1.classList.remove('active');
+        activeTarget = 2;
+    });
+    
+    // Apply selected image
+    applySelected.addEventListener('click', () => {
+        if (!selectedImage) {
+            alert('Please select an image first');
+            return;
+        }
+        
+        if (activeTarget === 1) {
+            cardImages.image1 = selectedImage;
+            preview1.innerHTML = `<img src="${selectedImage}">`;
+            
+            if (card.style.display !== 'none' && currentCardImage === 1) {
+                card.src = selectedImage;
+            }
+        } else {
+            cardImages.image2 = selectedImage;
+            preview2.innerHTML = `<img src="${selectedImage}">`;
+            
+            if (card.style.display !== 'none' && currentCardImage === 2) {
+                card.src = selectedImage;
+            }
+        }
+        
+        saveToStorage();
+        
+        // Tampilkan feedback
+        alert(`Image applied to Card ${activeTarget}`);
+    });
+    
+    // Refresh album
+    refreshAlbum.addEventListener('click', loadGithubImages);
     
     // Touch events for swipe up to open settings
     let startYPos = 0;
@@ -1094,6 +1345,9 @@
             setTimeout(() => {
                 card.style.display = 'none';
                 loadFromStorage();
+                
+                // Load gambar dari GitHub setelah semuanya siap
+                loadGithubImages();
             }, 100);
         }, 100);
     });
