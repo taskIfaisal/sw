@@ -637,24 +637,32 @@
     
     // ===== FUNGSI UNTUK ALBUM GITHUB =====
     async function loadGithubImages() {
-        try {
-            const response = await fetch(GITHUB_API_URL);
-            if (!response.ok) throw new Error('Failed to fetch');
-            
-            const data = await response.json();
-            
-            // Filter hanya file gambar (png, jpg, jpeg, gif)
-            githubImages = data.filter(file => {
-                const ext = file.name.split('.').pop().toLowerCase();
-                return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
+    try {
+        const response = await fetch(GITHUB_API_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        
+        const data = await response.json();
+        
+        // Filter hanya file gambar
+        githubImages = data.filter(file => {
+            const ext = file.name.split('.').pop().toLowerCase();
+            return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
+        });
+        
+        // SORTING: Dari kecil ke besar (ascending)
+        githubImages.sort((a, b) => {
+            return a.name.localeCompare(b.name, undefined, { 
+                numeric: true,  // Menganggap angka sebagai angka
+                sensitivity: 'base' 
             });
-            
-            return githubImages;
-        } catch (error) {
-            console.error('Error loading GitHub images:', error);
-            return [];
-        }
+        });
+        
+        return githubImages;
+    } catch (error) {
+        console.error('Error loading GitHub images:', error);
+        return [];
     }
+}
     
     function showGithubModal(cardTarget) {
         activeCardTarget = cardTarget;
