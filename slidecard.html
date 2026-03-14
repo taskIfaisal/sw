@@ -114,12 +114,19 @@
             align-items: center;
             justify-content: center;
             background: #333;
+            cursor: pointer; /* Membuat preview jadi clickable */
+            transition: border-color 0.2s ease;
+        }
+        
+        .upload-preview:hover {
+            border-color: #4CAF50;
         }
         
         .upload-preview img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
+            pointer-events: none; /* Mencegah gambar mengganggu klik */
         }
         
         .upload-label {
@@ -286,6 +293,103 @@
             border-radius: 3px;
             margin-left: 10px;
         }
+
+        /* Style untuk modal album GitHub */
+        .github-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #444;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #4CAF50;
+        }
+        
+        .modal-header button {
+            background: #f44336;
+            margin: 0;
+            padding: 8px 15px;
+        }
+        
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .grid-item {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border: 2px solid #444;
+            border-radius: 5px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #222;
+        }
+        
+        .grid-item:hover {
+            border-color: #4CAF50;
+            transform: scale(1.02);
+        }
+        
+        .grid-item.selected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+        
+        .grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            grid-column: span 3;
+        }
+        
+        .error-msg {
+            color: #f44336;
+            text-align: center;
+            padding: 20px;
+            grid-column: span 3;
+        }
+        
+        .modal-footer {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid #444;
+        }
+        
+        .apply-btn {
+            width: 100%;
+            background: #2196F3;
+            padding: 15px;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -309,6 +413,7 @@
         <div class="setting-section">
             <h3>Card Images</h3>
             <p>Upload two images for card transformation</p>
+            <p><small>✨ Klik preview gambar untuk memilih dari album GitHub</small></p>
             
             <div class="image-upload-row">
                 <div class="upload-label">
@@ -316,7 +421,9 @@
                         Card Image 1
                     </button>
                     <input type="file" id="card-upload-1" accept="image/*" data-index="1">
-                    <div class="upload-preview" id="preview-1"></div>
+                    <div class="upload-preview" id="preview-1" data-card="1">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png" alt="Card 1">
+                    </div>
                 </div>
 
                 <div class="upload-label">
@@ -324,7 +431,9 @@
                         Card Image 2
                     </button>
                     <input type="file" id="card-upload-2" accept="image/*" data-index="2">
-                    <div class="upload-preview" id="preview-2"></div>
+                    <div class="upload-preview" id="preview-2" data-card="2">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image2.png" alt="Card 2">
+                    </div>
                 </div>
             </div>
             
@@ -333,15 +442,15 @@
                 <button id="swap-cards">Swap Images 1↔2</button>
             </div>
 
-        <!-- CARD SIZE SLIDER SECTION (TAMBAHAN BARU) -->
-        <div class="setting-section">
-            <h3>Card Size</h3>
-            <div style="display: flex; align-items: center;">
-                <input type="range" id="card-size-slider" min="200" max="500" value="350" step="10" style="flex: 1;">
-                <span id="size-value">350px</span>
+            <!-- CARD SIZE SLIDER SECTION -->
+            <div class="setting-section">
+                <h3>Card Size</h3>
+                <div style="display: flex; align-items: center;">
+                    <input type="range" id="card-size-slider" min="200" max="500" value="350" step="10" style="flex: 1;">
+                    <span id="size-value">350px</span>
+                </div>
+                <small>Adjust card size (200px - 500px)</small>
             </div>
-            <small>Adjust card size (200px - 500px)</small>
-        </div>
             
             <div style="margin-top: 15px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px;">
                 <small>
@@ -382,6 +491,15 @@
     // Card size elements
     const cardSizeSlider = document.getElementById('card-size-slider');
     const sizeValue = document.getElementById('size-value');
+
+    // GitHub API URL
+    const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/cards';
+    
+    // State untuk album
+    let githubImages = [];
+    let selectedImage = null;
+    let activeCardTarget = 1; // 1 untuk Card 1, 2 untuk Card 2
+    let modalElement = null;
 
     // Initialize card properties
     let posX = window.innerWidth / 2 - card.offsetWidth / 2;
@@ -429,25 +547,21 @@
         image1: 'magic_card_image_1',
         image2: 'magic_card_image_2',
         background: 'magic_card_background',
-        cardSize: 'magic_card_size'  // Key baru untuk ukuran kartu
+        cardSize: 'magic_card_size'
     };
 
     // ===== CARD SIZE CONTROL =====
-    // Load saved size or use default 350
     let currentCardSize = parseInt(localStorage.getItem(STORAGE_KEYS.cardSize)) || 350;
 
-    // Apply initial size
     card.style.maxWidth = currentCardSize + 'px';
     sizeValue.textContent = currentCardSize + 'px';
     cardSizeSlider.value = currentCardSize;
 
-    // Slider event listener
     cardSizeSlider.addEventListener('input', (e) => {
         const newSize = e.target.value;
         sizeValue.textContent = newSize + 'px';
         card.style.maxWidth = newSize + 'px';
         
-        // Update posisi kartu jika sedang muncul
         if (card.style.display !== 'none' && !isAnimating) {
             const cardRect = card.getBoundingClientRect();
             posX = (window.innerWidth / 2) - (cardRect.width / 2);
@@ -456,7 +570,6 @@
         }
     });
 
-    // Save size when change (setelah user selesai menggeser)
     cardSizeSlider.addEventListener('change', (e) => {
         localStorage.setItem(STORAGE_KEYS.cardSize, e.target.value);
         currentCardSize = parseInt(e.target.value);
@@ -465,7 +578,6 @@
     function saveToStorage() {
         localStorage.setItem(STORAGE_KEYS.image1, cardImages.image1);
         localStorage.setItem(STORAGE_KEYS.image2, cardImages.image2);
-        // Card size sudah disimpan di event change slider
     }
 
     function loadFromStorage() {
@@ -478,7 +590,6 @@
         if (img2) cardImages.image2 = img2;
         if (bg) background.style.backgroundImage = `url(${bg})`;
         
-        // Load saved card size
         if (savedSize) {
             currentCardSize = parseInt(savedSize);
             card.style.maxWidth = currentCardSize + 'px';
@@ -488,8 +599,15 @@
 
         updatePreviews();
         
-        // Preload images setelah load
         setTimeout(preloadImages, 100);
+    }
+
+    function updatePreviews() {
+        const preview1Img = preview1.querySelector('img');
+        const preview2Img = preview2.querySelector('img');
+        
+        if (preview1Img) preview1Img.src = cardImages.image1;
+        if (preview2Img) preview2Img.src = cardImages.image2;
     }
 
     function preloadImages() {
@@ -516,6 +634,143 @@
     
     // Initialize sensor
     initSensor();
+    
+    // ===== FUNGSI UNTUK ALBUM GITHUB =====
+    async function loadGithubImages() {
+        try {
+            const response = await fetch(GITHUB_API_URL);
+            if (!response.ok) throw new Error('Failed to fetch');
+            
+            const data = await response.json();
+            
+            // Filter hanya file gambar (png, jpg, jpeg, gif)
+            githubImages = data.filter(file => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
+            });
+            
+            return githubImages;
+        } catch (error) {
+            console.error('Error loading GitHub images:', error);
+            return [];
+        }
+    }
+    
+    function showGithubModal(cardTarget) {
+        activeCardTarget = cardTarget;
+        selectedImage = null;
+        
+        // Buat modal
+        modalElement = document.createElement('div');
+        modalElement.className = 'github-modal';
+        modalElement.innerHTML = `
+            <div class="modal-header">
+                <h3>📁 Pilih Gambar untuk Card ${cardTarget}</h3>
+                <button id="close-modal">✕</button>
+            </div>
+            <div class="image-grid" id="modal-image-grid">
+                <div class="loading">Loading images from GitHub...</div>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-apply" class="apply-btn" disabled>Pilih gambar dulu</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modalElement);
+        
+        // Event listener untuk close
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.body.removeChild(modalElement);
+            modalElement = null;
+        });
+        
+        // Event listener untuk apply
+        const applyBtn = document.getElementById('modal-apply');
+        applyBtn.addEventListener('click', () => {
+            if (selectedImage) {
+                // Update card image sesuai target
+                if (activeCardTarget === 1) {
+                    cardImages.image1 = selectedImage;
+                } else {
+                    cardImages.image2 = selectedImage;
+                }
+                
+                updatePreviews();
+                saveToStorage();
+                
+                // Update card jika sedang tampil
+                if (card.style.display !== 'none') {
+                    if ((activeCardTarget === 1 && currentCardImage === 1) ||
+                        (activeCardTarget === 2 && currentCardImage === 2)) {
+                        card.src = selectedImage;
+                    }
+                }
+                
+                // Tutup modal
+                document.body.removeChild(modalElement);
+                modalElement = null;
+            }
+        });
+        
+        // Load dan render gambar
+        renderGithubModal();
+    }
+    
+    async function renderGithubModal() {
+        const gridElement = document.getElementById('modal-image-grid');
+        
+        if (githubImages.length === 0) {
+            // Load dari API jika belum ada
+            await loadGithubImages();
+        }
+        
+        if (githubImages.length === 0) {
+            gridElement.innerHTML = '<div class="error-msg">Gagal memuat gambar dari GitHub</div>';
+            return;
+        }
+        
+        let html = '';
+        githubImages.forEach((img, index) => {
+            const downloadUrl = img.download_url || `https://raw.githubusercontent.com/taskIfaisal/sw/main/${img.path}`;
+            
+            html += `
+                <div class="grid-item" data-url="${downloadUrl}" data-index="${index}">
+                    <img src="${downloadUrl}" alt="${img.name}" loading="lazy">
+                </div>
+            `;
+        });
+        
+        gridElement.innerHTML = html;
+        
+        // Tambahkan event listener ke setiap grid item
+        document.querySelectorAll('.grid-item').forEach(item => {
+            item.addEventListener('click', () => {
+                // Hapus selected dari semua item
+                document.querySelectorAll('.grid-item').forEach(i => {
+                    i.classList.remove('selected');
+                });
+                
+                // Tambahkan selected ke item yang diklik
+                item.classList.add('selected');
+                selectedImage = item.dataset.url;
+                
+                // Enable apply button
+                const applyBtn = document.getElementById('modal-apply');
+                applyBtn.disabled = false;
+                applyBtn.textContent = `Apply ke Card ${activeCardTarget}`;
+                applyBtn.style.background = '#4CAF50';
+            });
+        });
+    }
+    
+    // ===== MEMBUAT PREVIEW CLICKABLE =====
+    preview1.addEventListener('click', () => {
+        showGithubModal(1);
+    });
+    
+    preview2.addEventListener('click', () => {
+        showGithubModal(2);
+    });
     
     // Touch events for swipe up to open settings
     let startYPos = 0;
@@ -789,12 +1044,11 @@
                 showImageEditor(event.target.result, (editedImage) => {
                     if (imageNumber === 1) {
                         cardImages.image1 = editedImage;
-                        preview1.innerHTML = `<img src="${editedImage}">`;
                     } else {
                         cardImages.image2 = editedImage;
-                        preview2.innerHTML = `<img src="${editedImage}">`;
                     }
-
+                    
+                    updatePreviews();
                     saveToStorage();
 
                     if (card.style.display !== 'none' && currentCardImage === imageNumber) {
@@ -804,11 +1058,6 @@
             };
             reader.readAsDataURL(file);
         }
-    }
-    
-    function updatePreviews() {
-        preview1.innerHTML = `<img src="${cardImages.image1}" alt="Card 1">`;
-        preview2.innerHTML = `<img src="${cardImages.image2}" alt="Card 2">`;
     }
     
     function showCardWithTransformation() {
@@ -1094,6 +1343,9 @@
             setTimeout(() => {
                 card.style.display = 'none';
                 loadFromStorage();
+                
+                // Pre-load gambar GitHub di background
+                loadGithubImages();
             }, 100);
         }, 100);
     });
