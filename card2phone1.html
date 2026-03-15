@@ -1295,48 +1295,47 @@
             }
         });
         
-       // ===== CARD UPLOAD - MENGGUNAKAN FUNGSI YANG SAMA DENGAN GITHUB =====
-// ===== CARD UPLOAD - VERSION SEDERHANA (TANPA EDITOR) =====
-cardUpload.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    console.log('File selected:', file ? file.name : 'none');
-    
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            console.log('File loaded, length:', event.target.result.length);
+        // ===== CARD UPLOAD - MENGGUNAKAN FUNGSI YANG SAMA DENGAN GITHUB =====
+        cardUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            console.log('File selected:', file ? file.name : 'none');
             
-            // LANGSUNG update tanpa editor dulu
-            const imageSrc = event.target.result;
-            
-            // 1. Update Favorite 1
-            const preview1Img = preview1.querySelector('img');
-            if (preview1Img) {
-                preview1Img.src = imageSrc;
-                console.log('Preview1 updated');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    console.log('File loaded, length:', event.target.result.length);
+                    
+                    // LANGSUNG update tanpa editor dulu
+                    const imageSrc = event.target.result;
+                    
+                    // Gunakan fungsi yang sama dengan GitHub
+                    updateCardImage(imageSrc);
+                    
+                    console.log('Card upload complete');
+                };
+                reader.readAsDataURL(file);
             }
-            
-            // 2. Update kartu utama
-            card.src = imageSrc;
-            console.log('Card src updated');
-            
-            // 3. Update preview besar
-            mainCardPreview.src = imageSrc;
-            
-            // 4. Jika kartu sedang visible, update posisi
-            if (card.style.display !== 'none') {
-                scale = 1;
-                updateCardTransform();
-            }
-            
-            // 5. Simpan ke localStorage
+        });
+        
+        // ===== CLOSE SETTINGS BUTTON - DIPERBAIKI =====
+        if (closeSettingsBtn) {
+            closeSettingsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Close settings button clicked');
+                settings.style.top = '-100%';
+                autoSave();
+            });
+        } else {
+            console.error('closeSettingsBtn tidak ditemukan!');
+        }
+        
+        githubAlbumBtn.addEventListener('click', () => {
+            showGithubModal(1);
+        });
+        
+        shadowEffectCheckbox.addEventListener('change', () => {
             autoSave();
-            
-            console.log('Card upload complete');
-        };
-        reader.readAsDataURL(file);
-    }
-});
+        });
         
         // ===== SENSOR IMPLEMENTATION =====
         function initSensor() {
