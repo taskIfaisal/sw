@@ -806,11 +806,7 @@
                     
                     // Jika yang dipilih Favorite 1, update kartu utama dan preview besar
                     if (activePreview === 1) {
-                        card.src = selectedImage;
-                        mainCardPreview.src = selectedImage;
-                        updateMainCardPreview(); // Panggil fungsi update
-                        scale = 1;
-                        updateCardTransform();
+                        updateCardImage(selectedImage);
                     }
                     
                     // Highlight preview yang dipilih
@@ -939,6 +935,31 @@
             showGithubModal(3);
         });
         
+        // ===== FUNGSI UNTUK UPDATE CARD IMAGE (DIGUNAKAN OLEH CARD UPLOAD DAN GITHUB) =====
+        function updateCardImage(imageSrc) {
+            console.log('Updating card image to:', imageSrc.substring(0, 50) + '...');
+            
+            // Update Favorite 1
+            const preview1Img = preview1.querySelector('img');
+            if (preview1Img) {
+                preview1Img.src = imageSrc;
+            }
+            
+            // Update kartu utama
+            card.src = imageSrc;
+            
+            // Update preview besar
+            mainCardPreview.src = imageSrc;
+            updateMainCardPreview();
+            
+            // Reset scale
+            scale = 1;
+            updateCardTransform();
+            
+            // Simpan ke localStorage
+            autoSave();
+        }
+        
         // ===== LOCAL STORAGE FUNCTIONS =====
         function loadFromStorage() {
             try {
@@ -1062,9 +1083,7 @@
                             // Ambil gambar dari preview 1
                             const preview1Img = preview1.querySelector('img');
                             if (preview1Img) {
-                                card.src = preview1Img.src;
-                                mainCardPreview.src = preview1Img.src;
-                                updateMainCardPreview();
+                                updateCardImage(preview1Img.src);
                             }
                             
                             showCard();
@@ -1077,9 +1096,7 @@
                     sequenceTimer = setTimeout(() => {
                         const preview1Img = preview1.querySelector('img');
                         if (preview1Img) {
-                            card.src = preview1Img.src;
-                            mainCardPreview.src = preview1Img.src;
-                            updateMainCardPreview();
+                            updateCardImage(preview1Img.src);
                         }
                         
                         // Tampilkan kartu tanpa animasi
@@ -1278,7 +1295,7 @@
             }
         });
         
-        // ===== CARD UPLOAD - FIXED: Update Favorite 1 dan Preview Utama =====
+        // ===== CARD UPLOAD - MENGGUNAKAN FUNGSI YANG SAMA DENGAN GITHUB =====
         cardUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             console.log('File selected:', file ? file.name : 'none');
@@ -1291,26 +1308,8 @@
                     showImageEditor(event.target.result, (editedImage) => {
                         console.log('Editor returned image');
                         
-                        // Update Favorite 1
-                        const preview1Img = preview1.querySelector('img');
-                        if (preview1Img) {
-                            preview1Img.src = editedImage;
-                            console.log('Preview1 updated');
-                        }
-                        
-                        // Update kartu utama
-                        card.src = editedImage;
-                        console.log('Card src updated');
-                        
-                        // Update preview besar dan panggil fungsi update
-                        mainCardPreview.src = editedImage;
-                        updateMainCardPreview(); // Panggil fungsi untuk memastikan sinkron
-                        
-                        scale = 1;
-                        updateCardTransform();
-                        
-                        // Simpan ke localStorage
-                        autoSave();
+                        // Gunakan fungsi yang sama dengan GitHub untuk konsistensi
+                        updateCardImage(editedImage);
                         
                         console.log('Card upload complete');
                     });
