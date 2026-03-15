@@ -55,6 +55,7 @@
             touch-action: none;
             transform-origin: center center;
             height: auto;
+            cursor: pointer;
         }
 
         @keyframes muncul {
@@ -1063,10 +1064,12 @@
             lastTap = currentTime;
         });
         
-        // Single tap on card untuk melanjutkan sequence
-        card.addEventListener('click', (e) => {
+        // Fungsi untuk handle tap pada kartu - PASTIKAN INI BEKERJA
+        function handleCardTap(e) {
             e.stopPropagation();
             e.preventDefault();
+            
+            console.log('Card tapped, sequenceStage:', sequenceStage, 'isSequenceActive:', isSequenceActive);
             
             // Hanya proses jika dalam mode sequence dan effect shadow ON
             if (shadowEffectCheckbox.checked && isSequenceActive) {
@@ -1078,9 +1081,11 @@
                 }
                 
                 if (sequenceStage === 1) {
+                    console.log('Stage 1: akan ganti ke Favorite 2 dalam 3 detik');
                     // Stage 1: tap kartu utama, tunggu 3 detik ganti ke Favorite 2
                     sequenceTimer = setTimeout(() => {
                         if (isSequenceActive && sequenceStage === 1) {
+                            console.log('Mengganti ke Favorite 2');
                             // Ambil gambar dari preview 2
                             const preview2Img = preview2.querySelector('img');
                             if (preview2Img) {
@@ -1094,9 +1099,11 @@
                     }, 3000);
                     
                 } else if (sequenceStage === 2) {
+                    console.log('Stage 2: akan ganti ke Favorite 3 dalam 3 detik');
                     // Stage 2: tap kartu ke-2, tunggu 3 detik ganti ke Favorite 3
                     sequenceTimer = setTimeout(() => {
                         if (isSequenceActive && sequenceStage === 2) {
+                            console.log('Mengganti ke Favorite 3');
                             // Ambil gambar dari preview 3
                             const preview3Img = preview3.querySelector('img');
                             if (preview3Img) {
@@ -1110,21 +1117,31 @@
                     }, 3000);
                     
                 } else if (sequenceStage === 3) {
+                    console.log('Stage 3: sequence selesai');
                     // Stage 3: tap kartu ke-3, sequence selesai
                     isSequenceActive = false;
                     sequenceStage = 0;
-                    // Bisa juga langsung hide card atau biarkan
                 }
             } else {
                 // Jika tidak dalam mode sequence, behave normal (hide card)
                 if (shadowEffectCheckbox.checked) {
+                    console.log('Hide card normal');
                     hideCard();
                 }
             }
-        });
+        }
         
+        // Pasang event listener untuk card - GABUNGKAN CLICK DAN TOUCH
+        card.addEventListener('click', handleCardTap);
         card.addEventListener('touchstart', (e) => {
+            // Untuk drag, kita bedakan dengan tap
             if (e.touches.length === 1) {
+                // Simpan waktu untuk deteksi tap vs drag
+                card._touchStartTime = Date.now();
+                card._touchStartX = e.touches[0].clientX;
+                card._touchStartY = e.touches[0].clientY;
+                
+                // Set isDragging = true untuk drag
                 isDragging = true;
                 startX = e.touches[0].clientX - posX;
                 startY = e.touches[0].clientY - posY;
@@ -1164,6 +1181,17 @@
         
         document.addEventListener('touchend', (e) => {
             if (isDragging) {
+                // Cek apakah ini tap atau drag
+                const touchDuration = Date.now() - card._touchStartTime;
+                const touchMoveX = Math.abs(e.changedTouches[0].clientX - card._touchStartX);
+                const touchMoveY = Math.abs(e.changedTouches[0].clientY - card._touchStartY);
+                
+                // Jika durasi pendek dan pergerakan kecil, anggap sebagai tap
+                if (touchDuration < 200 && touchMoveX < 10 && touchMoveY < 10) {
+                    // Ini adalah tap, panggil handler tap
+                    handleCardTap(e);
+                }
+                
                 isDragging = false;
                 
                 const outTop    = posY < -card.offsetHeight * scale * 0.4;
