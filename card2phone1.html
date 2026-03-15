@@ -1528,7 +1528,7 @@
             return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
         }
         
-        function updateCardTransform() {
+       function updateCardTransform() {
     // Pastikan posisi selalu integer
     posX = Math.round(posX);
     posY = Math.round(posY);
@@ -1540,12 +1540,16 @@
         }
         
         function showCard() {
+    // Reset transformasi terlebih dahulu
+    card.style.transform = 'none';
+    
     // Hitung posisi tengah dengan akurat
     const cardWidth = card.offsetWidth;
     const cardHeight = card.offsetHeight;
     
-    posX = (window.innerWidth / 2) - (cardWidth / 2);
-    posY = (window.innerHeight / 2) - (cardHeight / 2);
+    // Rumus yang benar: (lebar layar - lebar kartu) / 2
+    posX = (window.innerWidth - cardWidth) / 2;
+    posY = (window.innerHeight - cardHeight) / 2;
     
     // Bulatkan ke integer
     posX = Math.round(posX);
@@ -1562,20 +1566,26 @@
         setTimeout(() => {
             card.style.animation = 'none';
         }, 5000);
+    } else {
+        card.style.animation = 'none';
     }
     
     updateCardTransform();
 }
 
 function showCardStandar() {
+    // Reset transformasi terlebih dahulu
+    card.style.transform = 'none';
+    
     // Hitung posisi tengah dengan akurat
     const cardWidth = card.offsetWidth;
     const cardHeight = card.offsetHeight;
     
-    posX = (window.innerWidth / 2) - (cardWidth / 2);
-    posY = (window.innerHeight / 2) - (cardHeight / 2);
+    // Rumus yang benar: (lebar layar - lebar kartu) / 2
+    posX = (window.innerWidth - cardWidth) / 2;
+    posY = (window.innerHeight - cardHeight) / 2;
     
-    // Bulatkan ke integer untuk menghindari pecahan pixel
+    // Bulatkan ke integer
     posX = Math.round(posX);
     posY = Math.round(posY);
     
