@@ -554,8 +554,8 @@
                 </label>
             </div>
             <div class="effect-description">
-                ON: Kartu muncul dengan animasi 5 detik (fade bertahap)<br>
-                OFF: Kartu muncul langsung (normal)
+                ON: Kartu muncul dengan animasi 5 detik, bisa berubah 3 kali, lalu fade out<br>
+                OFF: Hanya 1 kartu muncul tanpa animasi (tidak ada perubahan)
             </div>
         </div>
 
@@ -675,8 +675,7 @@
         }
         
         function updateAllPreviews() {
-            // Preview TIDAK mengikuti card.src
-            // Biarkan masing-masing preview dengan gambarnya sendiri
+            // Preview tidak mengikuti card.src
         }
         
         updatePreviewCardSize();
@@ -958,7 +957,6 @@
                         const preview1Img = preview1.querySelector('img');
                         if (preview1Img) {
                             preview1Img.src = data.preview1;
-                            console.log('Loaded preview1:', data.preview1);
                         }
                     }
                     if (data.preview2) {
@@ -974,7 +972,6 @@
                     if (data.preview1) {
                         card.src = data.preview1;
                         mainCardPreview.src = data.preview1;
-                        console.log('Updated card from preview1:', data.preview1);
                     }
                 }
                 
@@ -1006,7 +1003,6 @@
                 };
                 
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-                console.log('Saved to storage:', data);
             } catch (error) {
                 console.error('Error saving to storage:', error);
             }
@@ -1052,30 +1048,51 @@
                     touchToChangeTimeout = null;
                 }
                 
-                // Reset stage dan mulai sequence
-                sequenceStage = 0;
-                isSequenceActive = true;
-                
-                // Tunggu 5 detik sebelum memunculkan kartu utama (dari Favorite 1)
-                sequenceTimer = setTimeout(() => {
-                    if (isSequenceActive) {
-                        // Ambil gambar dari preview 1
-                        const preview1Img = preview1.querySelector('img');
-                        if (preview1Img) {
-                            card.src = preview1Img.src;
-                            mainCardPreview.src = preview1Img.src;
+                if (shadowEffectCheckbox.checked) {
+                    // EFFECT SHADOW ON: Jalankan sequence lengkap
+                    sequenceStage = 0;
+                    isSequenceActive = true;
+                    
+                    // Tunggu 5 detik sebelum memunculkan kartu utama (dari Favorite 1)
+                    sequenceTimer = setTimeout(() => {
+                        if (isSequenceActive) {
+                            // Ambil gambar dari preview 1
+                            const preview1Img = preview1.querySelector('img');
+                            if (preview1Img) {
+                                card.src = preview1Img.src;
+                                mainCardPreview.src = preview1Img.src;
+                            }
+                            
+                            showCard();
+                            sequenceStage = 1; // Stage 1: kartu 1 sudah muncul
                         }
-                        
-                        showCard();
-                        sequenceStage = 1; // Stage 1: kartu 1 sudah muncul
+                        sequenceTimer = null;
+                    }, 5000);
+                } else {
+                    // EFFECT SHADOW OFF: Langsung tampilkan kartu tanpa sequence
+                    const preview1Img = preview1.querySelector('img');
+                    if (preview1Img) {
+                        card.src = preview1Img.src;
+                        mainCardPreview.src = preview1Img.src;
                     }
-                    sequenceTimer = null;
-                }, 5000);
+                    
+                    // Tampilkan kartu tanpa animasi
+                    posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+                    posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+                    card.style.display = 'block';
+                    card.style.opacity = '1';
+                    card.style.animation = 'none';
+                    updateCardTransform();
+                    
+                    // Nonaktifkan sequence
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                }
             }
             lastTap = currentTime;
         });
         
-        // ===== EVENT LISTENER UNTUK KARTU - MENGIKUTI LOGIKA KODE PERTAMA =====
+        // ===== EVENT LISTENER UNTUK KARTU =====
         // Event listener untuk sentuhan pada kartu - mulai drag
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
@@ -1093,13 +1110,14 @@
             }
         }, {passive: false});
 
-        // Event listener untuk akhir sentuhan - deteksi tap dan mulai timer
+        // Event listener untuk akhir sentuhan - deteksi tap dan mulai timer (hanya jika shadow ON)
         card.addEventListener('touchend', (e) => {
             setTimeout(() => {
                 isDragging = false;
             }, 50);
             
-            if (card.style.display === 'none' || !isSequenceActive) {
+            // Hanya proses jika shadow ON dan sequence aktif
+            if (!shadowEffectCheckbox.checked || card.style.display === 'none' || !isSequenceActive) {
                 return;
             }
             
@@ -1256,7 +1274,7 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     showImageEditor(event.target.result, (editedImage) => {
-                        // Update hanya Favorite 1 dan kartu utama
+                        // Update Favorite 1, kartu utama, dan preview besar
                         const preview1Img = preview1.querySelector('img');
                         if (preview1Img) preview1Img.src = editedImage;
                         
@@ -1268,8 +1286,6 @@
                         
                         // Simpan ke localStorage
                         autoSave();
-                        
-                        console.log('Card uploaded and saved:', editedImage);
                     });
                 };
                 reader.readAsDataURL(file);
@@ -1482,9 +1498,6 @@
                 card.style.display = 'block';
                 card.style.animation = 'none';
                 card.style.opacity = '1';
-                
-                // Debug: lihat apa yang ada di storage
-                console.log('Storage after load:', localStorage.getItem(STORAGE_KEY));
             }, 200);
         });
     </script>
