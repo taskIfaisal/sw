@@ -25,14 +25,12 @@
             overflow: hidden;
             touch-action: none;
             position: relative;
-            /* Cegah zoom pada seluruh halaman */
             -webkit-text-size-adjust: 100%;
             -webkit-tap-highlight-color: transparent;
         }
 
         * {
             box-sizing: border-box;
-            /* Cegah double-tap zoom pada semua elemen */
             -webkit-tap-highlight-color: transparent;
         }
         
@@ -113,8 +111,7 @@
             padding: 20px;
             box-sizing: border-box;
             overflow-y: auto;
-            /* Cegah zoom di dalam settings */
-            touch-action: pan-y; /* Hanya boleh scroll vertical, tidak pinch zoom */
+            touch-action: pan-y;
         }
         
         .setting-section {
@@ -129,7 +126,6 @@
             margin: 5px;
             border-radius: 5px;
             cursor: pointer;
-            /* Cegah zoom pada button */
             touch-action: manipulation;
         }
         
@@ -144,18 +140,15 @@
             border-radius: 5px;
             display: inline-block;
             cursor: pointer;
-            /* Cegah zoom */
             touch-action: manipulation;
         }
 
-        /* Toggle Switch Styles */
         .toggle-switch {
             position: relative;
             display: inline-block;
             width: 60px;
             height: 34px;
             margin: 10px 0;
-            /* Cegah zoom */
             touch-action: manipulation;
         }
         
@@ -203,7 +196,6 @@
             margin-top: 5px;
         }
 
-        /* ===== PREVIEW 80x80px - TIGA KOTAK ===== */
         .preview-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -238,7 +230,6 @@
             cursor: pointer;
             transition: all 0.2s ease;
             margin: 0 auto;
-            /* Cegah zoom */
             touch-action: manipulation;
         }
         
@@ -259,7 +250,6 @@
             pointer-events: none;
         }
         
-        /* Style untuk modal album GitHub */
         .github-modal {
             position: fixed;
             top: 0;
@@ -273,7 +263,6 @@
             padding: 20px;
             box-sizing: border-box;
             overflow-y: auto;
-            /* Cegah zoom di modal */
             touch-action: pan-y;
         }
         
@@ -427,7 +416,6 @@
             touch-action: manipulation;
         }
 
-        /* FRAME PREVIEW KARTU UTAMA */
         .preview-frame-container {
             margin: 20px -20px;
             width: 100vw;
@@ -473,7 +461,6 @@
             transition: all 0.3s ease;
         }
         
-        /* Sensor Permission Button */
         #sensor-permission {
             position: fixed;
             top: 0;
@@ -649,6 +636,11 @@
         const smoothing = 0.2;
         let isSensorEnabled = false;
         
+        // ===== VARIABEL UNTUK SEQUENCE CARD =====
+        let sequenceTimer = null;
+        let sequenceStage = 0; // 0: tidak dalam sequence, 1: stage 1, 2: stage 2, 3: stage 3
+        let isSequenceActive = false;
+        
         // ===== LOCAL STORAGE SETUP =====
         const STORAGE_KEY = 'magic_card_data';
         
@@ -719,16 +711,7 @@
         
         // ===== CEGAH DOUBLE TAP ZOOM =====
         document.addEventListener('touchstart', (e) => {
-            // Cegah zoom pada double tap
             if (e.touches.length > 1) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        document.addEventListener('touchend', (e) => {
-            // Cegah zoom pada double tap
-            const now = Date.now();
-            if (now - lastTap < 300) {
                 e.preventDefault();
             }
         }, { passive: false });
@@ -1048,18 +1031,88 @@
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTap;
             if (tapLength < 300 && tapLength > 0) {
-                // Double tap detected - show card
-                e.preventDefault(); // Cegah zoom
-                showCard();
+                // Double tap detected
+                e.preventDefault();
+                
+                // Clear timer yang mungkin berjalan
+                if (sequenceTimer) {
+                    clearTimeout(sequenceTimer);
+                    sequenceTimer = null;
+                }
+                
+                // Reset stage
+                sequenceStage = 0;
+                isSequenceActive = true;
+                
+                // Tunggu 5 detik sebelum memunculkan kartu
+                sequenceTimer = setTimeout(() => {
+                    if (isSequenceActive) {
+                        showCard();
+                        sequenceStage = 1;
+                    }
+                    sequenceTimer = null;
+                }, 5000);
             }
             lastTap = currentTime;
         });
         
+        // Single tap on card untuk sequence
         card.addEventListener('click', (e) => {
             e.stopPropagation();
-            e.preventDefault(); // Cegah perilaku default
-            if (shadowEffectCheckbox.checked) {
-                hideCard();
+            e.preventDefault();
+            
+            // Hanya proses jika dalam mode sequence dan effect shadow ON
+            if (shadowEffectCheckbox.checked && isSequenceActive) {
+                
+                // Clear timer yang mungkin berjalan
+                if (sequenceTimer) {
+                    clearTimeout(sequenceTimer);
+                    sequenceTimer = null;
+                }
+                
+                if (sequenceStage === 1) {
+                    // Stage 1: tap kartu utama, tunggu 3 detik ganti ke preview 2
+                    sequenceTimer = setTimeout(() => {
+                        if (isSequenceActive && sequenceStage === 1) {
+                            // Ganti ke preview 2
+                            const preview2Img = preview2.querySelector('img');
+                            if (preview2Img) {
+                                card.src = preview2Img.src;
+                                mainCardPreview.src = preview2Img.src;
+                                updateCardTransform();
+                                sequenceStage = 2;
+                            }
+                        }
+                        sequenceTimer = null;
+                    }, 3000);
+                    
+                } else if (sequenceStage === 2) {
+                    // Stage 2: tap kartu ke-2, tunggu 3 detik ganti ke preview 3
+                    sequenceTimer = setTimeout(() => {
+                        if (isSequenceActive && sequenceStage === 2) {
+                            // Ganti ke preview 3
+                            const preview3Img = preview3.querySelector('img');
+                            if (preview3Img) {
+                                card.src = preview3Img.src;
+                                mainCardPreview.src = preview3Img.src;
+                                updateCardTransform();
+                                sequenceStage = 3;
+                            }
+                        }
+                        sequenceTimer = null;
+                    }, 3000);
+                    
+                } else if (sequenceStage === 3) {
+                    // Stage 3: tap kartu ke-3, sequence selesai
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                    // Bisa juga langsung hide card atau biarkan
+                }
+            } else {
+                // Jika tidak dalam mode sequence, behave normal (hide card)
+                if (shadowEffectCheckbox.checked) {
+                    hideCard();
+                }
             }
         });
         
@@ -1113,6 +1166,13 @@
 
                 if (outTop || outBottom || outLeft || outRight) {
                     hideCard();
+                    // Reset sequence jika kartu hilang
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                    if (sequenceTimer) {
+                        clearTimeout(sequenceTimer);
+                        sequenceTimer = null;
+                    }
                     return;
                 }
             }
@@ -1141,6 +1201,15 @@
                         scale = 1;
                         updateCardTransform();
                         autoSave();
+                        
+                        // Reset preview images juga
+                        const preview1Img = preview1.querySelector('img');
+                        const preview2Img = preview2.querySelector('img');
+                        const preview3Img = preview3.querySelector('img');
+                        
+                        if (preview1Img) preview1Img.src = editedImage;
+                        if (preview2Img) preview2Img.src = editedImage;
+                        if (preview3Img) preview3Img.src = editedImage;
                     });
                 };
                 reader.readAsDataURL(file);
@@ -1162,9 +1231,7 @@
         
         // ===== SENSOR IMPLEMENTATION =====
         function initSensor() {
-            // Cek apakah perlu permission (untuk iOS)
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === "function") {
-                // Tampilkan tombol permission
                 sensorPermissionBtn.classList.remove('hidden');
                 
                 sensorPermissionBtn.onclick = async () => {
@@ -1181,7 +1248,6 @@
                     }
                 };
             } else {
-                // Untuk browser yang tidak memerlukan permission
                 sensorPermissionBtn.classList.add('hidden');
                 startSensor();
             }
@@ -1323,9 +1389,7 @@
             card.style.display = 'block';
             
             if (shadowEffectCheckbox.checked) {
-                // Reset animasi
                 card.style.animation = 'none';
-                // Force reflow
                 void card.offsetHeight;
                 card.style.animation = 'muncul 5s ease-in-out';
                 
