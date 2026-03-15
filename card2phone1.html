@@ -638,7 +638,7 @@
         
         // ===== VARIABEL UNTUK SEQUENCE CARD =====
         let sequenceTimer = null;
-        let sequenceStage = 0; // 0: tidak dalam sequence, 1: stage 1, 2: stage 2, 3: stage 3
+        let sequenceStage = 0; // 0: tidak dalam sequence, 1: stage 1 (kartu 1), 2: stage 2 (kartu 2), 3: stage 3 (kartu 3)
         let isSequenceActive = false;
         
         // ===== LOCAL STORAGE SETUP =====
@@ -1040,15 +1040,22 @@
                     sequenceTimer = null;
                 }
                 
-                // Reset stage
+                // Reset stage dan mulai sequence
                 sequenceStage = 0;
                 isSequenceActive = true;
                 
-                // Tunggu 5 detik sebelum memunculkan kartu
+                // Tunggu 5 detik sebelum memunculkan kartu utama (dari Favorite 1)
                 sequenceTimer = setTimeout(() => {
                     if (isSequenceActive) {
+                        // Ambil gambar dari preview 1
+                        const preview1Img = preview1.querySelector('img');
+                        if (preview1Img) {
+                            card.src = preview1Img.src;
+                            mainCardPreview.src = preview1Img.src;
+                        }
+                        
                         showCard();
-                        sequenceStage = 1;
+                        sequenceStage = 1; // Stage 1: kartu 1 sudah muncul
                     }
                     sequenceTimer = null;
                 }, 5000);
@@ -1056,7 +1063,7 @@
             lastTap = currentTime;
         });
         
-        // Single tap on card untuk sequence
+        // Single tap on card untuk melanjutkan sequence
         card.addEventListener('click', (e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -1071,32 +1078,32 @@
                 }
                 
                 if (sequenceStage === 1) {
-                    // Stage 1: tap kartu utama, tunggu 3 detik ganti ke preview 2
+                    // Stage 1: tap kartu utama, tunggu 3 detik ganti ke Favorite 2
                     sequenceTimer = setTimeout(() => {
                         if (isSequenceActive && sequenceStage === 1) {
-                            // Ganti ke preview 2
+                            // Ambil gambar dari preview 2
                             const preview2Img = preview2.querySelector('img');
                             if (preview2Img) {
                                 card.src = preview2Img.src;
                                 mainCardPreview.src = preview2Img.src;
                                 updateCardTransform();
-                                sequenceStage = 2;
+                                sequenceStage = 2; // Stage 2: kartu 2
                             }
                         }
                         sequenceTimer = null;
                     }, 3000);
                     
                 } else if (sequenceStage === 2) {
-                    // Stage 2: tap kartu ke-2, tunggu 3 detik ganti ke preview 3
+                    // Stage 2: tap kartu ke-2, tunggu 3 detik ganti ke Favorite 3
                     sequenceTimer = setTimeout(() => {
                         if (isSequenceActive && sequenceStage === 2) {
-                            // Ganti ke preview 3
+                            // Ambil gambar dari preview 3
                             const preview3Img = preview3.querySelector('img');
                             if (preview3Img) {
                                 card.src = preview3Img.src;
                                 mainCardPreview.src = preview3Img.src;
                                 updateCardTransform();
-                                sequenceStage = 3;
+                                sequenceStage = 3; // Stage 3: kartu 3
                             }
                         }
                         sequenceTimer = null;
@@ -1202,7 +1209,7 @@
                         updateCardTransform();
                         autoSave();
                         
-                        // Reset preview images juga
+                        // Update preview images juga
                         const preview1Img = preview1.querySelector('img');
                         const preview2Img = preview2.querySelector('img');
                         const preview3Img = preview3.querySelector('img');
