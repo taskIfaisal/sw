@@ -12,7 +12,6 @@
     <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
     <style>
-        /* ===== SEMUA CSS SAMA SEPERTI CODE ANDA ===== */
         html, body {
             margin: 0;
             padding: 0;
@@ -56,7 +55,6 @@
             /* HAPUS opacity:0 dan animation dari sini */
         }
 
-        /* Animasi tetap ada, tapi dipanggil via JavaScript */
         @keyframes muncul {
             0% { opacity: 0; }
             50% { opacity: 0.3; }
@@ -452,6 +450,32 @@
             pointer-events: none;
             transition: all 0.3s ease;
         }
+        
+        /* Sensor Permission Button - Pastikan ini tidak hidden secara default */
+        #sensor-permission {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            font-size: 24px;
+            z-index: 9999;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            padding: 20px;
+            cursor: pointer;
+        }
+        
+        #sensor-permission.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -544,6 +568,7 @@
         </div>
     </div>
     
+    <!-- Sensor Permission Button - Awalnya hidden, akan muncul jika perlu permission -->
     <button id="sensor-permission" class="hidden">
         Allow Motion Sensor Access<br>
         <small>(Tap to enable tilt controls)</small>
@@ -667,7 +692,9 @@
             autoSave();
         });
         
-        // Initialize sensor - PANGGIL INI PENTING!
+        updateCardTransform();
+        
+        // ===== INIT SENSOR - PASTIKAN INI DIPANGGIL =====
         initSensor();
         
         // ===== FUNGSI GITHUB ALBUM =====
@@ -1093,15 +1120,25 @@
         
         // ===== SENSOR IMPLEMENTATION (YANG DIPERBAIKI) =====
         function initSensor() {
-            if (typeof DeviceOrientationEvent?.requestPermission === "function") {
+            console.log('initSensor called');
+            
+            // Cek apakah perlu permission (untuk iOS)
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === "function") {
+                console.log('iOS device detected, showing permission button');
+                // Tampilkan tombol permission
                 sensorPermissionBtn.classList.remove('hidden');
                 
                 sensorPermissionBtn.onclick = async () => {
                     try {
+                        console.log('Requesting permission...');
                         const permission = await DeviceOrientationEvent.requestPermission();
+                        console.log('Permission result:', permission);
+                        
                         if (permission === "granted") {
                             sensorPermissionBtn.classList.add('hidden');
                             startSensor();
+                        } else {
+                            alert('Permission denied. Tilt control tidak akan berfungsi.');
                         }
                     } catch (error) {
                         console.error("Error requesting permission:", error);
@@ -1109,29 +1146,43 @@
                     }
                 };
             } else {
+                console.log('Non-iOS device or no permission required, starting sensor directly');
+                // Untuk browser yang tidak memerlukan permission
+                sensorPermissionBtn.classList.add('hidden'); // Sembunyikan tombol
                 startSensor();
             }
         }
         
         function startSensor() {
+            console.log('startSensor called');
             isSensorEnabled = true;
-            window.addEventListener("deviceorientation", handleDeviceOrientation);
-            startSensorAnimation();
+            
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener("deviceorientation", handleDeviceOrientation);
+                startSensorAnimation();
+            } else {
+                console.log('DeviceOrientationEvent not supported');
+            }
         }
         
         function handleDeviceOrientation(e) {
+            // Hanya proses jika tidak sedang didrag
             if (isDragging) return;
 
-            const beta = Math.max(-45, Math.min(45, e.beta || 0));
-            const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
+            const beta = e.beta || 0;
+            const gamma = e.gamma || 0;
+            
+            // Batasi nilai
+            const limitedBeta = Math.max(-45, Math.min(45, beta));
+            const limitedGamma = Math.max(-45, Math.min(45, gamma));
 
-            smoothBeta += (beta - smoothBeta) * smoothing;
-            smoothGamma += (gamma - smoothGamma) * smoothing;
+            // Smoothing
+            smoothBeta += (limitedBeta - smoothBeta) * smoothing;
+            smoothGamma += (limitedGamma - smoothGamma) * smoothing;
         }
         
         function startSensorAnimation() {
             function animate() {
-                // Sensor tetap jalan meski kartu hidden
                 if (isSensorEnabled && !isDragging) {
                     // Update posisi hanya jika kartu terlihat
                     if (card.style.display !== 'none') {
@@ -1160,35 +1211,6 @@
             
             posX = Math.max(minX, Math.min(maxX, posX));
             posY = Math.max(minY, Math.min(maxY, posY));
-        }
-        
-        // ===== FUNGSI SHOW/HIDE CARD YANG DIPERBAIKI =====
-        function updateCardTransform() {
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
-        
-        function hideCard() {
-            card.style.display = 'none';
-            card.style.animation = 'none'; // Reset animasi
-        }
-        
-        function showCard() {
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-            
-            card.style.display = 'block';
-            
-            if (shadowEffectCheckbox.checked) {
-                // Reset animasi agar bisa jalan lagi
-                card.style.animation = 'none';
-                // Force reflow
-                void card.offsetHeight;
-                card.style.animation = 'muncul 5s ease-in-out';
-            } else {
-                card.style.animation = 'none';
-            }
-            
-            updateCardTransform();
         }
         
         function showImageEditor(imageSrc, callback) {
@@ -1257,6 +1279,37 @@
         
         function getDistance(x1, y1, x2, y2) {
             return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        }
+        
+        function updateCardTransform() {
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        }
+        
+        function hideCard() {
+            card.style.display = 'none';
+        }
+        
+        function showCard() {
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+            
+            card.style.display = 'block';
+            
+            if (shadowEffectCheckbox.checked) {
+                // Reset animasi
+                card.style.animation = 'none';
+                // Force reflow
+                void card.offsetHeight;
+                card.style.animation = 'muncul 5s ease-in-out';
+                
+                setTimeout(() => {
+                    card.style.animation = 'none';
+                }, 5000);
+            } else {
+                card.style.animation = 'none';
+            }
+            
+            updateCardTransform();
         }
         
         window.addEventListener('resize', () => {
