@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Magic Card Trick</title>
     <link rel="apple-touch-icon" href="./icon/slide-512x512.png">
     <link rel="apple-touch-startup-image" href="./icon/slide-512x512.png">
@@ -91,6 +91,8 @@
             padding: 20px;
             box-sizing: border-box;
             overflow-y: auto;
+            touch-action: pan-y; /* Hanya izinkan scroll vertikal, nonaktifkan zoom */
+            -webkit-overflow-scrolling: touch;
         }
         
         .setting-section {
@@ -173,6 +175,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            touch-action: pan-y; /* Hanya izinkan scroll vertikal */
+            -webkit-overflow-scrolling: touch;
         }
 
         .upload-label button {
@@ -294,7 +298,7 @@
             margin-left: 10px;
         }
 
-        /* Style untuk modal album GitHub - Diperbarui dengan folder system */
+        /* Style untuk modal album GitHub */
         .github-modal {
             position: fixed;
             top: 0;
@@ -308,6 +312,8 @@
             padding: 20px;
             box-sizing: border-box;
             overflow-y: auto;
+            touch-action: pan-y; /* Hanya izinkan scroll vertikal */
+            -webkit-overflow-scrolling: touch;
         }
         
         .modal-header {
@@ -489,7 +495,9 @@
             justify-content: center;
             margin: 0;
             box-sizing: border-box;
+            touch-action: pan-y; /* Hanya izinkan scroll vertikal */
         }       
+        
         #main-card-preview {
             position: absolute;
             width: auto;
@@ -613,14 +621,14 @@
     // Preview element untuk kartu utama
     const mainCardPreview = document.getElementById('main-card-preview');
 
-    // GitHub API URL - Diubah ke folder images sesuai dengan code album
+    // GitHub API URL
     const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/images';
     
     // State untuk album dengan folder system
-    let currentFolder = null; // null berarti di root (menampilkan folder)
+    let currentFolder = null;
     let folderContents = [];
     let selectedImage = null;
-    let activeCardTarget = 1; // 1 untuk Card 1, 2 untuk Card 2
+    let activeCardTarget = 1;
     let modalElement = null;
 
     // Initialize card properties
@@ -671,6 +679,28 @@
         background: 'magic_card_background',
         cardSize: 'magic_card_size'
     };
+
+    // ===== MENCEGAH ZOOM DENGAN JAVASCRIPT =====
+    // Mencegah pinch zoom di settings
+    settings.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // Mencegah pinch zoom di modal GitHub
+    document.addEventListener('touchmove', (e) => {
+        if (e.target.closest('.github-modal') && e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // Mencegah pinch zoom di image editor
+    document.addEventListener('touchmove', (e) => {
+        if (e.target.closest('.image-editor') && e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
 
     // ===== CARD SIZE CONTROL =====
     let currentCardSize = parseInt(localStorage.getItem(STORAGE_KEYS.cardSize)) || 350;
@@ -786,10 +816,8 @@
             
             const data = await response.json();
             
-            // Filter hanya folder (type = "dir")
             const folders = data.filter(item => item.type === "dir");
             
-            // Sorting folder berdasarkan nama
             folders.sort((a, b) => {
                 return a.name.localeCompare(b.name, undefined, { 
                     numeric: true,
@@ -812,13 +840,11 @@
             
             const data = await response.json();
             
-            // Filter hanya file gambar
             const images = data.filter(file => {
                 const ext = file.name.split('.').pop().toLowerCase();
                 return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
             });
             
-            // Sorting gambar berdasarkan nama
             images.sort((a, b) => {
                 return a.name.localeCompare(b.name, undefined, { 
                     numeric: true,
@@ -836,9 +862,8 @@
     function showGithubModal(cardTarget) {
         activeCardTarget = cardTarget;
         selectedImage = null;
-        currentFolder = null; // Reset ke root
+        currentFolder = null;
         
-        // Buat modal
         modalElement = document.createElement('div');
         modalElement.className = 'github-modal';
         modalElement.innerHTML = `
@@ -856,13 +881,11 @@
         
         document.body.appendChild(modalElement);
         
-        // Event listener untuk close
         document.getElementById('close-modal').addEventListener('click', () => {
             document.body.removeChild(modalElement);
             modalElement = null;
         });
         
-        // Event listener untuk apply
         const applyBtn = document.getElementById('modal-apply');
         applyBtn.addEventListener('click', () => {
             if (selectedImage) {
@@ -888,7 +911,6 @@
             }
         });
         
-        // Tampilkan folder-folder
         renderFolders();
     }
     
@@ -917,12 +939,10 @@
         contentElement.innerHTML = html;
     }
     
-    // Fungsi untuk membuka folder - dibuat global agar bisa dipanggil dari onclick
     window.openFolder = async function(folderName) {
         currentFolder = folderName;
         selectedImage = null;
         
-        // Disable apply button
         const applyBtn = document.getElementById('modal-apply');
         applyBtn.disabled = true;
         applyBtn.textContent = 'Pilih gambar dulu';
@@ -964,7 +984,6 @@
         html += '</div>';
         contentElement.innerHTML = html;
         
-        // Tambahkan event listener ke grid items
         document.querySelectorAll('.grid-item').forEach(item => {
             item.addEventListener('click', () => {
                 document.querySelectorAll('.grid-item').forEach(i => {
@@ -982,7 +1001,6 @@
         });
     };
     
-    // Fungsi untuk kembali ke daftar folder - dibuat global
     window.goBackToFolders = function() {
         currentFolder = null;
         selectedImage = null;
@@ -1010,7 +1028,6 @@
             startYPos = e.touches[0].clientY;
         }
         
-        // Double tap detection
         if (e.touches.length === 1 && !isDragging) {
             tapCount++;
             
@@ -1036,7 +1053,6 @@
         }
     }, {passive: false});
     
-    // ===== LOGIKA TITIK =====
     function handleDoubleTap() {
         console.log("Double tap detected!");
         
@@ -1088,7 +1104,6 @@
         cardIndicator.classList.remove('visible');
     }
     
-    // Card dragging functionality
     card.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
             isDragging = true;
@@ -1111,7 +1126,6 @@
         }
     }, {passive: false});
 
-    // Event touchend untuk kartu
     card.addEventListener('touchend', (e) => {
         setTimeout(() => {
             isDragging = false;
@@ -1200,7 +1214,6 @@
         }
     });
     
-    // Settings functionality
     bgUpload.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -1213,7 +1226,6 @@
         reader.readAsDataURL(file);
     });
     
-    // Card upload with image editor
     cardUpload1.addEventListener('change', (e) => handleCardUpload(e, 1));
     cardUpload2.addEventListener('change', (e) => handleCardUpload(e, 2));
     
@@ -1534,7 +1546,6 @@
         card.style.transform = `translate(${posX}px, ${posY}px)`;
     }
     
-    // Handle window resize
     window.addEventListener('resize', () => {
         if (card.style.display !== 'none') {
             const cardRect = card.getBoundingClientRect();
@@ -1544,7 +1555,6 @@
         }
     });
     
-    // Initialize card position
     window.addEventListener('load', () => {
         card.style.display = 'block';
         card.style.left = '0';
@@ -1567,7 +1577,6 @@
                 card.style.display = 'none';
                 loadFromStorage();
                 
-                // Pre-load root folders
                 loadRootFolders();
             }, 100);
         }, 100);
