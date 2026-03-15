@@ -56,6 +56,7 @@
             transform-origin: center center;
             height: auto;
             cursor: pointer;
+            transition: opacity 5s ease-in-out; /* Untuk fade out */
         }
 
         @keyframes muncul {
@@ -1064,7 +1065,7 @@
             lastTap = currentTime;
         });
         
-        // Fungsi untuk handle tap pada kartu - PASTIKAN INI BEKERJA
+        // Fungsi untuk handle tap pada kartu
         function handleCardTap(e) {
             e.stopPropagation();
             e.preventDefault();
@@ -1117,10 +1118,24 @@
                     }, 3000);
                     
                 } else if (sequenceStage === 3) {
-                    console.log('Stage 3: sequence selesai');
-                    // Stage 3: tap kartu ke-3, sequence selesai
-                    isSequenceActive = false;
-                    sequenceStage = 0;
+                    console.log('Stage 3: kartu akan menghilang perlahan dalam 5 detik');
+                    // Stage 3: tap kartu ke-3, kartu menghilang perlahan (fade out)
+                    
+                    // Set opacity 0 untuk fade out (transisi 5s dari CSS)
+                    card.style.opacity = '0';
+                    
+                    // Setelah fade out selesai, hide card dan reset sequence
+                    setTimeout(() => {
+                        if (isSequenceActive && sequenceStage === 3) {
+                            hideCard();
+                            // Reset opacity untuk next show
+                            card.style.opacity = '1';
+                            
+                            // Sequence selesai
+                            isSequenceActive = false;
+                            sequenceStage = 0;
+                        }
+                    }, 5000); // 5 detik fade out
                 }
             } else {
                 // Jika tidak dalam mode sequence, behave normal (hide card)
@@ -1131,7 +1146,7 @@
             }
         }
         
-        // Pasang event listener untuk card - GABUNGKAN CLICK DAN TOUCH
+        // Pasang event listener untuk card
         card.addEventListener('click', handleCardTap);
         card.addEventListener('touchstart', (e) => {
             // Untuk drag, kita bedakan dengan tap
@@ -1422,6 +1437,7 @@
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             
             card.style.display = 'block';
+            card.style.opacity = '1'; // Reset opacity
             
             if (shadowEffectCheckbox.checked) {
                 card.style.animation = 'none';
@@ -1456,6 +1472,7 @@
                 updatePreviewCardSize();
                 card.style.display = 'block';
                 card.style.animation = 'none';
+                card.style.opacity = '1';
             }, 200);
         });
     </script>
