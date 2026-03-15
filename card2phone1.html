@@ -1432,22 +1432,20 @@
         }
         
         function startSensorAnimation() {
-            function animate() {
-                if (isSensorEnabled && !isDragging) {
-                    if (card.style.display !== 'none') {
-                        posX += smoothGamma * sensitivity;
-                        posY += smoothBeta * sensitivity;
-                        
-                        applyBounds();
-                        updateCardTransform();
-                    }
-                }
-                
-                requestAnimationFrame(animate);
+    function animate() {
+        // Sensor hanya aktif jika Effect Standar ON dan tidak sedang drag
+        if (isSensorEnabled && !isDragging && effectStandarCheckbox.checked) {
+            if (card.style.display !== 'none') {
+                posX += smoothGamma * sensitivity;
+                posY += smoothBeta * sensitivity;
+                applyBounds();
+                updateCardTransform();
             }
-            
-            animate();
         }
+        requestAnimationFrame(animate);
+    }
+    animate();
+}
         
         function applyBounds() {
             const cardWidth = card.offsetWidth * scale;
