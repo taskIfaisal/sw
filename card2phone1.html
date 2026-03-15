@@ -674,7 +674,6 @@
         function updateAllPreviews() {
             // Preview TIDAK LAGI mengikuti card.src
             // Biarkan masing-masing preview dengan gambarnya sendiri
-            // Tidak perlu update di sini
         }
         
         updatePreviewCardSize();
@@ -965,7 +964,7 @@
                         if (preview3Img) preview3Img.src = data.preview3;
                     }
                     
-                    // Set card image dari preview1 (bukan dari data.cardImage)
+                    // Set card image dari preview1
                     if (data.preview1) {
                         card.src = data.preview1;
                     }
@@ -1069,12 +1068,12 @@
             lastTap = currentTime;
         });
         
-        // Fungsi untuk handle tap pada kartu (dari sentuhan yang dilepas)
-        function handleCardTap(e) {
+        // Fungsi untuk handle sentuhan pada kartu (dipanggil dari touchstart)
+        function handleCardTouch(e) {
             e.stopPropagation();
             e.preventDefault();
             
-            console.log('Card tapped, sequenceStage:', sequenceStage, 'isSequenceActive:', isSequenceActive);
+            console.log('Card touched, sequenceStage:', sequenceStage, 'isSequenceActive:', isSequenceActive);
             
             // Hanya proses jika dalam mode sequence dan effect shadow ON
             if (shadowEffectCheckbox.checked && isSequenceActive) {
@@ -1087,7 +1086,7 @@
                 
                 if (sequenceStage === 1) {
                     console.log('Stage 1: akan ganti ke Favorite 2 dalam 3 detik');
-                    // Stage 1: tap kartu utama, tunggu 3 detik ganti ke Favorite 2
+                    // Stage 1: sentuh kartu utama, tunggu 3 detik ganti ke Favorite 2
                     sequenceTimer = setTimeout(() => {
                         if (isSequenceActive && sequenceStage === 1) {
                             console.log('Mengganti ke Favorite 2');
@@ -1105,7 +1104,7 @@
                     
                 } else if (sequenceStage === 2) {
                     console.log('Stage 2: akan ganti ke Favorite 3 dalam 3 detik');
-                    // Stage 2: tap kartu ke-2, tunggu 3 detik ganti ke Favorite 3
+                    // Stage 2: sentuh kartu ke-2, tunggu 3 detik ganti ke Favorite 3
                     sequenceTimer = setTimeout(() => {
                         if (isSequenceActive && sequenceStage === 2) {
                             console.log('Mengganti ke Favorite 3');
@@ -1148,17 +1147,23 @@
                 if (shadowEffectCheckbox.checked) {
                     console.log('Hide card normal');
                     hideCard();
+                    // Reset sequence jika kartu hilang
+                    isSequenceActive = false;
+                    sequenceStage = 0;
                 }
             }
         }
         
-        // Event listener untuk sentuhan pada kartu
+        // Event listener untuk sentuhan pada kartu - TANPA EVENT CLICK
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
-                // Simpan waktu dan posisi untuk deteksi tap vs drag
+                // Simpan waktu dan posisi untuk deteksi drag
                 card._touchStartTime = Date.now();
                 card._touchStartX = e.touches[0].clientX;
                 card._touchStartY = e.touches[0].clientY;
+                
+                // 🔴 PANGGIL HANDLER SENTUHAN LANGSUNG - TIDAK MENUNGGU LEPAS
+                handleCardTouch(e);
                 
                 // Set isDragging = true untuk drag
                 isDragging = true;
@@ -1173,20 +1178,10 @@
             }
         }, {passive: false});
         
-        // Event listener untuk akhir sentuhan
+        // Event listener untuk akhir sentuhan - hanya untuk deteksi drag, BUKAN untuk tap
         card.addEventListener('touchend', (e) => {
             // Cek apakah ini akhir dari drag
             if (isDragging) {
-                const touchDuration = Date.now() - card._touchStartTime;
-                const touchMoveX = Math.abs(e.changedTouches[0].clientX - card._touchStartX);
-                const touchMoveY = Math.abs(e.changedTouches[0].clientY - card._touchStartY);
-                
-                // Jika durasi pendek dan pergerakan kecil, anggap sebagai tap
-                if (touchDuration < 200 && touchMoveX < 10 && touchMoveY < 10) {
-                    // Ini adalah tap, panggil handler tap saat jari diangkat
-                    handleCardTap(e);
-                }
-                
                 isDragging = false;
                 
                 // Cek apakah kartu keluar batas (flick)
@@ -1208,6 +1203,9 @@
                 }
             }
         });
+        
+        // HAPUS event listener click - TIDAK DIGUNAKAN
+        // card.addEventListener('click', handleCardTouch); - TIDAK ADA
         
         document.addEventListener('touchmove', (e) => {
             if (isDragging && e.touches.length === 1) {
