@@ -639,7 +639,7 @@
 
         // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
-        let posY = window.innerHeight / 2 - card.offsetHeight / 2;
+        let posY = window.innerHeight + card.offsetHeight + 100;
         let scale = 1;
         let isDragging = false;
         let startX, startY;
@@ -1599,15 +1599,27 @@ function showCardStandar() {
         });
 
         window.addEventListener('load', () => {
-            loadRootFolders();
-            setTimeout(() => {
-                updateMainCardPreview();
-                updatePreviewCardSize();
-                card.style.display = 'block';
-                card.style.animation = 'none';
-                card.style.opacity = '1';
-            }, 200);
-        });
+    loadRootFolders();
+    setTimeout(() => {
+        updateMainCardPreview();
+        updatePreviewCardSize();
+        
+        // Set kartu di luar layar (bawah) agar tidak terlihat
+        card.style.display = 'block';
+        card.style.animation = 'none';
+        card.style.opacity = '1';
+        
+        // Posisikan di luar layar (bawah)
+        posX = (window.innerWidth / 2) - (card.offsetWidth / 2);
+        posY = window.innerHeight + card.offsetHeight + 100;
+        posX = Math.round(posX);
+        posY = Math.round(posY);
+        updateCardTransform();
+        
+        // Sembunyikan kartu
+        card.style.display = 'none';
+    }, 200);
+});
     </script>
 </body>
 </html>
