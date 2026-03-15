@@ -545,20 +545,19 @@
         </div>
 
         <!-- ===== EFFECT SHADOW TOGGLE ===== -->
-        <!-- ===== EFFECT SHADOW TOGGLE ===== -->
-<div class="setting-section">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-        <h3 style="margin: 0;">Effect Shadow</h3>
-        <label class="toggle-switch" style="margin: 0;">
-            <input type="checkbox" id="shadow-effect" checked>
-            <span class="toggle-slider"></span>
-        </label>
-    </div>
-    <div class="effect-description">
-        ON: Kartu muncul dengan animasi 5 detik (fade bertahap)<br>
-        OFF: Kartu muncul langsung (normal)
-    </div>
-</div>
+        <div class="setting-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <h3 style="margin: 0;">Effect Shadow</h3>
+                <label class="toggle-switch" style="margin: 0;">
+                    <input type="checkbox" id="shadow-effect" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="effect-description">
+                ON: Kartu muncul dengan animasi 5 detik (fade bertahap)<br>
+                OFF: Kartu muncul langsung (normal)
+            </div>
+        </div>
 
         <!-- ===== FRAME PREVIEW KARTU UTAMA ===== -->
         <div class="preview-frame-container">
@@ -673,18 +672,13 @@
         }
         
         function updateAllPreviews() {
-            const preview1Img = preview1.querySelector('img');
-            const preview2Img = preview2.querySelector('img');
-            const preview3Img = preview3.querySelector('img');
-            
-            if (preview1Img) preview1Img.src = card.src;
-            if (preview2Img) preview2Img.src = card.src;
-            if (preview3Img) preview3Img.src = card.src;
+            // Preview TIDAK LAGI mengikuti card.src
+            // Biarkan masing-masing preview dengan gambarnya sendiri
+            // Tidak perlu update di sini
         }
         
         updatePreviewCardSize();
         updateMainCardPreview();
-        updateAllPreviews();
         
         // Slider event listener
         cardSizeSlider.addEventListener('input', (e) => {
@@ -942,7 +936,7 @@
             showGithubModal(3);
         });
         
-        // ===== LOCAL STORAGE FUNCTIONS - DIPERBAIKI =====
+        // ===== LOCAL STORAGE FUNCTIONS =====
         function loadFromStorage() {
             try {
                 const savedData = localStorage.getItem(STORAGE_KEY);
@@ -971,7 +965,7 @@
                         if (preview3Img) preview3Img.src = data.preview3;
                     }
                     
-                    // Set card image dari preview1
+                    // Set card image dari preview1 (bukan dari data.cardImage)
                     if (data.preview1) {
                         card.src = data.preview1;
                     }
@@ -1003,7 +997,6 @@
                 
                 const data = {
                     background: background.style.backgroundImage.replace('url("', '').replace('")', ''),
-                    cardImage: card.src,
                     shadowEffect: shadowEffectCheckbox.checked,
                     preview1: preview1Img ? preview1Img.src : '',
                     preview2: preview2Img ? preview2Img.src : '',
@@ -1076,7 +1069,7 @@
             lastTap = currentTime;
         });
         
-        // Fungsi untuk handle tap pada kartu (dari klik atau sentuhan)
+        // Fungsi untuk handle tap pada kartu (dari sentuhan yang dilepas)
         function handleCardTap(e) {
             e.stopPropagation();
             e.preventDefault();
@@ -1159,12 +1152,8 @@
             }
         }
         
-        // Pasang event listener untuk card (CLICK dan TOUCH)
-        card.addEventListener('click', handleCardTap);
-        
-        // Deteksi sentuhan (tap) - TAMBAHAN UNTUK SENTUHAN
+        // Event listener untuk sentuhan pada kartu
         card.addEventListener('touchstart', (e) => {
-            // Untuk drag, kita bedakan dengan tap
             if (e.touches.length === 1) {
                 // Simpan waktu dan posisi untuk deteksi tap vs drag
                 card._touchStartTime = Date.now();
@@ -1184,7 +1173,7 @@
             }
         }, {passive: false});
         
-        // TAMBAHAN: Event listener untuk touchend yang mendeteksi tap
+        // Event listener untuk akhir sentuhan
         card.addEventListener('touchend', (e) => {
             // Cek apakah ini akhir dari drag
             if (isDragging) {
@@ -1194,7 +1183,7 @@
                 
                 // Jika durasi pendek dan pergerakan kecil, anggap sebagai tap
                 if (touchDuration < 200 && touchMoveX < 10 && touchMoveY < 10) {
-                    // Ini adalah tap, panggil handler tap
+                    // Ini adalah tap, panggil handler tap saat jari diangkat
                     handleCardTap(e);
                 }
                 
@@ -1263,20 +1252,16 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     showImageEditor(event.target.result, (editedImage) => {
+                        // Update hanya Favorite 1 dan kartu utama
+                        const preview1Img = preview1.querySelector('img');
+                        if (preview1Img) preview1Img.src = editedImage;
+                        
                         card.src = editedImage;
-                        updateMainCardPreview();
+                        mainCardPreview.src = editedImage;
+                        
                         scale = 1;
                         updateCardTransform();
                         autoSave();
-                        
-                        // Update preview images juga
-                        const preview1Img = preview1.querySelector('img');
-                        const preview2Img = preview2.querySelector('img');
-                        const preview3Img = preview3.querySelector('img');
-                        
-                        if (preview1Img) preview1Img.src = editedImage;
-                        if (preview2Img) preview2Img.src = editedImage;
-                        if (preview3Img) preview3Img.src = editedImage;
                     });
                 };
                 reader.readAsDataURL(file);
@@ -1485,7 +1470,6 @@
             loadRootFolders();
             setTimeout(() => {
                 updateMainCardPreview();
-                updateAllPreviews();
                 updatePreviewCardSize();
                 card.style.display = 'block';
                 card.style.animation = 'none';
