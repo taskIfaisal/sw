@@ -645,7 +645,7 @@
         let sequenceStage = 0; // 0: tidak dalam sequence, 1: stage 1 (kartu 1), 2: stage 2 (kartu 2), 3: stage 3 (kartu 3)
         let isSequenceActive = false;
         
-        // ===== VARIABEL UNTUK SENTUHAN KARTU (DARI KODE PERTAMA) =====
+        // ===== VARIABEL UNTUK SENTUHAN KARTU =====
         let touchToChangeTimeout = null;
         
         // ===== LOCAL STORAGE SETUP =====
@@ -675,7 +675,7 @@
         }
         
         function updateAllPreviews() {
-            // Preview TIDAK LAGI mengikuti card.src
+            // Preview TIDAK mengikuti card.src
             // Biarkan masing-masing preview dengan gambarnya sendiri
         }
         
@@ -804,7 +804,7 @@
                     const previewImg = previewBox.querySelector('img');
                     previewImg.src = selectedImage;
                     
-                    // Jika yang dipilih Favorite 1, update kartu utama
+                    // Jika yang dipilih Favorite 1, update kartu utama dan preview besar
                     if (activePreview === 1) {
                         card.src = selectedImage;
                         mainCardPreview.src = selectedImage;
@@ -956,7 +956,10 @@
                     // Load semua preview images
                     if (data.preview1) {
                         const preview1Img = preview1.querySelector('img');
-                        if (preview1Img) preview1Img.src = data.preview1;
+                        if (preview1Img) {
+                            preview1Img.src = data.preview1;
+                            console.log('Loaded preview1:', data.preview1);
+                        }
                     }
                     if (data.preview2) {
                         const preview2Img = preview2.querySelector('img');
@@ -967,15 +970,12 @@
                         if (preview3Img) preview3Img.src = data.preview3;
                     }
                     
-                    // Set card image dari preview1
+                    // Update kartu utama dan preview besar dari preview1
                     if (data.preview1) {
                         card.src = data.preview1;
+                        mainCardPreview.src = data.preview1;
+                        console.log('Updated card from preview1:', data.preview1);
                     }
-                    
-                    // Update main card preview
-                    setTimeout(() => {
-                        updateMainCardPreview();
-                    }, 100);
                 }
                 
                 const savedSize = localStorage.getItem('card_size');
@@ -1265,7 +1265,11 @@
                         
                         scale = 1;
                         updateCardTransform();
+                        
+                        // Simpan ke localStorage
                         autoSave();
+                        
+                        console.log('Card uploaded and saved:', editedImage);
                     });
                 };
                 reader.readAsDataURL(file);
@@ -1443,7 +1447,7 @@
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             
             card.style.display = 'block';
-            card.style.opacity = '1'; // Reset opacity
+            card.style.opacity = '1';
             
             if (shadowEffectCheckbox.checked) {
                 card.style.animation = 'none';
@@ -1478,6 +1482,9 @@
                 card.style.display = 'block';
                 card.style.animation = 'none';
                 card.style.opacity = '1';
+                
+                // Debug: lihat apa yang ada di storage
+                console.log('Storage after load:', localStorage.getItem(STORAGE_KEY));
             }, 200);
         });
     </script>
