@@ -1546,34 +1546,76 @@
         }
         
         function showCard() {
-            // Reset transformasi terlebih dahulu
-            const cardWidth = card.offsetWidth;
-            const cardHeight = card.offsetHeight;
-            
-            posX = (window.innerWidth - cardWidth) / 2;
-            posY = (window.innerHeight - cardHeight) / 2;
-            
-            posX = Math.round(posX);
-            posY = Math.round(posY);
-            
-            card.style.transform = 'none';
-            card.style.display = 'block';
-            card.style.opacity = '1';
-            
-            if (shadowEffectCheckbox.checked) {
-                card.style.animation = 'none';
-                void card.offsetHeight;
-                card.style.animation = 'muncul 5s ease-in-out';
-                
-                setTimeout(() => {
-                    card.style.animation = 'none';
-                }, 5000);
-            } else {
-                card.style.animation = 'none';
-            }
-            
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
+    // Reset semua style yang bisa mengganggu
+    card.style.transition = 'none';
+    card.style.transform = 'none';
+    card.style.left = '0';
+    card.style.top = '0';
+    
+    // Tampilkan kartu dulu
+    card.style.display = 'block';
+    
+    // Dapatkan ukuran kartu setelah display block
+    const cardWidth = card.offsetWidth;
+    const cardHeight = card.offsetHeight;
+    
+    // Hitung posisi tengah
+    const centerX = (window.innerWidth - cardWidth) / 2;
+    const centerY = (window.innerHeight - cardHeight) / 2;
+    
+    // Simpan posisi
+    posX = Math.round(centerX);
+    posY = Math.round(centerY);
+    
+    // Set opacity
+    card.style.opacity = '1';
+    
+    // Atur animasi jika shadow ON
+    if (shadowEffectCheckbox.checked) {
+        card.style.animation = 'none';
+        void card.offsetHeight; // Force reflow
+        card.style.animation = 'muncul 5s ease-in-out';
+        
+        setTimeout(() => {
+            card.style.animation = 'none';
+        }, 5000);
+    } else {
+        card.style.animation = 'none';
+    }
+    
+    // Terapkan transformasi
+    card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+}
+
+function showCardStandar() {
+    // Reset semua style yang bisa mengganggu
+    card.style.transition = 'none';
+    card.style.transform = 'none';
+    card.style.left = '0';
+    card.style.top = '0';
+    
+    // Tampilkan kartu dulu
+    card.style.display = 'block';
+    
+    // Dapatkan ukuran kartu setelah display block
+    const cardWidth = card.offsetWidth;
+    const cardHeight = card.offsetHeight;
+    
+    // Hitung posisi tengah
+    const centerX = (window.innerWidth - cardWidth) / 2;
+    const centerY = (window.innerHeight - cardHeight) / 2;
+    
+    // Simpan posisi
+    posX = Math.round(centerX);
+    posY = Math.round(centerY);
+    
+    // Tampilkan kartu tanpa animasi
+    card.style.opacity = '1';
+    card.style.animation = 'none';
+    
+    // Terapkan transformasi
+    card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+}
         
         window.addEventListener('resize', () => {
             // Saat resize, update posisi jika kartu visible
