@@ -825,92 +825,55 @@
         }
         
         window.openFolder = async function(folderName) {
-    currentFolder = folderName;
-    selectedImage = null;
-    
-    const contentElement = document.getElementById('modal-content');
-    contentElement.innerHTML = '<div class="loading">Loading images...</div>';
-    
-    const images = await loadFolderContents(folderName);
-    
-    if (images.length === 0) {
-        contentElement.innerHTML = `
-            <div class="folder-header">
-                <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
-                <h3>${folderName}</h3>
-            </div>
-            <div class="error-msg">Tidak ada gambar dalam folder ini</div>
-        `;
-        return;
-    }
-    
-    let html = `
-        <div class="folder-header">
-            <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
-            <h3>${folderName}</h3>
-        </div>
-        <div class="image-grid">
-    `;
-    
-    images.forEach(img => {
-        const downloadUrl = img.download_url || `https://raw.githubusercontent.com/taskIfaisal/sw/main/images/${folderName}/${img.name}`;
-        
-        html += `
-            <div class="grid-item" data-url="${downloadUrl}">
-                <img src="${downloadUrl}" alt="${img.name}" loading="lazy">
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    contentElement.innerHTML = html;
-    
-    // Variable untuk melacak double click
-    let clickCount = 0;
-    let clickTimer = null;
-    let lastClickedItem = null;
-    
-    // Event listener untuk grid item
-    document.querySelectorAll('.grid-item').forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
+            currentFolder = folderName;
+            selectedImage = null;
             
-            const currentItem = this;
-            const imageUrl = currentItem.dataset.url;
+            const contentElement = document.getElementById('modal-content');
+            contentElement.innerHTML = '<div class="loading">Loading images...</div>';
             
-            // Increment click count
-            clickCount++;
+            const images = await loadFolderContents(folderName);
             
-            // Jika ini klik pertama
-            if (clickCount === 1) {
-                // Hapus selected dari semua item
-                document.querySelectorAll('.grid-item').forEach(i => {
-                    i.classList.remove('selected');
-                });
-                
-                // Selected item ini
-                currentItem.classList.add('selected');
-                selectedImage = imageUrl;
-                lastClickedItem = currentItem;
-                
-                // Set timer untuk reset click count
-                clickTimer = setTimeout(() => {
-                    clickCount = 0;
-                    lastClickedItem = null;
-                }, 300);
+            if (images.length === 0) {
+                contentElement.innerHTML = `
+                    <div class="folder-header">
+                        <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
+                        <h3>${folderName}</h3>
+                    </div>
+                    <div class="error-msg">Tidak ada gambar dalam folder ini</div>
+                `;
+                return;
             }
             
-            // Jika ini klik kedua
-            if (clickCount === 2) {
-                // Cek apakah yang diklik adalah item yang sama
-                if (lastClickedItem === currentItem) {
-                    // Clear timer
-                    clearTimeout(clickTimer);
-                    clickCount = 0;
-                    lastClickedItem = null;
+            let html = `
+                <div class="folder-header">
+                    <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
+                    <h3>${folderName}</h3>
+                </div>
+                <div class="image-grid">
+            `;
+            
+            images.forEach(img => {
+                const downloadUrl = img.download_url || `https://raw.githubusercontent.com/taskIfaisal/sw/main/images/${folderName}/${img.name}`;
+                
+                html += `
+                    <div class="grid-item" data-url="${downloadUrl}">
+                        <img src="${downloadUrl}" alt="${img.name}" loading="lazy">
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            contentElement.innerHTML = html;
+            
+            // Event listener untuk single click langsung apply
+            document.querySelectorAll('.grid-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     
-                    // Apply gambar
+                    const imageUrl = this.dataset.url;
+                    
+                    // Update preview box
                     const previewBox = document.getElementById(`preview-${activePreview}`);
                     const previewImg = previewBox.querySelector('img');
                     previewImg.src = imageUrl;
@@ -930,31 +893,9 @@
                     // Tutup modal
                     document.body.removeChild(modalElement);
                     modalElement = null;
-                } else {
-                    // Jika berbeda, reset dan mulai dari awal
-                    clickCount = 0;
-                    clearTimeout(clickTimer);
-                    
-                    // Hapus selected dari semua item
-                    document.querySelectorAll('.grid-item').forEach(i => {
-                        i.classList.remove('selected');
-                    });
-                    
-                    // Selected item yang baru
-                    currentItem.classList.add('selected');
-                    selectedImage = imageUrl;
-                    lastClickedItem = currentItem;
-                    
-                    // Set timer baru
-                    clickTimer = setTimeout(() => {
-                        clickCount = 0;
-                        lastClickedItem = null;
-                    }, 300);
-                }
-            }
-        });
-    });
-};
+                });
+            });
+        };
         
         window.goBackToFolders = function() {
             currentFolder = null;
