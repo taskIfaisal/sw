@@ -1537,26 +1537,53 @@
         }
         
         function showCard() {
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-            
-            card.style.display = 'block';
-            card.style.opacity = '1';
-            
-            if (shadowEffectCheckbox.checked) {
-                card.style.animation = 'none';
-                void card.offsetHeight;
-                card.style.animation = 'muncul 5s ease-in-out';
-                
-                setTimeout(() => {
-                    card.style.animation = 'none';
-                }, 5000);
-            } else {
-                card.style.animation = 'none';
-            }
-            
-            updateCardTransform();
-        }
+    // Hitung posisi tengah dengan akurat
+    const cardWidth = card.offsetWidth;
+    const cardHeight = card.offsetHeight;
+    
+    posX = (window.innerWidth / 2) - (cardWidth / 2);
+    posY = (window.innerHeight / 2) - (cardHeight / 2);
+    
+    // Bulatkan ke integer untuk menghindari pecahan pixel
+    posX = Math.round(posX);
+    posY = Math.round(posY);
+    
+    card.style.display = 'block';
+    card.style.opacity = '1';
+    
+    if (shadowEffectCheckbox.checked) {
+        card.style.animation = 'none';
+        void card.offsetHeight;
+        card.style.animation = 'muncul 5s ease-in-out';
+        
+        setTimeout(() => {
+            card.style.animation = 'none';
+        }, 5000);
+    } else {
+        card.style.animation = 'none';
+    }
+    
+    updateCardTransform();
+}
+
+function showCardStandar() {
+    // Hitung posisi tengah dengan akurat
+    const cardWidth = card.offsetWidth;
+    const cardHeight = card.offsetHeight;
+    
+    posX = (window.innerWidth / 2) - (cardWidth / 2);
+    posY = (window.innerHeight / 2) - (cardHeight / 2);
+    
+    // Bulatkan ke integer untuk menghindari pecahan pixel
+    posX = Math.round(posX);
+    posY = Math.round(posY);
+    
+    // Tampilkan kartu tanpa animasi
+    card.style.display = 'block';
+    card.style.opacity = '1';
+    card.style.animation = 'none';
+    updateCardTransform();
+}
         
         window.addEventListener('resize', () => {
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
