@@ -1118,25 +1118,27 @@
                     }, 3000);
                     
                 } else if (sequenceStage === 3) {
-                    console.log('Stage 3: kartu akan menghilang perlahan dalam 5 detik');
-                    // Stage 3: tap kartu ke-3, kartu menghilang perlahan (fade out)
-                    
-                    // Set opacity 0 untuk fade out (transisi 5s dari CSS)
-                    card.style.opacity = '0';
-                    
-                    // Setelah fade out selesai, hide card dan reset sequence
-                    setTimeout(() => {
-                        if (isSequenceActive && sequenceStage === 3) {
-                            hideCard();
-                            // Reset opacity untuk next show
-                            card.style.opacity = '1';
-                            
-                            // Sequence selesai
-                            isSequenceActive = false;
-                            sequenceStage = 0;
-                        }
-                    }, 5000); // 5 detik fade out
+    console.log('Stage 3: tunggu 5 detik, lalu kartu menghilang perlahan');
+    
+    // Tunggu 5 detik dulu, baru fade out
+    sequenceTimer = setTimeout(() => {
+        if (isSequenceActive && sequenceStage === 3) {
+            // Setelah 5 detik, baru fade out
+            card.style.opacity = '0';
+            
+            // Setelah fade out selesai (5 detik), hide card
+            setTimeout(() => {
+                if (isSequenceActive && sequenceStage === 3) {
+                    hideCard();
+                    card.style.opacity = '1'; // Reset opacity
+                    isSequenceActive = false;
+                    sequenceStage = 0;
                 }
+            }, 5000); // 5 detik fade out
+        }
+        sequenceTimer = null;
+    }, 5000); // 5 detik tunggu dulu sebelum fade out
+}
             } else {
                 // Jika tidak dalam mode sequence, behave normal (hide card)
                 if (shadowEffectCheckbox.checked) {
