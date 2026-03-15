@@ -50,44 +50,31 @@
             user-select: none;
             -webkit-user-drag: none;
             touch-action: none;
-            /* Tambahkan ini untuk zoom yang lebih baik */
             transform-origin: center center;
-            height: auto; /* Biarkan tinggi menyesuaikan */
-            /* Untuk efek fade - diambil dari code kedua */
+            height: auto;
             opacity: 0;
             animation: muncul 5s ease-in-out;
         }
 
-        /* Efek animasi dari code kedua - duration 5s */
         @keyframes muncul {
-            0% {
-                opacity: 0;
-            }
-            50% {
-                opacity: 0.3;
-            }
-            80% {
-                opacity: 0.7;
-            }
-            100% {
-                opacity: 1;
-            }
+            0% { opacity: 0; }
+            50% { opacity: 0.3; }
+            80% { opacity: 0.7; }
+            100% { opacity: 1; }
         }
 
-        /* Class untuk kontrol fade */
         .card-fade-hidden {
             opacity: 0 !important;
             pointer-events: none;
-            animation: none; /* Matikan animasi saat hidden */
+            animation: none;
         }
         
         .card-fade-visible {
             opacity: 1 !important;
             pointer-events: auto;
-            animation: muncul 5s ease-in-out; /* Animasi saat muncul */
+            animation: muncul 5s ease-in-out;
         }
 
-        /* Style untuk slider card size */
         .size-control {
             display: flex;
             align-items: center;
@@ -217,89 +204,61 @@
             margin-top: 5px;
         }
 
-        /* Editor Modal Styles */
-        .image-editor {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 9999;
+        /* ===== PREVIEW 80x80px - TIGA KOTAK ===== */
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+            padding: 10px 0;
+        }
+        
+        .preview-item {
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 5px;
+        }
+        
+        .preview-label-small {
+            font-size: 12px;
+            color: #4CAF50;
+            text-align: center;
+        }
+        
+        .preview-box {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #666;
+            border-radius: 5px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
             justify-content: center;
+            background: #333;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 0 auto;
         }
-
-        .editor-container {
-            position: relative;
-            width: 90%;
-            height: 70%;
-            margin: 20px;
+        
+        .preview-box:hover {
+            border-color: #4CAF50;
+            transform: scale(1.05);
         }
-
-        #editing-card {
+        
+        .preview-box.selected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+        
+        .preview-box img {
             max-width: 100%;
             max-height: 100%;
-            display: block;
-            margin: 0 auto;
-            touch-action: none;
-            /* Tambahkan ini untuk zoom yang lebih baik */
-            transform-origin: center center;
-        }
-
-        .editor-controls {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            text-align: center;
-            padding: 15px 0;
-            background: rgba(0,0,0,0.7);
-        }
-
-        .editor-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .editor-buttons button {
-            min-width: 100px;
-        }
-
-        #cancel-edit {
-            background: #f44336;
+            object-fit: contain;
+            pointer-events: none;
         }
         
-        /* Permission button for iOS */
-        #sensor-permission {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            font-size: 24px;
-            z-index: 9999;
-            border: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-            text-align: center;
-            padding: 20px;
-            cursor: pointer;
-        }
-        
-        #sensor-permission.hidden {
-            display: none;
-        }
-
-        /* Style untuk modal album GitHub - Diperbarui dengan folder system */
+        /* Style untuk modal album GitHub */
         .github-modal {
             position: fixed;
             top: 0;
@@ -357,7 +316,6 @@
             background: #45a049;
         }
         
-        /* Albums grid untuk folder */
         .albums-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -400,7 +358,6 @@
             word-break: break-word;
         }
         
-        /* Image grid - 3 kolom untuk gambar */
         .image-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -462,10 +419,10 @@
             font-size: 16px;
         }
 
-        /* ===== FRAME PREVIEW UNTUK KARTU UTAMA - FULL WIDTH ===== */
+        /* FRAME PREVIEW KARTU UTAMA */
         .preview-frame-container {
-            margin: 20px -20px; /* Negatif margin untuk tembus padding settings */
-            width: 100vw; /* Full viewport width */
+            margin: 20px -20px;
+            width: 100vw;
             position: relative;
             left: 50%;
             right: 50%;
@@ -477,16 +434,16 @@
             color: #4CAF50;
             font-size: 14px;
             margin-bottom: 8px;
-            padding-left: 20px; /* Padding kembali untuk label */
+            padding-left: 20px;
         }
         
         .editor-frame {
-            width: 100vw; /* Full viewport width - sampai pinggir HP */
+            width: 100vw;
             height: 280px;
             border-top: 2px solid #4CAF50;
             border-bottom: 2px solid #4CAF50;
-            border-left: none; /* Tanpa border kiri */
-            border-right: none; /* Tanpa border kanan */
+            border-left: none;
+            border-right: none;
             background: #222;
             overflow: hidden;
             position: relative;
@@ -528,8 +485,38 @@
                 Choose Card
                 <input type="file" id="card-upload" accept="image/*">
             </label>
-            <!-- TOMOL DEFAULT CARD DIUBAH MENJADI GITHUB ALBUM -->
             <button id="github-album-btn">📁 GitHub Cards Album</button>
+        </div>
+
+        <!-- ===== TIGA PREVIEW 80x80px ===== -->
+        <div class="setting-section">
+            <h3>Quick Preview</h3>
+            <div class="preview-grid">
+                <!-- Preview 1 -->
+                <div class="preview-item">
+                    <div class="preview-box" id="preview-1" data-index="1">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 1">
+                    </div>
+                    <span class="preview-label-small">Favorite 1</span>
+                </div>
+                
+                <!-- Preview 2 -->
+                <div class="preview-item">
+                    <div class="preview-box" id="preview-2" data-index="2">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 2">
+                    </div>
+                    <span class="preview-label-small">Favorite 2</span>
+                </div>
+                
+                <!-- Preview 3 -->
+                <div class="preview-item">
+                    <div class="preview-box" id="preview-3" data-index="3">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 3">
+                    </div>
+                    <span class="preview-label-small">Favorite 3</span>
+                </div>
+            </div>
+            <p><small>✨ Klik preview untuk memilih dari album GitHub</small></p>
         </div>
 
         <!-- ===== EFFECT SHADOW TOGGLE ===== -->
@@ -545,7 +532,7 @@
             </div>
         </div>
 
-        <!-- ===== FRAME PREVIEW KARTU UTAMA - DITEMPATKAN DI ATAS SLIDER ===== -->
+        <!-- ===== FRAME PREVIEW KARTU UTAMA ===== -->
         <div class="preview-frame-container">
             <div class="preview-label">🔮 PREVIEW KARTU UTAMA</div>
             <div class="editor-frame">
@@ -553,7 +540,7 @@
             </div>
         </div>
 
-        <!-- CARD SIZE SLIDER SECTION (TAMBAHAN BARU) -->
+        <!-- CARD SIZE SLIDER SECTION -->
         <div class="setting-section">
             <h3>Card Size</h3>
             <div class="size-control">
@@ -568,7 +555,6 @@
         </div>
     </div>
     
-    <!-- Sensor Permission Button -->
     <button id="sensor-permission" class="hidden">
         Allow Motion Sensor Access<br>
         <small>(Tap to enable tilt controls)</small>
@@ -589,21 +575,23 @@
         const cardSizeSlider = document.getElementById('card-size-slider');
         const sizeValue = document.getElementById('size-value');
         
-        // Preview element untuk kartu utama
+        // Preview elements
         const mainCardPreview = document.getElementById('main-card-preview');
+        const preview1 = document.getElementById('preview-1');
+        const preview2 = document.getElementById('preview-2');
+        const preview3 = document.getElementById('preview-3');
         
         // Effect Shadow toggle
         const shadowEffectCheckbox = document.getElementById('shadow-effect');
 
-        // GitHub API URL - Diubah ke folder images untuk struktur folder
+        // GitHub API URL
         const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/images';
         
-        // State untuk album dengan folder system
-        let currentFolder = null; // null berarti di root (menampilkan folder)
+        // State untuk album
+        let currentFolder = null;
         let selectedImage = null;
         let modalElement = null;
-
-        let isExiting = false;
+        let activePreview = 1; // 1, 2, atau 3
 
         // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
@@ -617,11 +605,11 @@
         let lastPosY = 0;
         let lastTime = 0;
         
-        // SENSOR VARIABLES - Ditambahkan
-        let smoothBeta = 0;      // Untuk smoothing beta (tilt depan-belakang)
-        let smoothGamma = 0;     // Untuk smoothing gamma (tilt kiri-kanan)
-        const sensitivity = 0.5; // Sensitivitas gerakan kartu
-        const smoothing = 0.2;   // Smoothing untuk gerakan halus
+        // SENSOR VARIABLES
+        let smoothBeta = 0;
+        let smoothGamma = 0;
+        const sensitivity = 0.5;
+        const smoothing = 0.2;
         let isSensorEnabled = false;
         
         // ===== LOCAL STORAGE SETUP =====
@@ -631,34 +619,41 @@
         loadFromStorage();
         
         // ===== CARD SIZE CONTROL =====
-        // Load saved size or use default 200
         let currentCardSize = parseInt(localStorage.getItem('card_size')) || 200;
         
-        // Apply initial size
         card.style.maxWidth = currentCardSize + 'px';
         sizeValue.textContent = currentCardSize + 'px';
         cardSizeSlider.value = currentCardSize;
         
-        // Update preview card size
         function updatePreviewCardSize() {
-            // Atur ukuran preview kartu utama sesuai dengan ukuran slider
             mainCardPreview.style.width = currentCardSize + 'px';
             mainCardPreview.style.height = 'auto';
-            // Posisikan sedikit turun (30px dari atas frame)
             mainCardPreview.style.position = 'absolute';
             mainCardPreview.style.top = '30px';
             mainCardPreview.style.left = '50%';
             mainCardPreview.style.transform = 'translateX(-50%)';
         }
         
-        // Update preview dengan image card saat ini
         function updateMainCardPreview() {
             mainCardPreview.src = card.src;
         }
         
-        // Panggil fungsi untuk mengatur posisi awal preview
+        function updateAllPreviews() {
+            // Update semua preview dengan gambar yang sama (atau bisa diatur berbeda nantinya)
+            const preview1Img = preview1.querySelector('img');
+            const preview2Img = preview2.querySelector('img');
+            const preview3Img = preview3.querySelector('img');
+            
+            // Untuk contoh, kita set semua preview sama dengan card utama
+            // Nanti bisa dikembangkan untuk menyimpan gambar favorit
+            if (preview1Img) preview1Img.src = card.src;
+            if (preview2Img) preview2Img.src = card.src;
+            if (preview3Img) preview3Img.src = card.src;
+        }
+        
         updatePreviewCardSize();
         updateMainCardPreview();
+        updateAllPreviews();
         
         // Slider event listener
         cardSizeSlider.addEventListener('input', (e) => {
@@ -666,16 +661,13 @@
             sizeValue.textContent = newSize + 'px';
             card.style.maxWidth = newSize + 'px';
             
-            // Update ukuran preview kartu utama secara real-time
             currentCardSize = parseInt(newSize);
             updatePreviewCardSize();
             
-            // Update posisi kartu jika sedang muncul
             if (card.style.display !== 'none') {
                 const oldWidth = card.offsetWidth;
                 setTimeout(() => {
                     const newWidth = card.offsetWidth;
-                    // Sesuaikan posisi X agar kartu tetap di area yang sama
                     posX = posX - (newWidth - oldWidth) / 2;
                     applyBounds();
                     updateCardTransform();
@@ -683,31 +675,24 @@
             }
         });
 
-        // Save size when change
         cardSizeSlider.addEventListener('change', (e) => {
             localStorage.setItem('card_size', e.target.value);
             currentCardSize = parseInt(e.target.value);
             autoSave();
         });
         
-        // Set initial positions
         updateCardTransform();
-        
-        // Initialize sensor
         initSensor();
         
-        // ===== FUNGSI UNTUK ALBUM GITHUB DENGAN FOLDER SYSTEM =====
+        // ===== FUNGSI GITHUB ALBUM =====
         async function loadRootFolders() {
             try {
                 const response = await fetch(GITHUB_API_URL);
                 if (!response.ok) throw new Error('Failed to fetch');
                 
                 const data = await response.json();
-                
-                // Filter hanya folder (type = "dir")
                 const folders = data.filter(item => item.type === "dir");
                 
-                // Sorting folder berdasarkan nama
                 folders.sort((a, b) => {
                     return a.name.localeCompare(b.name, undefined, { 
                         numeric: true,
@@ -730,13 +715,11 @@
                 
                 const data = await response.json();
                 
-                // Filter hanya file gambar
                 const images = data.filter(file => {
                     const ext = file.name.split('.').pop().toLowerCase();
                     return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
                 });
                 
-                // Sorting gambar berdasarkan nama
                 images.sort((a, b) => {
                     return a.name.localeCompare(b.name, undefined, { 
                         numeric: true,
@@ -751,16 +734,16 @@
             }
         }
         
-        function showGithubModal() {
+        function showGithubModal(previewNumber) {
+            activePreview = previewNumber;
             selectedImage = null;
-            currentFolder = null; // Reset ke root
+            currentFolder = null;
             
-            // Buat modal
             modalElement = document.createElement('div');
             modalElement.className = 'github-modal';
             modalElement.innerHTML = `
                 <div class="modal-header">
-                    <h3>📁 Pilih Gambar dari GitHub</h3>
+                    <h3>📁 Pilih Gambar untuk Preview ${previewNumber}</h3>
                     <button id="close-modal">✕</button>
                 </div>
                 <div id="modal-content">
@@ -773,34 +756,28 @@
             
             document.body.appendChild(modalElement);
             
-            // Event listener untuk close
             document.getElementById('close-modal').addEventListener('click', () => {
                 document.body.removeChild(modalElement);
                 modalElement = null;
             });
             
-            // Event listener untuk apply
             const applyBtn = document.getElementById('modal-apply');
             applyBtn.addEventListener('click', () => {
                 if (selectedImage) {
-                    // Update card image
-                    card.src = selectedImage;
+                    // Update preview yang dipilih
+                    const previewBox = document.getElementById(`preview-${activePreview}`);
+                    const previewImg = previewBox.querySelector('img');
+                    previewImg.src = selectedImage;
                     
-                    // Update preview card utama
-                    updateMainCardPreview();
+                    // Highlight preview yang dipilih
+                    document.querySelectorAll('.preview-box').forEach(p => p.classList.remove('selected'));
+                    previewBox.classList.add('selected');
                     
-                    // Reset scale when new image is loaded
-                    scale = 1;
-                    updateCardTransform();
-                    autoSave();
-                    
-                    // Tutup modal
                     document.body.removeChild(modalElement);
                     modalElement = null;
                 }
             });
             
-            // Tampilkan folder-folder
             renderFolders();
         }
         
@@ -829,12 +806,10 @@
             contentElement.innerHTML = html;
         }
         
-        // Fungsi untuk membuka folder - dibuat global agar bisa dipanggil dari onclick
         window.openFolder = async function(folderName) {
             currentFolder = folderName;
             selectedImage = null;
             
-            // Disable apply button
             const applyBtn = document.getElementById('modal-apply');
             applyBtn.disabled = true;
             applyBtn.textContent = 'Pilih gambar dulu';
@@ -876,7 +851,6 @@
             html += '</div>';
             contentElement.innerHTML = html;
             
-            // Tambahkan event listener ke grid items
             document.querySelectorAll('.grid-item').forEach(item => {
                 item.addEventListener('click', () => {
                     document.querySelectorAll('.grid-item').forEach(i => {
@@ -888,13 +862,12 @@
                     
                     const applyBtn = document.getElementById('modal-apply');
                     applyBtn.disabled = false;
-                    applyBtn.textContent = `Apply Gambar`;
+                    applyBtn.textContent = `Apply Gambar ke Preview ${activePreview}`;
                     applyBtn.style.background = '#4CAF50';
                 });
             });
         };
         
-        // Fungsi untuk kembali ke daftar folder - dibuat global
         window.goBackToFolders = function() {
             currentFolder = null;
             selectedImage = null;
@@ -906,6 +879,19 @@
             renderFolders();
         };
         
+        // ===== EVENT LISTENER UNTUK PREVIEW =====
+        preview1.addEventListener('click', () => {
+            showGithubModal(1);
+        });
+        
+        preview2.addEventListener('click', () => {
+            showGithubModal(2);
+        });
+        
+        preview3.addEventListener('click', () => {
+            showGithubModal(3);
+        });
+        
         // ===== LOCAL STORAGE FUNCTIONS =====
         function loadFromStorage() {
             try {
@@ -913,27 +899,37 @@
                 if (savedData) {
                     const data = JSON.parse(savedData);
                     
-                    // Load background image
                     if (data.background) {
                         background.style.backgroundImage = `url(${data.background})`;
                     }
                     
-                    // Load card image
                     if (data.cardImage) {
                         card.src = data.cardImage;
-                        // Update preview setelah card dimuat
                         setTimeout(() => {
                             updateMainCardPreview();
+                            updateAllPreviews();
                         }, 100);
                     }
                     
-                    // Load shadow effect setting
                     if (data.shadowEffect !== undefined) {
                         shadowEffectCheckbox.checked = data.shadowEffect;
                     }
+                    
+                    // Load preview images jika ada
+                    if (data.preview1) {
+                        const preview1Img = preview1.querySelector('img');
+                        preview1Img.src = data.preview1;
+                    }
+                    if (data.preview2) {
+                        const preview2Img = preview2.querySelector('img');
+                        preview2Img.src = data.preview2;
+                    }
+                    if (data.preview3) {
+                        const preview3Img = preview3.querySelector('img');
+                        preview3Img.src = data.preview3;
+                    }
                 }
                 
-                // Load card size (jika ada di storage terpisah)
                 const savedSize = localStorage.getItem('card_size');
                 if (savedSize) {
                     currentCardSize = parseInt(savedSize);
@@ -949,10 +945,17 @@
         
         function saveToStorage() {
             try {
+                const preview1Img = preview1.querySelector('img');
+                const preview2Img = preview2.querySelector('img');
+                const preview3Img = preview3.querySelector('img');
+                
                 const data = {
                     background: background.style.backgroundImage.replace('url("', '').replace('")', ''),
                     cardImage: card.src,
-                    shadowEffect: shadowEffectCheckbox.checked
+                    shadowEffect: shadowEffectCheckbox.checked,
+                    preview1: preview1Img ? preview1Img.src : '',
+                    preview2: preview2Img ? preview2Img.src : '',
+                    preview3: preview3Img ? preview3Img.src : ''
                 };
                 
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -964,9 +967,8 @@
         function autoSave() {
             saveToStorage();
         }
-        // ===== END LOCAL STORAGE FUNCTIONS =====
         
-        // Touch events for swipe up to open settings
+        // Touch events
         let startYPos = 0;
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
@@ -977,34 +979,30 @@
         document.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2) {
                 const currentY = e.touches[0].clientY;
-                if (currentY - startYPos > 100) { // Swipe UP with two fingers
+                if (currentY - startYPos > 100) {
                     e.preventDefault();
                     settings.style.top = '0';
                 }
             }
         }, {passive: false});
         
-        // Double click/tap to show card
         let lastTap = 0;
         document.addEventListener('touchend', (e) => {
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTap;
             if (tapLength < 300 && tapLength > 0) {
-                // Double tap detected
                 showCard();
             }
             lastTap = currentTime;
         });
         
-        // Single tap on card to hide (hanya jika shadow effect ON)
         card.addEventListener('click', (e) => {
-            e.stopPropagation(); // Mencegah event bubbling
+            e.stopPropagation();
             if (shadowEffectCheckbox.checked) {
                 hideCard();
             }
         });
         
-        // Card dragging functionality with velocity tracking
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 isDragging = true;
@@ -1038,7 +1036,6 @@
                     posX = newPosX;
                     posY = newPosY;
                     
-                    // Apply bounds saat dragging juga
                     updateCardTransform();
                 }
                 e.preventDefault();
@@ -1049,11 +1046,9 @@
             if (isDragging) {
                 isDragging = false;
                 
-                // Check if card is flicked quickly
-                const speedThreshold = 1000; // pixels per second
+                const speedThreshold = 1000;
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
                 
-                // Cek apakah kartu keluar batas (flick detection)
                 const outTop    = posY < -card.offsetHeight * scale * 0.4;
                 const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
                 const outLeft   = posX < -card.offsetWidth * scale * 0.4;
@@ -1066,20 +1061,18 @@
             }
         });
         
-        // Settings functionality
         bgUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     background.style.backgroundImage = `url(${event.target.result})`;
-                    autoSave(); // Save when background changes
+                    autoSave();
                 };
                 reader.readAsDataURL(file);
             }
         });
         
-        // Card upload with image editor
         cardUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -1087,36 +1080,30 @@
                 reader.onload = (event) => {
                     showImageEditor(event.target.result, (editedImage) => {
                         card.src = editedImage;
-                        // Update preview card utama
                         updateMainCardPreview();
-                        // Reset scale when new image is loaded
                         scale = 1;
                         updateCardTransform();
-                        autoSave(); // Save when card changes
+                        autoSave();
                     });
                 };
                 reader.readAsDataURL(file);
             }
         });
         
-        // GitHub Album button - dengan folder system
         githubAlbumBtn.addEventListener('click', () => {
-            showGithubModal();
+            showGithubModal(1); // Default ke preview 1
         });
         
         closeSettingsBtn.addEventListener('click', () => {
             settings.style.top = '-100%';
-            autoSave(); // Save when settings are closed
+            autoSave();
         });
         
-        // Shadow effect toggle change
         shadowEffectCheckbox.addEventListener('change', () => {
             autoSave();
         });
         
-        // ===== SENSOR IMPLEMENTATION =====
         function initSensor() {
-            // Cek apakah perlu permission (untuk iOS)
             if (typeof DeviceOrientationEvent?.requestPermission === "function") {
                 sensorPermissionBtn.classList.remove('hidden');
                 
@@ -1133,7 +1120,6 @@
                     }
                 };
             } else {
-                // Untuk browser yang tidak memerlukan permission
                 startSensor();
             }
         }
@@ -1145,27 +1131,21 @@
         }
         
         function handleDeviceOrientation(e) {
-            // Hanya proses jika kartu terlihat dan tidak sedang didrag
             if (!card.style.display || card.style.display === 'none' || isDragging) return;
 
-            // Batasi nilai beta dan gamma antara -45 sampai 45 derajat
             const beta = Math.max(-45, Math.min(45, e.beta || 0));
             const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
 
-            // Smoothing untuk gerakan yang lebih halus
             smoothBeta += (beta - smoothBeta) * smoothing;
             smoothGamma += (gamma - smoothGamma) * smoothing;
         }
         
         function startSensorAnimation() {
             function animate() {
-                // Hanya gerakkan kartu jika sensor enabled dan tidak sedang didrag
                 if (isSensorEnabled && !isDragging && card.style.display !== 'none') {
-                    // Gerakkan kartu berdasarkan nilai sensor
                     posX += smoothGamma * sensitivity;
                     posY += smoothBeta * sensitivity;
                     
-                    // PASTIKAN KARTU TIDAK KELUAR DARI BATAS LAYAR
                     applyBounds();
                     updateCardTransform();
                 }
@@ -1177,25 +1157,19 @@
         }
         
         function applyBounds() {
-            // Hitung ukuran kartu yang sudah discale
             const cardWidth = card.offsetWidth * scale;
             const cardHeight = card.offsetHeight * scale;
             
-            // PERBAIKAN: Hitung batas dengan benar
             const minX = 0;
             const maxX = window.innerWidth - cardWidth;
             const minY = 0;
             const maxY = window.innerHeight - cardHeight;
             
-            // Terapkan batas dengan benar
             posX = Math.max(minX, Math.min(maxX, posX));
             posY = Math.max(minY, Math.min(maxY, posY));
         }
-        // ===== END SENSOR IMPLEMENTATION =====
         
-        // Image Editor Function
         function showImageEditor(imageSrc, callback) {
-            // Create editor modal
             const editor = document.createElement('div');
             editor.className = 'image-editor';
             editor.innerHTML = `
@@ -1220,7 +1194,6 @@
             let currentScale = 1;
             let startDistance = 0;
             
-            // Zoom with pinch gesture
             editingCard.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 2) {
                     e.preventDefault();
@@ -1250,10 +1223,9 @@
                 startDistance = 0;
             }, {passive: false});
             
-            // Save/cancel buttons
             saveBtn.addEventListener('click', () => {
                 document.body.removeChild(editor);
-                callback(imageSrc); // Return the original image (scaling is handled by CSS)
+                callback(imageSrc);
             });
             
             cancelBtn.addEventListener('click', () => {
@@ -1261,46 +1233,33 @@
             });
         }
         
-        // Helper function to calculate distance between two points
         function getDistance(x1, y1, x2, y2) {
             return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
         }
         
-        // Helper functions
         function updateCardTransform() {
             card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
         }
         
         function hideCard() {
-            if (shadowEffectCheckbox.checked) {
-                // Fade out effect - langsung hide karena animasi hanya untuk muncul
-                card.style.display = 'none';
-                card.style.opacity = '0';
-            } else {
-                // Langsung hide tanpa efek
-                card.style.display = 'none';
-                card.style.opacity = '0';
-            }
+            card.style.display = 'none';
+            card.style.opacity = '0';
         }
         
         function showCard() {
-            // Reset to center position
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             
             if (shadowEffectCheckbox.checked) {
-                // Animasi muncul 5 detik dari code kedua
                 card.style.display = 'block';
-                card.style.opacity = '1'; // Opacity diatur oleh animasi
+                card.style.opacity = '1';
                 card.style.animation = 'muncul 5s ease-in-out';
                 updateCardTransform();
                 
-                // Hapus animation setelah selesai agar bisa diulang next time
                 setTimeout(() => {
                     card.style.animation = 'none';
                 }, 5000);
             } else {
-                // Langsung tampilkan tanpa efek
                 card.style.display = 'block';
                 card.style.opacity = '1';
                 card.style.animation = 'none';
@@ -1308,26 +1267,22 @@
             }
         }
         
-        // Handle window resize
         window.addEventListener('resize', () => {
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             updateCardTransform();
         });
         
-        // Save before page unload
         window.addEventListener('beforeunload', () => {
             saveToStorage();
         });
 
-        // Pre-load root folders di background
         window.addEventListener('load', () => {
             loadRootFolders();
-            // Pastikan preview update setelah load
             setTimeout(() => {
                 updateMainCardPreview();
+                updateAllPreviews();
                 updatePreviewCardSize();
-                // Set initial card visible
                 card.style.display = 'block';
                 card.style.opacity = '1';
                 card.style.animation = 'none';
