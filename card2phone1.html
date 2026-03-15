@@ -1071,27 +1071,31 @@
                     clearTimeout(touchToChangeTimeout);
                     touchToChangeTimeout = null;
                 }
-                
                 if (shadowEffectCheckbox.checked) {
-                    // EFFECT SHADOW ON: Jalankan sequence lengkap dengan delay 5 detik
-                    sequenceStage = 0;
-                    isSequenceActive = true;
-                    
-                    // Tunggu 5 detik sebelum memunculkan kartu utama (dari Favorite 1)
-                    sequenceTimer = setTimeout(() => {
-                        if (isSequenceActive) {
-                            // Ambil gambar dari preview 1
-                            const preview1Img = preview1.querySelector('img');
-                            if (preview1Img) {
-                                updateCardImage(preview1Img.src);
-                            }
-                            
-                            showCard();
-                            sequenceStage = 1; // Stage 1: kartu 1 sudah muncul
-                        }
-                        sequenceTimer = null;
-                    }, 5000);
-                } else {
+    // EFFECT SHADOW ON: Jalankan sequence lengkap dengan delay 5 detik
+    sequenceStage = 0;
+    isSequenceActive = true;
+    
+    // HAPUS updateCardImage dari sini, karena showCard sudah mengatur gambar
+    sequenceTimer = setTimeout(() => {
+        if (isSequenceActive) {
+            // Ambil gambar dari preview 1
+            const preview1Img = preview1.querySelector('img');
+            if (preview1Img) {
+                // Update card image
+                card.src = preview1Img.src;
+                mainCardPreview.src = preview1Img.src;
+                updateMainCardPreview();
+            }
+            
+            showCard();
+            sequenceStage = 1; // Stage 1: kartu 1 sudah muncul
+        }
+        sequenceTimer = null;
+    }, 5000);
+}
+                
+                else {
                     // EFFECT SHADOW OFF: Langsung tampilkan kartu setelah 1 detik (tanpa sequence)
                     sequenceTimer = setTimeout(() => {
                         const preview1Img = preview1.querySelector('img');
