@@ -1296,6 +1296,7 @@
         });
         
        // ===== CARD UPLOAD - MENGGUNAKAN FUNGSI YANG SAMA DENGAN GITHUB =====
+// ===== CARD UPLOAD - VERSION SEDERHANA (TANPA EDITOR) =====
 cardUpload.addEventListener('change', (e) => {
     const file = e.target.files[0];
     console.log('File selected:', file ? file.name : 'none');
@@ -1305,15 +1306,33 @@ cardUpload.addEventListener('change', (e) => {
         reader.onload = (event) => {
             console.log('File loaded, length:', event.target.result.length);
             
-            // Tampilkan editor dulu
-            showImageEditor(event.target.result, (editedImage) => {
-                console.log('Editor returned image');
-                
-                // ===== GUNAKAN FUNGSI YANG SAMA DENGAN GITHUB =====
-                updateCardImage(editedImage);
-                
-                console.log('Card upload complete');
-            });
+            // LANGSUNG update tanpa editor dulu
+            const imageSrc = event.target.result;
+            
+            // 1. Update Favorite 1
+            const preview1Img = preview1.querySelector('img');
+            if (preview1Img) {
+                preview1Img.src = imageSrc;
+                console.log('Preview1 updated');
+            }
+            
+            // 2. Update kartu utama
+            card.src = imageSrc;
+            console.log('Card src updated');
+            
+            // 3. Update preview besar
+            mainCardPreview.src = imageSrc;
+            
+            // 4. Jika kartu sedang visible, update posisi
+            if (card.style.display !== 'none') {
+                scale = 1;
+                updateCardTransform();
+            }
+            
+            // 5. Simpan ke localStorage
+            autoSave();
+            
+            console.log('Card upload complete');
         };
         reader.readAsDataURL(file);
     }
