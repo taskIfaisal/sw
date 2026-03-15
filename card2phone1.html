@@ -1529,8 +1529,11 @@
         }
         
         function updateCardTransform() {
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
+    // Pastikan posisi selalu integer
+    posX = Math.round(posX);
+    posY = Math.round(posY);
+    card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+}
         
         function hideCard() {
             card.style.display = 'none';
