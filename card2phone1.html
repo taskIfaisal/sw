@@ -645,6 +645,9 @@
         let sequenceStage = 0; // 0: tidak dalam sequence, 1: stage 1 (kartu 1), 2: stage 2 (kartu 2), 3: stage 3 (kartu 3)
         let isSequenceActive = false;
         
+        // ===== VARIABEL UNTUK SENTUHAN KARTU (DARI KODE PERTAMA) =====
+        let touchToChangeTimeout = null;
+        
         // ===== LOCAL STORAGE SETUP =====
         const STORAGE_KEY = 'magic_card_data';
         
@@ -1044,6 +1047,10 @@
                     clearTimeout(sequenceTimer);
                     sequenceTimer = null;
                 }
+                if (touchToChangeTimeout) {
+                    clearTimeout(touchToChangeTimeout);
+                    touchToChangeTimeout = null;
+                }
                 
                 // Reset stage dan mulai sequence
                 sequenceStage = 0;
@@ -1068,103 +1075,10 @@
             lastTap = currentTime;
         });
         
-        // Fungsi untuk handle sentuhan pada kartu (dipanggil dari touchend)
-        function handleCardTouch(e) {
-            e.stopPropagation();
-            e.preventDefault();
-            
-            console.log('Card released, sequenceStage:', sequenceStage, 'isSequenceActive:', isSequenceActive);
-            
-            // Hanya proses jika dalam mode sequence dan effect shadow ON
-            if (shadowEffectCheckbox.checked && isSequenceActive) {
-                
-                // Clear timer yang mungkin berjalan
-                if (sequenceTimer) {
-                    clearTimeout(sequenceTimer);
-                    sequenceTimer = null;
-                }
-                
-                if (sequenceStage === 1) {
-                    console.log('Stage 1: akan ganti ke Favorite 2 dalam 3 detik');
-                    // Stage 1: sentuh lalu lepas kartu utama, tunggu 3 detik ganti ke Favorite 2
-                    sequenceTimer = setTimeout(() => {
-                        if (isSequenceActive && sequenceStage === 1) {
-                            console.log('Mengganti ke Favorite 2');
-                            // Ambil gambar dari preview 2
-                            const preview2Img = preview2.querySelector('img');
-                            if (preview2Img) {
-                                card.src = preview2Img.src;
-                                mainCardPreview.src = preview2Img.src;
-                                updateCardTransform();
-                                sequenceStage = 2; // Stage 2: kartu 2
-                            }
-                        }
-                        sequenceTimer = null;
-                    }, 3000);
-                    
-                } else if (sequenceStage === 2) {
-                    console.log('Stage 2: akan ganti ke Favorite 3 dalam 3 detik');
-                    // Stage 2: sentuh lalu lepas kartu ke-2, tunggu 3 detik ganti ke Favorite 3
-                    sequenceTimer = setTimeout(() => {
-                        if (isSequenceActive && sequenceStage === 2) {
-                            console.log('Mengganti ke Favorite 3');
-                            // Ambil gambar dari preview 3
-                            const preview3Img = preview3.querySelector('img');
-                            if (preview3Img) {
-                                card.src = preview3Img.src;
-                                mainCardPreview.src = preview3Img.src;
-                                updateCardTransform();
-                                sequenceStage = 3; // Stage 3: kartu 3
-                            }
-                        }
-                        sequenceTimer = null;
-                    }, 3000);
-                    
-                } else if (sequenceStage === 3) {
-                    console.log('Stage 3: tunggu 5 detik, lalu kartu menghilang perlahan');
-                    
-                    // Tunggu 5 detik dulu, baru fade out
-                    sequenceTimer = setTimeout(() => {
-                        if (isSequenceActive && sequenceStage === 3) {
-                            // Setelah 5 detik, baru fade out
-                            card.style.opacity = '0';
-                            
-                            // Setelah fade out selesai (5 detik), hide card
-                            setTimeout(() => {
-                                if (isSequenceActive && sequenceStage === 3) {
-                                    hideCard();
-                                    card.style.opacity = '1'; // Reset opacity
-                                    isSequenceActive = false;
-                                    sequenceStage = 0;
-                                }
-                            }, 5000); // 5 detik fade out
-                        }
-                        sequenceTimer = null;
-                    }, 5000); // 5 detik tunggu dulu sebelum fade out
-                }
-            } else {
-                // Jika tidak dalam mode sequence, behave normal (hide card)
-                if (shadowEffectCheckbox.checked) {
-                    console.log('Hide card normal');
-                    hideCard();
-                    // Reset sequence jika kartu hilang
-                    isSequenceActive = false;
-                    sequenceStage = 0;
-                }
-            }
-        }
-        
-        // Event listener untuk sentuhan pada kartu - hanya catat waktu & posisi
+        // ===== EVENT LISTENER UNTUK KARTU - MENGIKUTI LOGIKA KODE PERTAMA =====
+        // Event listener untuk sentuhan pada kartu - mulai drag
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
-                // Simpan waktu dan posisi untuk deteksi tap vs drag
-                card._touchStartTime = Date.now();
-                card._touchStartX = e.touches[0].clientX;
-                card._touchStartY = e.touches[0].clientY;
-                
-                // 🔴 JANGAN panggil handler di sini - hanya catat untuk deteksi nanti
-                
-                // Set isDragging = true untuk drag
                 isDragging = true;
                 startX = e.touches[0].clientX - posX;
                 startY = e.touches[0].clientY - posY;
@@ -1173,42 +1087,78 @@
                 lastPosX = posX;
                 lastPosY = posY;
                 lastTime = Date.now();
+                card.style.transition = 'none';
+                card.style.animation = 'none';
                 e.preventDefault();
             }
         }, {passive: false});
-        
-        // Event listener untuk akhir sentuhan - DETeksi TAP dan PANGGIL HANDLER
-        card.addEventListener('touchend', (e) => {
-            // Cek apakah ini akhir dari drag
-            if (isDragging) {
-                const touchDuration = Date.now() - card._touchStartTime;
-                const touchMoveX = Math.abs(e.changedTouches[0].clientX - card._touchStartX);
-                const touchMoveY = Math.abs(e.changedTouches[0].clientY - card._touchStartY);
-                
-                // 🔴 PANGGIL HANDLER SAAT JARI DIANGKAT - jika ini adalah tap singkat
-                if (touchDuration < 200 && touchMoveX < 10 && touchMoveY < 10) {
-                    handleCardTouch(e);
-                }
-                
-                isDragging = false;
-                
-                // Cek apakah kartu keluar batas (flick)
-                const outTop    = posY < -card.offsetHeight * scale * 0.4;
-                const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
-                const outLeft   = posX < -card.offsetWidth * scale * 0.4;
-                const outRight  = posX > window.innerWidth - card.offsetWidth * scale * 0.6;
 
-                if (outTop || outBottom || outLeft || outRight) {
-                    hideCard();
-                    // Reset sequence jika kartu hilang
-                    isSequenceActive = false;
-                    sequenceStage = 0;
-                    if (sequenceTimer) {
-                        clearTimeout(sequenceTimer);
-                        sequenceTimer = null;
+        // Event listener untuk akhir sentuhan - deteksi tap dan mulai timer
+        card.addEventListener('touchend', (e) => {
+            setTimeout(() => {
+                isDragging = false;
+            }, 50);
+            
+            if (card.style.display === 'none' || !isSequenceActive) {
+                return;
+            }
+            
+            // Clear timer yang mungkin berjalan
+            if (touchToChangeTimeout) {
+                clearTimeout(touchToChangeTimeout);
+            }
+            
+            // Proses berdasarkan stage
+            if (sequenceStage === 1) {
+                console.log("Stage 1: timer 3 detik ke Favorite 2 dimulai...");
+                touchToChangeTimeout = setTimeout(() => {
+                    if (isSequenceActive && sequenceStage === 1) {
+                        console.log("Mengganti ke Favorite 2");
+                        const preview2Img = preview2.querySelector('img');
+                        if (preview2Img) {
+                            card.src = preview2Img.src;
+                            mainCardPreview.src = preview2Img.src;
+                            updateCardTransform();
+                            sequenceStage = 2;
+                        }
                     }
-                    return;
-                }
+                    touchToChangeTimeout = null;
+                }, 3000);
+                
+            } else if (sequenceStage === 2) {
+                console.log("Stage 2: timer 3 detik ke Favorite 3 dimulai...");
+                touchToChangeTimeout = setTimeout(() => {
+                    if (isSequenceActive && sequenceStage === 2) {
+                        console.log("Mengganti ke Favorite 3");
+                        const preview3Img = preview3.querySelector('img');
+                        if (preview3Img) {
+                            card.src = preview3Img.src;
+                            mainCardPreview.src = preview3Img.src;
+                            updateCardTransform();
+                            sequenceStage = 3;
+                        }
+                    }
+                    touchToChangeTimeout = null;
+                }, 3000);
+                
+            } else if (sequenceStage === 3) {
+                console.log("Stage 3: timer 5 detik fade out dimulai...");
+                touchToChangeTimeout = setTimeout(() => {
+                    if (isSequenceActive && sequenceStage === 3) {
+                        console.log("Fade out dimulai");
+                        card.style.opacity = '0';
+                        
+                        setTimeout(() => {
+                            if (isSequenceActive && sequenceStage === 3) {
+                                hideCard();
+                                card.style.opacity = '1';
+                                isSequenceActive = false;
+                                sequenceStage = 0;
+                            }
+                        }, 5000);
+                    }
+                    touchToChangeTimeout = null;
+                }, 5000);
             }
         });
         
@@ -1232,10 +1182,61 @@
                     posY = newPosY;
                     
                     updateCardTransform();
+                    
+                    const cardRect = card.getBoundingClientRect();
+                    const exitThreshold = 30;
+                    
+                    if (cardRect.bottom < -exitThreshold || 
+                        cardRect.top > window.innerHeight + exitThreshold ||
+                        cardRect.right < -exitThreshold || 
+                        cardRect.left > window.innerWidth + exitThreshold) {
+                        
+                        hideCard();
+                        isSequenceActive = false;
+                        sequenceStage = 0;
+                        if (touchToChangeTimeout) {
+                            clearTimeout(touchToChangeTimeout);
+                            touchToChangeTimeout = null;
+                        }
+                        isDragging = false;
+                        return;
+                    }
                 }
                 e.preventDefault();
             }
         }, {passive: false});
+        
+        document.addEventListener('touchend', (e) => {
+            if (isDragging) {
+                isDragging = false;
+                card.style.transition = '';
+                
+                const speedThreshold = 1000;
+                const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+                
+                const cardRect = card.getBoundingClientRect();
+                const exitThreshold = 50;
+                
+                if (cardRect.bottom < -exitThreshold || 
+                    cardRect.top > window.innerHeight + exitThreshold ||
+                    cardRect.right < -exitThreshold || 
+                    cardRect.left > window.innerWidth + exitThreshold ||
+                    currentSpeed > speedThreshold) {
+                    
+                    hideCard();
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                    if (touchToChangeTimeout) {
+                        clearTimeout(touchToChangeTimeout);
+                        touchToChangeTimeout = null;
+                    }
+                    return;
+                }
+                
+                applyBounds();
+                updateCardTransform();
+            }
+        });
         
         bgUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
