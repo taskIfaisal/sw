@@ -544,18 +544,33 @@
             <p><small>✨ Klik preview untuk memilih dari album GitHub</small></p>
         </div>
 
+        <!-- ===== EFFECT STANDAR TOGGLE ===== -->
+        <div class="setting-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <h3 style="margin: 0;">Effect Standar</h3>
+                <label class="toggle-switch" style="margin: 0;">
+                    <input type="checkbox" id="effect-standar" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="effect-description">
+                ON: Double tap → tunggu 1 detik → kartu muncul langsung<br>
+                OFF: -
+            </div>
+        </div>
+
         <!-- ===== EFFECT SHADOW TOGGLE ===== -->
         <div class="setting-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <h3 style="margin: 0;">Effect Shadow</h3>
                 <label class="toggle-switch" style="margin: 0;">
-                    <input type="checkbox" id="shadow-effect" checked>
+                    <input type="checkbox" id="shadow-effect">
                     <span class="toggle-slider"></span>
                 </label>
             </div>
             <div class="effect-description">
-                ON: Kartu muncul dengan animasi 5 detik, bisa berubah 3 kali, lalu fade out<br>
-                OFF: Kartu muncul setelah 1 detik (tanpa animasi, tanpa perubahan)
+                ON: Double tap → tunggu 5 detik → kartu muncul fade in (5 detik), bisa berubah 3 kali, lalu fade out<br>
+                OFF: -
             </div>
         </div>
 
@@ -609,7 +624,8 @@
         const preview2 = document.getElementById('preview-2');
         const preview3 = document.getElementById('preview-3');
         
-        // Effect Shadow toggle
+        // Effect toggles
+        const effectStandarCheckbox = document.getElementById('effect-standar');
         const shadowEffectCheckbox = document.getElementById('shadow-effect');
 
         // GitHub API URL
@@ -935,7 +951,7 @@
             showGithubModal(3);
         });
         
-        // ===== FUNGSI UNTUK UPDATE CARD IMAGE (DIGUNAKAN OLEH CARD UPLOAD DAN GITHUB) =====
+        // ===== FUNGSI UNTUK UPDATE CARD IMAGE =====
         function updateCardImage(imageSrc) {
             console.log('Updating card image to:', imageSrc.substring(0, 50) + '...');
             
@@ -960,6 +976,19 @@
             autoSave();
         }
         
+        // ===== FUNGSI UNTUK EFFECT STANDAR (MUNCUL CEPAT) =====
+        function showCardStandar() {
+            // Reset posisi ke tengah
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+            
+            // Tampilkan kartu tanpa animasi
+            card.style.display = 'block';
+            card.style.opacity = '1';
+            card.style.animation = 'none';
+            updateCardTransform();
+        }
+        
         // ===== LOCAL STORAGE FUNCTIONS =====
         function loadFromStorage() {
             try {
@@ -971,6 +1000,10 @@
                         background.style.backgroundImage = `url(${data.background})`;
                     }
                     
+                    // Load effect settings
+                    if (data.effectStandar !== undefined) {
+                        effectStandarCheckbox.checked = data.effectStandar;
+                    }
                     if (data.shadowEffect !== undefined) {
                         shadowEffectCheckbox.checked = data.shadowEffect;
                     }
@@ -1020,6 +1053,7 @@
                 
                 const data = {
                     background: background.style.backgroundImage.replace('url("', '').replace('")', ''),
+                    effectStandar: effectStandarCheckbox.checked,
                     shadowEffect: shadowEffectCheckbox.checked,
                     preview1: preview1Img ? preview1Img.src : '',
                     preview2: preview2Img ? preview2Img.src : '',
@@ -1035,6 +1069,21 @@
         function autoSave() {
             saveToStorage();
         }
+        
+        // ===== EFFECT TOGGLES - SALING EKSKLUSIF =====
+        effectStandarCheckbox.addEventListener('change', (e) => {
+            if (effectStandarCheckbox.checked) {
+                shadowEffectCheckbox.checked = false;
+            }
+            autoSave();
+        });
+        
+        shadowEffectCheckbox.addEventListener('change', (e) => {
+            if (shadowEffectCheckbox.checked) {
+                effectStandarCheckbox.checked = false;
+            }
+            autoSave();
+        });
         
         // Touch events for swipe up to open settings
         let startYPos = 0;
@@ -1071,51 +1120,50 @@
                     clearTimeout(touchToChangeTimeout);
                     touchToChangeTimeout = null;
                 }
-                if (shadowEffectCheckbox.checked) {
-    // EFFECT SHADOW ON: Jalankan sequence lengkap dengan delay 5 detik
-    sequenceStage = 0;
-    isSequenceActive = true;
-    
-    // HAPUS updateCardImage dari sini, karena showCard sudah mengatur gambar
-    sequenceTimer = setTimeout(() => {
-        if (isSequenceActive) {
-            // Ambil gambar dari preview 1
-            const preview1Img = preview1.querySelector('img');
-            if (preview1Img) {
-                // Update card image
-                card.src = preview1Img.src;
-                mainCardPreview.src = preview1Img.src;
-                updateMainCardPreview();
-            }
-            
-            showCard();
-            sequenceStage = 1; // Stage 1: kartu 1 sudah muncul
-        }
-        sequenceTimer = null;
-    }, 5000);
-}
                 
-                else {
-                    // EFFECT SHADOW OFF: Langsung tampilkan kartu setelah 1 detik (tanpa sequence)
+                // CEK EFFECT YANG AKTIF
+                if (shadowEffectCheckbox.checked) {
+                    // EFFECT SHADOW ON
+                    sequenceStage = 0;
+                    isSequenceActive = true;
+                    
+                    sequenceTimer = setTimeout(() => {
+                        if (isSequenceActive) {
+                            // Ambil gambar dari preview 1
+                            const preview1Img = preview1.querySelector('img');
+                            if (preview1Img) {
+                                // Update card image
+                                card.src = preview1Img.src;
+                                mainCardPreview.src = preview1Img.src;
+                                updateMainCardPreview();
+                            }
+                            
+                            showCard(); // showCard dengan animasi fade in
+                            sequenceStage = 1;
+                        }
+                        sequenceTimer = null;
+                    }, 5000);
+                    
+                } else if (effectStandarCheckbox.checked) {
+                    // EFFECT STANDAR ON
+                    isSequenceActive = false; // Tidak pakai sequence
+                    
                     sequenceTimer = setTimeout(() => {
                         const preview1Img = preview1.querySelector('img');
                         if (preview1Img) {
-                            updateCardImage(preview1Img.src);
+                            // Update card image
+                            card.src = preview1Img.src;
+                            mainCardPreview.src = preview1Img.src;
+                            updateMainCardPreview();
                         }
                         
-                        // Tampilkan kartu tanpa animasi
-                        posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-                        posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-                        card.style.display = 'block';
-                        card.style.opacity = '1';
-                        card.style.animation = 'none';
-                        updateCardTransform();
-                        
-                        // Nonaktifkan sequence
-                        isSequenceActive = false;
-                        sequenceStage = 0;
+                        showCardStandar(); // Muncul tanpa animasi
                         sequenceTimer = null;
-                    }, 1000); // 1 detik delay untuk shadow OFF
+                    }, 1000); // 1 detik delay
+                    
+                } else {
+                    // KEDUA EFFECT OFF - TIDAK MELAKUKAN APA-APA
+                    console.log('Both effects off - card will not appear');
                 }
             }
             lastTap = currentTime;
@@ -1299,7 +1347,7 @@
             }
         });
         
-        // ===== CARD UPLOAD - MENGGUNAKAN FUNGSI YANG SAMA DENGAN GITHUB =====
+        // ===== CARD UPLOAD =====
         cardUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             console.log('File selected:', file ? file.name : 'none');
@@ -1312,7 +1360,7 @@
                     // LANGSUNG update tanpa editor dulu
                     const imageSrc = event.target.result;
                     
-                    // Gunakan fungsi yang sama dengan GitHub
+                    // Gunakan fungsi updateCardImage
                     updateCardImage(imageSrc);
                     
                     console.log('Card upload complete');
@@ -1321,7 +1369,7 @@
             }
         });
         
-        // ===== CLOSE SETTINGS BUTTON - DIPERBAIKI =====
+        // ===== CLOSE SETTINGS BUTTON =====
         if (closeSettingsBtn) {
             closeSettingsBtn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -1335,10 +1383,6 @@
         
         githubAlbumBtn.addEventListener('click', () => {
             showGithubModal(1);
-        });
-        
-        shadowEffectCheckbox.addEventListener('change', () => {
-            autoSave();
         });
         
         // ===== SENSOR IMPLEMENTATION =====
