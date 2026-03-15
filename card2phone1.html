@@ -763,20 +763,34 @@
             
             const applyBtn = document.getElementById('modal-apply');
             applyBtn.addEventListener('click', () => {
-                if (selectedImage) {
-                    // Update preview yang dipilih
-                    const previewBox = document.getElementById(`preview-${activePreview}`);
-                    const previewImg = previewBox.querySelector('img');
-                    previewImg.src = selectedImage;
-                    
-                    // Highlight preview yang dipilih
-                    document.querySelectorAll('.preview-box').forEach(p => p.classList.remove('selected'));
-                    previewBox.classList.add('selected');
-                    
-                    document.body.removeChild(modalElement);
-                    modalElement = null;
-                }
-            });
+    if (selectedImage) {
+        // Update preview yang dipilih
+        const previewBox = document.getElementById(`preview-${activePreview}`);
+        const previewImg = previewBox.querySelector('img');
+        previewImg.src = selectedImage;
+        
+        // Jika yang dipilih adalah Favorite 1 (preview 1)
+        if (activePreview === 1) {
+            // Update KARTU UTAMA dengan gambar yang sama
+            card.src = selectedImage;
+            
+            // Update PREVIEW KARTU UTAMA
+            mainCardPreview.src = selectedImage;
+            
+            // Reset scale
+            scale = 1;
+            updateCardTransform();
+        }
+        
+        // Highlight preview yang dipilih
+        document.querySelectorAll('.preview-box').forEach(p => p.classList.remove('selected'));
+        previewBox.classList.add('selected');
+        
+        autoSave();
+        document.body.removeChild(modalElement);
+        modalElement = null;
+    }
+});
             
             renderFolders();
         }
