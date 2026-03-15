@@ -979,14 +979,20 @@
         // ===== FUNGSI UNTUK EFFECT STANDAR (MUNCUL CEPAT) =====
         function showCardStandar() {
             // Reset posisi ke tengah
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+            const cardWidth = card.offsetWidth;
+            const cardHeight = card.offsetHeight;
             
-            // Tampilkan kartu tanpa animasi
+            posX = (window.innerWidth - cardWidth) / 2;
+            posY = (window.innerHeight - cardHeight) / 2;
+            
+            posX = Math.round(posX);
+            posY = Math.round(posY);
+            
+            card.style.transform = 'none';
             card.style.display = 'block';
             card.style.opacity = '1';
             card.style.animation = 'none';
-            updateCardTransform();
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
         }
         
         // ===== LOCAL STORAGE FUNCTIONS =====
@@ -1432,20 +1438,20 @@
         }
         
         function startSensorAnimation() {
-    function animate() {
-        // Sensor hanya aktif jika Effect Standar ON dan tidak sedang drag
-        if (isSensorEnabled && !isDragging && effectStandarCheckbox.checked) {
-            if (card.style.display !== 'none') {
-                posX += smoothGamma * sensitivity;
-                posY += smoothBeta * sensitivity;
-                applyBounds();
-                updateCardTransform();
+            function animate() {
+                // Sensor hanya aktif jika Effect Standar ON dan tidak sedang drag
+                if (isSensorEnabled && !isDragging && effectStandarCheckbox.checked) {
+                    if (card.style.display !== 'none') {
+                        posX += smoothGamma * sensitivity;
+                        posY += smoothBeta * sensitivity;
+                        applyBounds();
+                        updateCardTransform();
+                    }
+                }
+                requestAnimationFrame(animate);
             }
+            animate();
         }
-        requestAnimationFrame(animate);
-    }
-    animate();
-}
         
         function applyBounds() {
             const cardWidth = card.offsetWidth * scale;
@@ -1528,78 +1534,58 @@
             return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
         }
         
-       function updateCardTransform() {
-    // Pastikan posisi selalu integer
-    posX = Math.round(posX);
-    posY = Math.round(posY);
-    card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-}
+        function updateCardTransform() {
+            // Pastikan posisi selalu integer
+            posX = Math.round(posX);
+            posY = Math.round(posY);
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        }
         
         function hideCard() {
             card.style.display = 'none';
         }
         
         function showCard() {
-    // Reset transformasi terlebih dahulu
-    card.style.transform = 'none';
-    
-    // Hitung posisi tengah dengan akurat
-    const cardWidth = card.offsetWidth;
-    const cardHeight = card.offsetHeight;
-    
-    // Rumus yang benar: (lebar layar - lebar kartu) / 2
-    posX = (window.innerWidth - cardWidth) / 2;
-    posY = (window.innerHeight - cardHeight) / 2;
-    
-    // Bulatkan ke integer
-    posX = Math.round(posX);
-    posY = Math.round(posY);
-    
-    card.style.display = 'block';
-    card.style.opacity = '1';
-    
-    if (shadowEffectCheckbox.checked) {
-        card.style.animation = 'none';
-        void card.offsetHeight;
-        card.style.animation = 'muncul 5s ease-in-out';
-        
-        setTimeout(() => {
-            card.style.animation = 'none';
-        }, 5000);
-    } else {
-        card.style.animation = 'none';
-    }
-    
-    updateCardTransform();
-}
-
-function showCardStandar() {
-    // Reset transformasi terlebih dahulu
-    card.style.transform = 'none';
-    
-    // Hitung posisi tengah dengan akurat
-    const cardWidth = card.offsetWidth;
-    const cardHeight = card.offsetHeight;
-    
-    // Rumus yang benar: (lebar layar - lebar kartu) / 2
-    posX = (window.innerWidth - cardWidth) / 2;
-    posY = (window.innerHeight - cardHeight) / 2;
-    
-    // Bulatkan ke integer
-    posX = Math.round(posX);
-    posY = Math.round(posY);
-    
-    // Tampilkan kartu tanpa animasi
-    card.style.display = 'block';
-    card.style.opacity = '1';
-    card.style.animation = 'none';
-    updateCardTransform();
-}
+            // Reset transformasi terlebih dahulu
+            const cardWidth = card.offsetWidth;
+            const cardHeight = card.offsetHeight;
+            
+            posX = (window.innerWidth - cardWidth) / 2;
+            posY = (window.innerHeight - cardHeight) / 2;
+            
+            posX = Math.round(posX);
+            posY = Math.round(posY);
+            
+            card.style.transform = 'none';
+            card.style.display = 'block';
+            card.style.opacity = '1';
+            
+            if (shadowEffectCheckbox.checked) {
+                card.style.animation = 'none';
+                void card.offsetHeight;
+                card.style.animation = 'muncul 5s ease-in-out';
+                
+                setTimeout(() => {
+                    card.style.animation = 'none';
+                }, 5000);
+            } else {
+                card.style.animation = 'none';
+            }
+            
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        }
         
         window.addEventListener('resize', () => {
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-            updateCardTransform();
+            // Saat resize, update posisi jika kartu visible
+            if (card.style.display !== 'none') {
+                const cardWidth = card.offsetWidth;
+                const cardHeight = card.offsetHeight;
+                posX = (window.innerWidth - cardWidth) / 2;
+                posY = (window.innerHeight - cardHeight) / 2;
+                posX = Math.round(posX);
+                posY = Math.round(posY);
+                updateCardTransform();
+            }
         });
         
         window.addEventListener('beforeunload', () => {
@@ -1607,27 +1593,27 @@ function showCardStandar() {
         });
 
         window.addEventListener('load', () => {
-    loadRootFolders();
-    setTimeout(() => {
-        updateMainCardPreview();
-        updatePreviewCardSize();
-        
-        // Set kartu di luar layar (bawah) agar tidak terlihat
-        card.style.display = 'block';
-        card.style.animation = 'none';
-        card.style.opacity = '1';
-        
-        // Posisikan di luar layar (bawah)
-        posX = (window.innerWidth / 2) - (card.offsetWidth / 2);
-        posY = window.innerHeight + card.offsetHeight + 100;
-        posX = Math.round(posX);
-        posY = Math.round(posY);
-        updateCardTransform();
-        
-        // Sembunyikan kartu
-        card.style.display = 'none';
-    }, 200);
-});
+            loadRootFolders();
+            setTimeout(() => {
+                updateMainCardPreview();
+                updatePreviewCardSize();
+                
+                // Set kartu di luar layar (bawah) agar tidak terlihat
+                card.style.display = 'block';
+                card.style.animation = 'none';
+                card.style.opacity = '1';
+                
+                // Posisikan di luar layar (bawah)
+                posX = (window.innerWidth / 2) - (card.offsetWidth / 2);
+                posY = window.innerHeight + card.offsetHeight + 100;
+                posX = Math.round(posX);
+                posY = Math.round(posY);
+                updateCardTransform();
+                
+                // Sembunyikan kartu
+                card.style.display = 'none';
+            }, 200);
+        });
     </script>
 </body>
 </html>
