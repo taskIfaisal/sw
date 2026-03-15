@@ -53,20 +53,38 @@
             /* Tambahkan ini untuk zoom yang lebih baik */
             transform-origin: center center;
             height: auto; /* Biarkan tinggi menyesuaikan */
-            /* Untuk efek fade */
-            transition: opacity 20.5s ease;
-            opacity: 1;
+            /* Untuk efek fade - diambil dari code kedua */
+            opacity: 0;
+            animation: muncul 5s ease-in-out;
         }
-        
-        /* Class untuk efek fade in/out */
+
+        /* Efek animasi dari code kedua - duration 5s */
+        @keyframes muncul {
+            0% {
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.3;
+            }
+            80% {
+                opacity: 0.7;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* Class untuk kontrol fade */
         .card-fade-hidden {
             opacity: 0 !important;
-            pointer-events: none; /* Biar tidak bisa di-tap saat hidden */
+            pointer-events: none;
+            animation: none; /* Matikan animasi saat hidden */
         }
         
         .card-fade-visible {
             opacity: 1 !important;
             pointer-events: auto;
+            animation: muncul 5s ease-in-out; /* Animasi saat muncul */
         }
 
         /* Style untuk slider card size */
@@ -522,8 +540,8 @@
                 <span class="toggle-slider"></span>
             </label>
             <div class="effect-description">
-                ON: Kartu muncul/hilang dengan efek fade (0.5s)<br>
-                OFF: Kartu muncul/hilang langsung (normal)
+                ON: Kartu muncul dengan animasi 5 detik (fade bertahap)<br>
+                OFF: Kartu muncul langsung (normal)
             </div>
         </div>
 
@@ -1255,19 +1273,13 @@
         
         function hideCard() {
             if (shadowEffectCheckbox.checked) {
-                // Fade out effect
-                card.style.transition = 'opacity 0.5s ease';
+                // Fade out effect - langsung hide karena animasi hanya untuk muncul
+                card.style.display = 'none';
                 card.style.opacity = '0';
-                
-                // Setelah fade selesai, baru hide display
-                setTimeout(() => {
-                    card.style.display = 'none';
-                    // Reset opacity untuk next show
-                    card.style.opacity = '1';
-                }, 500);
             } else {
                 // Langsung hide tanpa efek
                 card.style.display = 'none';
+                card.style.opacity = '0';
             }
         }
         
@@ -1277,19 +1289,21 @@
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
             
             if (shadowEffectCheckbox.checked) {
-                // Fade in effect
+                // Animasi muncul 5 detik dari code kedua
                 card.style.display = 'block';
-                card.style.opacity = '0';
-                card.style.transition = 'opacity 0.5s ease';
-                
-                // Force reflow untuk memastikan transisi berjalan
-                card.offsetHeight;
-                
-                card.style.opacity = '1';
+                card.style.opacity = '1'; // Opacity diatur oleh animasi
+                card.style.animation = 'muncul 5s ease-in-out';
                 updateCardTransform();
+                
+                // Hapus animation setelah selesai agar bisa diulang next time
+                setTimeout(() => {
+                    card.style.animation = 'none';
+                }, 5000);
             } else {
                 // Langsung tampilkan tanpa efek
                 card.style.display = 'block';
+                card.style.opacity = '1';
+                card.style.animation = 'none';
                 updateCardTransform();
             }
         }
@@ -1313,6 +1327,10 @@
             setTimeout(() => {
                 updateMainCardPreview();
                 updatePreviewCardSize();
+                // Set initial card visible
+                card.style.display = 'block';
+                card.style.opacity = '1';
+                card.style.animation = 'none';
             }, 200);
         });
     </script>
