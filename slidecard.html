@@ -91,7 +91,7 @@
             padding: 20px;
             box-sizing: border-box;
             overflow-y: auto;
-            touch-action: pan-y; /* Hanya izinkan scroll vertikal, nonaktifkan zoom */
+            touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
         }
         
@@ -122,6 +122,11 @@
         
         .upload-preview:hover {
             border-color: #4CAF50;
+        }
+        
+        .upload-preview.selected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
         }
         
         .upload-preview img {
@@ -175,7 +180,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            touch-action: pan-y; /* Hanya izinkan scroll vertikal */
+            touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -312,7 +317,7 @@
             padding: 20px;
             box-sizing: border-box;
             overflow-y: auto;
-            touch-action: pan-y; /* Hanya izinkan scroll vertikal */
+            touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
         }
         
@@ -358,7 +363,6 @@
             background: #45a049;
         }
         
-        /* Albums grid untuk folder */
         .albums-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -401,7 +405,6 @@
             word-break: break-word;
         }
         
-        /* Image grid */
         .image-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -449,19 +452,6 @@
             padding: 20px;
             grid-column: span 3;
         }
-        
-        .modal-footer {
-            margin-top: auto;
-            padding-top: 20px;
-            border-top: 1px solid #444;
-        }
-        
-        .apply-btn {
-            width: 100%;
-            background: #2196F3;
-            padding: 15px;
-            font-size: 16px;
-        }
 
         /* FRAME PREVIEW UNTUK KARTU UTAMA */
         .preview-frame-container {
@@ -495,7 +485,7 @@
             justify-content: center;
             margin: 0;
             box-sizing: border-box;
-            touch-action: pan-y; /* Hanya izinkan scroll vertikal */
+            touch-action: pan-y;
         }       
         
         #main-card-preview {
@@ -681,21 +671,18 @@
     };
 
     // ===== MENCEGAH ZOOM DENGAN JAVASCRIPT =====
-    // Mencegah pinch zoom di settings
     settings.addEventListener('touchmove', (e) => {
         if (e.touches.length > 1) {
             e.preventDefault();
         }
     }, { passive: false });
 
-    // Mencegah pinch zoom di modal GitHub
     document.addEventListener('touchmove', (e) => {
         if (e.target.closest('.github-modal') && e.touches.length > 1) {
             e.preventDefault();
         }
     }, { passive: false });
 
-    // Mencegah pinch zoom di image editor
     document.addEventListener('touchmove', (e) => {
         if (e.target.closest('.image-editor') && e.touches.length > 1) {
             e.preventDefault();
@@ -709,7 +696,6 @@
     sizeValue.textContent = currentCardSize + 'px';
     cardSizeSlider.value = currentCardSize;
     
-    // Update preview card size
     function updatePreviewCardSize() {
         mainCardPreview.style.width = currentCardSize + 'px';
         mainCardPreview.style.height = 'auto';
@@ -874,9 +860,6 @@
             <div id="modal-content">
                 <div class="loading">Loading folders from GitHub...</div>
             </div>
-            <div class="modal-footer">
-                <button id="modal-apply" class="apply-btn" disabled>Pilih gambar dulu</button>
-            </div>
         `;
         
         document.body.appendChild(modalElement);
@@ -884,31 +867,6 @@
         document.getElementById('close-modal').addEventListener('click', () => {
             document.body.removeChild(modalElement);
             modalElement = null;
-        });
-        
-        const applyBtn = document.getElementById('modal-apply');
-        applyBtn.addEventListener('click', () => {
-            if (selectedImage) {
-                if (activeCardTarget === 1) {
-                    cardImages.image1 = selectedImage;
-                    updateMainCardPreview();
-                } else {
-                    cardImages.image2 = selectedImage;
-                }
-                
-                updatePreviews();
-                saveToStorage();
-                
-                if (card.style.display !== 'none') {
-                    if ((activeCardTarget === 1 && currentCardImage === 1) ||
-                        (activeCardTarget === 2 && currentCardImage === 2)) {
-                        card.src = selectedImage;
-                    }
-                }
-                
-                document.body.removeChild(modalElement);
-                modalElement = null;
-            }
         });
         
         renderFolders();
@@ -942,10 +900,6 @@
     window.openFolder = async function(folderName) {
         currentFolder = folderName;
         selectedImage = null;
-        
-        const applyBtn = document.getElementById('modal-apply');
-        applyBtn.disabled = true;
-        applyBtn.textContent = 'Pilih gambar dulu';
         
         const contentElement = document.getElementById('modal-content');
         contentElement.innerHTML = '<div class="loading">Loading images...</div>';
@@ -984,19 +938,33 @@
         html += '</div>';
         contentElement.innerHTML = html;
         
+        // Single click langsung apply gambar
         document.querySelectorAll('.grid-item').forEach(item => {
             item.addEventListener('click', () => {
-                document.querySelectorAll('.grid-item').forEach(i => {
-                    i.classList.remove('selected');
-                });
+                const imageUrl = item.dataset.url;
                 
-                item.classList.add('selected');
-                selectedImage = item.dataset.url;
+                // Apply ke card target
+                if (activeCardTarget === 1) {
+                    cardImages.image1 = imageUrl;
+                    updateMainCardPreview();
+                } else {
+                    cardImages.image2 = imageUrl;
+                }
                 
-                const applyBtn = document.getElementById('modal-apply');
-                applyBtn.disabled = false;
-                applyBtn.textContent = `Apply ke Card ${activeCardTarget}`;
-                applyBtn.style.background = '#4CAF50';
+                updatePreviews();
+                saveToStorage();
+                
+                // Update kartu utama jika sedang tampil
+                if (card.style.display !== 'none') {
+                    if ((activeCardTarget === 1 && currentCardImage === 1) ||
+                        (activeCardTarget === 2 && currentCardImage === 2)) {
+                        card.src = imageUrl;
+                    }
+                }
+                
+                // Tutup modal
+                document.body.removeChild(modalElement);
+                modalElement = null;
             });
         });
     };
@@ -1004,10 +972,6 @@
     window.goBackToFolders = function() {
         currentFolder = null;
         selectedImage = null;
-        
-        const applyBtn = document.getElementById('modal-apply');
-        applyBtn.disabled = true;
-        applyBtn.textContent = 'Pilih gambar dulu';
         
         renderFolders();
     };
