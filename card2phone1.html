@@ -825,103 +825,136 @@
         }
         
         window.openFolder = async function(folderName) {
-            currentFolder = folderName;
-            selectedImage = null;
+    currentFolder = folderName;
+    selectedImage = null;
+    
+    const contentElement = document.getElementById('modal-content');
+    contentElement.innerHTML = '<div class="loading">Loading images...</div>';
+    
+    const images = await loadFolderContents(folderName);
+    
+    if (images.length === 0) {
+        contentElement.innerHTML = `
+            <div class="folder-header">
+                <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
+                <h3>${folderName}</h3>
+            </div>
+            <div class="error-msg">Tidak ada gambar dalam folder ini</div>
+        `;
+        return;
+    }
+    
+    let html = `
+        <div class="folder-header">
+            <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
+            <h3>${folderName}</h3>
+        </div>
+        <div class="image-grid">
+    `;
+    
+    images.forEach(img => {
+        const downloadUrl = img.download_url || `https://raw.githubusercontent.com/taskIfaisal/sw/main/images/${folderName}/${img.name}`;
+        
+        html += `
+            <div class="grid-item" data-url="${downloadUrl}">
+                <img src="${downloadUrl}" alt="${img.name}" loading="lazy">
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    contentElement.innerHTML = html;
+    
+    // Variable untuk melacak double click
+    let clickCount = 0;
+    let clickTimer = null;
+    let lastClickedItem = null;
+    
+    // Event listener untuk grid item
+    document.querySelectorAll('.grid-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             
-            const contentElement = document.getElementById('modal-content');
-            contentElement.innerHTML = '<div class="loading">Loading images...</div>';
+            const currentItem = this;
+            const imageUrl = currentItem.dataset.url;
             
-            const images = await loadFolderContents(folderName);
+            // Increment click count
+            clickCount++;
             
-            if (images.length === 0) {
-                contentElement.innerHTML = `
-                    <div class="folder-header">
-                        <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
-                        <h3>${folderName}</h3>
-                    </div>
-                    <div class="error-msg">Tidak ada gambar dalam folder ini</div>
-                `;
-                return;
+            // Jika ini klik pertama
+            if (clickCount === 1) {
+                // Hapus selected dari semua item
+                document.querySelectorAll('.grid-item').forEach(i => {
+                    i.classList.remove('selected');
+                });
+                
+                // Selected item ini
+                currentItem.classList.add('selected');
+                selectedImage = imageUrl;
+                lastClickedItem = currentItem;
+                
+                // Set timer untuk reset click count
+                clickTimer = setTimeout(() => {
+                    clickCount = 0;
+                    lastClickedItem = null;
+                }, 300);
             }
             
-            let html = `
-                <div class="folder-header">
-                    <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
-                    <h3>${folderName}</h3>
-                </div>
-                <div class="image-grid">
-            `;
-            
-            images.forEach(img => {
-                const downloadUrl = img.download_url || `https://raw.githubusercontent.com/taskIfaisal/sw/main/images/${folderName}/${img.name}`;
-                
-                html += `
-                    <div class="grid-item" data-url="${downloadUrl}">
-                        <img src="${downloadUrl}" alt="${img.name}" loading="lazy">
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            contentElement.innerHTML = html;
-            
-            // Event listener untuk grid item dengan double click
-            document.querySelectorAll('.grid-item').forEach(item => {
-                let clickTimer = null;
-                let isSelected = false;
-                
-                item.addEventListener('click', () => {
-                    // Jika sudah ada timer, ini adalah double click
-                    if (clickTimer) {
-                        clearTimeout(clickTimer);
-                        clickTimer = null;
-                        
-                        // Jika item ini yang sedang dipilih, apply gambar
-                        if (isSelected) {
-                            const imageUrl = item.dataset.url;
-                            
-                            // Update preview box
-                            const previewBox = document.getElementById(`preview-${activePreview}`);
-                            const previewImg = previewBox.querySelector('img');
-                            previewImg.src = imageUrl;
-                            
-                            // Jika yang dipilih Favorite 1, update kartu utama dan preview besar
-                            if (activePreview === 1) {
-                                updateCardImage(imageUrl);
-                            }
-                            
-                            // Highlight preview yang dipilih
-                            document.querySelectorAll('.preview-box').forEach(p => p.classList.remove('selected'));
-                            previewBox.classList.add('selected');
-                            
-                            // SIMPAN SEMUA PREVIEW KE STORAGE
-                            autoSave();
-                            
-                            // Tutup modal
-                            document.body.removeChild(modalElement);
-                            modalElement = null;
-                        }
-                    } else {
-                        // Ini adalah klik pertama
-                        // Hapus selected dari semua item
-                        document.querySelectorAll('.grid-item').forEach(i => {
-                            i.classList.remove('selected');
-                        });
-                        
-                        // Selected item ini
-                        item.classList.add('selected');
-                        isSelected = true;
-                        selectedImage = item.dataset.url;
-                        
-                        // Set timer untuk mendeteksi double click
-                        clickTimer = setTimeout(() => {
-                            clickTimer = null;
-                            isSelected = false;
-                        }, 300);
+            // Jika ini klik kedua
+            if (clickCount === 2) {
+                // Cek apakah yang diklik adalah item yang sama
+                if (lastClickedItem === currentItem) {
+                    // Clear timer
+                    clearTimeout(clickTimer);
+                    clickCount = 0;
+                    lastClickedItem = null;
+                    
+                    // Apply gambar
+                    const previewBox = document.getElementById(`preview-${activePreview}`);
+                    const previewImg = previewBox.querySelector('img');
+                    previewImg.src = imageUrl;
+                    
+                    // Jika yang dipilih Favorite 1, update kartu utama dan preview besar
+                    if (activePreview === 1) {
+                        updateCardImage(imageUrl);
                     }
-                });
-            });
-        };
+                    
+                    // Highlight preview yang dipilih
+                    document.querySelectorAll('.preview-box').forEach(p => p.classList.remove('selected'));
+                    previewBox.classList.add('selected');
+                    
+                    // SIMPAN SEMUA PREVIEW KE STORAGE
+                    autoSave();
+                    
+                    // Tutup modal
+                    document.body.removeChild(modalElement);
+                    modalElement = null;
+                } else {
+                    // Jika berbeda, reset dan mulai dari awal
+                    clickCount = 0;
+                    clearTimeout(clickTimer);
+                    
+                    // Hapus selected dari semua item
+                    document.querySelectorAll('.grid-item').forEach(i => {
+                        i.classList.remove('selected');
+                    });
+                    
+                    // Selected item yang baru
+                    currentItem.classList.add('selected');
+                    selectedImage = imageUrl;
+                    lastClickedItem = currentItem;
+                    
+                    // Set timer baru
+                    clickTimer = setTimeout(() => {
+                        clickCount = 0;
+                        lastClickedItem = null;
+                    }, 300);
+                }
+            }
+        });
+    });
+};
         
         window.goBackToFolders = function() {
             currentFolder = null;
