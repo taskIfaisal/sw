@@ -1547,7 +1547,7 @@
     posX = (window.innerWidth / 2) - (cardWidth / 2);
     posY = (window.innerHeight / 2) - (cardHeight / 2);
     
-    // Bulatkan ke integer untuk menghindari pecahan pixel
+    // Bulatkan ke integer
     posX = Math.round(posX);
     posY = Math.round(posY);
     
@@ -1562,8 +1562,6 @@
         setTimeout(() => {
             card.style.animation = 'none';
         }, 5000);
-    } else {
-        card.style.animation = 'none';
     }
     
     updateCardTransform();
