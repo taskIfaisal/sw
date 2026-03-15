@@ -772,57 +772,61 @@
         }
         
         function showGithubModal(previewNumber) {
-            activePreview = previewNumber;
-            selectedImage = null;
-            currentFolder = null;
+    activePreview = previewNumber;
+    selectedImage = null;
+    currentFolder = null;
+    
+    modalElement = document.createElement('div');
+    modalElement.className = 'github-modal';
+    modalElement.innerHTML = `
+        <div class="modal-header">
+            <h3>📁 Pilih Gambar untuk Preview ${previewNumber}</h3>
+            <button id="close-modal">✕</button>
+        </div>
+        <div id="modal-content">
+            <div class="loading">Loading folders from GitHub...</div>
+        </div>
+        <div class="modal-footer">
+            <button id="modal-apply" class="apply-btn" disabled>Pilih gambar dulu</button>
+        </div>
+    `;
+    
+    document.body.appendChild(modalElement);
+    
+    document.getElementById('close-modal').addEventListener('click', () => {
+        document.body.removeChild(modalElement);
+        modalElement = null;
+    });
+    
+    const applyBtn = document.getElementById('modal-apply');
+    applyBtn.addEventListener('click', () => {
+        if (selectedImage) {
+            const previewBox = document.getElementById(`preview-${activePreview}`);
+            const previewImg = previewBox.querySelector('img');
+            previewImg.src = selectedImage;
             
-            modalElement = document.createElement('div');
-            modalElement.className = 'github-modal';
-            modalElement.innerHTML = `
-                <div class="modal-header">
-                    <h3>📁 Pilih Gambar untuk Preview ${previewNumber}</h3>
-                    <button id="close-modal">✕</button>
-                </div>
-                <div id="modal-content">
-                    <div class="loading">Loading folders from GitHub...</div>
-                </div>
-                <div class="modal-footer">
-                    <button id="modal-apply" class="apply-btn" disabled>Pilih gambar dulu</button>
-                </div>
-            `;
+            // Jika yang dipilih Favorite 1, update kartu utama
+            if (activePreview === 1) {
+                card.src = selectedImage;
+                mainCardPreview.src = selectedImage;
+                scale = 1;
+                updateCardTransform();
+            }
             
-            document.body.appendChild(modalElement);
+            // Highlight preview yang dipilih
+            document.querySelectorAll('.preview-box').forEach(p => p.classList.remove('selected'));
+            previewBox.classList.add('selected');
             
-            document.getElementById('close-modal').addEventListener('click', () => {
-                document.body.removeChild(modalElement);
-                modalElement = null;
-            });
+            // SIMPAN SEMUA PREVIEW KE STORAGE
+            autoSave(); // Ini akan menyemua semua preview
             
-            const applyBtn = document.getElementById('modal-apply');
-            applyBtn.addEventListener('click', () => {
-                if (selectedImage) {
-                    const previewBox = document.getElementById(`preview-${activePreview}`);
-                    const previewImg = previewBox.querySelector('img');
-                    previewImg.src = selectedImage;
-                    
-                    if (activePreview === 1) {
-                        card.src = selectedImage;
-                        mainCardPreview.src = selectedImage;
-                        scale = 1;
-                        updateCardTransform();
-                    }
-                    
-                    document.querySelectorAll('.preview-box').forEach(p => p.classList.remove('selected'));
-                    previewBox.classList.add('selected');
-                    
-                    autoSave();
-                    document.body.removeChild(modalElement);
-                    modalElement = null;
-                }
-            });
-            
-            renderFolders();
+            document.body.removeChild(modalElement);
+            modalElement = null;
         }
+    });
+    
+    renderFolders();
+}
         
         async function renderFolders() {
             const contentElement = document.getElementById('modal-content');
@@ -936,54 +940,79 @@
         });
         
         // ===== LOCAL STORAGE FUNCTIONS =====
-        function loadFromStorage() {
-            try {
-                const savedData = localStorage.getItem(STORAGE_KEY);
-                if (savedData) {
-                    const data = JSON.parse(savedData);
-                    
-                    if (data.background) {
-                        background.style.backgroundImage = `url(${data.background})`;
-                    }
-                    
-                    if (data.cardImage) {
-                        card.src = data.cardImage;
-                        setTimeout(() => {
-                            updateMainCardPreview();
-                            updateAllPreviews();
-                        }, 100);
-                    }
-                    
-                    if (data.shadowEffect !== undefined) {
-                        shadowEffectCheckbox.checked = data.shadowEffect;
-                    }
-                    
-                    if (data.preview1) {
-                        const preview1Img = preview1.querySelector('img');
-                        preview1Img.src = data.preview1;
-                    }
-                    if (data.preview2) {
-                        const preview2Img = preview2.querySelector('img');
-                        preview2Img.src = data.preview2;
-                    }
-                    if (data.preview3) {
-                        const preview3Img = preview3.querySelector('img');
-                        preview3Img.src = data.preview3;
-                    }
-                }
-                
-                const savedSize = localStorage.getItem('card_size');
-                if (savedSize) {
-                    currentCardSize = parseInt(savedSize);
-                    card.style.maxWidth = currentCardSize + 'px';
-                    cardSizeSlider.value = currentCardSize;
-                    sizeValue.textContent = currentCardSize + 'px';
-                    updatePreviewCardSize();
-                }
-            } catch (error) {
-                console.error('Error loading from storage:', error);
+        // ===== LOCAL STORAGE FUNCTIONS - YANG DIPERBAIKI =====
+function loadFromStorage() {
+    try {
+        const savedData = localStorage.getItem(STORAGE_KEY);
+        if (savedData) {
+            const data = JSON.parse(savedData);
+            
+            if (data.background) {
+                background.style.backgroundImage = `url(${data.background})`;
             }
+            
+            if (data.cardImage) {
+                card.src = data.cardImage;
+            }
+            
+            if (data.shadowEffect !== undefined) {
+                shadowEffectCheckbox.checked = data.shadowEffect;
+            }
+            
+            // Load semua preview images
+            if (data.preview1) {
+                const preview1Img = preview1.querySelector('img');
+                preview1Img.src = data.preview1;
+            }
+            if (data.preview2) {
+                const preview2Img = preview2.querySelector('img');
+                preview2Img.src = data.preview2;
+            }
+            if (data.preview3) {
+                const preview3Img = preview3.querySelector('img');
+                preview3Img.src = data.preview3;
+            }
+            
+            // Update main card preview setelah semua preview dimuat
+            setTimeout(() => {
+                updateMainCardPreview();
+            }, 100);
         }
+        
+        const savedSize = localStorage.getItem('card_size');
+        if (savedSize) {
+            currentCardSize = parseInt(savedSize);
+            card.style.maxWidth = currentCardSize + 'px';
+            cardSizeSlider.value = currentCardSize;
+            sizeValue.textContent = currentCardSize + 'px';
+            updatePreviewCardSize();
+        }
+    } catch (error) {
+        console.error('Error loading from storage:', error);
+    }
+}
+
+function saveToStorage() {
+    try {
+        const preview1Img = preview1.querySelector('img');
+        const preview2Img = preview2.querySelector('img');
+        const preview3Img = preview3.querySelector('img');
+        
+        const data = {
+            background: background.style.backgroundImage.replace('url("', '').replace('")', ''),
+            cardImage: card.src,
+            shadowEffect: shadowEffectCheckbox.checked,
+            preview1: preview1Img ? preview1Img.src : '',
+            preview2: preview2Img ? preview2Img.src : '',
+            preview3: preview3Img ? preview3Img.src : ''
+        };
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        console.log('Saved to storage:', data); // Untuk debugging
+    } catch (error) {
+        console.error('Error saving to storage:', error);
+    }
+}
         
         function saveToStorage() {
             try {
