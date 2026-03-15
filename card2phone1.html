@@ -12,6 +12,7 @@
     <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
     <style>
+        /* ===== SEMUA CSS SAMA SEPERTI CODE ANDA ===== */
         html, body {
             margin: 0;
             padding: 0;
@@ -52,27 +53,15 @@
             touch-action: none;
             transform-origin: center center;
             height: auto;
-            opacity: 0;
-            animation: muncul 5s ease-in-out;
+            /* HAPUS opacity:0 dan animation dari sini */
         }
 
+        /* Animasi tetap ada, tapi dipanggil via JavaScript */
         @keyframes muncul {
             0% { opacity: 0; }
             50% { opacity: 0.3; }
             80% { opacity: 0.7; }
             100% { opacity: 1; }
-        }
-
-        .card-fade-hidden {
-            opacity: 0 !important;
-            pointer-events: none;
-            animation: none;
-        }
-        
-        .card-fade-visible {
-            opacity: 1 !important;
-            pointer-events: auto;
-            animation: muncul 5s ease-in-out;
         }
 
         .size-control {
@@ -591,7 +580,7 @@
         let currentFolder = null;
         let selectedImage = null;
         let modalElement = null;
-        let activePreview = 1; // 1, 2, atau 3
+        let activePreview = 1;
 
         // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
@@ -639,13 +628,10 @@
         }
         
         function updateAllPreviews() {
-            // Update semua preview dengan gambar yang sama (atau bisa diatur berbeda nantinya)
             const preview1Img = preview1.querySelector('img');
             const preview2Img = preview2.querySelector('img');
             const preview3Img = preview3.querySelector('img');
             
-            // Untuk contoh, kita set semua preview sama dengan card utama
-            // Nanti bisa dikembangkan untuk menyimpan gambar favorit
             if (preview1Img) preview1Img.src = card.src;
             if (preview2Img) preview2Img.src = card.src;
             if (preview3Img) preview3Img.src = card.src;
@@ -681,7 +667,8 @@
             autoSave();
         });
         
-        updateCardTransform();
+        // Initialize sensor - PANGGIL INI PENTING!
+        initSensor();
         
         // ===== FUNGSI GITHUB ALBUM =====
         async function loadRootFolders() {
@@ -763,25 +750,17 @@
             const applyBtn = document.getElementById('modal-apply');
             applyBtn.addEventListener('click', () => {
                 if (selectedImage) {
-                    // Update preview yang dipilih
                     const previewBox = document.getElementById(`preview-${activePreview}`);
                     const previewImg = previewBox.querySelector('img');
                     previewImg.src = selectedImage;
                     
-                    // Jika yang dipilih adalah Favorite 1 (preview 1)
                     if (activePreview === 1) {
-                        // Update KARTU UTAMA dengan gambar yang sama
                         card.src = selectedImage;
-                        
-                        // Update PREVIEW KARTU UTAMA
                         mainCardPreview.src = selectedImage;
-                        
-                        // Reset scale
                         scale = 1;
                         updateCardTransform();
                     }
                     
-                    // Highlight preview yang dipilih
                     document.querySelectorAll('.preview-box').forEach(p => p.classList.remove('selected'));
                     previewBox.classList.add('selected');
                     
@@ -928,7 +907,6 @@
                         shadowEffectCheckbox.checked = data.shadowEffect;
                     }
                     
-                    // Load preview images jika ada
                     if (data.preview1) {
                         const preview1Img = preview1.querySelector('img');
                         preview1Img.src = data.preview1;
@@ -1059,9 +1037,6 @@
             if (isDragging) {
                 isDragging = false;
                 
-                const speedThreshold = 1000;
-                const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
-                
                 const outTop    = posY < -card.offsetHeight * scale * 0.4;
                 const outBottom = posY > window.innerHeight - card.offsetHeight * scale * 0.6;
                 const outLeft   = posX < -card.offsetWidth * scale * 0.4;
@@ -1104,7 +1079,7 @@
         });
         
         githubAlbumBtn.addEventListener('click', () => {
-            showGithubModal(1); // Default ke preview 1
+            showGithubModal(1);
         });
         
         closeSettingsBtn.addEventListener('click', () => {
@@ -1116,19 +1091,14 @@
             autoSave();
         });
         
-        // ===== SENSOR IMPLEMENTATION - DIPERBAIKI =====
+        // ===== SENSOR IMPLEMENTATION (YANG DIPERBAIKI) =====
         function initSensor() {
-            console.log('initSensor dipanggil');
-            
-            // Cek apakah perlu permission (untuk iOS)
             if (typeof DeviceOrientationEvent?.requestPermission === "function") {
-                console.log('iOS device detected, perlu permission');
                 sensorPermissionBtn.classList.remove('hidden');
                 
                 sensorPermissionBtn.onclick = async () => {
                     try {
                         const permission = await DeviceOrientationEvent.requestPermission();
-                        console.log('Permission result:', permission);
                         if (permission === "granted") {
                             sensorPermissionBtn.classList.add('hidden');
                             startSensor();
@@ -1139,45 +1109,35 @@
                     }
                 };
             } else {
-                // Untuk browser yang tidak memerlukan permission
-                console.log('Non-iOS device, langsung start sensor');
                 startSensor();
             }
         }
         
         function startSensor() {
-            console.log('startSensor dipanggil');
             isSensorEnabled = true;
             window.addEventListener("deviceorientation", handleDeviceOrientation);
             startSensorAnimation();
         }
         
         function handleDeviceOrientation(e) {
-            // Hanya proses jika kartu terlihat dan tidak sedang didrag
-            if (!card.style.display || card.style.display === 'none' || isDragging) return;
+            if (isDragging) return;
 
-            // Batasi nilai beta dan gamma antara -45 sampai 45 derajat
-            const beta = e.beta !== null ? Math.max(-45, Math.min(45, e.beta)) : 0;
-            const gamma = e.gamma !== null ? Math.max(-45, Math.min(45, e.gamma)) : 0;
+            const beta = Math.max(-45, Math.min(45, e.beta || 0));
+            const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
 
-            // Smoothing untuk gerakan yang lebih halus
             smoothBeta += (beta - smoothBeta) * smoothing;
             smoothGamma += (gamma - smoothGamma) * smoothing;
         }
         
         function startSensorAnimation() {
-            console.log('Sensor animation started');
-            
             function animate() {
-                // Hanya gerakkan kartu jika sensor enabled, tidak sedang didrag, dan kartu terlihat
+                // Sensor tetap jalan meski kartu hidden
                 if (isSensorEnabled && !isDragging) {
-                    // Pastikan kartu terlihat (display block dan opacity tidak 0)
-                    if (card.style.display === 'block' && card.style.opacity !== '0') {
-                        // Gerakkan kartu berdasarkan nilai sensor
+                    // Update posisi hanya jika kartu terlihat
+                    if (card.style.display !== 'none') {
                         posX += smoothGamma * sensitivity;
                         posY += smoothBeta * sensitivity;
                         
-                        // PASTIKAN KARTU TIDAK KELUAR DARI BATAS LAYAR
                         applyBounds();
                         updateCardTransform();
                     }
@@ -1190,21 +1150,45 @@
         }
         
         function applyBounds() {
-            // Hitung ukuran kartu yang sudah discale
             const cardWidth = card.offsetWidth * scale;
             const cardHeight = card.offsetHeight * scale;
             
-            // Batasi agar kartu tidak keluar layar
             const minX = 0;
             const maxX = window.innerWidth - cardWidth;
             const minY = 0;
             const maxY = window.innerHeight - cardHeight;
             
-            // Terapkan batas dengan benar
-            if (posX < minX) posX = minX;
-            if (posX > maxX) posX = maxX;
-            if (posY < minY) posY = minY;
-            if (posY > maxY) posY = maxY;
+            posX = Math.max(minX, Math.min(maxX, posX));
+            posY = Math.max(minY, Math.min(maxY, posY));
+        }
+        
+        // ===== FUNGSI SHOW/HIDE CARD YANG DIPERBAIKI =====
+        function updateCardTransform() {
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        }
+        
+        function hideCard() {
+            card.style.display = 'none';
+            card.style.animation = 'none'; // Reset animasi
+        }
+        
+        function showCard() {
+            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
+            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
+            
+            card.style.display = 'block';
+            
+            if (shadowEffectCheckbox.checked) {
+                // Reset animasi agar bisa jalan lagi
+                card.style.animation = 'none';
+                // Force reflow
+                void card.offsetHeight;
+                card.style.animation = 'muncul 5s ease-in-out';
+            } else {
+                card.style.animation = 'none';
+            }
+            
+            updateCardTransform();
         }
         
         function showImageEditor(imageSrc, callback) {
@@ -1275,36 +1259,6 @@
             return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
         }
         
-        function updateCardTransform() {
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
-        
-        function hideCard() {
-            card.style.display = 'none';
-            card.style.opacity = '0';
-        }
-        
-        function showCard() {
-            posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
-            posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
-            
-            if (shadowEffectCheckbox.checked) {
-                card.style.display = 'block';
-                card.style.opacity = '1';
-                card.style.animation = 'muncul 5s ease-in-out';
-                updateCardTransform();
-                
-                setTimeout(() => {
-                    card.style.animation = 'none';
-                }, 5000);
-            } else {
-                card.style.display = 'block';
-                card.style.opacity = '1';
-                card.style.animation = 'none';
-                updateCardTransform();
-            }
-        }
-        
         window.addEventListener('resize', () => {
             posX = window.innerWidth / 2 - (card.offsetWidth * scale) / 2;
             posY = window.innerHeight / 2 - (card.offsetHeight * scale) / 2;
@@ -1317,28 +1271,14 @@
 
         window.addEventListener('load', () => {
             loadRootFolders();
-            // Panggil initSensor di sini setelah semua elemen siap
-            initSensor();
             setTimeout(() => {
                 updateMainCardPreview();
                 updateAllPreviews();
                 updatePreviewCardSize();
                 card.style.display = 'block';
-                card.style.opacity = '1';
                 card.style.animation = 'none';
             }, 200);
         });
-
-        // Test sensor setelah 3 detik
-        setTimeout(() => {
-            console.log('Sensor status:', isSensorEnabled ? 'ENABLED' : 'DISABLED');
-            console.log('DeviceOrientationEvent support:', typeof DeviceOrientationEvent !== 'undefined' ? 'YES' : 'NO');
-            console.log('Card display:', card.style.display);
-            
-            if (typeof DeviceOrientationEvent?.requestPermission === "function") {
-                console.log('iOS device - perlu permission');
-            }
-        }, 3000);
     </script>
 </body>
 </html>
