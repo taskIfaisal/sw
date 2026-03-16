@@ -255,7 +255,7 @@
             height: 80px;
             border: 2px solid #666;
             border-radius: 5px;
-            overflow: hidden;
+            overflow: visible;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -265,6 +265,40 @@
             margin: 0 auto;
             touch-action: manipulation;
             position: relative;
+        }
+        
+        /* Toggle icon kecil di pojok preview */
+        .preview-toggle {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #4CAF50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            border: 2px solid white;
+            z-index: 10;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .preview-toggle.inactive {
+            background: #f44336;
+        }
+        
+        .preview-toggle.active::after {
+            content: "✓";
+        }
+        
+        .preview-toggle.inactive::after {
+            content: "✕";
         }
         
         /* Style untuk preview aktif (border hijau) */
@@ -582,6 +616,7 @@
                 <div class="preview-item">
                     <div class="preview-box" id="preview-1" data-index="1">
                         <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 1">
+                        <div class="preview-toggle active" data-toggle="1"></div>
                     </div>
                     <span class="preview-label-small">Favorite 1</span>
                 </div>
@@ -589,6 +624,7 @@
                 <div class="preview-item">
                     <div class="preview-box" id="preview-2" data-index="2">
                         <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 2">
+                        <div class="preview-toggle active" data-toggle="2"></div>
                     </div>
                     <span class="preview-label-small">Favorite 2</span>
                 </div>
@@ -596,11 +632,12 @@
                 <div class="preview-item">
                     <div class="preview-box" id="preview-3" data-index="3">
                         <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 3">
+                        <div class="preview-toggle active" data-toggle="3"></div>
                     </div>
                     <span class="preview-label-small">Favorite 3</span>
                 </div>
             </div>
-            <p><small>✨ Single klik: buka album GitHub | Double klik: aktif/nonaktifkan gambar</small></p>
+            <p><small>✨ Klik gambar: buka album GitHub | Klik bulatan ✓/✕: aktif/nonaktifkan</small></p>
         </div>
 
         <div class="setting-section">
@@ -625,7 +662,7 @@
                 </label>
             </div>
             <div class="effect-description">
-                ON: Double tap → tunggu 5 detik → kartu muncul fade in 5 detik, berganti sesuai gambar aktif, fade out 5 detik
+                ON: Double tap → tunggu 5 detik → kartu muncul fade in 5 detik di tengah, berganti sesuai gambar aktif, fade out 5 detik
             </div>
         </div>
 
@@ -854,6 +891,18 @@
                     preview.classList.remove('active');
                 }
             });
+            
+            // Update toggle icons
+            document.querySelectorAll('.preview-toggle').forEach(toggle => {
+                const toggleIndex = parseInt(toggle.dataset.toggle);
+                if (activeImages[toggleIndex]) {
+                    toggle.classList.remove('inactive');
+                    toggle.classList.add('active');
+                } else {
+                    toggle.classList.remove('active');
+                    toggle.classList.add('inactive');
+                }
+            });
         }
         
         // ===== FUNGSI GITHUB ALBUM =====
@@ -1038,53 +1087,46 @@
             renderFolders();
         };
         
-        // ===== VARIABEL UNTUK DETEKSI DOUBLE KLIK =====
-        let clickTimer = null;
-        let clickCount = 0;
-        let lastClickedPreview = null;
-        
-        // ===== EVENT LISTENER UNTUK PREVIEW =====
-        function handlePreviewClick(e, previewNumber) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const currentPreview = e.currentTarget;
-            
-            // Increment click count
-            clickCount++;
-            lastClickedPreview = previewNumber;
-            
-            if (clickCount === 1) {
-                // Single click - tunggu untuk lihat apakah ada double click
-                clickTimer = setTimeout(() => {
-                    // Ini adalah single click
-                    clickCount = 0;
-                    lastClickedPreview = null;
-                    
-                    // Buka album GitHub
-                    console.log(`Single click: buka album untuk Preview ${previewNumber}`);
-                    showGithubModal(previewNumber);
-                    
-                }, 300); // Tunggu 300ms
-                
-            } else if (clickCount === 2) {
-                // Double click - batalkan timer single click
-                clearTimeout(clickTimer);
-                clickCount = 0;
-                lastClickedPreview = null;
-                
-                // Toggle aktif/nonaktif
-                console.log(`Double click: toggle aktif/nonaktif Preview ${previewNumber}`);
-                activeImages[previewNumber] = !activeImages[previewNumber];
-                updateActivePreviewStyles();
-                autoSave();
+        // ===== EVENT LISTENER UNTUK PREVIEW (SINGLE KLIK BUKA ALBUM) =====
+        preview1.addEventListener('click', (e) => {
+            // Pastikan bukan klik di toggle icon
+            if (!e.target.classList.contains('preview-toggle')) {
+                showGithubModal(1);
             }
-        }
+        });
         
-        // Pasang event listener
-        preview1.addEventListener('click', (e) => handlePreviewClick(e, 1));
-        preview2.addEventListener('click', (e) => handlePreviewClick(e, 2));
-        preview3.addEventListener('click', (e) => handlePreviewClick(e, 3));
+        preview2.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('preview-toggle')) {
+                showGithubModal(2);
+            }
+        });
+        
+        preview3.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('preview-toggle')) {
+                showGithubModal(3);
+            }
+        });
+        
+        // ===== EVENT LISTENER UNTUK TOGGLE ICON =====
+        document.querySelectorAll('.preview-toggle').forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const previewIndex = parseInt(toggle.dataset.toggle);
+                
+                // Toggle status aktif
+                activeImages[previewIndex] = !activeImages[previewIndex];
+                
+                // Update tampilan
+                updateActivePreviewStyles();
+                
+                // Simpan ke storage
+                autoSave();
+                
+                console.log(`Favorite ${previewIndex}: ${activeImages[previewIndex] ? 'aktif' : 'nonaktif'}`);
+            });
+        });
         
         // ===== FUNGSI UNTUK UPDATE CARD IMAGE =====
         function updateCardImage(imageSrc) {
@@ -1118,22 +1160,32 @@
                 return;
             }
             
-            // Reset posisi ke tengah (seperti kode asli)
+            // Reset semua style
+            card.style.transition = 'none';
+            card.style.transform = 'none';
+            card.style.left = '0';
+            card.style.top = '0';
+            
+            // Tampilkan kartu dulu
+            card.style.display = 'block';
+            
+            // Dapatkan ukuran kartu setelah display block
             const cardWidth = card.offsetWidth;
             const cardHeight = card.offsetHeight;
             
-            posX = (window.innerWidth - cardWidth) / 2;
-            posY = (window.innerHeight - cardHeight) / 2;
+            // Hitung posisi tengah
+            const centerX = (window.innerWidth - cardWidth) / 2;
+            const centerY = (window.innerHeight - cardHeight) / 2;
             
-            posX = Math.round(posX);
-            posY = Math.round(posY);
+            // Simpan posisi
+            posX = Math.round(centerX);
+            posY = Math.round(centerY);
             
             // Set gambar pertama
             currentCardImageIndex = 0;
             card.src = activeList[0].src;
             
-            // Tampilkan kartu
-            card.style.display = 'block';
+            // Tampilkan kartu tanpa animasi
             card.style.opacity = '1';
             card.style.visibility = 'visible';
             card.style.animation = 'none';
@@ -1158,26 +1210,34 @@
                 return;
             }
             
-            // Reset posisi ke tengah
+            // Reset semua style
+            card.style.transition = 'none';
+            card.style.transform = 'none';
+            card.style.left = '0';
+            card.style.top = '0';
+            
+            // Tampilkan kartu dulu
+            card.style.display = 'block';
+            
+            // Dapatkan ukuran kartu setelah display block
             const cardWidth = card.offsetWidth;
             const cardHeight = card.offsetHeight;
             
-            posX = (window.innerWidth - cardWidth) / 2;
-            posY = (window.innerHeight - cardHeight) / 2;
+            // Hitung posisi tengah
+            const centerX = (window.innerWidth - cardWidth) / 2;
+            const centerY = (window.innerHeight - cardHeight) / 2;
             
-            posX = Math.round(posX);
-            posY = Math.round(posY);
+            // Simpan posisi
+            posX = Math.round(centerX);
+            posY = Math.round(centerY);
             
             // Set gambar pertama
             currentCardImageIndex = 0;
             card.src = activeList[0].src;
             
-            // Tampilkan kartu
-            card.style.display = 'block';
-            card.style.visibility = 'visible';
-            
-            // Animasi fade in 5 detik
+            // Set opacity dan animasi fade in
             card.style.opacity = '1';
+            card.style.visibility = 'visible';
             card.style.animation = 'none';
             void card.offsetHeight;
             card.style.animation = 'muncul 5s ease-in-out';
@@ -1186,6 +1246,7 @@
                 card.style.animation = 'none';
             }, 5000);
             
+            // Terapkan transformasi
             card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
             
             // Simpan daftar aktif untuk sequence sentuhan
@@ -1193,7 +1254,7 @@
             isSequenceActive = true;
             sequenceStage = 1;
             
-            console.log('Effect Shadow: kartu muncul fade in dengan gambar 1');
+            console.log('Effect Shadow: kartu muncul fade in di tengah dengan gambar 1');
         }
         
         // ===== FUNGSI UNTUK EFFECT SLIDER (MUNCUL DARI BAWAH) =====
@@ -1457,7 +1518,7 @@
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTap;
             
-            // Deteksi double tap (tanpa memperhatikan target)
+            // Deteksi double tap
             if (tapLength < 300 && tapLength > 0) {
                 // Double tap detected
                 e.preventDefault();
@@ -1540,7 +1601,6 @@
         }
         
         // ===== EVENT LISTENER UNTUK KARTU =====
-        // Event listener untuk sentuhan pada kartu - mulai drag
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 isDragging = true;
@@ -1557,7 +1617,6 @@
             }
         }, {passive: false});
 
-        // Event listener untuk akhir sentuhan - deteksi tap dan mulai timer
         card.addEventListener('touchend', (e) => {
             setTimeout(() => {
                 isDragging = false;
@@ -1577,7 +1636,7 @@
             
             // Untuk shadow effect
             if (shadowEffectCheckbox.checked) {
-                // Stage gambar (1,2,3...)
+                // Stage gambar
                 if (sequenceStage < activeCount) {
                     console.log(`Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
                     touchToChangeTimeout = setTimeout(() => {
@@ -1589,7 +1648,7 @@
                         touchToChangeTimeout = null;
                     }, 3000);
                 } 
-                // Stage terakhir (fade out) - hanya jika sudah di gambar terakhir
+                // Stage terakhir (fade out)
                 else if (sequenceStage === activeCount && activeCount > 0) {
                     console.log(`Stage ${sequenceStage}: tunggu 5 detik untuk fade out`);
                     touchToChangeTimeout = setTimeout(() => {
@@ -1620,7 +1679,6 @@
                             if (goToNextImage()) {
                                 console.log(`Standar/Slider: ganti ke gambar ${currentCardImageIndex + 1}`);
                             } else {
-                                // Jika sudah habis, sequence selesai
                                 console.log("Standar/Slider: semua gambar sudah tampil");
                                 isSequenceActive = false;
                                 sequenceStage = 0;
@@ -1629,7 +1687,6 @@
                         touchToChangeTimeout = null;
                     }, 3000);
                 } else {
-                    // Sudah di gambar terakhir, tidak ada lagi
                     isSequenceActive = false;
                     sequenceStage = 0;
                 }
@@ -1738,10 +1795,11 @@
             }
         });
         
-        // ===== CLOSE SETTINGS BUTTON =====
+        // ===== CLOSE SETTINGS BUTTON - HANYA MENUTUP DAN MENYIMPAN =====
         if (closeSettingsBtn) {
             closeSettingsBtn.addEventListener('click', (e) => {
                 e.preventDefault();
+                console.log('Close settings button clicked - menyimpan dan menutup');
                 settings.style.top = '-100%';
                 autoSave();
             });
