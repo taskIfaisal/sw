@@ -237,7 +237,7 @@
         .preview-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
+            gap: 8px;
             margin: 20px 0;
             padding: 10px 0;
         }
@@ -250,15 +250,15 @@
         }
         
         .preview-label-small {
-            font-size: 11px;
+            font-size: 10px;
             color: #4CAF50;
             text-align: center;
             white-space: nowrap;
         }
         
         .preview-box {
-            width: 70px;
-            height: 70px;
+            width: 65px;
+            height: 65px;
             border: 2px solid #666;
             border-radius: 5px;
             overflow: visible;
@@ -676,7 +676,7 @@
                 </label>
             </div>
             <div class="effect-description">
-                ON: Double tap → tunggu 5 detik → kartu muncul fade in 5 detik di tengah, berganti sesuai gambar aktif, fade out 5 detik
+                ON: Double tap → tunggu 5 detik → kartu muncul fade in 5 detik di tengah, berganti sesuai gambar aktif (3 detik setelah sentuh), fade out 5 detik
             </div>
         </div>
 
@@ -694,7 +694,7 @@
             </div>
         </div>
 
-        <!-- NEW: Effect Skating (muncul dari bawah, keluar ke atas) -->
+        <!-- Effect Skating (muncul dari bawah, keluar ke atas) -->
         <div class="setting-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <h3 style="margin: 0;">Effect Skating</h3>
@@ -774,7 +774,7 @@
         const effectStandarCheckbox = document.getElementById('effect-standar');
         const shadowEffectCheckbox = document.getElementById('shadow-effect');
         const effectSliderCheckbox = document.getElementById('effect-slider');
-        const effectSkatingCheckbox = document.getElementById('effect-skating'); // NEW
+        const effectSkatingCheckbox = document.getElementById('effect-skating');
         const sensorGerakCheckbox = document.getElementById('sensor-gerak');
 
         // GitHub API URL
@@ -1381,7 +1381,7 @@
             }
         }
 
-        // ===== NEW: FUNGSI UNTUK EFFECT SKATING (MUNCUL DARI BAWAH, KELUAR KE ATAS) =====
+        // ===== FUNGSI UNTUK EFFECT SKATING (MUNCUL DARI BAWAH, KELUAR KE ATAS) =====
         function showCardSkating() {
             const activeList = getActiveImagesList();
             
@@ -1462,9 +1462,6 @@
                             activeImagesList = activeList;
                             isSequenceActive = true;
                             sequenceStage = 1;
-                            
-                            // Untuk Skating, kita akan handle exit setelah semua gambar
-                            // Ini akan diproses di event touchend
                         }, 800);
                     }, 50);
                 });
@@ -1484,8 +1481,8 @@
             card.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
             
             // Posisi akhir di atas layar
-            posY = -card.offsetHeight - 100;
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            const targetY = -card.offsetHeight - 100;
+            card.style.transform = `translate(${posX}px, ${targetY}px) scale(${scale})`;
             
             // Setelah animasi selesai, sembunyikan kartu
             setTimeout(() => {
@@ -1506,7 +1503,7 @@
             // Jika masih ada gambar berikutnya
             if (currentCardImageIndex < activeImagesList.length) {
                 card.src = activeImagesList[currentCardImageIndex].src;
-                sequenceStage++;
+                sequenceStage = currentCardImageIndex + 1;
                 console.log(`Ganti ke gambar ${currentCardImageIndex + 1}`);
                 return true;
             } 
@@ -1824,11 +1821,11 @@
             
             const activeCount = activeImagesList.length;
             
-            // Untuk shadow effect
+            // Untuk shadow effect - PERBAIKAN UNTUK SEMUA JUMLAH GAMBAR
             if (shadowEffectCheckbox.checked) {
-                // Stage gambar
+                // Stage gambar (1,2,3,4) - SELALU 3 detik
                 if (sequenceStage < activeCount) {
-                    console.log(`Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
+                    console.log(`Shadow Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
                     touchToChangeTimeout = setTimeout(() => {
                         if (isSequenceActive) {
                             if (goToNextImage()) {
@@ -1838,9 +1835,9 @@
                         touchToChangeTimeout = null;
                     }, 3000);
                 } 
-                // Stage terakhir (fade out)
+                // Stage fade out - SETELAH GAMBAR TERAKHIR, UNTUK SEMUA JUMLAH GAMBAR
                 else if (sequenceStage === activeCount && activeCount > 0) {
-                    console.log(`Stage ${sequenceStage}: tunggu 5 detik untuk fade out`);
+                    console.log(`Shadow Stage ${sequenceStage} (FADE OUT): tunggu 5 detik`);
                     touchToChangeTimeout = setTimeout(() => {
                         if (isSequenceActive) {
                             console.log("Shadow: fade out dimulai");
@@ -1852,12 +1849,12 @@
                                     card.style.opacity = '1';
                                     isSequenceActive = false;
                                     sequenceStage = 0;
-                                    console.log("Shadow: kartu hilang");
+                                    console.log("Shadow: kartu hilang setelah fade out");
                                 }
                             }, 5000);
                         }
                         touchToChangeTimeout = null;
-                    }, 5000);
+                    }, 5000); // 5 detik untuk fade out
                 }
             } 
             // Untuk effect standar dan slider
@@ -1881,7 +1878,7 @@
                     sequenceStage = 0;
                 }
             }
-            // Untuk effect skating
+            // Untuk effect skating - PERBAIKAN
             else if (effectSkatingCheckbox.checked) {
                 if (sequenceStage < activeCount) {
                     console.log(`Skating Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
@@ -1889,24 +1886,22 @@
                         if (isSequenceActive) {
                             if (goToNextImage()) {
                                 console.log(`Skating: ganti ke gambar ${currentCardImageIndex + 1}`);
-                            } else {
-                                // Jika sudah habis, tunggu 4 detik lalu exit ke atas
-                                console.log("Skating: semua gambar sudah tampil, tunggu 4 detik untuk exit");
-                                
-                                touchToChangeTimeout = setTimeout(() => {
-                                    if (isSequenceActive) {
-                                        exitCardSkating();
-                                    }
-                                    touchToChangeTimeout = null;
-                                }, 4000);
                             }
                         }
                         touchToChangeTimeout = null;
                     }, 3000);
-                } else {
-                    // Fallback
-                    isSequenceActive = false;
-                    sequenceStage = 0;
+                } 
+                // Stage terakhir - setelah semua gambar tampil
+                else if (sequenceStage === activeCount && activeCount > 0) {
+                    console.log(`Skating Stage ${sequenceStage}: semua gambar sudah tampil, tunggu 4 detik untuk exit`);
+                    
+                    touchToChangeTimeout = setTimeout(() => {
+                        if (isSequenceActive) {
+                            console.log("Skating: mulai exit ke atas");
+                            exitCardSkating();
+                        }
+                        touchToChangeTimeout = null;
+                    }, 4000); // 4 detik untuk exit
                 }
             }
         });
