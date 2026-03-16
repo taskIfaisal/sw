@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Magic Card Trick</title>
-    <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
-    <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
+    <link rel="apple-touch-icon" href="./icon/slide-512x512.png">
+    <link rel="apple-touch-startup-image" href="./icon/slide-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Card2Phone">
+    <meta name="apple-mobile-web-app-title" content="Slide Card">
     <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon/slide-512x512.png">
     <style>
         html, body {
             margin: 0;
@@ -25,13 +25,10 @@
             overflow: hidden;
             touch-action: none;
             position: relative;
-            -webkit-text-size-adjust: 100%;
-            -webkit-tap-highlight-color: transparent;
         }
 
         * {
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
         }
         
         #background {
@@ -48,19 +45,17 @@
         #card {
             position: absolute;
             width: 100%;
-            max-width: 200px;
+            max-width: 350px;
             z-index: 2;
             user-select: none;
             -webkit-user-drag: none;
             touch-action: none;
-            transform-origin: center center;
-            height: auto;
-            cursor: pointer;
-            transition: opacity 5s ease-in-out, transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             left: 0;
             top: 0;
+            will-change: transform;
             opacity: 0;
             visibility: hidden;
+            transform-origin: center;
         }
 
         .card-visible {
@@ -80,48 +75,7 @@
         }
 
         .card-moving {
-            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease !important;
-        }
-
-        @keyframes muncul {
-            0% { opacity: 0; }
-            50% { opacity: 0.3; }
-            80% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
-
-        .size-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 10px 0;
-        }
-        
-        input[type=range] {
-            -webkit-appearance: none;
-            height: 5px;
-            background: #4CAF50;
-            border-radius: 5px;
-            outline: none;
-            flex: 1;
-        }
-        
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid #4CAF50;
-        }
-        
-        #size-value {
-            min-width: 50px;
-            text-align: center;
-            background: rgba(255,255,255,0.2);
-            padding: 3px 8px;
-            border-radius: 3px;
+             transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
         }
         
         #settings {
@@ -145,6 +99,50 @@
             margin-bottom: 20px;
         }
         
+        .image-upload-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .upload-preview {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #666;
+            border-radius: 5px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #333;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+        
+        .upload-preview:hover {
+            border-color: #4CAF50;
+        }
+        
+        .upload-preview.selected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+        
+        .upload-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+        
+        .upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
         button {
             background: #4CAF50;
             color: white;
@@ -153,7 +151,6 @@
             margin: 5px;
             border-radius: 5px;
             cursor: pointer;
-            touch-action: manipulation;
         }
         
         input[type="file"] {
@@ -167,122 +164,146 @@
             border-radius: 5px;
             display: inline-block;
             cursor: pointer;
-            touch-action: manipulation;
+            text-align: center;
+            min-width: 150px;
         }
 
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-            margin: 10px 0;
-            touch-action: manipulation;
-        }
-        
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
+        .image-editor {
+            position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-        }
-        
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        
-        /* Hijau untuk effect (eksklusif) */
-        input:checked + .toggle-slider.effect-slider {
-            background-color: #4CAF50;
-        }
-        
-        /* Orange untuk sensor gerak (non-eksklusif) */
-        input:checked + .toggle-slider.sensor-slider {
-            background-color: #FF9800;
-        }
-        
-        input:checked + .toggle-slider:before {
-            transform: translateX(26px);
-        }
-        
-        .effect-description {
-            font-size: 12px;
-            color: #aaa;
-            margin-top: 5px;
-        }
-
-        .preview-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin: 20px 0;
-            padding: 10px 0;
-        }
-        
-        .preview-item {
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 9999;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 5px;
-        }
-        
-        .preview-label-small {
-            font-size: 12px;
-            color: #4CAF50;
-            text-align: center;
-        }
-        
-        .preview-box {
-            width: 80px;
-            height: 80px;
-            border: 2px solid #666;
-            border-radius: 5px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            background: #333;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin: 0 auto;
-            touch-action: manipulation;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .upload-label button {
+            background: #2196F3;
         }
         
-        .preview-box:hover {
-            border-color: #4CAF50;
-            transform: scale(1.05);
+        .editor-container {
+            position: relative;
+            width: 90%;
+            height: 70%;
+            margin: 20px;
         }
-        
-        .preview-box.selected {
-            border-color: #4CAF50;
-            box-shadow: 0 0 10px #4CAF50;
-        }
-        
-        .preview-box img {
+
+        #editing-card {
             max-width: 100%;
             max-height: 100%;
-            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+            touch-action: none;
+            transform-origin: center center;
+        }
+
+        .editor-controls {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            padding: 15px 0;
+            background: rgba(0,0,0,0.7);
+        }
+
+        .editor-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .editor-buttons button {
+            min-width: 100px;
+        }
+
+        #cancel-edit {
+            background: #f44336;
+        }
+        
+        #sensor-permission {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            font-size: 24px;
+            z-index: 9999;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            padding: 20px;
+            cursor: pointer;
+        }
+        
+        #sensor-permission.hidden {
+            display: none;
+        }
+        
+        /* TITIK INDIKATOR */
+        #card-indicator {
+            position: fixed;
+            bottom: 8px;
+            right: 8px;
+            width: 1px;
+            height: 1px;
+            background-color: #FFFFFF;
+            border-radius: 50%;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
             pointer-events: none;
         }
         
+        #card-indicator.visible {
+            opacity: 1;
+        }
+
+        /* Style untuk slider card size */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 5px;
+            background: #4CAF50;
+            border-radius: 5px;
+            outline: none;
+            margin: 10px 0;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #4CAF50;
+        }
+
+        #size-value {
+            display: inline-block;
+            min-width: 50px;
+            text-align: center;
+            background: rgba(255,255,255,0.2);
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin-left: 10px;
+        }
+
+        /* Style untuk modal album GitHub */
         .github-modal {
             position: fixed;
             top: 0;
@@ -336,7 +357,6 @@
             cursor: pointer;
             font-size: 14px;
             transition: background 0.3s;
-            touch-action: manipulation;
         }
 
         .back-button:hover {
@@ -363,7 +383,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            touch-action: manipulation;
         }
         
         .album-item:hover {
@@ -402,7 +421,6 @@
             cursor: pointer;
             transition: all 0.2s ease;
             background: #222;
-            touch-action: manipulation;
         }
         
         .grid-item:hover {
@@ -419,7 +437,6 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
-            pointer-events: none;
         }
         
         .loading {
@@ -436,6 +453,7 @@
             grid-column: span 3;
         }
 
+        /* FRAME PREVIEW UNTUK KARTU UTAMA */
         .preview-frame-container {
             margin: 20px -20px;
             width: 100vw;
@@ -445,14 +463,14 @@
             margin-left: -50vw;
             margin-right: -50vw;
         }
-        
+
         .preview-label {
             color: #4CAF50;
             font-size: 14px;
             margin-bottom: 8px;
             padding-left: 20px;
         }
-        
+
         .editor-frame {
             width: 100vw;
             height: 280px;
@@ -468,7 +486,7 @@
             margin: 0;
             box-sizing: border-box;
             touch-action: pan-y;
-        }
+        }       
         
         #main-card-preview {
             position: absolute;
@@ -480,77 +498,17 @@
             pointer-events: none;
             transition: all 0.3s ease;
         }
-        
-        #sensor-permission {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            color: white;
-            font-size: 24px;
-            z-index: 9999;
-            border: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-            text-align: center;
-            padding: 20px;
-            cursor: pointer;
-            touch-action: manipulation;
-        }
-        
-        #sensor-permission.hidden {
-            display: none;
-        }
-
-        .save-close-btn {
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            min-width: 150px;
-            font-size: 16px;
-            margin: 5px auto;
-            display: block;
-            touch-action: manipulation;
-        }
-
-        /* TITIK INDIKATOR */
-        #card-indicator {
-            position: fixed;
-            bottom: 8px;
-            right: 8px;
-            width: 1px;
-            height: 1px;
-            background-color: #FFFFFF;
-            border-radius: 50%;
-            z-index: 999;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-        }
-        
-        #card-indicator.visible {
-            opacity: 1;
-        }
-        
     </style>
 </head>
 <body>
     <div id="background"></div>
-    <img id="card" src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Magic Ball">
+    <img id="card" src="https://deckofcardsapi.com/static/img/AS.png" alt="Magic Card">
     
     <!-- TITIK INDIKATOR -->
     <div id="card-indicator"></div>
     
     <div id="settings">
-        <h2>Settings</h2>
+        <h2>Magic Card Settings</h2>
         
         <div class="setting-section">
             <h3>Background Image</h3>
@@ -561,116 +519,67 @@
         </div>
         
         <div class="setting-section">
-            <h3>Card Image</h3>
-            <label class="file-upload">
-                Choose Card
-                <input type="file" id="card-upload" accept="image/*">
-            </label>
-        </div>
+            <h3>Card Images</h3>
+            <p>Upload two images for card transformation</p>
+            <p><small>✨ Klik preview gambar untuk memilih dari album GitHub</small></p>
+            
+            <div class="image-upload-row">
+                <div class="upload-label">
+                    <button onclick="document.getElementById('card-upload-1').click()">
+                        Card Image 1
+                    </button>
+                    <input type="file" id="card-upload-1" accept="image/*" data-index="1">
+                    <div class="upload-preview" id="preview-1" data-card="1">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png" alt="Card 1">
+                    </div>
+                </div>
 
-        <div class="setting-section">
-            <h3>Quick Preview</h3>
-            <div class="preview-grid">
-                <div class="preview-item">
-                    <div class="preview-box" id="preview-1" data-index="1">
-                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 1">
+                <div class="upload-label">
+                    <button onclick="document.getElementById('card-upload-2').click()">
+                        Card Image 2
+                    </button>
+                    <input type="file" id="card-upload-2" accept="image/*" data-index="2">
+                    <div class="upload-preview" id="preview-2" data-card="2">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image2.png" alt="Card 2">
                     </div>
-                    <span class="preview-label-small">Favorite 1</span>
-                </div>
-                
-                <div class="preview-item">
-                    <div class="preview-box" id="preview-2" data-index="2">
-                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 2">
-                    </div>
-                    <span class="preview-label-small">Favorite 2</span>
-                </div>
-                
-                <div class="preview-item">
-                    <div class="preview-box" id="preview-3" data-index="3">
-                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 3">
-                    </div>
-                    <span class="preview-label-small">Favorite 3</span>
                 </div>
             </div>
-            <p><small>✨ Klik preview untuk memilih dari album GitHub</small></p>
-        </div>
+            
+            <div style="margin-top: 15px;">
+                <button id="default-cards">Use Default Cards</button>
+                <button id="swap-cards">Swap Images 1↔2</button>
+            </div>
 
-        <div class="setting-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                <h3 style="margin: 0;">Effect Standar</h3>
-                <label class="toggle-switch" style="margin: 0;">
-                    <input type="checkbox" id="effect-standar" checked>
-                    <span class="toggle-slider effect-slider"></span>
-                </label>
+            <!-- FRAME PREVIEW KARTU UTAMA -->
+            <div class="preview-frame-container">
+                <div class="preview-label">🔮 PREVIEW KARTU UTAMA</div>
+                <div class="editor-frame">
+                    <img id="main-card-preview" src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png" alt="Main Card Preview">
+                </div>
             </div>
-            <div class="effect-description">
-                ON: Double tap → tunggu 1 detik → kartu muncul langsung<br>
-                OFF: -
-            </div>
-        </div>
 
-        <div class="setting-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                <h3 style="margin: 0;">Effect Shadow</h3>
-                <label class="toggle-switch" style="margin: 0;">
-                    <input type="checkbox" id="shadow-effect">
-                    <span class="toggle-slider effect-slider"></span>
-                </label>
+            <!-- CARD SIZE SLIDER SECTION -->
+            <div class="setting-section">
+                <h3>Card Size</h3>
+                <div style="display: flex; align-items: center;">
+                    <input type="range" id="card-size-slider" min="200" max="500" value="350" step="5" style="flex: 1;">
+                    <span id="size-value">350px</span>
+                </div>
+                <small>Adjust card size (200px - 500px)</small>
             </div>
-            <div class="effect-description">
-                ON: Double tap → tunggu 5 detik → kartu muncul fade in (5 detik), bisa berubah 3 kali, lalu fade out<br>
-                OFF: -
+            
+            <div style="margin-top: 15px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px;">
+                <small>
+                    <strong>How it works:</strong><br>
+                    1. Double tap to summon card<br>
+                    2. Card shows Image 1<br>
+                    3. After 5 seconds, card flips to Image 2
+                </small>
             </div>
-        </div>
-
-        <!-- NEW: Effect Slider (muncul dari bawah) -->
-        <div class="setting-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                <h3 style="margin: 0;">Effect Slider</h3>
-                <label class="toggle-switch" style="margin: 0;">
-                    <input type="checkbox" id="effect-slider">
-                    <span class="toggle-slider effect-slider"></span>
-                </label>
-            </div>
-            <div class="effect-description">
-                ON: Double tap → tunggu 4 detik (titik indikator muncul di detik 3) → kartu muncul dari bawah ke tengah<br>
-                OFF: -
-            </div>
-        </div>
-
-        <!-- Sensor Gerak Toggle dengan warna ORANGE (non-eksklusif) -->
-        <div class="setting-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                <h3 style="margin: 0;">Sensor Gerak</h3>
-                <label class="toggle-switch" style="margin: 0;">
-                    <input type="checkbox" id="sensor-gerak" checked>
-                    <span class="toggle-slider sensor-slider"></span>
-                </label>
-            </div>
-            <div class="effect-description">
-                ON: Kartu bergerak mengikuti kemiringan device (gyroscope)<br>
-                OFF: Sensor tidak aktif
-            </div>
-        </div>
-
-        <div class="preview-frame-container">
-            <div class="preview-label">🔮 PREVIEW KARTU UTAMA</div>
-            <div class="editor-frame">
-                <img id="main-card-preview" src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Main Card Preview">
-            </div>
-        </div>
-
-        <div class="setting-section">
-            <h3>Card Size</h3>
-            <div class="size-control">
-                <input type="range" id="card-size-slider" min="100" max="400" value="200" step="5">
-                <span id="size-value">200px</span>
-            </div>
-            <small>Adjust card size (100px - 400px)</small>
         </div>
         
         <div class="setting-section">
-            <button id="close-settings" class="save-close-btn">Save & Close</button>
+            <button id="close-settings">Save & Close</button>
         </div>
     </div>
     
@@ -680,1109 +589,962 @@
     </button>
 
     <script>
-        // Elements
-        const background = document.getElementById('background');
-        const card = document.getElementById('card');
-        const settings = document.getElementById('settings');
-        const bgUpload = document.getElementById('bg-upload');
-        const cardUpload = document.getElementById('card-upload');
-        const closeSettingsBtn = document.getElementById('close-settings');
-        const sensorPermissionBtn = document.getElementById('sensor-permission');
-        const cardIndicator = document.getElementById('card-indicator');
-        
-        // Card size elements
-        const cardSizeSlider = document.getElementById('card-size-slider');
-        const sizeValue = document.getElementById('size-value');
-        
-        // Preview elements
-        const mainCardPreview = document.getElementById('main-card-preview');
-        const preview1 = document.getElementById('preview-1');
-        const preview2 = document.getElementById('preview-2');
-        const preview3 = document.getElementById('preview-3');
-        
-        // Effect toggles
-        const effectStandarCheckbox = document.getElementById('effect-standar');
-        const shadowEffectCheckbox = document.getElementById('shadow-effect');
-        const effectSliderCheckbox = document.getElementById('effect-slider'); // NEW
-        const sensorGerakCheckbox = document.getElementById('sensor-gerak');
+    // Elements
+    const background = document.getElementById('background');
+    const card = document.getElementById('card');
+    const settings = document.getElementById('settings');
+    const bgUpload = document.getElementById('bg-upload');
+    const cardUpload1 = document.getElementById('card-upload-1');
+    const cardUpload2 = document.getElementById('card-upload-2');
+    const defaultCardsBtn = document.getElementById('default-cards');
+    const swapCardsBtn = document.getElementById('swap-cards');
+    const closeSettingsBtn = document.getElementById('close-settings');
+    const sensorPermissionBtn = document.getElementById('sensor-permission');
+    const preview1 = document.getElementById('preview-1');
+    const preview2 = document.getElementById('preview-2');
+    const cardIndicator = document.getElementById('card-indicator');
+    
+    // Card size elements
+    const cardSizeSlider = document.getElementById('card-size-slider');
+    const sizeValue = document.getElementById('size-value');
+    
+    // Preview element untuk kartu utama
+    const mainCardPreview = document.getElementById('main-card-preview');
 
-        // GitHub API URL
-        const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/images';
-        
-        // State untuk album
-        let currentFolder = null;
-        let selectedImage = null;
-        let modalElement = null;
-        let activePreview = 1;
+    // GitHub API URL
+    const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/images';
+    
+    // State untuk album dengan folder system
+    let currentFolder = null;
+    let folderContents = [];
+    let selectedImage = null;
+    let activeCardTarget = 1;
+    let modalElement = null;
 
-        // Initialize card properties
-        let posX = window.innerWidth / 2 - card.offsetWidth / 2;
-        let posY = window.innerHeight + card.offsetHeight + 100;
-        let scale = 1;
-        let isDragging = false;
-        let startX, startY;
-        let velocityX = 0;
-        let velocityY = 0;
-        let lastPosX = 0;
-        let lastPosY = 0;
-        let lastTime = 0;
-        
-        // SENSOR VARIABLES
-        let smoothBeta = 0;
-        let smoothGamma = 0;
-        const sensitivity = 0.5;
-        const smoothing = 0.2;
-        let isSensorEnabled = false;
-        let isSensorActive = true;
-        
-        // ===== VARIABEL UNTUK SEQUENCE CARD =====
-        let sequenceTimer = null;
-        let sequenceStage = 0;
-        let isSequenceActive = false;
-        
-        // ===== VARIABEL UNTUK SENTUHAN KARTU =====
-        let touchToChangeTimeout = null;
-        
-        // ===== VARIABEL UNTUK EFFECT SLIDER =====
-        let indicatorTimeout = null;
-        let cardAppearTimeout = null;
-        let isAnimating = false;
-        let hasBeenTouched = false;
-        let currentCardImage = 1;
-        
-        // ===== LOCAL STORAGE SETUP =====
-        const STORAGE_KEY = 'magic_card_data';
-        
-        // Load saved data on startup
-        loadFromStorage();
-        
-        // ===== CARD SIZE CONTROL =====
-        let currentCardSize = parseInt(localStorage.getItem('card_size')) || 200;
-        
-        card.style.maxWidth = currentCardSize + 'px';
-        sizeValue.textContent = currentCardSize + 'px';
-        cardSizeSlider.value = currentCardSize;
-        
-        function updatePreviewCardSize() {
-            mainCardPreview.style.width = currentCardSize + 'px';
-            mainCardPreview.style.height = 'auto';
-            mainCardPreview.style.position = 'absolute';
-            mainCardPreview.style.top = '30px';
-            mainCardPreview.style.left = '50%';
-            mainCardPreview.style.transform = 'translateX(-50%)';
+    // Initialize card properties
+    let posX = window.innerWidth / 2 - card.offsetWidth / 2;
+    let posY = window.innerHeight / 2 - card.offsetHeight / 2;
+    let scale = 1;
+    let isDragging = false;
+    let startX, startY;
+    let velocityX = 0;
+    let velocityY = 0;
+    let lastPosX = 0;
+    let lastPosY = 0;
+    let lastTime = 0;
+    
+    // Card images storage
+    let cardImages = {
+        image1: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png",
+        image2: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image2.png"
+    };
+    let currentCardImage = 1;
+    
+    // SENSOR VARIABLES
+    let smoothBeta = 0;
+    let smoothGamma = 0;
+    const sensitivity = 0.5;
+    const smoothing = 0.2;
+    let isSensorEnabled = false;
+    
+    // Animation and timing control
+    let isAnimating = false;
+    let showCardTimeout = null;
+    let changeCardTimeout = null;
+    let touchToChangeTimeout = null;
+    let hasBeenTouched = false;
+    
+    // Double tap detection variables
+    let tapCount = 0;
+    let tapTimer = null;
+    
+    // LOGIKA TITIK
+    let indicatorTimeout = null;
+    let cardAppearTimeout = null;
+    
+    // STORAGE FUNCTIONS
+    const STORAGE_KEYS = {
+        image1: 'magic_card_image_1',
+        image2: 'magic_card_image_2',
+        background: 'magic_card_background',
+        cardSize: 'magic_card_size'
+    };
+
+    // ===== MENCEGAH ZOOM DENGAN JAVASCRIPT =====
+    settings.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 1) {
+            e.preventDefault();
         }
-        
-        function updateMainCardPreview() {
-            mainCardPreview.src = card.src;
-            console.log('Main preview updated to:', card.src.substring(0, 50) + '...');
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+        if (e.target.closest('.github-modal') && e.touches.length > 1) {
+            e.preventDefault();
         }
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+        if (e.target.closest('.image-editor') && e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // ===== CARD SIZE CONTROL =====
+    let currentCardSize = parseInt(localStorage.getItem(STORAGE_KEYS.cardSize)) || 350;
+
+    card.style.maxWidth = currentCardSize + 'px';
+    sizeValue.textContent = currentCardSize + 'px';
+    cardSizeSlider.value = currentCardSize;
+    
+    function updatePreviewCardSize() {
+        mainCardPreview.style.width = currentCardSize + 'px';
+        mainCardPreview.style.height = 'auto';
+        mainCardPreview.style.position = 'absolute';
+        mainCardPreview.style.top = '30px';
+        mainCardPreview.style.left = '50%';
+        mainCardPreview.style.transform = 'translateX(-50%)';
+    }
+    
+    updatePreviewCardSize();
+
+    cardSizeSlider.addEventListener('input', (e) => {
+        const newSize = e.target.value;
+        sizeValue.textContent = newSize + 'px';
+        card.style.maxWidth = newSize + 'px';
         
+        currentCardSize = parseInt(newSize);
         updatePreviewCardSize();
+        
+        if (card.style.display !== 'none' && !isAnimating) {
+            const cardRect = card.getBoundingClientRect();
+            posX = (window.innerWidth / 2) - (cardRect.width / 2);
+            posY = (window.innerHeight / 2) - (cardRect.height / 2);
+            updateCardTransform();
+        }
+    });
+
+    cardSizeSlider.addEventListener('change', (e) => {
+        localStorage.setItem(STORAGE_KEYS.cardSize, e.target.value);
+        currentCardSize = parseInt(e.target.value);
+    });
+
+    function saveToStorage() {
+        localStorage.setItem(STORAGE_KEYS.image1, cardImages.image1);
+        localStorage.setItem(STORAGE_KEYS.image2, cardImages.image2);
+    }
+
+    function loadFromStorage() {
+        const img1 = localStorage.getItem(STORAGE_KEYS.image1);
+        const img2 = localStorage.getItem(STORAGE_KEYS.image2);
+        const bg  = localStorage.getItem(STORAGE_KEYS.background);
+        const savedSize = localStorage.getItem(STORAGE_KEYS.cardSize);
+
+        if (img1) cardImages.image1 = img1;
+        if (img2) cardImages.image2 = img2;
+        if (bg) background.style.backgroundImage = `url(${bg})`;
+        
+        if (savedSize) {
+            currentCardSize = parseInt(savedSize);
+            card.style.maxWidth = currentCardSize + 'px';
+            cardSizeSlider.value = currentCardSize;
+            sizeValue.textContent = currentCardSize + 'px';
+            updatePreviewCardSize();
+        }
+
+        updatePreviews();
         updateMainCardPreview();
         
-        // Slider event listener
-        cardSizeSlider.addEventListener('input', (e) => {
-            const newSize = e.target.value;
-            sizeValue.textContent = newSize + 'px';
-            card.style.maxWidth = newSize + 'px';
-            
-            currentCardSize = parseInt(newSize);
-            updatePreviewCardSize();
-            
-            if (card.style.display !== 'none') {
-                const oldWidth = card.offsetWidth;
-                setTimeout(() => {
-                    const newWidth = card.offsetWidth;
-                    posX = posX - (newWidth - oldWidth) / 2;
-                    applyBounds();
-                    updateCardTransform();
-                }, 10);
-            }
-        });
+        setTimeout(preloadImages, 100);
+    }
+    
+    function updateMainCardPreview() {
+        mainCardPreview.src = cardImages.image1;
+    }
 
-        cardSizeSlider.addEventListener('change', (e) => {
-            localStorage.setItem('card_size', e.target.value);
-            currentCardSize = parseInt(e.target.value);
-            autoSave();
+    function updatePreviews() {
+        const preview1Img = preview1.querySelector('img');
+        const preview2Img = preview2.querySelector('img');
+        
+        if (preview1Img) preview1Img.src = cardImages.image1;
+        if (preview2Img) preview2Img.src = cardImages.image2;
+        
+        updateMainCardPreview();
+    }
+
+    function preloadImages() {
+        const images = [cardImages.image1, cardImages.image2];
+        images.forEach(src => {
+            const img = new Image();
+            img.src = src;
+        });
+    }
+
+    // Set initial positions
+    card.style.display = 'block';
+    card.style.opacity = '0';
+    card.style.visibility = 'hidden';
+    
+    posX = Math.floor(window.innerWidth / 2 - card.offsetWidth / 2);
+    posY = window.innerHeight + card.offsetHeight + 100;
+    
+    updateCardTransform();
+    card.style.display = 'none';
+    
+    updatePreviews();
+    
+    initSensor();
+    
+    // ===== FUNGSI UNTUK ALBUM GITHUB DENGAN FOLDER SYSTEM =====
+    async function loadRootFolders() {
+        try {
+            const response = await fetch(GITHUB_API_URL);
+            if (!response.ok) throw new Error('Failed to fetch');
+            
+            const data = await response.json();
+            
+            const folders = data.filter(item => item.type === "dir");
+            
+            folders.sort((a, b) => {
+                return a.name.localeCompare(b.name, undefined, { 
+                    numeric: true,
+                    sensitivity: 'base' 
+                });
+            });
+            
+            return folders;
+        } catch (error) {
+            console.error('Error loading root folders:', error);
+            return [];
+        }
+    }
+    
+    async function loadFolderContents(folderName) {
+        try {
+            const folderUrl = `${GITHUB_API_URL}/${folderName}`;
+            const response = await fetch(folderUrl);
+            if (!response.ok) throw new Error('Failed to fetch folder');
+            
+            const data = await response.json();
+            
+            const images = data.filter(file => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
+            });
+            
+            images.sort((a, b) => {
+                return a.name.localeCompare(b.name, undefined, { 
+                    numeric: true,
+                    sensitivity: 'base' 
+                });
+            });
+            
+            return images;
+        } catch (error) {
+            console.error('Error loading folder contents:', error);
+            return [];
+        }
+    }
+    
+    function showGithubModal(cardTarget) {
+        activeCardTarget = cardTarget;
+        selectedImage = null;
+        currentFolder = null;
+        
+        modalElement = document.createElement('div');
+        modalElement.className = 'github-modal';
+        modalElement.innerHTML = `
+            <div class="modal-header">
+                <h3>📁 Pilih Gambar untuk Card ${cardTarget}</h3>
+                <button id="close-modal">✕</button>
+            </div>
+            <div id="modal-content">
+                <div class="loading">Loading folders from GitHub...</div>
+            </div>
+        `;
+        
+        document.body.appendChild(modalElement);
+        
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.body.removeChild(modalElement);
+            modalElement = null;
         });
         
-        updateCardTransform();
+        renderFolders();
+    }
+    
+    async function renderFolders() {
+        const contentElement = document.getElementById('modal-content');
         
-        // ===== CEGAH DOUBLE TAP ZOOM =====
-        document.addEventListener('touchstart', (e) => {
-            if (e.touches.length > 1) {
-                e.preventDefault();
-            }
-        }, { passive: false });
+        const folders = await loadRootFolders();
         
-        // ===== INIT SENSOR =====
-        initSensor();
-        
-        // ===== FUNGSI GITHUB ALBUM =====
-        async function loadRootFolders() {
-            try {
-                const response = await fetch(GITHUB_API_URL);
-                if (!response.ok) throw new Error('Failed to fetch');
-                
-                const data = await response.json();
-                const folders = data.filter(item => item.type === "dir");
-                
-                folders.sort((a, b) => {
-                    return a.name.localeCompare(b.name, undefined, { 
-                        numeric: true,
-                        sensitivity: 'base' 
-                    });
-                });
-                
-                return folders;
-            } catch (error) {
-                console.error('Error loading root folders:', error);
-                return [];
-            }
+        if (folders.length === 0) {
+            contentElement.innerHTML = '<div class="error-msg">Tidak ada folder ditemukan</div>';
+            return;
         }
         
-        async function loadFolderContents(folderName) {
-            try {
-                const folderUrl = `${GITHUB_API_URL}/${folderName}`;
-                const response = await fetch(folderUrl);
-                if (!response.ok) throw new Error('Failed to fetch folder');
-                
-                const data = await response.json();
-                
-                const images = data.filter(file => {
-                    const ext = file.name.split('.').pop().toLowerCase();
-                    return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
-                });
-                
-                images.sort((a, b) => {
-                    return a.name.localeCompare(b.name, undefined, { 
-                        numeric: true,
-                        sensitivity: 'base' 
-                    });
-                });
-                
-                return images;
-            } catch (error) {
-                console.error('Error loading folder contents:', error);
-                return [];
-            }
-        }
+        let html = '<div class="albums-grid">';
         
-        function showGithubModal(previewNumber) {
-            activePreview = previewNumber;
-            selectedImage = null;
-            currentFolder = null;
-            
-            modalElement = document.createElement('div');
-            modalElement.className = 'github-modal';
-            modalElement.innerHTML = `
-                <div class="modal-header">
-                    <h3>📁 Pilih Gambar untuk Preview ${previewNumber}</h3>
-                    <button id="close-modal">✕</button>
-                </div>
-                <div id="modal-content">
-                    <div class="loading">Loading folders from GitHub...</div>
+        folders.forEach(folder => {
+            html += `
+                <div class="album-item" onclick="window.openFolder('${folder.name}')">
+                    <div class="folder-icon">📁</div>
+                    <div class="folder-name">${folder.name}</div>
                 </div>
             `;
-            
-            document.body.appendChild(modalElement);
-            
-            document.getElementById('close-modal').addEventListener('click', () => {
-                document.body.removeChild(modalElement);
-                modalElement = null;
-            });
-            
-            renderFolders();
-        }
+        });
         
-        async function renderFolders() {
-            const contentElement = document.getElementById('modal-content');
-            
-            const folders = await loadRootFolders();
-            
-            if (folders.length === 0) {
-                contentElement.innerHTML = '<div class="error-msg">Tidak ada folder ditemukan</div>';
-                return;
-            }
-            
-            let html = '<div class="albums-grid">';
-            
-            folders.forEach(folder => {
-                html += `
-                    <div class="album-item" onclick="window.openFolder('${folder.name}')">
-                        <div class="folder-icon">📁</div>
-                        <div class="folder-name">${folder.name}</div>
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            contentElement.innerHTML = html;
-        }
+        html += '</div>';
+        contentElement.innerHTML = html;
+    }
+    
+    window.openFolder = async function(folderName) {
+        currentFolder = folderName;
+        selectedImage = null;
         
-        window.openFolder = async function(folderName) {
-            currentFolder = folderName;
-            selectedImage = null;
-            
-            const contentElement = document.getElementById('modal-content');
-            contentElement.innerHTML = '<div class="loading">Loading images...</div>';
-            
-            const images = await loadFolderContents(folderName);
-            
-            if (images.length === 0) {
-                contentElement.innerHTML = `
-                    <div class="folder-header">
-                        <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
-                        <h3>${folderName}</h3>
-                    </div>
-                    <div class="error-msg">Tidak ada gambar dalam folder ini</div>
-                `;
-                return;
-            }
-            
-            let html = `
+        const contentElement = document.getElementById('modal-content');
+        contentElement.innerHTML = '<div class="loading">Loading images...</div>';
+        
+        const images = await loadFolderContents(folderName);
+        
+        if (images.length === 0) {
+            contentElement.innerHTML = `
                 <div class="folder-header">
                     <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
                     <h3>${folderName}</h3>
                 </div>
-                <div class="image-grid">
+                <div class="error-msg">Tidak ada gambar dalam folder ini</div>
             `;
+            return;
+        }
+        
+        let html = `
+            <div class="folder-header">
+                <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
+                <h3>${folderName}</h3>
+            </div>
+            <div class="image-grid">
+        `;
+        
+        images.forEach(img => {
+            const downloadUrl = img.download_url || `https://raw.githubusercontent.com/taskIfaisal/sw/main/images/${folderName}/${img.name}`;
             
-            images.forEach(img => {
-                const downloadUrl = img.download_url || `https://raw.githubusercontent.com/taskIfaisal/sw/main/images/${folderName}/${img.name}`;
+            html += `
+                <div class="grid-item" data-url="${downloadUrl}">
+                    <img src="${downloadUrl}" alt="${img.name}" loading="lazy">
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        contentElement.innerHTML = html;
+        
+        // Single click langsung apply gambar
+        document.querySelectorAll('.grid-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const imageUrl = item.dataset.url;
                 
-                html += `
-                    <div class="grid-item" data-url="${downloadUrl}">
-                        <img src="${downloadUrl}" alt="${img.name}" loading="lazy">
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            contentElement.innerHTML = html;
-            
-            // Event listener untuk single click langsung apply
-            document.querySelectorAll('.grid-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const imageUrl = this.dataset.url;
-                    
-                    // Update preview box
-                    const previewBox = document.getElementById(`preview-${activePreview}`);
-                    const previewImg = previewBox.querySelector('img');
-                    previewImg.src = imageUrl;
-                    
-                    // Jika yang dipilih Favorite 1, update kartu utama dan preview besar
-                    if (activePreview === 1) {
-                        updateCardImage(imageUrl);
-                    }
-                    
-                    // Highlight preview yang dipilih
-                    document.querySelectorAll('.preview-box').forEach(p => p.classList.remove('selected'));
-                    previewBox.classList.add('selected');
-                    
-                    // SIMPAN SEMUA PREVIEW KE STORAGE
-                    autoSave();
-                    
-                    // Tutup modal
-                    document.body.removeChild(modalElement);
-                    modalElement = null;
-                });
-            });
-        };
-        
-        window.goBackToFolders = function() {
-            currentFolder = null;
-            selectedImage = null;
-            
-            renderFolders();
-        };
-        
-        // ===== EVENT LISTENER UNTUK PREVIEW =====
-        preview1.addEventListener('click', () => {
-            showGithubModal(1);
-        });
-        
-        preview2.addEventListener('click', () => {
-            showGithubModal(2);
-        });
-        
-        preview3.addEventListener('click', () => {
-            showGithubModal(3);
-        });
-        
-        // ===== FUNGSI UNTUK UPDATE CARD IMAGE =====
-        function updateCardImage(imageSrc) {
-            console.log('Updating card image to:', imageSrc.substring(0, 50) + '...');
-            
-            // Update Favorite 1
-            const preview1Img = preview1.querySelector('img');
-            if (preview1Img) {
-                preview1Img.src = imageSrc;
-            }
-            
-            // Update kartu utama
-            card.src = imageSrc;
-            
-            // Update preview besar
-            mainCardPreview.src = imageSrc;
-            updateMainCardPreview();
-            
-            // Reset scale
-            scale = 1;
-            updateCardTransform();
-            
-            // Simpan ke localStorage
-            autoSave();
-        }
-        
-        // ===== FUNGSI UNTUK EFFECT STANDAR (MUNCUL CEPAT) =====
-        function showCardStandar() {
-            // Reset posisi ke tengah
-            const cardWidth = card.offsetWidth;
-            const cardHeight = card.offsetHeight;
-            
-            posX = (window.innerWidth - cardWidth) / 2;
-            posY = (window.innerHeight - cardHeight) / 2;
-            
-            posX = Math.round(posX);
-            posY = Math.round(posY);
-            
-            card.style.transform = 'none';
-            card.style.display = 'block';
-            card.style.opacity = '1';
-            card.style.animation = 'none';
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
-        
-        // ===== FUNGSI UNTUK EFFECT SLIDER (MUNCUL DARI BAWAH) =====
-        function showCardSlider() {
-            hasBeenTouched = false;
-
-            if (touchToChangeTimeout) {
-                clearTimeout(touchToChangeTimeout);
-                touchToChangeTimeout = null;
-            }
-
-            if (isAnimating) return;
-            isAnimating = true;
-            
-            clearAllTimeouts();
-            
-            currentCardImage = 1;
-            card.src = cardImages ? cardImages.image1 : card.src;
-            
-            card.style.animation = 'none';
-            card.style.opacity = '0';
-            card.style.visibility = 'hidden';
-            card.style.display = 'block';
-            
-            card.style.left = '0';
-            card.style.top = '0';
-            card.style.right = 'auto';
-            card.style.bottom = 'auto';
-            card.style.margin = '0';
-            
-            card.classList.remove('card-moving', 'card-flipping', 'card-visible');
-            
-            requestAnimationFrame(() => {
-                if (card.complete) {
-                    initCardAnimation();
+                // Apply ke card target
+                if (activeCardTarget === 1) {
+                    cardImages.image1 = imageUrl;
+                    updateMainCardPreview();
                 } else {
-                    card.onload = initCardAnimation;
-                    setTimeout(initCardAnimation, 500);
+                    cardImages.image2 = imageUrl;
                 }
+                
+                updatePreviews();
+                saveToStorage();
+                
+                // Update kartu utama jika sedang tampil
+                if (card.style.display !== 'none') {
+                    if ((activeCardTarget === 1 && currentCardImage === 1) ||
+                        (activeCardTarget === 2 && currentCardImage === 2)) {
+                        card.src = imageUrl;
+                    }
+                }
+                
+                // Tutup modal
+                document.body.removeChild(modalElement);
+                modalElement = null;
             });
+        });
+    };
+    
+    window.goBackToFolders = function() {
+        currentFolder = null;
+        selectedImage = null;
+        
+        renderFolders();
+    };
+    
+    // ===== MEMBUAT PREVIEW CLICKABLE =====
+    preview1.addEventListener('click', () => {
+        showGithubModal(1);
+    });
+    
+    preview2.addEventListener('click', () => {
+        showGithubModal(2);
+    });
+    
+    // Touch events for swipe up to open settings
+    let startYPos = 0;
+    document.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            startYPos = e.touches[0].clientY;
+        }
+        
+        if (e.touches.length === 1 && !isDragging) {
+            tapCount++;
             
-            function initCardAnimation() {
-                const cardRect = card.getBoundingClientRect();
-                const cardWidth = cardRect.width;
-                const cardHeight = cardRect.height;
-                
-                posX = (window.innerWidth / 2) - (cardWidth / 2);
-                posY = window.innerHeight + 100;
-                
-                card.style.transition = 'none';
-                card.style.transform = `translate(${posX}px, ${posY}px)`;
-                
-                void card.offsetHeight;
-                
-                card.style.opacity = '1';
-                card.style.visibility = 'visible';
-                card.classList.add('card-visible');
-                
-                requestAnimationFrame(() => {
-                    card.classList.add('card-moving');
-                    card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
-                    
-                    setTimeout(() => {
-                        posX = (window.innerWidth / 2) - (cardWidth / 2);
-                        posY = (window.innerHeight / 2) - (cardHeight / 2);
-                        
-                        card.style.transform = `translate(${posX}px, ${posY}px)`;
-                        
-                        setTimeout(() => {
-                            isAnimating = false;
-                            card.classList.remove('card-moving');
-                        }, 800);
-                    }, 50);
-                });
+            if (tapCount === 1) {
+                tapTimer = setTimeout(() => {
+                    tapCount = 0;
+                }, 300);
+            } else if (tapCount === 2) {
+                clearTimeout(tapTimer);
+                handleDoubleTap();
+                tapCount = 0;
             }
         }
-        
-        // ===== LOCAL STORAGE FUNCTIONS =====
-        function loadFromStorage() {
-            try {
-                const savedData = localStorage.getItem(STORAGE_KEY);
-                if (savedData) {
-                    const data = JSON.parse(savedData);
-                    
-                    if (data.background) {
-                        background.style.backgroundImage = `url(${data.background})`;
-                    }
-                    
-                    // Load effect settings
-                    if (data.effectStandar !== undefined) {
-                        effectStandarCheckbox.checked = data.effectStandar;
-                    }
-                    if (data.shadowEffect !== undefined) {
-                        shadowEffectCheckbox.checked = data.shadowEffect;
-                    }
-                    if (data.effectSlider !== undefined) {
-                        effectSliderCheckbox.checked = data.effectSlider;
-                    }
-                    if (data.sensorGerak !== undefined) {
-                        sensorGerakCheckbox.checked = data.sensorGerak;
-                        isSensorActive = data.sensorGerak;
-                    }
-                    
-                    // Load semua preview images
-                    if (data.preview1) {
-                        const preview1Img = preview1.querySelector('img');
-                        if (preview1Img) {
-                            preview1Img.src = data.preview1;
-                        }
-                    }
-                    if (data.preview2) {
-                        const preview2Img = preview2.querySelector('img');
-                        if (preview2Img) preview2Img.src = data.preview2;
-                    }
-                    if (data.preview3) {
-                        const preview3Img = preview3.querySelector('img');
-                        if (preview3Img) preview3Img.src = data.preview3;
-                    }
-                    
-                    // Update kartu utama dan preview besar dari preview1
-                    if (data.preview1) {
-                        card.src = data.preview1;
-                        mainCardPreview.src = data.preview1;
-                        updateMainCardPreview();
-                    }
-                }
-                
-                const savedSize = localStorage.getItem('card_size');
-                if (savedSize) {
-                    currentCardSize = parseInt(savedSize);
-                    card.style.maxWidth = currentCardSize + 'px';
-                    cardSizeSlider.value = currentCardSize;
-                    sizeValue.textContent = currentCardSize + 'px';
-                    updatePreviewCardSize();
-                }
-            } catch (error) {
-                console.error('Error loading from storage:', error);
-            }
-        }
-        
-        function saveToStorage() {
-            try {
-                const preview1Img = preview1.querySelector('img');
-                const preview2Img = preview2.querySelector('img');
-                const preview3Img = preview3.querySelector('img');
-                
-                const data = {
-                    background: background.style.backgroundImage.replace('url("', '').replace('")', ''),
-                    effectStandar: effectStandarCheckbox.checked,
-                    shadowEffect: shadowEffectCheckbox.checked,
-                    effectSlider: effectSliderCheckbox.checked,
-                    sensorGerak: sensorGerakCheckbox.checked,
-                    preview1: preview1Img ? preview1Img.src : '',
-                    preview2: preview2Img ? preview2Img.src : '',
-                    preview3: preview3Img ? preview3Img.src : ''
-                };
-                
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            } catch (error) {
-                console.error('Error saving to storage:', error);
-            }
-        }
-        
-        function autoSave() {
-            saveToStorage();
-        }
-        
-        // ===== EFFECT TOGGLES - TETAP EKSKLUSIF UNTUK EFFECT SAJA =====
-        effectStandarCheckbox.addEventListener('change', (e) => {
-            if (effectStandarCheckbox.checked) {
-                shadowEffectCheckbox.checked = false;
-                effectSliderCheckbox.checked = false;
-            }
-            autoSave();
-        });
-        
-        shadowEffectCheckbox.addEventListener('change', (e) => {
-            if (shadowEffectCheckbox.checked) {
-                effectStandarCheckbox.checked = false;
-                effectSliderCheckbox.checked = false;
-            }
-            autoSave();
-        });
-        
-        effectSliderCheckbox.addEventListener('change', (e) => {
-            if (effectSliderCheckbox.checked) {
-                effectStandarCheckbox.checked = false;
-                shadowEffectCheckbox.checked = false;
-            }
-            autoSave();
-        });
-        
-        // Sensor gerak toggle - tidak eksklusif
-        sensorGerakCheckbox.addEventListener('change', (e) => {
-            isSensorActive = sensorGerakCheckbox.checked;
-            autoSave();
-            console.log('Sensor gerak:', isSensorActive ? 'ON' : 'OFF');
-        });
-        
-        // Touch events for swipe up to open settings
-        let startYPos = 0;
-        document.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 2) {
-                startYPos = e.touches[0].clientY;
-            }
-        }, {passive: false});
-        
-        document.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 2) {
-                const currentY = e.touches[0].clientY;
-                if (currentY - startYPos > 100) {
-                    e.preventDefault();
-                    settings.style.top = '0';
-                }
-            }
-        }, {passive: false});
-        
-        // Double tap detection
-        let lastTap = 0;
-        document.addEventListener('touchend', (e) => {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTap;
-            if (tapLength < 300 && tapLength > 0) {
-                // Double tap detected
+    }, {passive: false});
+    
+    document.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2) {
+            const currentY = e.touches[0].clientY;
+            if (currentY - startYPos > 100) {
                 e.preventDefault();
-                
-                // Clear timer yang mungkin berjalan
-                clearAllTimeouts();
-                hideIndicator();
-                
-                // CEK EFFECT YANG AKTIF
-                if (shadowEffectCheckbox.checked) {
-                    // EFFECT SHADOW ON
-                    sequenceStage = 0;
-                    isSequenceActive = true;
-                    
-                    sequenceTimer = setTimeout(() => {
-                        if (isSequenceActive) {
-                            // Ambil gambar dari preview 1
-                            const preview1Img = preview1.querySelector('img');
-                            if (preview1Img) {
-                                // Update card image
-                                card.src = preview1Img.src;
-                                mainCardPreview.src = preview1Img.src;
-                                updateMainCardPreview();
-                            }
-                            
-                            showCard(); // showCard dengan animasi fade in
-                            sequenceStage = 1;
-                        }
-                        sequenceTimer = null;
-                    }, 5000);
-                    
-                } else if (effectStandarCheckbox.checked) {
-                    // EFFECT STANDAR ON
-                    isSequenceActive = false;
-                    
-                    sequenceTimer = setTimeout(() => {
-                        const preview1Img = preview1.querySelector('img');
-                        if (preview1Img) {
-                            // Update card image
-                            card.src = preview1Img.src;
-                            mainCardPreview.src = preview1Img.src;
-                            updateMainCardPreview();
-                        }
-                        
-                        showCardStandar();
-                        sequenceTimer = null;
-                    }, 1000);
-                    
-                } else if (effectSliderCheckbox.checked) {
-                    // EFFECT SLIDER ON
-                    const totalDelay = 4000; // 4 detik
-                    const indicatorDelay = 3000; // titik muncul detik ke-3
-                    
-                    indicatorTimeout = setTimeout(() => {
-                        showIndicator();
-                    }, indicatorDelay);
-                    
-                    cardAppearTimeout = setTimeout(() => {
-                        hideIndicator();
-                        showCardSlider();
-                    }, totalDelay);
-                    
-                } else {
-                    // TIDAK ADA EFFECT AKTIF
-                    console.log('No effect active - card will not appear');
-                }
-            }
-            lastTap = currentTime;
-        });
-        
-        function clearAllTimeouts() {
-            if (sequenceTimer) {
-                clearTimeout(sequenceTimer);
-                sequenceTimer = null;
-            }
-            if (touchToChangeTimeout) {
-                clearTimeout(touchToChangeTimeout);
-                touchToChangeTimeout = null;
-            }
-            if (indicatorTimeout) {
-                clearTimeout(indicatorTimeout);
-                indicatorTimeout = null;
-            }
-            if (cardAppearTimeout) {
-                clearTimeout(cardAppearTimeout);
-                cardAppearTimeout = null;
+                settings.style.top = '0';
             }
         }
+    }, {passive: false});
+    
+    function handleDoubleTap() {
+        console.log("Double tap detected!");
         
-        function showIndicator() {
-            cardIndicator.classList.add('visible');
-            console.log("Indicator shown - card will appear in 1 second");
+        clearAllTimeouts();
+        hideIndicator();
+        
+        const totalDelay = 5000;
+        const indicatorDelay = 4000;
+        
+        indicatorTimeout = setTimeout(() => {
+            showIndicator();
+        }, indicatorDelay);
+        
+        cardAppearTimeout = setTimeout(() => {
+            hideIndicator();
+            showCardWithTransformation();
+        }, totalDelay);
+    }
+    
+    function clearAllTimeouts() {
+        if (showCardTimeout) {
+            clearTimeout(showCardTimeout);
+            showCardTimeout = null;
         }
-        
-        function hideIndicator() {
-            cardIndicator.classList.remove('visible');
+        if (changeCardTimeout) {
+            clearTimeout(changeCardTimeout);
+            changeCardTimeout = null;
         }
-        
-        // ===== EVENT LISTENER UNTUK KARTU =====
-        // Event listener untuk sentuhan pada kartu - mulai drag
-        card.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                isDragging = true;
-                startX = e.touches[0].clientX - posX;
-                startY = e.touches[0].clientY - posY;
-                velocityX = 0;
-                velocityY = 0;
-                lastPosX = posX;
-                lastPosY = posY;
-                lastTime = Date.now();
-                card.style.transition = 'none';
-                card.style.animation = 'none';
-                e.preventDefault();
+        if (indicatorTimeout) {
+            clearTimeout(indicatorTimeout);
+            indicatorTimeout = null;
+        }
+        if (cardAppearTimeout) {
+            clearTimeout(cardAppearTimeout);
+            cardAppearTimeout = null;
+        }
+        if (touchToChangeTimeout) {
+            clearTimeout(touchToChangeTimeout);
+            touchToChangeTimeout = null;
+        }
+    }
+    
+    function showIndicator() {
+        cardIndicator.classList.add('visible');
+        console.log("Indicator shown - card will appear in 1 second");
+    }
+    
+    function hideIndicator() {
+        cardIndicator.classList.remove('visible');
+    }
+    
+    card.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            isDragging = true;
+            startX = e.touches[0].clientX - posX;
+            startY = e.touches[0].clientY - posY;
+            velocityX = 0;
+            velocityY = 0;
+            lastPosX = posX;
+            lastPosY = posY;
+            lastTime = Date.now();
+            card.style.transition = 'none';
+            card.style.animation = 'none';
+            e.preventDefault();
+            
+            tapCount = 0;
+            if (tapTimer) {
+                clearTimeout(tapTimer);
+                tapTimer = null;
             }
-        }, {passive: false});
+        }
+    }, {passive: false});
 
-        // Event listener untuk akhir sentuhan - deteksi tap dan mulai timer (hanya jika shadow ON)
-        card.addEventListener('touchend', (e) => {
-            setTimeout(() => {
-                isDragging = false;
-            }, 50);
-            
-            // Hanya proses jika shadow ON dan sequence aktif
-            if (!shadowEffectCheckbox.checked || card.style.display === 'none' || !isSequenceActive) {
-                return;
-            }
-            
-            // Clear timer yang mungkin berjalan
-            if (touchToChangeTimeout) {
-                clearTimeout(touchToChangeTimeout);
-            }
-            
-            // Proses berdasarkan stage
-            if (sequenceStage === 1) {
-                console.log("Stage 1: timer 3 detik ke Favorite 2 dimulai...");
-                touchToChangeTimeout = setTimeout(() => {
-                    if (isSequenceActive && sequenceStage === 1) {
-                        console.log("Mengganti ke Favorite 2");
-                        const preview2Img = preview2.querySelector('img');
-                        if (preview2Img) {
-                            card.src = preview2Img.src;
-                            mainCardPreview.src = preview2Img.src;
-                            updateMainCardPreview();
-                            updateCardTransform();
-                            sequenceStage = 2;
-                        }
-                    }
-                    touchToChangeTimeout = null;
-                }, 3000);
-                
-            } else if (sequenceStage === 2) {
-                console.log("Stage 2: timer 3 detik ke Favorite 3 dimulai...");
-                touchToChangeTimeout = setTimeout(() => {
-                    if (isSequenceActive && sequenceStage === 2) {
-                        console.log("Mengganti ke Favorite 3");
-                        const preview3Img = preview3.querySelector('img');
-                        if (preview3Img) {
-                            card.src = preview3Img.src;
-                            mainCardPreview.src = preview3Img.src;
-                            updateMainCardPreview();
-                            updateCardTransform();
-                            sequenceStage = 3;
-                        }
-                    }
-                    touchToChangeTimeout = null;
-                }, 3000);
-                
-            } else if (sequenceStage === 3) {
-                console.log("Stage 3: timer 5 detik fade out dimulai...");
-                touchToChangeTimeout = setTimeout(() => {
-                    if (isSequenceActive && sequenceStage === 3) {
-                        console.log("Fade out dimulai");
-                        card.style.opacity = '0';
-                        
-                        setTimeout(() => {
-                            if (isSequenceActive && sequenceStage === 3) {
-                                hideCard();
-                                card.style.opacity = '1';
-                                isSequenceActive = false;
-                                sequenceStage = 0;
-                            }
-                        }, 5000);
-                    }
-                    touchToChangeTimeout = null;
-                }, 5000);
-            }
-        });
+    card.addEventListener('touchend', (e) => {
+        setTimeout(() => {
+            isDragging = false;
+        }, 50);
         
-        document.addEventListener('touchmove', (e) => {
-            if (isDragging && e.touches.length === 1) {
-                const now = Date.now();
-                const deltaTime = now - lastTime;
-                
-                if (deltaTime > 0) {
-                    const newPosX = e.touches[0].clientX - startX;
-                    const newPosY = e.touches[0].clientY - startY;
-                    
-                    velocityX = (newPosX - lastPosX) / deltaTime * 1000;
-                    velocityY = (newPosY - lastPosY) / deltaTime * 1000;
-                    
-                    lastPosX = newPosX;
-                    lastPosY = newPosY;
-                    lastTime = now;
-                    
-                    posX = newPosX;
-                    posY = newPosY;
-                    
-                    updateCardTransform();
-                    
-                    const cardRect = card.getBoundingClientRect();
-                    const exitThreshold = 30;
-                    
-                    if (cardRect.bottom < -exitThreshold || 
-                        cardRect.top > window.innerHeight + exitThreshold ||
-                        cardRect.right < -exitThreshold || 
-                        cardRect.left > window.innerWidth + exitThreshold) {
-                        
-                        hideCard();
-                        isSequenceActive = false;
-                        sequenceStage = 0;
-                        if (touchToChangeTimeout) {
-                            clearTimeout(touchToChangeTimeout);
-                            touchToChangeTimeout = null;
-                        }
-                        isDragging = false;
-                        return;
-                    }
-                }
-                e.preventDefault();
-            }
-        }, {passive: false});
+        if (card.style.display === 'none' || 
+            hasBeenTouched || 
+            currentCardImage !== 1) {
+            return;
+        }
         
-        document.addEventListener('touchend', (e) => {
-            if (isDragging) {
-                isDragging = false;
-                card.style.transition = '';
+        hasBeenTouched = true;
+        console.log("Kartu disentuh, timer dimulai...");
+
+        if (touchToChangeTimeout) {
+            clearTimeout(touchToChangeTimeout);
+        }
+        
+        touchToChangeTimeout = setTimeout(() => {
+            console.log("3 detik berlalu, mengubah kartu...");
+            transformToImage2();
+        }, 3000);
+    });
+    
+    document.addEventListener('touchmove', (e) => {
+        if (isDragging && e.touches.length === 1) {
+            const now = Date.now();
+            const deltaTime = now - lastTime;
+            
+            if (deltaTime > 0) {
+                const newPosX = e.touches[0].clientX - startX;
+                const newPosY = e.touches[0].clientY - startY;
                 
-                const speedThreshold = 1000;
-                const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+                velocityX = (newPosX - lastPosX) / deltaTime * 1000;
+                velocityY = (newPosY - lastPosY) / deltaTime * 1000;
+                
+                lastPosX = newPosX;
+                lastPosY = newPosY;
+                lastTime = now;
+                
+                posX = newPosX;
+                posY = newPosY;
+                
+                updateCardTransform();
                 
                 const cardRect = card.getBoundingClientRect();
-                const exitThreshold = 50;
+                const exitThreshold = 30;
                 
                 if (cardRect.bottom < -exitThreshold || 
                     cardRect.top > window.innerHeight + exitThreshold ||
                     cardRect.right < -exitThreshold || 
-                    cardRect.left > window.innerWidth + exitThreshold ||
-                    currentSpeed > speedThreshold) {
+                    cardRect.left > window.innerWidth + exitThreshold) {
                     
-                    hideCard();
-                    isSequenceActive = false;
-                    sequenceStage = 0;
-                    if (touchToChangeTimeout) {
-                        clearTimeout(touchToChangeTimeout);
-                        touchToChangeTimeout = null;
-                    }
+                    hideCardImmediately();
+                    isDragging = false;
                     return;
                 }
+            }
+            e.preventDefault();
+        }
+    }, {passive: false});
+    
+    document.addEventListener('touchend', (e) => {
+        if (isDragging) {
+            isDragging = false;
+            card.style.transition = '';
+            
+            const speedThreshold = 1000;
+            const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+            
+            const cardRect = card.getBoundingClientRect();
+            const exitThreshold = 50;
+            
+            if (cardRect.bottom < -exitThreshold || 
+                cardRect.top > window.innerHeight + exitThreshold ||
+                cardRect.right < -exitThreshold || 
+                cardRect.left > window.innerWidth + exitThreshold ||
+                currentSpeed > speedThreshold) {
+                
+                hideCardImmediately();
+                return;
+            }
+            
+            applyBounds();
+            updateCardTransform();
+        }
+    });
+    
+    bgUpload.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            background.style.backgroundImage = `url(${event.target.result})`;
+            localStorage.setItem(STORAGE_KEYS.background, event.target.result);
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    cardUpload1.addEventListener('change', (e) => handleCardUpload(e, 1));
+    cardUpload2.addEventListener('change', (e) => handleCardUpload(e, 2));
+    
+    defaultCardsBtn.addEventListener('click', () => {
+        cardImages = {
+            image1: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image1.png",
+            image2: "https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/image2.png"
+        };
+        updatePreviews();
+        updateMainCardPreview();
+        
+        if (card.style.display !== 'none') {
+            card.src = cardImages.image1;
+            currentCardImage = 1;
+        }
+        
+        scale = 1;
+        posX = Math.floor(window.innerWidth / 2 - card.offsetWidth / 2);
+        posY = window.innerHeight + card.offsetHeight;
+        updateCardTransform();
+
+        localStorage.removeItem(STORAGE_KEYS.image1);
+        localStorage.removeItem(STORAGE_KEYS.image2);
+    });
+    
+    swapCardsBtn.addEventListener('click', () => {
+        const temp = cardImages.image1;
+        cardImages.image1 = cardImages.image2;
+        cardImages.image2 = temp;
+        
+        updatePreviews();
+        updateMainCardPreview();
+        
+        if (card.style.display !== 'none') {
+            if (currentCardImage === 1) {
+                card.src = cardImages.image1;
+            } else {
+                card.src = cardImages.image2;
+            }
+        }
+    });
+    
+    closeSettingsBtn.addEventListener('click', () => {
+        settings.style.top = '-100%';
+    });
+    
+    function handleCardUpload(e, imageNumber) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                showImageEditor(event.target.result, (editedImage) => {
+                    if (imageNumber === 1) {
+                        cardImages.image1 = editedImage;
+                        updateMainCardPreview();
+                    } else {
+                        cardImages.image2 = editedImage;
+                    }
+                    
+                    updatePreviews();
+                    saveToStorage();
+
+                    if (card.style.display !== 'none' && currentCardImage === imageNumber) {
+                        card.src = editedImage;
+                    }
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    function showCardWithTransformation() {
+        hasBeenTouched = false;
+
+        if (touchToChangeTimeout) {
+            clearTimeout(touchToChangeTimeout);
+            touchToChangeTimeout = null;
+        }
+
+        if (isAnimating) return;
+        isAnimating = true;
+        
+        clearAllTimeouts();
+        
+        currentCardImage = 1;
+        card.src = cardImages.image1;
+        card.style.animation = 'none';
+        
+        card.style.opacity = '0';
+        card.style.visibility = 'hidden';
+        card.style.display = 'block';
+        
+        card.style.left = '0';
+        card.style.top = '0';
+        card.style.right = 'auto';
+        card.style.bottom = 'auto';
+        card.style.margin = '0';
+        
+        card.classList.remove('card-moving', 'card-flipping', 'card-visible');
+        
+        requestAnimationFrame(() => {
+            if (card.complete) {
+                initCardAnimation();
+            } else {
+                card.onload = initCardAnimation;
+                setTimeout(initCardAnimation, 500);
+            }
+        });
+        
+        function initCardAnimation() {
+            const cardRect = card.getBoundingClientRect();
+            const cardWidth = cardRect.width;
+            const cardHeight = cardRect.height;
+            
+            posX = (window.innerWidth / 2) - (cardWidth / 2);
+            posY = window.innerHeight + 100;
+            
+            card.style.transition = 'none';
+            card.style.transform = `translate(${posX}px, ${posY}px)`;
+            
+            void card.offsetHeight;
+            
+            card.style.opacity = '1';
+            card.style.visibility = 'visible';
+            card.classList.add('card-visible');
+            
+            requestAnimationFrame(() => {
+                card.classList.add('card-moving');
+                card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+                
+                setTimeout(() => {
+                    posX = (window.innerWidth / 2) - (cardWidth / 2);
+                    posY = (window.innerHeight / 2) - (cardHeight / 2);
+                    
+                    card.style.transform = `translate(${posX}px, ${posY}px)`;
+                    
+                    setTimeout(() => {
+                        isAnimating = false;
+                        card.classList.remove('card-moving');
+                    }, 800);
+                }, 50);
+            });
+        }
+    }
+    
+    function transformToImage2() {
+        if (card.style.display === 'none') return;
+        
+        card.classList.remove('card-flipping');
+        void card.offsetHeight;
+        
+        card.classList.add('card-flipping');
+        
+        setTimeout(() => {
+            currentCardImage = 2;
+            card.src = cardImages.image2;
+        }, 500);
+        
+        setTimeout(() => {
+            card.classList.remove('card-flipping');
+            hasBeenTouched = false;
+        }, 1000);
+    }
+    
+    function hideCardImmediately() {
+        clearAllTimeouts();
+        hideIndicator();
+        
+        card.style.transition = 'none';
+        card.style.animation = 'none';
+        card.style.display = 'none';
+        card.classList.remove('card-flipping');
+        
+        const cardRect = card.getBoundingClientRect();
+        posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
+        posY = window.innerHeight + card.offsetHeight;
+        updateCardTransform();
+        
+        currentCardImage = 1;
+    }
+    
+    function initSensor() {
+        if (typeof DeviceOrientationEvent?.requestPermission === "function") {
+            sensorPermissionBtn.classList.remove('hidden');
+            
+            sensorPermissionBtn.onclick = async () => {
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission === "granted") {
+                        sensorPermissionBtn.classList.add('hidden');
+                        startSensor();
+                    }
+                } catch (error) {
+                    console.error("Error requesting permission:", error);
+                    sensorPermissionBtn.innerHTML = "Error requesting permission.<br>Try refreshing the page.";
+                }
+            };
+        } else {
+            startSensor();
+        }
+    }
+    
+    function startSensor() {
+        isSensorEnabled = true;
+        window.addEventListener("deviceorientation", handleDeviceOrientation);
+        startSensorAnimation();
+    }
+    
+    function handleDeviceOrientation(e) {
+        if (!card.style.display || card.style.display === 'none' || isDragging) return;
+
+        const beta = Math.max(-45, Math.min(45, e.beta || 0));
+        const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
+
+        smoothBeta += (beta - smoothBeta) * smoothing;
+        smoothGamma += (gamma - smoothGamma) * smoothing;
+    }
+    
+    function startSensorAnimation() {
+        function animate() {
+            if (isSensorEnabled && !isDragging && card.style.display !== 'none') {
+                posX += smoothGamma * sensitivity;
+                posY += smoothBeta * sensitivity;
                 
                 applyBounds();
                 updateCardTransform();
             }
-        });
-        
-        bgUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    background.style.backgroundImage = `url(${event.target.result})`;
-                    autoSave();
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-        
-        // ===== CARD UPLOAD =====
-        cardUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            console.log('File selected:', file ? file.name : 'none');
             
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    console.log('File loaded, length:', event.target.result.length);
-                    
-                    // LANGSUNG update tanpa editor dulu
-                    const imageSrc = event.target.result;
-                    
-                    // Gunakan fungsi updateCardImage
-                    updateCardImage(imageSrc);
-                    
-                    console.log('Card upload complete');
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+            requestAnimationFrame(animate);
+        }
         
-        // ===== CLOSE SETTINGS BUTTON =====
-        if (closeSettingsBtn) {
-            closeSettingsBtn.addEventListener('click', (e) => {
+        animate();
+    }
+    
+    function applyBounds() {
+        const cardWidth = card.offsetWidth * scale;
+        const cardHeight = card.offsetHeight * scale;
+        
+        const padding = 0;
+        const minX = padding;
+        const maxX = window.innerWidth - cardWidth - padding;
+        const minY = padding;
+        const maxY = window.innerHeight - cardHeight - padding;
+        
+        posX = Math.max(minX, Math.min(maxX, posX));
+        posY = Math.max(minY, Math.min(maxY, posY));
+    }
+    
+    function showImageEditor(imageSrc, callback) {
+        const editor = document.createElement('div');
+        editor.className = 'image-editor';
+        editor.innerHTML = `
+            <div class="editor-container">
+                <img id="editing-card" src="${imageSrc}" alt="Card being edited">
+                <div class="editor-controls">
+                    <div style="color:white; margin-bottom:10px;">Pinch to zoom</div>
+                    <div class="editor-buttons">
+                        <button id="save-edit">Save</button>
+                        <button id="cancel-edit">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(editor);
+        
+        const editingCard = document.getElementById('editing-card');
+        const saveBtn = document.getElementById('save-edit');
+        const cancelBtn = document.getElementById('cancel-edit');
+        
+        let currentScale = 1;
+        let startDistance = 0;
+        
+        editingCard.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
                 e.preventDefault();
-                console.log('Close settings button clicked');
-                settings.style.top = '-100%';
-                autoSave();
-            });
-        } else {
-            console.error('closeSettingsBtn tidak ditemukan!');
-        }
+                startDistance = getDistance(
+                    e.touches[0].clientX, e.touches[0].clientY,
+                    e.touches[1].clientX, e.touches[1].clientY
+                );
+            }
+        }, {passive: false});
         
-        // ===== SENSOR IMPLEMENTATION =====
-        function initSensor() {
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === "function") {
-                sensorPermissionBtn.classList.remove('hidden');
+        editingCard.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const currentDistance = getDistance(
+                    e.touches[0].clientX, e.touches[0].clientY,
+                    e.touches[1].clientX, e.touches[1].clientY
+                );
                 
-                sensorPermissionBtn.onclick = async () => {
-                    try {
-                        const permission = await DeviceOrientationEvent.requestPermission();
-                        
-                        if (permission === "granted") {
-                            sensorPermissionBtn.classList.add('hidden');
-                            startSensor();
-                        }
-                    } catch (error) {
-                        console.error("Error requesting permission:", error);
-                        sensorPermissionBtn.innerHTML = "Error requesting permission.<br>Try refreshing the page.";
-                    }
-                };
-            } else {
-                sensorPermissionBtn.classList.add('hidden');
-                startSensor();
-            }
-        }
-        
-        function startSensor() {
-            isSensorEnabled = true;
-            
-            if (window.DeviceOrientationEvent) {
-                window.addEventListener("deviceorientation", handleDeviceOrientation);
-                startSensorAnimation();
-            }
-        }
-        
-        function handleDeviceOrientation(e) {
-            if (isDragging) return;
-
-            const beta = e.beta || 0;
-            const gamma = e.gamma || 0;
-            
-            const limitedBeta = Math.max(-45, Math.min(45, beta));
-            const limitedGamma = Math.max(-45, Math.min(45, gamma));
-
-            smoothBeta += (limitedBeta - smoothBeta) * smoothing;
-            smoothGamma += (limitedGamma - smoothGamma) * smoothing;
-        }
-        
-        function startSensorAnimation() {
-            function animate() {
-                // Sensor aktif hanya jika toggle sensor gerak ON dan tidak sedang drag
-                // dan kartu sedang ditampilkan
-                if (isSensorEnabled && !isDragging && sensorGerakCheckbox.checked && card.style.display !== 'none') {
-                    posX += smoothGamma * sensitivity;
-                    posY += smoothBeta * sensitivity;
-                    applyBounds();
-                    updateCardTransform();
+                if (startDistance > 0) {
+                    currentScale = Math.max(0.3, Math.min(3, currentDistance / startDistance));
+                    editingCard.style.transform = `scale(${currentScale})`;
                 }
-                requestAnimationFrame(animate);
             }
-            animate();
-        }
+        }, {passive: false});
         
-        function applyBounds() {
-            const cardWidth = card.offsetWidth * scale;
-            const cardHeight = card.offsetHeight * scale;
-            
-            const minX = 0;
-            const maxX = window.innerWidth - cardWidth;
-            const minY = 0;
-            const maxY = window.innerHeight - cardHeight;
-            
-            posX = Math.max(minX, Math.min(maxX, posX));
-            posY = Math.max(minY, Math.min(maxY, posY));
-        }
+        editingCard.addEventListener('touchend', () => {
+            startDistance = 0;
+        }, {passive: false});
         
-        function updateCardTransform() {
-            // Pastikan posisi selalu integer
-            posX = Math.round(posX);
-            posY = Math.round(posY);
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
-        
-        function hideCard() {
-            card.style.display = 'none';
-        }
-        
-        function showCard() {
-            // Reset semua style yang bisa mengganggu
-            card.style.transition = 'none';
-            card.style.transform = 'none';
-            card.style.left = '0';
-            card.style.top = '0';
-            
-            // Tampilkan kartu dulu
-            card.style.display = 'block';
-            
-            // Dapatkan ukuran kartu setelah display block
-            const cardWidth = card.offsetWidth;
-            const cardHeight = card.offsetHeight;
-            
-            // Hitung posisi tengah
-            const centerX = (window.innerWidth - cardWidth) / 2;
-            const centerY = (window.innerHeight - cardHeight) / 2;
-            
-            // Simpan posisi
-            posX = Math.round(centerX);
-            posY = Math.round(centerY);
-            
-            // Set opacity
-            card.style.opacity = '1';
-            
-            // Atur animasi jika shadow ON
-            if (shadowEffectCheckbox.checked) {
-                card.style.animation = 'none';
-                void card.offsetHeight; // Force reflow
-                card.style.animation = 'muncul 5s ease-in-out';
-                
-                setTimeout(() => {
-                    card.style.animation = 'none';
-                }, 5000);
-            } else {
-                card.style.animation = 'none';
-            }
-            
-            // Terapkan transformasi
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
-
-        function showCardStandar() {
-            // Reset semua style yang bisa mengganggu
-            card.style.transition = 'none';
-            card.style.transform = 'none';
-            card.style.left = '0';
-            card.style.top = '0';
-            
-            // Tampilkan kartu dulu
-            card.style.display = 'block';
-            
-            // Dapatkan ukuran kartu setelah display block
-            const cardWidth = card.offsetWidth;
-            const cardHeight = card.offsetHeight;
-            
-            // Hitung posisi tengah
-            const centerX = (window.innerWidth - cardWidth) / 2;
-            const centerY = (window.innerHeight - cardHeight) / 2;
-            
-            // Simpan posisi
-            posX = Math.round(centerX);
-            posY = Math.round(centerY);
-            
-            // Tampilkan kartu tanpa animasi
-            card.style.opacity = '1';
-            card.style.animation = 'none';
-            
-            // Terapkan transformasi
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
-        
-        window.addEventListener('resize', () => {
-            // Saat resize, update posisi jika kartu visible
-            if (card.style.display !== 'none') {
-                const cardWidth = card.offsetWidth;
-                const cardHeight = card.offsetHeight;
-                posX = (window.innerWidth - cardWidth) / 2;
-                posY = (window.innerHeight - cardHeight) / 2;
-                posX = Math.round(posX);
-                posY = Math.round(posY);
-                updateCardTransform();
-            }
+        saveBtn.addEventListener('click', () => {
+            document.body.removeChild(editor);
+            callback(imageSrc);
         });
         
-        window.addEventListener('beforeunload', () => {
-            saveToStorage();
+        cancelBtn.addEventListener('click', () => {
+            document.body.removeChild(editor);
         });
-
-        window.addEventListener('load', () => {
-            loadRootFolders();
+    }
+    
+    function getDistance(x1, y1, x2, y2) {
+        return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    }
+    
+    function updateCardTransform() {
+        card.style.transform = `translate(${posX}px, ${posY}px)`;
+    }
+    
+    window.addEventListener('resize', () => {
+        if (card.style.display !== 'none') {
+            const cardRect = card.getBoundingClientRect();
+            posX = Math.floor(window.innerWidth / 2 - cardRect.width / 2);
+            posY = Math.floor(window.innerHeight / 2 - cardRect.height / 2);
+            updateCardTransform();
+        }
+    });
+    
+    window.addEventListener('load', () => {
+        card.style.display = 'block';
+        card.style.left = '0';
+        card.style.top = '0';
+        card.style.transform = 'translate(0, 0)';
+        card.style.transition = 'none';
+        card.style.opacity = '0';
+        card.style.visibility = 'hidden';
+        
+        setTimeout(() => {
+            const cardRect = card.getBoundingClientRect();
+            const cardWidth = cardRect.width;
+            
+            posX = (window.innerWidth / 2) - (cardWidth / 2);
+            posY = window.innerHeight + 100;
+            
+            updateCardTransform();
+            
             setTimeout(() => {
-                updateMainCardPreview();
-                updatePreviewCardSize();
-                
-                // Set kartu di luar layar (bawah) agar tidak terlihat
-                card.style.display = 'block';
-                card.style.animation = 'none';
-                card.style.opacity = '1';
-                
-                // Posisikan di luar layar (bawah)
-                posX = (window.innerWidth / 2) - (card.offsetWidth / 2);
-                posY = window.innerHeight + card.offsetHeight + 100;
-                posX = Math.round(posX);
-                posY = Math.round(posY);
-                updateCardTransform();
-                
-                // Sembunyikan kartu
                 card.style.display = 'none';
-            }, 200);
-        });
+                loadFromStorage();
+                
+                loadRootFolders();
+            }, 100);
+        }, 100);
+    });
     </script>
 </body>
 </html>
