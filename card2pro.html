@@ -83,6 +83,10 @@
             transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease !important;
         }
 
+        .card-exit {
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease !important;
+        }
+
         @keyframes muncul {
             0% { opacity: 0; }
             50% { opacity: 0.3; }
@@ -229,10 +233,11 @@
             margin-top: 5px;
         }
 
+        /* Grid 4 kolom untuk 4 preview */
         .preview-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
             margin: 20px 0;
             padding: 10px 0;
         }
@@ -245,14 +250,15 @@
         }
         
         .preview-label-small {
-            font-size: 12px;
+            font-size: 11px;
             color: #4CAF50;
             text-align: center;
+            white-space: nowrap;
         }
         
         .preview-box {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             border: 2px solid #666;
             border-radius: 5px;
             overflow: visible;
@@ -272,15 +278,15 @@
             position: absolute;
             top: -8px;
             right: -8px;
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             background: #4CAF50;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             border: 2px solid white;
             z-index: 10;
@@ -611,7 +617,7 @@
         </div>
 
         <div class="setting-section">
-            <h3>Quick Preview</h3>
+            <h3>Quick Preview (4 Favorites)</h3>
             <div class="preview-grid">
                 <div class="preview-item">
                     <div class="preview-box" id="preview-1" data-index="1">
@@ -635,6 +641,14 @@
                         <div class="preview-toggle active" data-toggle="3"></div>
                     </div>
                     <span class="preview-label-small">Favorite 3</span>
+                </div>
+
+                <div class="preview-item">
+                    <div class="preview-box" id="preview-4" data-index="4">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 4">
+                        <div class="preview-toggle active" data-toggle="4"></div>
+                    </div>
+                    <span class="preview-label-small">Favorite 4</span>
                 </div>
             </div>
             <p><small>✨ Klik gambar: buka album GitHub | Klik bulatan ✓/✕: aktif/nonaktifkan</small></p>
@@ -666,7 +680,7 @@
             </div>
         </div>
 
-        <!-- Effect Slider (muncul dari bawah) -->
+        <!-- Effect Slider (muncul dari bawah, tetap di tengah) -->
         <div class="setting-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <h3 style="margin: 0;">Effect Slider</h3>
@@ -676,7 +690,21 @@
                 </label>
             </div>
             <div class="effect-description">
-                ON: Double tap → tunggu 4 detik (indikator detik 3) → kartu slide dari bawah ke tengah
+                ON: Double tap → tunggu 4 detik (indikator detik 3) → kartu slide dari bawah ke tengah (tetap di tengah setelah selesai)
+            </div>
+        </div>
+
+        <!-- NEW: Effect Skating (muncul dari bawah, keluar ke atas) -->
+        <div class="setting-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <h3 style="margin: 0;">Effect Skating</h3>
+                <label class="toggle-switch" style="margin: 0;">
+                    <input type="checkbox" id="effect-skating">
+                    <span class="toggle-slider effect-slider"></span>
+                </label>
+            </div>
+            <div class="effect-description">
+                ON: Double tap → tunggu 4 detik (indikator detik 3) → kartu slide dari bawah ke tengah, berganti gambar, setelah selesai slide keluar ke atas
             </div>
         </div>
 
@@ -735,16 +763,18 @@
         const cardSizeSlider = document.getElementById('card-size-slider');
         const sizeValue = document.getElementById('size-value');
         
-        // Preview elements
+        // Preview elements (4 previews)
         const mainCardPreview = document.getElementById('main-card-preview');
         const preview1 = document.getElementById('preview-1');
         const preview2 = document.getElementById('preview-2');
         const preview3 = document.getElementById('preview-3');
+        const preview4 = document.getElementById('preview-4');
         
         // Effect toggles
         const effectStandarCheckbox = document.getElementById('effect-standar');
         const shadowEffectCheckbox = document.getElementById('shadow-effect');
         const effectSliderCheckbox = document.getElementById('effect-slider');
+        const effectSkatingCheckbox = document.getElementById('effect-skating'); // NEW
         const sensorGerakCheckbox = document.getElementById('sensor-gerak');
 
         // GitHub API URL
@@ -756,11 +786,12 @@
         let modalElement = null;
         let activePreview = 1;
 
-        // Status aktif untuk setiap gambar favorite
+        // Status aktif untuk setiap gambar favorite (4 gambar)
         let activeImages = {
             1: true,  // Favorite 1 aktif secara default
             2: true,  // Favorite 2 aktif secara default
-            3: true   // Favorite 3 aktif secara default
+            3: true,  // Favorite 3 aktif secara default
+            4: true   // Favorite 4 aktif secara default
         };
 
         // Initialize card properties
@@ -792,7 +823,7 @@
         // ===== VARIABEL UNTUK SENTUHAN KARTU =====
         let touchToChangeTimeout = null;
         
-        // ===== VARIABEL UNTUK EFFECT SLIDER =====
+        // ===== VARIABEL UNTUK EFFECT SLIDER & SKATING =====
         let indicatorTimeout = null;
         let cardAppearTimeout = null;
         let isAnimating = false;
@@ -872,6 +903,7 @@
             if (activeImages[1]) list.push({ index: 1, element: preview1, src: getPreviewSrc(1) });
             if (activeImages[2]) list.push({ index: 2, element: preview2, src: getPreviewSrc(2) });
             if (activeImages[3]) list.push({ index: 3, element: preview3, src: getPreviewSrc(3) });
+            if (activeImages[4]) list.push({ index: 4, element: preview4, src: getPreviewSrc(4) });
             return list;
         }
         
@@ -883,7 +915,7 @@
         
         // ===== FUNGSI UNTUK UPDATE TAMPILAN AKTIF =====
         function updateActivePreviewStyles() {
-            [preview1, preview2, preview3].forEach((preview, idx) => {
+            [preview1, preview2, preview3, preview4].forEach((preview, idx) => {
                 const index = idx + 1;
                 if (activeImages[index]) {
                     preview.classList.add('active');
@@ -1089,7 +1121,6 @@
         
         // ===== EVENT LISTENER UNTUK PREVIEW (SINGLE KLIK BUKA ALBUM) =====
         preview1.addEventListener('click', (e) => {
-            // Pastikan bukan klik di toggle icon
             if (!e.target.classList.contains('preview-toggle')) {
                 showGithubModal(1);
             }
@@ -1104,6 +1135,12 @@
         preview3.addEventListener('click', (e) => {
             if (!e.target.classList.contains('preview-toggle')) {
                 showGithubModal(3);
+            }
+        });
+
+        preview4.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('preview-toggle')) {
+                showGithubModal(4);
             }
         });
         
@@ -1257,7 +1294,7 @@
             console.log('Effect Shadow: kartu muncul fade in di tengah dengan gambar 1');
         }
         
-        // ===== FUNGSI UNTUK EFFECT SLIDER (MUNCUL DARI BAWAH) =====
+        // ===== FUNGSI UNTUK EFFECT SLIDER (MUNCUL DARI BAWAH, TETAP DI TENGAH) =====
         function showCardSlider() {
             const activeList = getActiveImagesList();
             
@@ -1343,6 +1380,122 @@
                 });
             }
         }
+
+        // ===== NEW: FUNGSI UNTUK EFFECT SKATING (MUNCUL DARI BAWAH, KELUAR KE ATAS) =====
+        function showCardSkating() {
+            const activeList = getActiveImagesList();
+            
+            if (activeList.length === 0) {
+                console.log('Tidak ada gambar aktif');
+                return;
+            }
+            
+            hasBeenTouched = false;
+
+            if (touchToChangeTimeout) {
+                clearTimeout(touchToChangeTimeout);
+                touchToChangeTimeout = null;
+            }
+
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            clearAllTimeouts();
+            
+            currentCardImageIndex = 0;
+            card.src = activeList[0].src;
+            
+            card.style.animation = 'none';
+            card.style.opacity = '0';
+            card.style.visibility = 'hidden';
+            card.style.display = 'block';
+            
+            card.style.left = '0';
+            card.style.top = '0';
+            card.style.right = 'auto';
+            card.style.bottom = 'auto';
+            card.style.margin = '0';
+            
+            card.classList.remove('card-moving', 'card-flipping', 'card-visible');
+            
+            requestAnimationFrame(() => {
+                if (card.complete) {
+                    initCardAnimation();
+                } else {
+                    card.onload = initCardAnimation;
+                    setTimeout(initCardAnimation, 500);
+                }
+            });
+            
+            function initCardAnimation() {
+                const cardRect = card.getBoundingClientRect();
+                const cardWidth = cardRect.width;
+                const cardHeight = cardRect.height;
+                
+                posX = (window.innerWidth / 2) - (cardWidth / 2);
+                posY = window.innerHeight + 100;
+                
+                card.style.transition = 'none';
+                card.style.transform = `translate(${posX}px, ${posY}px)`;
+                
+                void card.offsetHeight;
+                
+                card.style.opacity = '1';
+                card.style.visibility = 'visible';
+                card.classList.add('card-visible');
+                
+                requestAnimationFrame(() => {
+                    card.classList.add('card-moving');
+                    card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+                    
+                    setTimeout(() => {
+                        posX = (window.innerWidth / 2) - (cardWidth / 2);
+                        posY = (window.innerHeight / 2) - (cardHeight / 2);
+                        
+                        card.style.transform = `translate(${posX}px, ${posY}px)`;
+                        
+                        setTimeout(() => {
+                            isAnimating = false;
+                            card.classList.remove('card-moving');
+                            
+                            // Simpan daftar aktif untuk sequence sentuhan
+                            activeImagesList = activeList;
+                            isSequenceActive = true;
+                            sequenceStage = 1;
+                            
+                            // Untuk Skating, kita akan handle exit setelah semua gambar
+                            // Ini akan diproses di event touchend
+                        }, 800);
+                    }, 50);
+                });
+            }
+        }
+
+        // ===== FUNGSI UNTUK EXIT SKATING (KELUAR KE ATAS) =====
+        function exitCardSkating() {
+            if (card.style.display === 'none' || !isSequenceActive) return;
+            
+            console.log("Skating: kartu keluar ke atas");
+            
+            const cardWidth = card.offsetWidth;
+            
+            // Animasi keluar ke atas
+            card.classList.add('card-moving');
+            card.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+            
+            // Posisi akhir di atas layar
+            posY = -card.offsetHeight - 100;
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            
+            // Setelah animasi selesai, sembunyikan kartu
+            setTimeout(() => {
+                hideCard();
+                card.classList.remove('card-moving');
+                isSequenceActive = false;
+                sequenceStage = 0;
+                console.log("Skating: kartu hilang");
+            }, 500);
+        }
         
         // ===== FUNGSI UNTUK BERGANTI KE GAMBAR BERIKUTNYA (UNTUK SEMUA EFFECT) =====
         function goToNextImage() {
@@ -1384,6 +1537,9 @@
                     if (data.effectSlider !== undefined) {
                         effectSliderCheckbox.checked = data.effectSlider;
                     }
+                    if (data.effectSkating !== undefined) {
+                        effectSkatingCheckbox.checked = data.effectSkating;
+                    }
                     if (data.sensorGerak !== undefined) {
                         sensorGerakCheckbox.checked = data.sensorGerak;
                         isSensorActive = data.sensorGerak;
@@ -1394,7 +1550,7 @@
                         activeImages = data.activeImages;
                     }
                     
-                    // Load semua preview images
+                    // Load semua preview images (4 gambar)
                     if (data.preview1) {
                         const preview1Img = preview1.querySelector('img');
                         if (preview1Img) {
@@ -1408,6 +1564,10 @@
                     if (data.preview3) {
                         const preview3Img = preview3.querySelector('img');
                         if (preview3Img) preview3Img.src = data.preview3;
+                    }
+                    if (data.preview4) {
+                        const preview4Img = preview4.querySelector('img');
+                        if (preview4Img) preview4Img.src = data.preview4;
                     }
                     
                     // Update kartu utama dan preview besar dari preview1
@@ -1440,17 +1600,20 @@
                 const preview1Img = preview1.querySelector('img');
                 const preview2Img = preview2.querySelector('img');
                 const preview3Img = preview3.querySelector('img');
+                const preview4Img = preview4.querySelector('img');
                 
                 const data = {
                     background: background.style.backgroundImage.replace('url("', '').replace('")', ''),
                     effectStandar: effectStandarCheckbox.checked,
                     shadowEffect: shadowEffectCheckbox.checked,
                     effectSlider: effectSliderCheckbox.checked,
+                    effectSkating: effectSkatingCheckbox.checked,
                     sensorGerak: sensorGerakCheckbox.checked,
                     activeImages: activeImages,
                     preview1: preview1Img ? preview1Img.src : '',
                     preview2: preview2Img ? preview2Img.src : '',
-                    preview3: preview3Img ? preview3Img.src : ''
+                    preview3: preview3Img ? preview3Img.src : '',
+                    preview4: preview4Img ? preview4Img.src : ''
                 };
                 
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -1468,6 +1631,7 @@
             if (effectStandarCheckbox.checked) {
                 shadowEffectCheckbox.checked = false;
                 effectSliderCheckbox.checked = false;
+                effectSkatingCheckbox.checked = false;
             }
             autoSave();
         });
@@ -1476,6 +1640,7 @@
             if (shadowEffectCheckbox.checked) {
                 effectStandarCheckbox.checked = false;
                 effectSliderCheckbox.checked = false;
+                effectSkatingCheckbox.checked = false;
             }
             autoSave();
         });
@@ -1484,6 +1649,16 @@
             if (effectSliderCheckbox.checked) {
                 effectStandarCheckbox.checked = false;
                 shadowEffectCheckbox.checked = false;
+                effectSkatingCheckbox.checked = false;
+            }
+            autoSave();
+        });
+
+        effectSkatingCheckbox.addEventListener('change', (e) => {
+            if (effectSkatingCheckbox.checked) {
+                effectStandarCheckbox.checked = false;
+                shadowEffectCheckbox.checked = false;
+                effectSliderCheckbox.checked = false;
             }
             autoSave();
         });
@@ -1564,6 +1739,21 @@
                     cardAppearTimeout = setTimeout(() => {
                         hideIndicator();
                         showCardSlider();
+                    }, totalDelay);
+                    
+                } else if (effectSkatingCheckbox.checked) {
+                    // EFFECT SKATING ON
+                    console.log('Double tap: Effect Skating ON');
+                    const totalDelay = 4000;
+                    const indicatorDelay = 3000;
+                    
+                    indicatorTimeout = setTimeout(() => {
+                        showIndicator();
+                    }, indicatorDelay);
+                    
+                    cardAppearTimeout = setTimeout(() => {
+                        hideIndicator();
+                        showCardSkating();
                     }, totalDelay);
                     
                 } else {
@@ -1687,6 +1877,34 @@
                         touchToChangeTimeout = null;
                     }, 3000);
                 } else {
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                }
+            }
+            // Untuk effect skating
+            else if (effectSkatingCheckbox.checked) {
+                if (sequenceStage < activeCount) {
+                    console.log(`Skating Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
+                    touchToChangeTimeout = setTimeout(() => {
+                        if (isSequenceActive) {
+                            if (goToNextImage()) {
+                                console.log(`Skating: ganti ke gambar ${currentCardImageIndex + 1}`);
+                            } else {
+                                // Jika sudah habis, tunggu 4 detik lalu exit ke atas
+                                console.log("Skating: semua gambar sudah tampil, tunggu 4 detik untuk exit");
+                                
+                                touchToChangeTimeout = setTimeout(() => {
+                                    if (isSequenceActive) {
+                                        exitCardSkating();
+                                    }
+                                    touchToChangeTimeout = null;
+                                }, 4000);
+                            }
+                        }
+                        touchToChangeTimeout = null;
+                    }, 3000);
+                } else {
+                    // Fallback
                     isSequenceActive = false;
                     sequenceStage = 0;
                 }
