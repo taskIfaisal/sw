@@ -264,6 +264,7 @@
             transition: all 0.2s ease;
             margin: 0 auto;
             touch-action: manipulation;
+            position: relative;
         }
         
         /* Style untuk preview aktif (border hijau) */
@@ -606,12 +607,12 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <h3 style="margin: 0;">Effect Standar</h3>
                 <label class="toggle-switch" style="margin: 0;">
-                    <input type="checkbox" id="effect-standar" checked>
+                    <input type="checkbox" id="effect-standar">
                     <span class="toggle-slider effect-slider"></span>
                 </label>
             </div>
             <div class="effect-description">
-                ON: Double tap → tunggu 1 detik → kartu muncul langsung (gambar aktif pertama)
+                ON: Double tap → tunggu 1 detik → kartu muncul langsung di tengah (gambar aktif pertama)
             </div>
         </div>
 
@@ -624,7 +625,7 @@
                 </label>
             </div>
             <div class="effect-description">
-                ON: Double tap → tunggu 5 detik → kartu muncul fade in, berganti sesuai gambar aktif, fade out
+                ON: Double tap → tunggu 5 detik → kartu muncul fade in 5 detik, berganti sesuai gambar aktif, fade out 5 detik
             </div>
         </div>
 
@@ -718,7 +719,7 @@
         let modalElement = null;
         let activePreview = 1;
 
-        // NEW: Status aktif untuk setiap gambar favorite
+        // Status aktif untuk setiap gambar favorite
         let activeImages = {
             1: true,  // Favorite 1 aktif secara default
             2: true,  // Favorite 2 aktif secara default
@@ -1037,67 +1038,53 @@
             renderFolders();
         };
         
+        // ===== VARIABEL UNTUK DETEKSI DOUBLE KLIK =====
+        let clickTimer = null;
+        let clickCount = 0;
+        let lastClickedPreview = null;
+        
         // ===== EVENT LISTENER UNTUK PREVIEW =====
-        // Single click: buka album GitHub
-        preview1.addEventListener('click', (e) => {
-            // Cegah double click trigger dua kali
-            if (e.detail === 1) {
-                // Tunggu sebentar untuk lihat apakah ada double click
-                setTimeout(() => {
-                    if (e.detail === 1) {
-                        showGithubModal(1);
-                    }
-                }, 250);
-            }
-        });
-        
-        preview2.addEventListener('click', (e) => {
-            if (e.detail === 1) {
-                setTimeout(() => {
-                    if (e.detail === 1) {
-                        showGithubModal(2);
-                    }
-                }, 250);
-            }
-        });
-        
-        preview3.addEventListener('click', (e) => {
-            if (e.detail === 1) {
-                setTimeout(() => {
-                    if (e.detail === 1) {
-                        showGithubModal(3);
-                    }
-                }, 250);
-            }
-        });
-        
-        // Double click: toggle aktif/nonaktif gambar
-        preview1.addEventListener('dblclick', (e) => {
+        function handlePreviewClick(e, previewNumber) {
             e.preventDefault();
             e.stopPropagation();
-            activeImages[1] = !activeImages[1];
-            updateActivePreviewStyles();
-            autoSave();
-            console.log('Favorite 1:', activeImages[1] ? 'aktif' : 'nonaktif');
-        });
+            
+            const currentPreview = e.currentTarget;
+            
+            // Increment click count
+            clickCount++;
+            lastClickedPreview = previewNumber;
+            
+            if (clickCount === 1) {
+                // Single click - tunggu untuk lihat apakah ada double click
+                clickTimer = setTimeout(() => {
+                    // Ini adalah single click
+                    clickCount = 0;
+                    lastClickedPreview = null;
+                    
+                    // Buka album GitHub
+                    console.log(`Single click: buka album untuk Preview ${previewNumber}`);
+                    showGithubModal(previewNumber);
+                    
+                }, 300); // Tunggu 300ms
+                
+            } else if (clickCount === 2) {
+                // Double click - batalkan timer single click
+                clearTimeout(clickTimer);
+                clickCount = 0;
+                lastClickedPreview = null;
+                
+                // Toggle aktif/nonaktif
+                console.log(`Double click: toggle aktif/nonaktif Preview ${previewNumber}`);
+                activeImages[previewNumber] = !activeImages[previewNumber];
+                updateActivePreviewStyles();
+                autoSave();
+            }
+        }
         
-        preview2.addEventListener('dblclick', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            activeImages[2] = !activeImages[2];
-            updateActivePreviewStyles();
-            autoSave();
-            console.log('Favorite 2:', activeImages[2] ? 'aktif' : 'nonaktif');
-        });
-        
-        preview3.addEventListener('dblclick', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            activeImages[3] = !activeImages[3];
-            updateActivePreviewStyles();
-            autoSave();
-            console.log('Favorite 3:', activeImages[3] ? 'aktif' : 'nonaktif');
-        });
+        // Pasang event listener
+        preview1.addEventListener('click', (e) => handlePreviewClick(e, 1));
+        preview2.addEventListener('click', (e) => handlePreviewClick(e, 2));
+        preview3.addEventListener('click', (e) => handlePreviewClick(e, 3));
         
         // ===== FUNGSI UNTUK UPDATE CARD IMAGE =====
         function updateCardImage(imageSrc) {
@@ -1122,7 +1109,7 @@
             autoSave();
         }
         
-        // ===== FUNGSI UNTUK EFFECT STANDAR (MUNCUL CEPAT) =====
+        // ===== FUNGSI UNTUK EFFECT STANDAR (MUNCUL CEPAT DI TENGAH) =====
         function showCardStandar() {
             const activeList = getActiveImagesList();
             
@@ -1131,7 +1118,7 @@
                 return;
             }
             
-            // Reset posisi ke tengah
+            // Reset posisi ke tengah (seperti kode asli)
             const cardWidth = card.offsetWidth;
             const cardHeight = card.offsetHeight;
             
@@ -1145,16 +1132,21 @@
             currentCardImageIndex = 0;
             card.src = activeList[0].src;
             
-            card.style.transform = 'none';
+            // Tampilkan kartu
             card.style.display = 'block';
             card.style.opacity = '1';
+            card.style.visibility = 'visible';
             card.style.animation = 'none';
+            
+            // Terapkan transformasi
             card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
             
             // Simpan daftar aktif untuk sequence sentuhan
             activeImagesList = activeList;
             isSequenceActive = true;
             sequenceStage = 1;
+            
+            console.log('Effect Standar: kartu muncul di tengah dengan gambar 1');
         }
         
         // ===== FUNGSI UNTUK EFFECT SHADOW =====
@@ -1180,11 +1172,12 @@
             currentCardImageIndex = 0;
             card.src = activeList[0].src;
             
-            card.style.transform = 'none';
+            // Tampilkan kartu
             card.style.display = 'block';
-            card.style.opacity = '1';
+            card.style.visibility = 'visible';
             
             // Animasi fade in 5 detik
+            card.style.opacity = '1';
             card.style.animation = 'none';
             void card.offsetHeight;
             card.style.animation = 'muncul 5s ease-in-out';
@@ -1199,6 +1192,8 @@
             activeImagesList = activeList;
             isSequenceActive = true;
             sequenceStage = 1;
+            
+            console.log('Effect Shadow: kartu muncul fade in dengan gambar 1');
         }
         
         // ===== FUNGSI UNTUK EFFECT SLIDER (MUNCUL DARI BAWAH) =====
@@ -1298,21 +1293,12 @@
             if (currentCardImageIndex < activeImagesList.length) {
                 card.src = activeImagesList[currentCardImageIndex].src;
                 sequenceStage++;
+                console.log(`Ganti ke gambar ${currentCardImageIndex + 1}`);
                 return true;
             } 
-            // Jika sudah habis, masuk ke fade out (khusus shadow) atau langsung selesai
+            // Jika sudah habis
             else {
-                // Untuk shadow, masuk stage fade out
-                if (shadowEffectCheckbox.checked) {
-                    sequenceStage++; // Stage fade out
-                    return false; // Tidak ada gambar lagi, tapi masih ada fade out
-                } 
-                // Untuk effect lain, selesai
-                else {
-                    isSequenceActive = false;
-                    sequenceStage = 0;
-                    return false;
-                }
+                return false;
             }
         }
         
@@ -1470,6 +1456,8 @@
         document.addEventListener('touchend', (e) => {
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTap;
+            
+            // Deteksi double tap (tanpa memperhatikan target)
             if (tapLength < 300 && tapLength > 0) {
                 // Double tap detected
                 e.preventDefault();
@@ -1481,6 +1469,7 @@
                 // CEK EFFECT YANG AKTIF
                 if (shadowEffectCheckbox.checked) {
                     // EFFECT SHADOW ON
+                    console.log('Double tap: Effect Shadow ON');
                     isSequenceActive = true;
                     sequenceStage = 1;
                     
@@ -1493,6 +1482,7 @@
                     
                 } else if (effectStandarCheckbox.checked) {
                     // EFFECT STANDAR ON
+                    console.log('Double tap: Effect Standar ON');
                     isSequenceActive = false;
                     
                     sequenceTimer = setTimeout(() => {
@@ -1502,6 +1492,7 @@
                     
                 } else if (effectSliderCheckbox.checked) {
                     // EFFECT SLIDER ON
+                    console.log('Double tap: Effect Slider ON');
                     const totalDelay = 4000;
                     const indicatorDelay = 3000;
                     
@@ -1515,7 +1506,7 @@
                     }, totalDelay);
                     
                 } else {
-                    console.log('No effect active');
+                    console.log('Double tap: No effect active');
                 }
             }
             lastTap = currentTime;
@@ -1572,8 +1563,8 @@
                 isDragging = false;
             }, 50);
             
-            // Hanya proses jika ada sequence aktif
-            if (!isSequenceActive || card.style.display === 'none') {
+            // Hanya proses jika ada sequence aktif dan kartu visible
+            if (!isSequenceActive || card.style.display === 'none' || card.style.visibility !== 'visible') {
                 return;
             }
             
@@ -1582,27 +1573,28 @@
                 clearTimeout(touchToChangeTimeout);
             }
             
-            // Proses berdasarkan stage dan jumlah gambar aktif
             const activeCount = activeImagesList.length;
             
             // Untuk shadow effect
             if (shadowEffectCheckbox.checked) {
-                // Stage 1,2,3... (ganti gambar)
+                // Stage gambar (1,2,3...)
                 if (sequenceStage < activeCount) {
+                    console.log(`Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
                     touchToChangeTimeout = setTimeout(() => {
                         if (isSequenceActive) {
                             if (goToNextImage()) {
-                                console.log(`Ganti ke gambar ${currentCardImageIndex + 1}`);
+                                console.log(`Shadow: ganti ke gambar ${currentCardImageIndex + 1}`);
                             }
                         }
                         touchToChangeTimeout = null;
                     }, 3000);
                 } 
-                // Stage terakhir (fade out)
-                else if (sequenceStage === activeCount) {
+                // Stage terakhir (fade out) - hanya jika sudah di gambar terakhir
+                else if (sequenceStage === activeCount && activeCount > 0) {
+                    console.log(`Stage ${sequenceStage}: tunggu 5 detik untuk fade out`);
                     touchToChangeTimeout = setTimeout(() => {
                         if (isSequenceActive) {
-                            console.log("Fade out dimulai");
+                            console.log("Shadow: fade out dimulai");
                             card.style.opacity = '0';
                             
                             setTimeout(() => {
@@ -1611,6 +1603,7 @@
                                     card.style.opacity = '1';
                                     isSequenceActive = false;
                                     sequenceStage = 0;
+                                    console.log("Shadow: kartu hilang");
                                 }
                             }, 5000);
                         }
@@ -1621,12 +1614,14 @@
             // Untuk effect standar dan slider
             else if (effectStandarCheckbox.checked || effectSliderCheckbox.checked) {
                 if (sequenceStage < activeCount) {
+                    console.log(`Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
                     touchToChangeTimeout = setTimeout(() => {
                         if (isSequenceActive) {
                             if (goToNextImage()) {
-                                console.log(`Ganti ke gambar ${currentCardImageIndex + 1}`);
+                                console.log(`Standar/Slider: ganti ke gambar ${currentCardImageIndex + 1}`);
                             } else {
                                 // Jika sudah habis, sequence selesai
+                                console.log("Standar/Slider: semua gambar sudah tampil");
                                 isSequenceActive = false;
                                 sequenceStage = 0;
                             }
@@ -1832,6 +1827,7 @@
         
         function hideCard() {
             card.style.display = 'none';
+            card.style.visibility = 'hidden';
         }
         
         window.addEventListener('resize', () => {
@@ -1869,6 +1865,7 @@
                 updateCardTransform();
                 
                 card.style.display = 'none';
+                card.style.visibility = 'hidden';
             }, 200);
         });
     </script>
