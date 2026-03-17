@@ -830,10 +830,6 @@
         let hasBeenTouched = false;
         let currentCardImageIndex = 0;
         
-        // ===== VARIABEL KHUSUS UNTUK EFFECT STANDAR (PERBAIKAN) =====
-        let standarDragActive = false; // Menandakan sedang drag di effect standar
-        const EXIT_THRESHOLD_PERCENT = 0.5; // 50% keluar untuk force exit
-        
         // ===== LOCAL STORAGE SETUP =====
         const STORAGE_KEY = 'magic_card_data';
         
@@ -1517,116 +1513,6 @@
             }
         }
         
-        // ===== FUNGSI CEK 50% EXIT UNTUK EFFECT STANDAR (PERBAIKAN) =====
-        function checkStandarExit() {
-            if (!effectStandarCheckbox.checked || !isSequenceActive || card.style.display === 'none') {
-                return false;
-            }
-            
-            const cardRect = card.getBoundingClientRect();
-            const cardWidth = cardRect.width;
-            const cardHeight = cardRect.height;
-            
-            // Hitung persentase kartu yang visible
-            let exitDirection = null;
-            let shouldExit = false;
-            
-            // Cek setiap sisi
-            if (cardRect.right < 0) {
-                // Keluar kiri
-                shouldExit = true;
-                exitDirection = 'left';
-            } else if (cardRect.left > window.innerWidth) {
-                // Keluar kanan
-                shouldExit = true;
-                exitDirection = 'right';
-            } else if (cardRect.bottom < 0) {
-                // Keluar atas
-                shouldExit = true;
-                exitDirection = 'top';
-            } else if (cardRect.top > window.innerHeight) {
-                // Keluar bawah
-                shouldExit = true;
-                exitDirection = 'bottom';
-            } else {
-                // Masih dalam layar, hitung persentase hidden
-                const leftHidden = Math.max(0, -cardRect.left);
-                const rightHidden = Math.max(0, cardRect.right - window.innerWidth);
-                const topHidden = Math.max(0, -cardRect.top);
-                const bottomHidden = Math.max(0, cardRect.bottom - window.innerHeight);
-                
-                const maxHidden = Math.max(leftHidden, rightHidden, topHidden, bottomHidden);
-                const cardDimension = Math.max(cardWidth, cardHeight);
-                const hiddenPercent = maxHidden / cardDimension;
-                
-                // Jika sudah 50% keluar
-                if (hiddenPercent >= EXIT_THRESHOLD_PERCENT) {
-                    shouldExit = true;
-                    if (leftHidden > 0) exitDirection = 'left';
-                    else if (rightHidden > 0) exitDirection = 'right';
-                    else if (topHidden > 0) exitDirection = 'top';
-                    else if (bottomHidden > 0) exitDirection = 'bottom';
-                }
-            }
-            
-            // Jika memenuhi syarat exit
-            if (shouldExit && exitDirection) {
-                console.log(`Effect Standar: 50% keluar (${exitDirection}), force exit!`);
-                forceExitCardStandar(exitDirection);
-                return true;
-            }
-            
-            return false;
-        }
-
-        // ===== FUNGSI FORCE EXIT UNTUK EFFECT STANDAR =====
-        function forceExitCardStandar(direction) {
-            // Matikan drag
-            isDragging = false;
-            standarDragActive = false;
-            
-            // Animasi keluar yang smooth
-            card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-            
-            // Tentukan target posisi berdasarkan arah
-            const cardWidth = card.offsetWidth;
-            const cardHeight = card.offsetHeight;
-            
-            switch(direction) {
-                case 'left':
-                    posX = -cardWidth - 100;
-                    break;
-                case 'right':
-                    posX = window.innerWidth + 100;
-                    break;
-                case 'top':
-                    posY = -cardHeight - 100;
-                    break;
-                case 'bottom':
-                    posY = window.innerHeight + 100;
-                    break;
-            }
-            
-            // Update posisi
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-            
-            // Sembunyikan setelah animasi selesai
-            setTimeout(() => {
-                hideCard();
-                card.style.transition = 'none';
-                
-                // Matikan sequence
-                isSequenceActive = false;
-                sequenceStage = 0;
-                if (touchToChangeTimeout) {
-                    clearTimeout(touchToChangeTimeout);
-                    touchToChangeTimeout = null;
-                }
-                
-                console.log('Effect Standar: kartu force exit completed');
-            }, 300);
-        }
-        
         // ===== LOCAL STORAGE FUNCTIONS =====
         function loadFromStorage() {
             try {
@@ -1901,18 +1787,9 @@
             cardIndicator.classList.remove('visible');
         }
         
-        // ===== EVENT LISTENER UNTUK KARTU - DENGAN PERBAIKAN EXIT =====
+        // ===== EVENT LISTENER UNTUK KARTU =====
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
-                e.preventDefault();
-                
-                // KHUSUS UNTUK EFFECT STANDAR: matikan sensor dengan flag
-                if (effectStandarCheckbox.checked) {
-                    standarDragActive = true;
-                    console.log('Effect Standar: Drag dimulai, sensor dinonaktifkan');
-                }
-                
-                // Untuk semua effect
                 isDragging = true;
                 startX = e.touches[0].clientX - posX;
                 startY = e.touches[0].clientY - posY;
@@ -1923,13 +1800,12 @@
                 lastTime = Date.now();
                 card.style.transition = 'none';
                 card.style.animation = 'none';
+                e.preventDefault();
             }
         }, {passive: false});
 
         document.addEventListener('touchmove', (e) => {
             if (isDragging && e.touches.length === 1) {
-                e.preventDefault();
-                
                 const now = Date.now();
                 const deltaTime = now - lastTime;
                 
@@ -1949,82 +1825,92 @@
                     
                     updateCardTransform();
                     
-                    // PERBAIKAN: Untuk Effect Standar - cek 50% exit
-                    if (effectStandarCheckbox.checked && isSequenceActive) {
-                        // Jika checkStandarExit mengembalikan true, berarti sudah force exit
-                        if (checkStandarExit()) {
-                            // Stop drag
-                            isDragging = false;
-                            standarDragActive = false;
-                            return;
-                        }
-                    } else {
-                        // Untuk effect lain, gunakan threshold biasa
-                        const cardRect = card.getBoundingClientRect();
-                        const exitThreshold = 30;
+                    // PERBAIKAN: Deteksi lebih sensitif untuk kartu keluar layar
+                    const cardRect = card.getBoundingClientRect();
+                    
+                    // Cek apakah kartu sudah keluar dari layar (dengan toleransi 10px)
+                    if (cardRect.bottom < -10 || 
+                        cardRect.top > window.innerHeight + 10 ||
+                        cardRect.right < -10 || 
+                        cardRect.left > window.innerWidth + 10) {
                         
-                        if (cardRect.bottom < -exitThreshold || 
-                            cardRect.top > window.innerHeight + exitThreshold ||
-                            cardRect.right < -exitThreshold || 
-                            cardRect.left > window.innerWidth + exitThreshold) {
-                            
-                            hideCard();
-                            isSequenceActive = false;
-                            sequenceStage = 0;
-                            if (touchToChangeTimeout) {
-                                clearTimeout(touchToChangeTimeout);
-                                touchToChangeTimeout = null;
-                            }
-                            isDragging = false;
-                            return;
-                        }
-                    }
-                }
-            }
-        }, {passive: false});
-        
-        document.addEventListener('touchend', (e) => {
-            if (isDragging) {
-                isDragging = false;
-                
-                // KHUSUS UNTUK EFFECT STANDAR: hidupkan sensor kembali
-                if (effectStandarCheckbox.checked && standarDragActive) {
-                    standarDragActive = false;
-                    console.log('Effect Standar: Drag selesai, sensor diaktifkan kembali');
-                }
-                
-                card.style.transition = '';
-                
-                const speedThreshold = 1000;
-                const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
-                
-                const cardRect = card.getBoundingClientRect();
-                const exitThreshold = 50;
-                
-                // Untuk effect standar, exit sudah ditangani oleh checkStandarExit
-                // Untuk effect lain, gunakan threshold biasa
-                if (!effectStandarCheckbox.checked) {
-                    if (cardRect.bottom < -exitThreshold || 
-                        cardRect.top > window.innerHeight + exitThreshold ||
-                        cardRect.right < -exitThreshold || 
-                        cardRect.left > window.innerWidth + exitThreshold ||
-                        currentSpeed > speedThreshold) {
-                        
+                        console.log("Kartu keluar layar - LANGSUNG HILANG");
                         hideCard();
+                        
+                        // Reset semua state
                         isSequenceActive = false;
                         sequenceStage = 0;
+                        isDragging = false;
+                        
                         if (touchToChangeTimeout) {
                             clearTimeout(touchToChangeTimeout);
                             touchToChangeTimeout = null;
                         }
+                        
+                        // PERBAIKAN: Hentikan propagasi event
+                        e.preventDefault();
                         return;
                     }
                 }
+                e.preventDefault();
+            }
+        }, {passive: false});
+        
+        card.addEventListener('touchend', (e) => {
+            if (isDragging) {
+                // PERBAIKAN: Cek lagi posisi kartu saat jari diangkat
+                const cardRect = card.getBoundingClientRect();
                 
+                if (cardRect.bottom < -10 || 
+                    cardRect.top > window.innerHeight + 10 ||
+                    cardRect.right < -10 || 
+                    cardRect.left > window.innerWidth + 10) {
+                    
+                    console.log("Kartu keluar layar di touchend - LANGSUNG HILANG");
+                    hideCard();
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                    
+                    if (touchToChangeTimeout) {
+                        clearTimeout(touchToChangeTimeout);
+                        touchToChangeTimeout = null;
+                    }
+                    
+                    isDragging = false;
+                    return;
+                }
+                
+                // Kecepatan threshold
+                const speedThreshold = 800; // Diturunkan sedikit agar lebih sensitif
+                const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+                
+                // Jika kecepatan tinggi, langsung hilangkan kartu
+                if (currentSpeed > speedThreshold) {
+                    console.log("Kecepatan tinggi - kartu langsung hilang");
+                    hideCard();
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                    
+                    if (touchToChangeTimeout) {
+                        clearTimeout(touchToChangeTimeout);
+                        touchToChangeTimeout = null;
+                    }
+                    
+                    isDragging = false;
+                    return;
+                }
+                
+                isDragging = false;
+                card.style.transition = '';
+                
+                // PERBAIKAN: Selalu terapkan bounds agar kartu tetap di dalam layar
+                // jika tidak sengaja keluar sedikit
                 applyBounds();
                 updateCardTransform();
-                
-                // Hanya proses jika ada sequence aktif dan kartu visible
+            }
+            
+            // Proses sequence untuk ganti gambar
+            setTimeout(() => {
                 if (!isSequenceActive || card.style.display === 'none' || card.style.visibility !== 'visible') {
                     return;
                 }
@@ -2038,7 +1924,6 @@
                 
                 // Untuk shadow effect
                 if (shadowEffectCheckbox.checked) {
-                    // Stage gambar (1,2,3,4) - SELALU 3 detik
                     if (sequenceStage < activeCount) {
                         console.log(`Shadow Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
                         touchToChangeTimeout = setTimeout(() => {
@@ -2050,7 +1935,6 @@
                             touchToChangeTimeout = null;
                         }, 3000);
                     } 
-                    // Stage fade out - SETELAH GAMBAR TERAKHIR
                     else if (sequenceStage === activeCount && activeCount > 0) {
                         console.log(`Shadow Stage ${sequenceStage} (FADE OUT): tunggu 5 detik`);
                         touchToChangeTimeout = setTimeout(() => {
@@ -2106,7 +1990,6 @@
                             touchToChangeTimeout = null;
                         }, 3000);
                     } 
-                    // Stage terakhir - setelah semua gambar tampil
                     else if (sequenceStage === activeCount && activeCount > 0) {
                         console.log(`Skating Stage ${sequenceStage}: semua gambar sudah tampil, tunggu 4 detik untuk exit`);
                         
@@ -2119,7 +2002,11 @@
                         }, 4000);
                     }
                 }
-            }
+            }, 50);
+        });
+        
+        document.addEventListener('touchend', (e) => {
+            // Sudah dihandle di atas
         });
         
         bgUpload.addEventListener('change', (e) => {
@@ -2158,7 +2045,7 @@
             });
         }
         
-        // ===== SENSOR IMPLEMENTATION - DIMODIFIKASI UNTUK EFFECT STANDAR =====
+        // ===== SENSOR IMPLEMENTATION =====
         function initSensor() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === "function") {
                 sensorPermissionBtn.classList.remove('hidden');
@@ -2206,30 +2093,11 @@
         
         function startSensorAnimation() {
             function animate() {
-                // Sensor hanya aktif jika:
-                // 1. Sensor diizinkan
-                // 2. Toggle sensor ON
-                // 3. Kartu visible
-                // 4. TIDAK SEDANG DRAG SECARA UMUM
-                // 5. KHUSUS EFFECT STANDAR: tidak sedang drag (!standarDragActive)
                 if (isSensorEnabled && !isDragging && sensorGerakCheckbox.checked && card.style.display !== 'none') {
-                    
-                    // EXTRA CHECK: untuk Effect Standar, pastikan tidak sedang drag
-                    if (effectStandarCheckbox.checked && standarDragActive) {
-                        requestAnimationFrame(animate);
-                        return;
-                    }
-                    
                     posX += smoothGamma * sensitivity;
                     posY += smoothBeta * sensitivity;
                     applyBounds();
                     updateCardTransform();
-                    
-                    // CEK 50% EXIT UNTUK EFFECT STANDAR (sensor juga bisa trigger exit)
-                    if (effectStandarCheckbox.checked && isSequenceActive && !standarDragActive) {
-                        // Cek setelah update posisi
-                        setTimeout(() => checkStandarExit(), 0);
-                    }
                 }
                 requestAnimationFrame(animate);
             }
@@ -2258,7 +2126,6 @@
         function hideCard() {
             card.style.display = 'none';
             card.style.visibility = 'hidden';
-            standarDragActive = false; // Reset flag jika kartu hilang
         }
         
         window.addEventListener('resize', () => {
