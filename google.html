@@ -20,7 +20,6 @@
     align-items: center;
     padding: 12px 14px;
     gap: 14px;
-    transition: opacity 0.2s ease;
   }
 
   .menu {
@@ -88,7 +87,6 @@
   .logo-container {
     text-align: center;
     margin: 30px 0 20px;
-    transition: opacity 0.2s ease, transform 0.2s ease;
   }
 
   .google-logo {
@@ -101,10 +99,9 @@
     background-size: contain;
   }
 
-  /* ===== SEARCH BAR ===== */
+  /* ===== SEARCH BAR (NORMAL MODE) ===== */
   .search-container {
     margin: 0 16px 24px;
-    transition: all 0.2s ease;
   }
 
   .search-box {
@@ -114,7 +111,6 @@
     align-items: center;
     padding: 8px 14px;
     gap: 12px;
-    transition: all 0.2s ease;
   }
 
   .search-box:hover {
@@ -131,7 +127,6 @@
     background: transparent;
   }
 
-  /* UKURAN ICON DIPERBESAR SEPERTI GOOGLE ASLI */
   .search-icon {
     width: 24px;
     height: 24px;
@@ -151,20 +146,20 @@
     cursor: pointer;
   }
 
+  /* GOOGLE LENS - PAKAI URL DARI GITHUB ANDA */
   .lens-icon {
     width: 26px;
     height: 26px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 1C7.19 1 3.06 4 1.57 8.25L4.1 9.69C5.23 6.28 8.36 4 12 4c3.64 0 6.77 2.28 7.9 5.69l2.53-1.44C20.94 4 16.81 1 12 1zm0 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0 1c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm-1 1.5v3h2v-3h-2zm0 4v3h2v-3h-2z"/></svg>');
+    background-image: url('https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/google-lens.png');
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
     cursor: pointer;
   }
 
-  /* ===== TRENDING ===== */
+  /* ===== TRENDING (NORMAL MODE) ===== */
   .section {
     padding: 0 16px;
-    transition: opacity 0.2s ease;
   }
 
   .section h3 {
@@ -212,7 +207,6 @@
     font-size: 13px;
     color: #5f6368;
     text-align: center;
-    transition: opacity 0.2s ease;
   }
 
   .footer-row {
@@ -228,7 +222,7 @@
     text-decoration: underline;
   }
 
-  /* ===== SEARCH OVERLAY (FULL-SCREEN MODE) ===== */
+  /* ===== SEARCH OVERLAY (POP-UP MODE) ===== */
   .search-overlay {
     position: fixed;
     top: 0;
@@ -252,8 +246,11 @@
     align-items: center;
     gap: 16px;
     margin-bottom: 24px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #1a73e8; /* GARIS BAWAH BIRU */
   }
 
+  /* TANDA PANAH KIRI - DIPERBESAR DAN DIPERJELAS */
   .back-button {
     width: 32px;
     height: 32px;
@@ -262,20 +259,17 @@
     background-position: center;
     background-size: contain;
     cursor: pointer;
+    flex-shrink: 0;
   }
 
-  .overlay-search-box {
+  .overlay-search-container {
     flex: 1;
     display: flex;
     align-items: center;
-    border: 1px solid #dfe1e5;
-    border-radius: 24px;
-    padding: 8px 14px;
     gap: 12px;
-    background: white;
   }
 
-  .overlay-search-box input {
+  .overlay-search-container input {
     border: none;
     outline: none;
     flex: 1;
@@ -283,6 +277,7 @@
     font-family: 'Arial', sans-serif;
     caret-color: transparent;
     background: transparent;
+    padding: 8px 0;
   }
 
   .overlay-mic-icon {
@@ -293,16 +288,18 @@
     background-position: center;
     background-size: contain;
     cursor: pointer;
+    flex-shrink: 0;
   }
 
   .overlay-lens-icon {
     width: 26px;
     height: 26px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 1C7.19 1 3.06 4 1.57 8.25L4.1 9.69C5.23 6.28 8.36 4 12 4c3.64 0 6.77 2.28 7.9 5.69l2.53-1.44C20.94 4 16.81 1 12 1zm0 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0 1c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm-1 1.5v3h2v-3h-2zm0 4v3h2v-3h-2z"/></svg>');
+    background-image: url('https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/google-lens.png');
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
     cursor: pointer;
+    flex-shrink: 0;
   }
 
   .overlay-trending {
@@ -315,6 +312,39 @@
     font-size: 18px;
     font-weight: 500;
     margin: 10px 0;
+  }
+
+  /* TRENDING DI OVERLAY - PAKAI IKON KACA PEMBESAR */
+  .overlay-trend {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .overlay-trend:hover {
+    background-color: #f8f9fa;
+  }
+
+  .overlay-trend-icon {
+    width: 18px;
+    height: 18px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235f6368" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+  }
+
+  .overlay-trend-text {
+    color: #202124;
+  }
+
+  .overlay-trend:hover .overlay-trend-text {
+    text-decoration: underline;
+    color: #1a0dab;
   }
 
   /* Hide main content when overlay is active */
@@ -354,13 +384,6 @@
     .topbar {
       padding: 10px 12px;
       gap: 10px;
-    }
-
-    .search-icon,
-    .mic-icon,
-    .lens-icon {
-      width: 24px;
-      height: 24px;
     }
   }
 </style>
@@ -421,12 +444,11 @@
   </div>
 </div>
 
-<!-- SEARCH OVERLAY (full-screen mode) -->
+<!-- SEARCH OVERLAY (POP-UP MODE) -->
 <div class="search-overlay" id="searchOverlay">
   <div class="overlay-header">
     <div class="back-button" id="backButton" title="Kembali"></div>
-    <div class="overlay-search-box">
-      <div class="search-icon"></div>
+    <div class="overlay-search-container">
       <input type="text" id="overlaySearchInput" placeholder="Telusuri Google" autocomplete="off" autocapitalize="off" spellcheck="false">
       <div class="overlay-mic-icon" id="overlayMicButton" title="Search by voice"></div>
       <div class="overlay-lens-icon" id="overlayLensButton" title="Search by image with Google Lens"></div>
@@ -458,83 +480,57 @@
   }
 
   // ========== API FUNCTIONS ==========
-  // Ambil data dari API (field "note")
   async function getNoteData() {
     try {
       const response = await fetch(API_URL);
       if (!response.ok) return null;
-      
       const data = await response.json();
-      
-      // Periksa apakah ada field "note"
       if (data && data.note) {
         lastNoteData = data.note;
-        
-        // Coba parse sebagai JSON
         try {
           const parsedNote = JSON.parse(data.note);
           return parsedNote;
         } catch (e) {
-          // Jika bukan JSON, return sebagai string
           return { search: data.note };
         }
       }
-      
       return null;
     } catch (error) {
-      // Silent error - tidak tampilkan apa-apa
       return null;
     }
   }
 
-  // Simpan data ke API (field "note")
   async function saveNoteData(searchTerm) {
     try {
-      // Dapatkan data saat ini
       const currentData = await getNoteData();
-      
       let noteData = {
         search: searchTerm,
         timestamp: Date.now(),
         history: []
       };
-      
-      // Jika ada data sebelumnya, tambahkan ke history
       if (currentData && currentData.search) {
         noteData.history = [currentData.search];
-        
-        // Tambahkan history lama jika ada
         if (currentData.history && Array.isArray(currentData.history)) {
           noteData.history = [...currentData.history.slice(0, 4), currentData.search];
         }
       }
-      
-      // Kirim ke API
       const response = await fetch(API_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ note: JSON.stringify(noteData) })
       });
-      
       return response.ok;
     } catch (error) {
-      // Silent error
       return false;
     }
   }
 
   // ========== SYNC FUNCTIONS ==========
-  // Sinkronisasi data dari API (diam-diam)
   async function syncData() {
     const data = await getNoteData();
-    
     if (data && data.search) {
       const searchInput = document.getElementById('searchInput');
       const overlaySearchInput = document.getElementById('overlaySearchInput');
-      
-      // Update search bar dengan data terbaru (hanya jika tidak dalam mode fokus)
       if (searchInput && !searchInput.matches(':focus')) {
         searchInput.value = data.search;
       }
@@ -544,12 +540,8 @@
     }
   }
 
-  // Mulai sinkronisasi otomatis (setiap 3 detik)
   function startAutoSync() {
-    // Sync pertama
     setTimeout(syncData, 1000);
-    
-    // Sync berulang
     syncInterval = setInterval(syncData, 3000);
   }
 
@@ -557,28 +549,19 @@
   function createSafeGoogleURL(query) {
     const encodedQuery = encodeURIComponent(query);
     const timestamp = Date.now();
-    
     return `https://www.google.com/search?q=${encodedQuery}&igu=1&client=safari&_=${timestamp}&noredirect=1&pf=1`;
   }
 
   function performSearch(query) {
     const searchQuery = query.trim();
     if (!searchQuery) return false;
-    
-    // Simpan ke API (diam-diam)
     saveNoteData(searchQuery);
-    
-    // Redirect ke Google
     const googleURL = createSafeGoogleURL(searchQuery);
-    
     if (isIOS() && isSafari()) {
-      setTimeout(() => {
-        window.location.replace(googleURL);
-      }, 50);
+      setTimeout(() => { window.location.replace(googleURL); }, 50);
     } else {
       window.location.href = googleURL;
     }
-    
     return false;
   }
 
@@ -586,19 +569,15 @@
     const timestamp = Date.now();
     const separator = url.includes('?') ? '&' : '?';
     const safeURL = url + separator + `igu=1&client=safari&_=${timestamp}&noredirect=1`;
-    
     if (isIOS() && isSafari()) {
-      setTimeout(() => {
-        window.location.href = safeURL;
-      }, 50);
+      setTimeout(() => { window.location.href = safeURL; }, 50);
     } else {
       window.location.href = safeURL;
     }
-    
     return false;
   }
 
-  // ========== OVERLAY (FULL-SCREEN SEARCH MODE) ==========
+  // ========== OVERLAY FUNCTIONS ==========
   const overlay = document.getElementById('searchOverlay');
   const searchInput = document.getElementById('searchInput');
   const overlaySearchInput = document.getElementById('overlaySearchInput');
@@ -606,86 +585,65 @@
   const trendingContainer = document.getElementById('trendingContainer');
   const overlayTrendingContainer = document.getElementById('overlayTrendingContainer');
 
-  // Clone trending items ke overlay
   function cloneTrendingToOverlay() {
     if (!trendingContainer || !overlayTrendingContainer) return;
-    
-    // Kosongkan container overlay
     overlayTrendingContainer.innerHTML = '';
     
-    // Clone semua trend dari container utama
     const trends = trendingContainer.querySelectorAll('.trend');
     trends.forEach(trend => {
-      const clonedTrend = trend.cloneNode(true);
+      const trendText = trend.querySelector('.trend-text').textContent;
       
-      // Tambahkan event listener ke cloned trend
-      clonedTrend.addEventListener('click', function() {
-        const searchTerm = this.querySelector('.trend-text').textContent;
-        overlaySearchInput.value = searchTerm;
-        performSearch(searchTerm);
+      const overlayTrend = document.createElement('div');
+      overlayTrend.className = 'overlay-trend';
+      overlayTrend.innerHTML = `
+        <div class="overlay-trend-icon"></div>
+        <div class="overlay-trend-text">${trendText}</div>
+      `;
+      
+      overlayTrend.addEventListener('click', function() {
+        const term = this.querySelector('.overlay-trend-text').textContent;
+        overlaySearchInput.value = term;
+        performSearch(term);
       });
       
-      overlayTrendingContainer.appendChild(clonedTrend);
+      overlayTrendingContainer.appendChild(overlayTrend);
     });
   }
 
-  // Buka overlay
   function openSearchOverlay() {
     overlay.classList.add('active');
     document.body.classList.add('overlay-active');
-    
-    // Copy value dari search input utama ke overlay
     overlaySearchInput.value = searchInput.value;
-    
-    // Clone trending items
     cloneTrendingToOverlay();
-    
-    // Focus ke input overlay
-    setTimeout(() => {
-      overlaySearchInput.focus();
-    }, 100);
+    setTimeout(() => { overlaySearchInput.focus(); }, 100);
   }
 
-  // Tutup overlay
   function closeSearchOverlay() {
     overlay.classList.remove('active');
     document.body.classList.remove('overlay-active');
-    
-    // Copy value dari overlay ke search input utama
     searchInput.value = overlaySearchInput.value;
   }
 
   // ========== DOUBLE CLICK HANDLER ==========
   function setupDoubleClickHandler() {
     const loginBtn = document.getElementById('loginBtn');
-    
     loginBtn.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      
       clickCount++;
-      
       if (clickCount === 1) {
-        // Click pertama - tunggu click kedua
         clickTimer = setTimeout(() => {
-          // Single click - buka Google Account
           clickCount = 0;
           openGoogleLink('https://accounts.google.com');
         }, 300);
       } else if (clickCount === 2) {
-        // Double click - load data dari API
         clearTimeout(clickTimer);
         clickCount = 0;
-        
-        // Ambil data terbaru dari API
         getNoteData().then(data => {
           if (data && data.search) {
-            // Isi search bar dengan data terakhir
             if (searchInput) {
               searchInput.value = data.search;
               searchInput.focus();
-              
-              // Jika ada history, tambahkan ke trending area
               if (data.history && data.history.length > 0) {
                 updateTrendingWithHistory(data.history);
               }
@@ -696,49 +654,27 @@
     });
   }
 
-  // Update trending dengan history (diam-diam)
   function updateTrendingWithHistory(history) {
     if (!trendingContainer || !history || history.length === 0) return;
-    
-    // Simpan trending asli
     const originalTrending = Array.from(trendingContainer.children).slice(0, 4);
-    
-    // Clear container
     trendingContainer.innerHTML = '';
-    
-    // Tambahkan history sebagai trending (maksimal 4)
     history.slice(0, 4).forEach((searchTerm) => {
       const trendElement = document.createElement('div');
       trendElement.className = 'trend';
-      trendElement.innerHTML = `
-        <div class="trend-icon"></div>
-        <div class="trend-text">${searchTerm}</div>
-      `;
-      
+      trendElement.innerHTML = `<div class="trend-icon"></div><div class="trend-text">${searchTerm}</div>`;
       trendElement.addEventListener('click', function() {
         const term = this.querySelector('.trend-text').textContent;
         searchInput.value = term;
         performSearch(term);
       });
-      
       trendingContainer.appendChild(trendElement);
     });
-    
-    // Tambahkan kembali trending asli
-    originalTrending.forEach(trend => {
-      trendingContainer.appendChild(trend);
-    });
-    
-    // Clone ke overlay
+    originalTrending.forEach(trend => { trendingContainer.appendChild(trend); });
     cloneTrendingToOverlay();
-    
-    // Kembali ke trending asli setelah 10 detik
     setTimeout(() => {
       if (trendingContainer.children.length > 7) {
         trendingContainer.innerHTML = '';
-        originalTrending.forEach(trend => {
-          trendingContainer.appendChild(trend.cloneNode(true));
-        });
+        originalTrending.forEach(trend => { trendingContainer.appendChild(trend.cloneNode(true)); });
         cloneTrendingToOverlay();
       }
     }, 10000);
@@ -746,23 +682,18 @@
 
   // ========== EVENT LISTENERS ==========
   function setupEventListeners() {
-    const searchInput = document.getElementById('searchInput');
     const searchForm = document.getElementById('searchForm');
-    const overlaySearchInput = document.getElementById('overlaySearchInput');
     const micButton = document.getElementById('micButton');
     const lensButton = document.getElementById('lensButton');
     const overlayMicButton = document.getElementById('overlayMicButton');
     const overlayLensButton = document.getElementById('overlayLensButton');
-    const backButton = document.getElementById('backButton');
     
-    // Search form (main)
     searchForm.addEventListener('submit', function(e) {
       e.preventDefault();
       performSearch(searchInput.value);
       return false;
     }, true);
     
-    // Enter key (main)
     searchInput.addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -771,7 +702,6 @@
       }
     });
     
-    // Enter key (overlay)
     overlaySearchInput.addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -780,82 +710,69 @@
       }
     });
     
-    // Klik pada search input utama → buka overlay
     searchInput.addEventListener('click', function(e) {
       e.preventDefault();
       openSearchOverlay();
     });
     
-    // Klik pada search box (selain input) juga buka overlay
     document.querySelector('.search-box').addEventListener('click', function(e) {
-      // Jika yang diklik bukan input, tetap buka overlay
       if (e.target.tagName !== 'INPUT') {
         e.preventDefault();
         openSearchOverlay();
       }
     });
     
-    // Tombol back di overlay
     backButton.addEventListener('click', function(e) {
       e.preventDefault();
       closeSearchOverlay();
     });
     
-    // Auto-focus (main)
     setTimeout(() => {
       searchInput.placeholder = "Telusuri Google";
       setTimeout(() => searchInput.placeholder = "", 1500);
     }, 100);
     
-    // Mic button (main)
     micButton.addEventListener('click', function(e) {
       e.preventDefault();
-      alert('Voice search: Fitur ini akan mengaktifkan pencarian suara. Silakan ucapkan pencarian Anda.');
+      alert('Voice search: Silakan ucapkan pencarian Anda.');
       return false;
     });
     
-    // Lens button (main)
     lensButton.addEventListener('click', function(e) {
       e.preventDefault();
       openGoogleLink('https://lens.google.com');
       return false;
     });
     
-    // Mic button (overlay)
     overlayMicButton.addEventListener('click', function(e) {
       e.preventDefault();
-      alert('Voice search: Fitur ini akan mengaktifkan pencarian suara. Silakan ucapkan pencarian Anda.');
+      alert('Voice search: Silakan ucapkan pencarian Anda.');
       return false;
     });
     
-    // Lens button (overlay)
     overlayLensButton.addEventListener('click', function(e) {
       e.preventDefault();
       openGoogleLink('https://lens.google.com');
       return false;
     });
     
-    // Apps icon
     document.querySelector('.apps-icon').addEventListener('click', function(e) {
       e.preventDefault();
       openGoogleLink('https://www.google.com/intl/id_id/about/products');
       return false;
     });
     
-    // Menu icon
     document.querySelector('.menu').addEventListener('click', function(e) {
       e.preventDefault();
       alert('Menu Google\n\n• Telusuri\n• Gambar\n• Video\n• Berita\n• Peta\n• Lainnya');
       return false;
     });
     
-    // Tabs
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', function(e) {
         e.preventDefault();
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
-        
         if (this.dataset.tab === 'images') {
           openGoogleLink('https://www.google.com/imghp');
         }
@@ -863,7 +780,6 @@
       });
     });
     
-    // Trending items (main)
     document.querySelectorAll('.trend').forEach(trend => {
       trend.addEventListener('click', function() {
         const searchTerm = this.querySelector('.trend-text').textContent;
@@ -872,7 +788,6 @@
       });
     });
     
-    // Footer links
     const footerLinks = {
       'settingsBtn': 'https://www.google.com/preferences',
       'privacyBtn': 'https://policies.google.com/privacy',
@@ -890,29 +805,21 @@
       });
     });
     
-    // Setup double click handler
     setupDoubleClickHandler();
   }
 
-  // ========== INITIALIZATION ==========
   function init() {
-    // Setup event listeners
     setupEventListeners();
-    
-    // Mulai sinkronisasi otomatis
     startAutoSync();
-    
-    console.log('Google Clone dengan Sync API dan Full-Screen Search - Siap digunakan');
+    console.log('Google Clone dengan Pop-up Mode - Siap digunakan');
   }
 
-  // Start
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
 
-  // Cleanup
   window.addEventListener('beforeunload', function() {
     if (syncInterval) {
       clearInterval(syncInterval);
