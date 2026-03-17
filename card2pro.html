@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Magic Card Trick</title>
-    <!-- <link rel="manifest" href="./manifest.json"> -->
+    <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
     <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -863,28 +863,28 @@
             </div>
         </div>
 
-        <!-- REMOVE BACKGROUND SECTION - TAMBAHAN BARU -->
-        <!-- <div class="setting-section" style="border-top: 1px solid #333; padding-top: 15px; margin-top: 10px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3 style="margin: 0; color: #4CAF50;">🧹 REMOVE BACKGROUND</h3>
-            </div> -->
-            <!-- Status message (hidden by default) -->
-            <div id="remove-bg-status" class="remove-bg-status" style="display: none;"></div>
-            <p style="font-size: 11px; color: #aaa; text-align: center; margin: 5px 0 0;">Proses & hasil akan tampil di preview atas (maks 5MB)</p>
+             <!-- REMOVE BACKGROUND SECTION - TAMBAHAN BARU -->
+        <div class="setting-section" style="border-top: 1px solid #333; padding-top: 15px; margin-top: 10px;">
+            <!-- Teks keterangan di ATAS tombol, lebih dekat ke preview -->
+            <p style="font-size: 12px; color: #4CAF50; text-align: center; margin: 0 0 10px 0; font-weight: 500;">
+                ⬆️ Proses & hasil akan tampil di preview atas (maks 5MB)
+            </p>
             
             <!-- Container untuk 2 tombol sejajar -->
             <div class="button-row">
-                <!-- Tombol Hapus Background (HIJAU) - Ukuran dan font sama dengan Choose Card -->
+                <!-- Tombol Hapus Background (HIJAU) -->
                 <button id="remove-bg-btn">
                     🧹 Hapus Background
                 </button>
                 
-                <!-- Tombol Download (ABU-ABU) - Ukuran dan font sama dengan Choose Card -->
+                <!-- Tombol Download (ABU-ABU) -->
                 <button id="download-result-btn">
                     ⬇️ Unduh
                 </button>
             </div>
             
+            <!-- Status message (hidden by default) -->
+            <div id="remove-bg-status" class="remove-bg-status" style="display: none;"></div>
         </div>
 
         <div class="setting-section">
