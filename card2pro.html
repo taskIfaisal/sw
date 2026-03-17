@@ -704,7 +704,7 @@
                 </label>
             </div>
             <div class="effect-description">
-                ON: Double tap → tunggu 4 detik (indikator detik 3) → kartu slide dari bawah ke tengah, berganti gambar, setelah selesai slide keluar ke atas
+                ON: Double tap → tunggu 4 detik (indikator detik 3) → kartu slide dari bawah ke tengah, berganti gambar, setelah selesai tunggu 4 detik (indikator detik 3) → slide keluar ke atas
             </div>
         </div>
 
@@ -829,6 +829,10 @@
         let isAnimating = false;
         let hasBeenTouched = false;
         let currentCardImageIndex = 0;
+        
+        // ===== VARIABEL UNTUK INDIKATOR KELUAR SKATING =====
+        let exitIndicatorTimeout = null;
+        let exitCardTimeout = null;
         
         // ===== LOCAL STORAGE SETUP =====
         const STORAGE_KEY = 'magic_card_data';
@@ -1468,6 +1472,42 @@
             }
         }
 
+        // ===== FUNGSI UNTUK EXIT SKATING (KELUAR KE ATAS) DENGAN INDIKATOR =====
+        function scheduleExitSkating() {
+            if (card.style.display === 'none' || !isSequenceActive) return;
+            
+            console.log("Skating: menjadwalkan exit dengan indikator");
+            
+            // Clear timeout yang mungkin masih berjalan
+            if (exitIndicatorTimeout) {
+                clearTimeout(exitIndicatorTimeout);
+                exitIndicatorTimeout = null;
+            }
+            if (exitCardTimeout) {
+                clearTimeout(exitCardTimeout);
+                exitCardTimeout = null;
+            }
+            
+            // Jadwalkan indikator muncul 1 detik sebelum exit (di detik ke-3)
+            exitIndicatorTimeout = setTimeout(() => {
+                if (isSequenceActive) {
+                    console.log("Skating: indikator exit muncul");
+                    showIndicator();
+                }
+                exitIndicatorTimeout = null;
+            }, 3000); // 3 detik
+            
+            // Jadwalkan kartu keluar setelah 4 detik
+            exitCardTimeout = setTimeout(() => {
+                if (isSequenceActive) {
+                    console.log("Skating: mulai exit ke atas");
+                    hideIndicator(); // Sembunyikan indikator
+                    exitCardSkating();
+                }
+                exitCardTimeout = null;
+            }, 4000); // 4 detik
+        }
+        
         // ===== FUNGSI UNTUK EXIT SKATING (KELUAR KE ATAS) =====
         function exitCardSkating() {
             if (card.style.display === 'none' || !isSequenceActive) return;
@@ -1777,6 +1817,14 @@
                 clearTimeout(cardAppearTimeout);
                 cardAppearTimeout = null;
             }
+            if (exitIndicatorTimeout) {
+                clearTimeout(exitIndicatorTimeout);
+                exitIndicatorTimeout = null;
+            }
+            if (exitCardTimeout) {
+                clearTimeout(exitCardTimeout);
+                exitCardTimeout = null;
+            }
         }
         
         function showIndicator() {
@@ -1991,15 +2039,10 @@
                         }, 3000);
                     } 
                     else if (sequenceStage === activeCount && activeCount > 0) {
-                        console.log(`Skating Stage ${sequenceStage}: semua gambar sudah tampil, tunggu 4 detik untuk exit`);
+                        console.log(`Skating Stage ${sequenceStage}: semua gambar sudah tampil, menjadwalkan exit dengan indikator`);
                         
-                        touchToChangeTimeout = setTimeout(() => {
-                            if (isSequenceActive) {
-                                console.log("Skating: mulai exit ke atas");
-                                exitCardSkating();
-                            }
-                            touchToChangeTimeout = null;
-                        }, 4000);
+                        // Panggil fungsi untuk menjadwalkan exit dengan indikator
+                        scheduleExitSkating();
                     }
                 }
             }, 50);
