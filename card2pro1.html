@@ -1348,7 +1348,7 @@
             });
             
             function initCardAnimation() {
-                // Matikan sensor selama animasi
+                // PERBAIKAN: Matikan sensor selama animasi slider
                 isAnimatingMotion = true;
                 
                 const cardRect = card.getBoundingClientRect();
@@ -1379,7 +1379,7 @@
                         
                         setTimeout(() => {
                             isAnimating = false;
-                            isAnimatingMotion = false; // Hidupkan sensor kembali
+                            isAnimatingMotion = false; // PERBAIKAN: Hidupkan sensor kembali
                             card.classList.remove('card-moving');
                             
                             // Simpan daftar aktif untuk sequence sentuhan
@@ -1439,7 +1439,7 @@
             });
             
             function initCardAnimation() {
-                // Matikan sensor selama animasi masuk
+                // PERBAIKAN: Matikan sensor selama animasi masuk
                 isAnimatingMotion = true;
                 
                 const cardRect = card.getBoundingClientRect();
@@ -1470,7 +1470,7 @@
                         
                         setTimeout(() => {
                             isAnimating = false;
-                            isAnimatingMotion = false; // Hidupkan sensor kembali
+                            isAnimatingMotion = false; // PERBAIKAN: Hidupkan sensor kembali
                             card.classList.remove('card-moving');
                             
                             // Simpan daftar aktif untuk sequence sentuhan
@@ -1525,7 +1525,7 @@
             
             console.log("Skating: kartu keluar ke atas");
             
-            // Matikan sensor selama animasi keluar
+            // PERBAIKAN: Matikan sensor selama animasi keluar
             isAnimatingMotion = true;
             
             const cardWidth = card.offsetWidth;
@@ -1544,7 +1544,7 @@
                 card.classList.remove('card-moving');
                 isSequenceActive = false;
                 sequenceStage = 0;
-                isAnimatingMotion = false; // Hidupkan sensor kembali
+                isAnimatingMotion = false; // PERBAIKAN: Hidupkan sensor kembali
                 console.log("Skating: kartu hilang");
             }, 500);
         }
