@@ -12,6 +12,7 @@
     <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
     <style>
+        /* CSS tetap sama persis seperti kode Anda */
         html, body {
             margin: 0;
             padding: 0;
@@ -830,6 +831,10 @@
         let hasBeenTouched = false;
         let currentCardImageIndex = 0;
         
+        // ===== VARIABEL KHUSUS UNTUK EFFECT STANDAR (PERBAIKAN SENSOR) =====
+        let standarDragActive = false; // Menandakan sedang drag di effect standar
+        const EXIT_THRESHOLD_PERCENT = 0.5; // 50% keluar untuk force exit
+        
         // ===== LOCAL STORAGE SETUP =====
         const STORAGE_KEY = 'magic_card_data';
         
@@ -1513,6 +1518,109 @@
             }
         }
         
+        // ===== FUNGSI CEK 50% EXIT UNTUK EFFECT STANDAR =====
+        function checkStandarExit() {
+            if (!effectStandarCheckbox.checked || !isSequenceActive || card.style.display === 'none') {
+                return false;
+            }
+            
+            const cardRect = card.getBoundingClientRect();
+            const cardWidth = cardRect.width;
+            const cardHeight = cardRect.height;
+            
+            // Hitung persentase kartu yang visible
+            let visiblePercent = 1.0;
+            let exitDirection = null;
+            
+            // Cek setiap sisi
+            if (cardRect.right < 0) {
+                // Keluar kiri
+                visiblePercent = 0;
+                exitDirection = 'left';
+            } else if (cardRect.left > window.innerWidth) {
+                // Keluar kanan
+                visiblePercent = 0;
+                exitDirection = 'right';
+            } else if (cardRect.bottom < 0) {
+                // Keluar atas
+                visiblePercent = 0;
+                exitDirection = 'top';
+            } else if (cardRect.top > window.innerHeight) {
+                // Keluar bawah
+                visiblePercent = 0;
+                exitDirection = 'bottom';
+            } else {
+                // Hitung persentase hidden
+                const leftHidden = Math.max(0, -cardRect.left);
+                const rightHidden = Math.max(0, cardRect.right - window.innerWidth);
+                const topHidden = Math.max(0, -cardRect.top);
+                const bottomHidden = Math.max(0, cardRect.bottom - window.innerHeight);
+                
+                const hiddenPercent = Math.max(leftHidden, rightHidden, topHidden, bottomHidden) / 
+                                      Math.max(cardWidth, cardHeight);
+                
+                visiblePercent = 1 - hiddenPercent;
+                
+                if (leftHidden > 0) exitDirection = 'left';
+                else if (rightHidden > 0) exitDirection = 'right';
+                else if (topHidden > 0) exitDirection = 'top';
+                else if (bottomHidden > 0) exitDirection = 'bottom';
+            }
+            
+            // Jika sudah 50% keluar, force exit
+            if (visiblePercent <= EXIT_THRESHOLD_PERCENT && exitDirection) {
+                console.log(`Effect Standar: ${Math.round((1-visiblePercent)*100)}% keluar (${exitDirection}), force exit!`);
+                forceExitCardStandar(exitDirection);
+                return true;
+            }
+            
+            return false;
+        }
+
+        // ===== FUNGSI FORCE EXIT UNTUK EFFECT STANDAR =====
+        function forceExitCardStandar(direction) {
+            // Animasi keluar yang smooth
+            card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            
+            // Tentukan target posisi berdasarkan arah
+            const cardWidth = card.offsetWidth;
+            const cardHeight = card.offsetHeight;
+            
+            switch(direction) {
+                case 'left':
+                    posX = -cardWidth - 100;
+                    break;
+                case 'right':
+                    posX = window.innerWidth + 100;
+                    break;
+                case 'top':
+                    posY = -cardHeight - 100;
+                    break;
+                case 'bottom':
+                    posY = window.innerHeight + 100;
+                    break;
+            }
+            
+            // Update posisi
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            
+            // Sembunyikan setelah animasi selesai
+            setTimeout(() => {
+                hideCard();
+                card.style.transition = 'none';
+                
+                // Matikan sequence
+                isSequenceActive = false;
+                sequenceStage = 0;
+                if (touchToChangeTimeout) {
+                    clearTimeout(touchToChangeTimeout);
+                    touchToChangeTimeout = null;
+                }
+                
+                console.log('Effect Standar: kartu force exit completed');
+            }, 300);
+        }
+        
         // ===== LOCAL STORAGE FUNCTIONS =====
         function loadFromStorage() {
             try {
@@ -1787,9 +1895,18 @@
             cardIndicator.classList.remove('visible');
         }
         
-        // ===== EVENT LISTENER UNTUK KARTU =====
+        // ===== EVENT LISTENER UNTUK KARTU - DENGAN PERBAIKAN SENSOR UNTUK EFFECT STANDAR =====
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
+                e.preventDefault();
+                
+                // KHUSUS UNTUK EFFECT STANDAR: matikan sensor dengan flag
+                if (effectStandarCheckbox.checked) {
+                    standarDragActive = true;
+                    console.log('Effect Standar: Drag dimulai, sensor dinonaktifkan');
+                }
+                
+                // Untuk semua effect
                 isDragging = true;
                 startX = e.touches[0].clientX - posX;
                 startY = e.touches[0].clientY - posY;
@@ -1800,114 +1917,13 @@
                 lastTime = Date.now();
                 card.style.transition = 'none';
                 card.style.animation = 'none';
-                e.preventDefault();
             }
         }, {passive: false});
 
-        card.addEventListener('touchend', (e) => {
-            setTimeout(() => {
-                isDragging = false;
-            }, 50);
-            
-            // Hanya proses jika ada sequence aktif dan kartu visible
-            if (!isSequenceActive || card.style.display === 'none' || card.style.visibility !== 'visible') {
-                return;
-            }
-            
-            // Clear timer yang mungkin berjalan
-            if (touchToChangeTimeout) {
-                clearTimeout(touchToChangeTimeout);
-            }
-            
-            const activeCount = activeImagesList.length;
-            
-            // Untuk shadow effect - PERBAIKAN UNTUK SEMUA JUMLAH GAMBAR
-            if (shadowEffectCheckbox.checked) {
-                // Stage gambar (1,2,3,4) - SELALU 3 detik
-                if (sequenceStage < activeCount) {
-                    console.log(`Shadow Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
-                    touchToChangeTimeout = setTimeout(() => {
-                        if (isSequenceActive) {
-                            if (goToNextImage()) {
-                                console.log(`Shadow: ganti ke gambar ${currentCardImageIndex + 1}`);
-                            }
-                        }
-                        touchToChangeTimeout = null;
-                    }, 3000);
-                } 
-                // Stage fade out - SETELAH GAMBAR TERAKHIR, UNTUK SEMUA JUMLAH GAMBAR
-                else if (sequenceStage === activeCount && activeCount > 0) {
-                    console.log(`Shadow Stage ${sequenceStage} (FADE OUT): tunggu 5 detik`);
-                    touchToChangeTimeout = setTimeout(() => {
-                        if (isSequenceActive) {
-                            console.log("Shadow: fade out dimulai");
-                            card.style.opacity = '0';
-                            
-                            setTimeout(() => {
-                                if (isSequenceActive) {
-                                    hideCard();
-                                    card.style.opacity = '1';
-                                    isSequenceActive = false;
-                                    sequenceStage = 0;
-                                    console.log("Shadow: kartu hilang setelah fade out");
-                                }
-                            }, 5000);
-                        }
-                        touchToChangeTimeout = null;
-                    }, 5000); // 5 detik untuk fade out
-                }
-            } 
-            // Untuk effect standar dan slider
-            else if (effectStandarCheckbox.checked || effectSliderCheckbox.checked) {
-                if (sequenceStage < activeCount) {
-                    console.log(`Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
-                    touchToChangeTimeout = setTimeout(() => {
-                        if (isSequenceActive) {
-                            if (goToNextImage()) {
-                                console.log(`Standar/Slider: ganti ke gambar ${currentCardImageIndex + 1}`);
-                            } else {
-                                console.log("Standar/Slider: semua gambar sudah tampil");
-                                isSequenceActive = false;
-                                sequenceStage = 0;
-                            }
-                        }
-                        touchToChangeTimeout = null;
-                    }, 3000);
-                } else {
-                    isSequenceActive = false;
-                    sequenceStage = 0;
-                }
-            }
-            // Untuk effect skating - PERBAIKAN
-            else if (effectSkatingCheckbox.checked) {
-                if (sequenceStage < activeCount) {
-                    console.log(`Skating Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
-                    touchToChangeTimeout = setTimeout(() => {
-                        if (isSequenceActive) {
-                            if (goToNextImage()) {
-                                console.log(`Skating: ganti ke gambar ${currentCardImageIndex + 1}`);
-                            }
-                        }
-                        touchToChangeTimeout = null;
-                    }, 3000);
-                } 
-                // Stage terakhir - setelah semua gambar tampil
-                else if (sequenceStage === activeCount && activeCount > 0) {
-                    console.log(`Skating Stage ${sequenceStage}: semua gambar sudah tampil, tunggu 4 detik untuk exit`);
-                    
-                    touchToChangeTimeout = setTimeout(() => {
-                        if (isSequenceActive) {
-                            console.log("Skating: mulai exit ke atas");
-                            exitCardSkating();
-                        }
-                        touchToChangeTimeout = null;
-                    }, 4000); // 4 detik untuk exit
-                }
-            }
-        });
-        
         document.addEventListener('touchmove', (e) => {
             if (isDragging && e.touches.length === 1) {
+                e.preventDefault();
+                
                 const now = Date.now();
                 const deltaTime = now - lastTime;
                 
@@ -1927,32 +1943,46 @@
                     
                     updateCardTransform();
                     
-                    const cardRect = card.getBoundingClientRect();
-                    const exitThreshold = 30;
+                    // KHUSUS UNTUK EFFECT STANDAR: cek 50% exit
+                    if (effectStandarCheckbox.checked && isSequenceActive) {
+                        checkStandarExit();
+                    }
                     
-                    if (cardRect.bottom < -exitThreshold || 
-                        cardRect.top > window.innerHeight + exitThreshold ||
-                        cardRect.right < -exitThreshold || 
-                        cardRect.left > window.innerWidth + exitThreshold) {
+                    // Cek exit biasa untuk effect lain (kecuali standar)
+                    if (!effectStandarCheckbox.checked) {
+                        const cardRect = card.getBoundingClientRect();
+                        const exitThreshold = 30;
                         
-                        hideCard();
-                        isSequenceActive = false;
-                        sequenceStage = 0;
-                        if (touchToChangeTimeout) {
-                            clearTimeout(touchToChangeTimeout);
-                            touchToChangeTimeout = null;
+                        if (cardRect.bottom < -exitThreshold || 
+                            cardRect.top > window.innerHeight + exitThreshold ||
+                            cardRect.right < -exitThreshold || 
+                            cardRect.left > window.innerWidth + exitThreshold) {
+                            
+                            hideCard();
+                            isSequenceActive = false;
+                            sequenceStage = 0;
+                            if (touchToChangeTimeout) {
+                                clearTimeout(touchToChangeTimeout);
+                                touchToChangeTimeout = null;
+                            }
+                            isDragging = false;
+                            return;
                         }
-                        isDragging = false;
-                        return;
                     }
                 }
-                e.preventDefault();
             }
         }, {passive: false});
         
         document.addEventListener('touchend', (e) => {
             if (isDragging) {
                 isDragging = false;
+                
+                // KHUSUS UNTUK EFFECT STANDAR: hidupkan sensor kembali
+                if (effectStandarCheckbox.checked && standarDragActive) {
+                    standarDragActive = false;
+                    console.log('Effect Standar: Drag selesai, sensor diaktifkan kembali');
+                }
+                
                 card.style.transition = '';
                 
                 const speedThreshold = 1000;
@@ -1961,24 +1991,124 @@
                 const cardRect = card.getBoundingClientRect();
                 const exitThreshold = 50;
                 
-                if (cardRect.bottom < -exitThreshold || 
-                    cardRect.top > window.innerHeight + exitThreshold ||
-                    cardRect.right < -exitThreshold || 
-                    cardRect.left > window.innerWidth + exitThreshold ||
-                    currentSpeed > speedThreshold) {
-                    
-                    hideCard();
-                    isSequenceActive = false;
-                    sequenceStage = 0;
-                    if (touchToChangeTimeout) {
-                        clearTimeout(touchToChangeTimeout);
-                        touchToChangeTimeout = null;
+                // Untuk effect standar, exit sudah ditangani oleh checkStandarExit
+                // Untuk effect lain, gunakan threshold biasa
+                if (!effectStandarCheckbox.checked) {
+                    if (cardRect.bottom < -exitThreshold || 
+                        cardRect.top > window.innerHeight + exitThreshold ||
+                        cardRect.right < -exitThreshold || 
+                        cardRect.left > window.innerWidth + exitThreshold ||
+                        currentSpeed > speedThreshold) {
+                        
+                        hideCard();
+                        isSequenceActive = false;
+                        sequenceStage = 0;
+                        if (touchToChangeTimeout) {
+                            clearTimeout(touchToChangeTimeout);
+                            touchToChangeTimeout = null;
+                        }
+                        return;
                     }
-                    return;
                 }
                 
                 applyBounds();
                 updateCardTransform();
+                
+                // Hanya proses jika ada sequence aktif dan kartu visible
+                if (!isSequenceActive || card.style.display === 'none' || card.style.visibility !== 'visible') {
+                    return;
+                }
+                
+                // Clear timer yang mungkin berjalan
+                if (touchToChangeTimeout) {
+                    clearTimeout(touchToChangeTimeout);
+                }
+                
+                const activeCount = activeImagesList.length;
+                
+                // Untuk shadow effect
+                if (shadowEffectCheckbox.checked) {
+                    // Stage gambar (1,2,3,4) - SELALU 3 detik
+                    if (sequenceStage < activeCount) {
+                        console.log(`Shadow Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
+                        touchToChangeTimeout = setTimeout(() => {
+                            if (isSequenceActive) {
+                                if (goToNextImage()) {
+                                    console.log(`Shadow: ganti ke gambar ${currentCardImageIndex + 1}`);
+                                }
+                            }
+                            touchToChangeTimeout = null;
+                        }, 3000);
+                    } 
+                    // Stage fade out - SETELAH GAMBAR TERAKHIR, UNTUK SEMUA JUMLAH GAMBAR
+                    else if (sequenceStage === activeCount && activeCount > 0) {
+                        console.log(`Shadow Stage ${sequenceStage} (FADE OUT): tunggu 5 detik`);
+                        touchToChangeTimeout = setTimeout(() => {
+                            if (isSequenceActive) {
+                                console.log("Shadow: fade out dimulai");
+                                card.style.opacity = '0';
+                                
+                                setTimeout(() => {
+                                    if (isSequenceActive) {
+                                        hideCard();
+                                        card.style.opacity = '1';
+                                        isSequenceActive = false;
+                                        sequenceStage = 0;
+                                        console.log("Shadow: kartu hilang setelah fade out");
+                                    }
+                                }, 5000);
+                            }
+                            touchToChangeTimeout = null;
+                        }, 5000);
+                    }
+                } 
+                // Untuk effect standar dan slider
+                else if (effectStandarCheckbox.checked || effectSliderCheckbox.checked) {
+                    if (sequenceStage < activeCount) {
+                        console.log(`Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
+                        touchToChangeTimeout = setTimeout(() => {
+                            if (isSequenceActive) {
+                                if (goToNextImage()) {
+                                    console.log(`Standar/Slider: ganti ke gambar ${currentCardImageIndex + 1}`);
+                                } else {
+                                    console.log("Standar/Slider: semua gambar sudah tampil");
+                                    isSequenceActive = false;
+                                    sequenceStage = 0;
+                                }
+                            }
+                            touchToChangeTimeout = null;
+                        }, 3000);
+                    } else {
+                        isSequenceActive = false;
+                        sequenceStage = 0;
+                    }
+                }
+                // Untuk effect skating
+                else if (effectSkatingCheckbox.checked) {
+                    if (sequenceStage < activeCount) {
+                        console.log(`Skating Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
+                        touchToChangeTimeout = setTimeout(() => {
+                            if (isSequenceActive) {
+                                if (goToNextImage()) {
+                                    console.log(`Skating: ganti ke gambar ${currentCardImageIndex + 1}`);
+                                }
+                            }
+                            touchToChangeTimeout = null;
+                        }, 3000);
+                    } 
+                    // Stage terakhir - setelah semua gambar tampil
+                    else if (sequenceStage === activeCount && activeCount > 0) {
+                        console.log(`Skating Stage ${sequenceStage}: semua gambar sudah tampil, tunggu 4 detik untuk exit`);
+                        
+                        touchToChangeTimeout = setTimeout(() => {
+                            if (isSequenceActive) {
+                                console.log("Skating: mulai exit ke atas");
+                                exitCardSkating();
+                            }
+                            touchToChangeTimeout = null;
+                        }, 4000);
+                    }
+                }
             }
         });
         
@@ -2018,7 +2148,7 @@
             });
         }
         
-        // ===== SENSOR IMPLEMENTATION =====
+        // ===== SENSOR IMPLEMENTATION - DIMODIFIKASI UNTUK EFFECT STANDAR =====
         function initSensor() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === "function") {
                 sensorPermissionBtn.classList.remove('hidden');
@@ -2066,11 +2196,30 @@
         
         function startSensorAnimation() {
             function animate() {
+                // Sensor hanya aktif jika:
+                // 1. Sensor diizinkan
+                // 2. Toggle sensor ON
+                // 3. Kartu visible
+                // 4. TIDAK SEDANG DRAG SECARA UMUM
+                // 5. KHUSUS EFFECT STANDAR: tidak sedang drag (!standarDragActive)
                 if (isSensorEnabled && !isDragging && sensorGerakCheckbox.checked && card.style.display !== 'none') {
+                    
+                    // EXTRA CHECK: untuk Effect Standar, pastikan tidak sedang drag
+                    if (effectStandarCheckbox.checked && standarDragActive) {
+                        requestAnimationFrame(animate);
+                        return;
+                    }
+                    
                     posX += smoothGamma * sensitivity;
                     posY += smoothBeta * sensitivity;
                     applyBounds();
                     updateCardTransform();
+                    
+                    // CEK 50% EXIT UNTUK EFFECT STANDAR (sensor juga bisa trigger exit)
+                    if (effectStandarCheckbox.checked && isSequenceActive && !standarDragActive) {
+                        // Cek setelah update posisi
+                        setTimeout(() => checkStandarExit(), 0);
+                    }
                 }
                 requestAnimationFrame(animate);
             }
@@ -2099,6 +2248,7 @@
         function hideCard() {
             card.style.display = 'none';
             card.style.visibility = 'hidden';
+            standarDragActive = false; // Reset flag jika kartu hilang
         }
         
         window.addEventListener('resize', () => {
