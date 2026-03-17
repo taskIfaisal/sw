@@ -12,7 +12,6 @@
     <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
     <style>
-        /* CSS tetap sama persis seperti kode Anda */
         html, body {
             margin: 0;
             padding: 0;
@@ -831,7 +830,7 @@
         let hasBeenTouched = false;
         let currentCardImageIndex = 0;
         
-        // ===== VARIABEL KHUSUS UNTUK EFFECT STANDAR (PERBAIKAN SENSOR) =====
+        // ===== VARIABEL KHUSUS UNTUK EFFECT STANDAR (PERBAIKAN) =====
         let standarDragActive = false; // Menandakan sedang drag di effect standar
         const EXIT_THRESHOLD_PERCENT = 0.5; // 50% keluar untuk force exit
         
@@ -1518,7 +1517,7 @@
             }
         }
         
-        // ===== FUNGSI CEK 50% EXIT UNTUK EFFECT STANDAR =====
+        // ===== FUNGSI CEK 50% EXIT UNTUK EFFECT STANDAR (PERBAIKAN) =====
         function checkStandarExit() {
             if (!effectStandarCheckbox.checked || !isSequenceActive || card.style.display === 'none') {
                 return false;
@@ -1529,47 +1528,50 @@
             const cardHeight = cardRect.height;
             
             // Hitung persentase kartu yang visible
-            let visiblePercent = 1.0;
             let exitDirection = null;
+            let shouldExit = false;
             
             // Cek setiap sisi
             if (cardRect.right < 0) {
                 // Keluar kiri
-                visiblePercent = 0;
+                shouldExit = true;
                 exitDirection = 'left';
             } else if (cardRect.left > window.innerWidth) {
                 // Keluar kanan
-                visiblePercent = 0;
+                shouldExit = true;
                 exitDirection = 'right';
             } else if (cardRect.bottom < 0) {
                 // Keluar atas
-                visiblePercent = 0;
+                shouldExit = true;
                 exitDirection = 'top';
             } else if (cardRect.top > window.innerHeight) {
                 // Keluar bawah
-                visiblePercent = 0;
+                shouldExit = true;
                 exitDirection = 'bottom';
             } else {
-                // Hitung persentase hidden
+                // Masih dalam layar, hitung persentase hidden
                 const leftHidden = Math.max(0, -cardRect.left);
                 const rightHidden = Math.max(0, cardRect.right - window.innerWidth);
                 const topHidden = Math.max(0, -cardRect.top);
                 const bottomHidden = Math.max(0, cardRect.bottom - window.innerHeight);
                 
-                const hiddenPercent = Math.max(leftHidden, rightHidden, topHidden, bottomHidden) / 
-                                      Math.max(cardWidth, cardHeight);
+                const maxHidden = Math.max(leftHidden, rightHidden, topHidden, bottomHidden);
+                const cardDimension = Math.max(cardWidth, cardHeight);
+                const hiddenPercent = maxHidden / cardDimension;
                 
-                visiblePercent = 1 - hiddenPercent;
-                
-                if (leftHidden > 0) exitDirection = 'left';
-                else if (rightHidden > 0) exitDirection = 'right';
-                else if (topHidden > 0) exitDirection = 'top';
-                else if (bottomHidden > 0) exitDirection = 'bottom';
+                // Jika sudah 50% keluar
+                if (hiddenPercent >= EXIT_THRESHOLD_PERCENT) {
+                    shouldExit = true;
+                    if (leftHidden > 0) exitDirection = 'left';
+                    else if (rightHidden > 0) exitDirection = 'right';
+                    else if (topHidden > 0) exitDirection = 'top';
+                    else if (bottomHidden > 0) exitDirection = 'bottom';
+                }
             }
             
-            // Jika sudah 50% keluar, force exit
-            if (visiblePercent <= EXIT_THRESHOLD_PERCENT && exitDirection) {
-                console.log(`Effect Standar: ${Math.round((1-visiblePercent)*100)}% keluar (${exitDirection}), force exit!`);
+            // Jika memenuhi syarat exit
+            if (shouldExit && exitDirection) {
+                console.log(`Effect Standar: 50% keluar (${exitDirection}), force exit!`);
                 forceExitCardStandar(exitDirection);
                 return true;
             }
@@ -1579,6 +1581,10 @@
 
         // ===== FUNGSI FORCE EXIT UNTUK EFFECT STANDAR =====
         function forceExitCardStandar(direction) {
+            // Matikan drag
+            isDragging = false;
+            standarDragActive = false;
+            
             // Animasi keluar yang smooth
             card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             
@@ -1895,7 +1901,7 @@
             cardIndicator.classList.remove('visible');
         }
         
-        // ===== EVENT LISTENER UNTUK KARTU - DENGAN PERBAIKAN SENSOR UNTUK EFFECT STANDAR =====
+        // ===== EVENT LISTENER UNTUK KARTU - DENGAN PERBAIKAN EXIT =====
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 e.preventDefault();
@@ -1943,13 +1949,17 @@
                     
                     updateCardTransform();
                     
-                    // KHUSUS UNTUK EFFECT STANDAR: cek 50% exit
+                    // PERBAIKAN: Untuk Effect Standar - cek 50% exit
                     if (effectStandarCheckbox.checked && isSequenceActive) {
-                        checkStandarExit();
-                    }
-                    
-                    // Cek exit biasa untuk effect lain (kecuali standar)
-                    if (!effectStandarCheckbox.checked) {
+                        // Jika checkStandarExit mengembalikan true, berarti sudah force exit
+                        if (checkStandarExit()) {
+                            // Stop drag
+                            isDragging = false;
+                            standarDragActive = false;
+                            return;
+                        }
+                    } else {
+                        // Untuk effect lain, gunakan threshold biasa
                         const cardRect = card.getBoundingClientRect();
                         const exitThreshold = 30;
                         
@@ -2040,7 +2050,7 @@
                             touchToChangeTimeout = null;
                         }, 3000);
                     } 
-                    // Stage fade out - SETELAH GAMBAR TERAKHIR, UNTUK SEMUA JUMLAH GAMBAR
+                    // Stage fade out - SETELAH GAMBAR TERAKHIR
                     else if (sequenceStage === activeCount && activeCount > 0) {
                         console.log(`Shadow Stage ${sequenceStage} (FADE OUT): tunggu 5 detik`);
                         touchToChangeTimeout = setTimeout(() => {
