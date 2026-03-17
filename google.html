@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Google</title>
 <link rel="icon" href="https://www.google.com/favicon.ico" type="image/x-icon">
 
@@ -20,6 +20,7 @@
     align-items: center;
     padding: 12px 14px;
     gap: 14px;
+    transition: opacity 0.2s ease;
   }
 
   .menu {
@@ -87,6 +88,7 @@
   .logo-container {
     text-align: center;
     margin: 30px 0 20px;
+    transition: opacity 0.2s ease, transform 0.2s ease;
   }
 
   .google-logo {
@@ -102,6 +104,7 @@
   /* ===== SEARCH BAR ===== */
   .search-container {
     margin: 0 16px 24px;
+    transition: all 0.2s ease;
   }
 
   .search-box {
@@ -109,8 +112,9 @@
     border-radius: 24px;
     display: flex;
     align-items: center;
-    padding: 10px 14px;
-    gap: 10px;
+    padding: 8px 14px;
+    gap: 12px;
+    transition: all 0.2s ease;
   }
 
   .search-box:hover {
@@ -123,39 +127,44 @@
     flex: 1;
     font-size: 16px;
     font-family: 'Arial', sans-serif;
+    caret-color: transparent;
+    background: transparent;
   }
 
+  /* UKURAN ICON DIPERBESAR SEPERTI GOOGLE ASLI */
   .search-icon {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%239aa0a6" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
     background-repeat: no-repeat;
     background-position: center;
+    background-size: contain;
   }
 
   .mic-icon {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>');
     background-repeat: no-repeat;
     background-position: center;
+    background-size: contain;
     cursor: pointer;
   }
 
-  /* ICON GOOGLE LENS KAMERA - WARNA ABU-ABU */
   .lens-icon {
-    width: 24px;
-    height: 24px;
-    background-image: url('https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/google-lens.png');
+    width: 26px;
+    height: 26px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 1C7.19 1 3.06 4 1.57 8.25L4.1 9.69C5.23 6.28 8.36 4 12 4c3.64 0 6.77 2.28 7.9 5.69l2.53-1.44C20.94 4 16.81 1 12 1zm0 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0 1c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm-1 1.5v3h2v-3h-2zm0 4v3h2v-3h-2z"/></svg>');
     background-repeat: no-repeat;
     background-position: center;
-    background-size: contain; /* Penting: agar gambar pas di dalam kotak */
+    background-size: contain;
     cursor: pointer;
-}
+  }
 
   /* ===== TRENDING ===== */
   .section {
     padding: 0 16px;
+    transition: opacity 0.2s ease;
   }
 
   .section h3 {
@@ -203,6 +212,7 @@
     font-size: 13px;
     color: #5f6368;
     text-align: center;
+    transition: opacity 0.2s ease;
   }
 
   .footer-row {
@@ -218,6 +228,104 @@
     text-decoration: underline;
   }
 
+  /* ===== SEARCH OVERLAY (FULL-SCREEN MODE) ===== */
+  .search-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    padding: 12px 16px;
+    box-sizing: border-box;
+  }
+
+  .search-overlay.active {
+    display: flex;
+  }
+
+  .overlay-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .back-button {
+    width: 32px;
+    height: 32px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%231a73e8" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    cursor: pointer;
+  }
+
+  .overlay-search-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    border: 1px solid #dfe1e5;
+    border-radius: 24px;
+    padding: 8px 14px;
+    gap: 12px;
+    background: white;
+  }
+
+  .overlay-search-box input {
+    border: none;
+    outline: none;
+    flex: 1;
+    font-size: 16px;
+    font-family: 'Arial', sans-serif;
+    caret-color: transparent;
+    background: transparent;
+  }
+
+  .overlay-mic-icon {
+    width: 26px;
+    height: 26px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    cursor: pointer;
+  }
+
+  .overlay-lens-icon {
+    width: 26px;
+    height: 26px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 1C7.19 1 3.06 4 1.57 8.25L4.1 9.69C5.23 6.28 8.36 4 12 4c3.64 0 6.77 2.28 7.9 5.69l2.53-1.44C20.94 4 16.81 1 12 1zm0 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0 1c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm-1 1.5v3h2v-3h-2zm0 4v3h2v-3h-2z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    cursor: pointer;
+  }
+
+  .overlay-trending {
+    margin-top: 20px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .overlay-trending h3 {
+    font-size: 18px;
+    font-weight: 500;
+    margin: 10px 0;
+  }
+
+  /* Hide main content when overlay is active */
+  body.overlay-active .topbar,
+  body.overlay-active .logo-container,
+  body.overlay-active .section:not(.search-overlay .overlay-trending),
+  body.overlay-active .footer {
+    opacity: 0;
+    pointer-events: none;
+  }
+
   /* RESPONSIVE DESIGN */
   @media (max-width: 600px) {
     .google-logo {
@@ -226,7 +334,7 @@
     }
     
     .search-box {
-      padding: 12px 16px;
+      padding: 10px 14px;
     }
     
     .search-box input {
@@ -247,12 +355,20 @@
       padding: 10px 12px;
       gap: 10px;
     }
+
+    .search-icon,
+    .mic-icon,
+    .lens-icon {
+      width: 24px;
+      height: 24px;
+    }
   }
 </style>
 </head>
 
 <body>
 
+<!-- MAIN CONTENT (normal view) -->
 <div class="topbar">
   <div class="menu" title="Menu">☰</div>
   <div class="tabs">
@@ -302,6 +418,23 @@
     <span id="advertisingBtn">Advertising</span>
     <span id="businessBtn">Business</span>
     <span id="aboutBtn">About</span>
+  </div>
+</div>
+
+<!-- SEARCH OVERLAY (full-screen mode) -->
+<div class="search-overlay" id="searchOverlay">
+  <div class="overlay-header">
+    <div class="back-button" id="backButton" title="Kembali"></div>
+    <div class="overlay-search-box">
+      <div class="search-icon"></div>
+      <input type="text" id="overlaySearchInput" placeholder="Telusuri Google" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="overlay-mic-icon" id="overlayMicButton" title="Search by voice"></div>
+      <div class="overlay-lens-icon" id="overlayLensButton" title="Search by image with Google Lens"></div>
+    </div>
+  </div>
+  <div class="overlay-trending">
+    <h3>Trending searches</h3>
+    <div id="overlayTrendingContainer"></div>
   </div>
 </div>
 
@@ -399,10 +532,14 @@
     
     if (data && data.search) {
       const searchInput = document.getElementById('searchInput');
+      const overlaySearchInput = document.getElementById('overlaySearchInput');
       
-      // Update search bar dengan data terbaru
+      // Update search bar dengan data terbaru (hanya jika tidak dalam mode fokus)
       if (searchInput && !searchInput.matches(':focus')) {
         searchInput.value = data.search;
+      }
+      if (overlaySearchInput && !overlaySearchInput.matches(':focus')) {
+        overlaySearchInput.value = data.search;
       }
     }
   }
@@ -461,6 +598,63 @@
     return false;
   }
 
+  // ========== OVERLAY (FULL-SCREEN SEARCH MODE) ==========
+  const overlay = document.getElementById('searchOverlay');
+  const searchInput = document.getElementById('searchInput');
+  const overlaySearchInput = document.getElementById('overlaySearchInput');
+  const backButton = document.getElementById('backButton');
+  const trendingContainer = document.getElementById('trendingContainer');
+  const overlayTrendingContainer = document.getElementById('overlayTrendingContainer');
+
+  // Clone trending items ke overlay
+  function cloneTrendingToOverlay() {
+    if (!trendingContainer || !overlayTrendingContainer) return;
+    
+    // Kosongkan container overlay
+    overlayTrendingContainer.innerHTML = '';
+    
+    // Clone semua trend dari container utama
+    const trends = trendingContainer.querySelectorAll('.trend');
+    trends.forEach(trend => {
+      const clonedTrend = trend.cloneNode(true);
+      
+      // Tambahkan event listener ke cloned trend
+      clonedTrend.addEventListener('click', function() {
+        const searchTerm = this.querySelector('.trend-text').textContent;
+        overlaySearchInput.value = searchTerm;
+        performSearch(searchTerm);
+      });
+      
+      overlayTrendingContainer.appendChild(clonedTrend);
+    });
+  }
+
+  // Buka overlay
+  function openSearchOverlay() {
+    overlay.classList.add('active');
+    document.body.classList.add('overlay-active');
+    
+    // Copy value dari search input utama ke overlay
+    overlaySearchInput.value = searchInput.value;
+    
+    // Clone trending items
+    cloneTrendingToOverlay();
+    
+    // Focus ke input overlay
+    setTimeout(() => {
+      overlaySearchInput.focus();
+    }, 100);
+  }
+
+  // Tutup overlay
+  function closeSearchOverlay() {
+    overlay.classList.remove('active');
+    document.body.classList.remove('overlay-active');
+    
+    // Copy value dari overlay ke search input utama
+    searchInput.value = overlaySearchInput.value;
+  }
+
   // ========== DOUBLE CLICK HANDLER ==========
   function setupDoubleClickHandler() {
     const loginBtn = document.getElementById('loginBtn');
@@ -487,7 +681,6 @@
         getNoteData().then(data => {
           if (data && data.search) {
             // Isi search bar dengan data terakhir
-            const searchInput = document.getElementById('searchInput');
             if (searchInput) {
               searchInput.value = data.search;
               searchInput.focus();
@@ -505,7 +698,6 @@
 
   // Update trending dengan history (diam-diam)
   function updateTrendingWithHistory(history) {
-    const trendingContainer = document.getElementById('trendingContainer');
     if (!trendingContainer || !history || history.length === 0) return;
     
     // Simpan trending asli
@@ -515,7 +707,7 @@
     trendingContainer.innerHTML = '';
     
     // Tambahkan history sebagai trending (maksimal 4)
-    history.slice(0, 4).forEach((searchTerm, index) => {
+    history.slice(0, 4).forEach((searchTerm) => {
       const trendElement = document.createElement('div');
       trendElement.className = 'trend';
       trendElement.innerHTML = `
@@ -525,7 +717,7 @@
       
       trendElement.addEventListener('click', function() {
         const term = this.querySelector('.trend-text').textContent;
-        document.getElementById('searchInput').value = term;
+        searchInput.value = term;
         performSearch(term);
       });
       
@@ -537,6 +729,9 @@
       trendingContainer.appendChild(trend);
     });
     
+    // Clone ke overlay
+    cloneTrendingToOverlay();
+    
     // Kembali ke trending asli setelah 10 detik
     setTimeout(() => {
       if (trendingContainer.children.length > 7) {
@@ -544,6 +739,7 @@
         originalTrending.forEach(trend => {
           trendingContainer.appendChild(trend.cloneNode(true));
         });
+        cloneTrendingToOverlay();
       }
     }, 10000);
   }
@@ -552,15 +748,21 @@
   function setupEventListeners() {
     const searchInput = document.getElementById('searchInput');
     const searchForm = document.getElementById('searchForm');
+    const overlaySearchInput = document.getElementById('overlaySearchInput');
+    const micButton = document.getElementById('micButton');
+    const lensButton = document.getElementById('lensButton');
+    const overlayMicButton = document.getElementById('overlayMicButton');
+    const overlayLensButton = document.getElementById('overlayLensButton');
+    const backButton = document.getElementById('backButton');
     
-    // Search form
+    // Search form (main)
     searchForm.addEventListener('submit', function(e) {
       e.preventDefault();
       performSearch(searchInput.value);
       return false;
     }, true);
     
-    // Enter key
+    // Enter key (main)
     searchInput.addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -569,22 +771,65 @@
       }
     });
     
-    // Auto-focus
+    // Enter key (overlay)
+    overlaySearchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        performSearch(this.value);
+        return false;
+      }
+    });
+    
+    // Klik pada search input utama → buka overlay
+    searchInput.addEventListener('click', function(e) {
+      e.preventDefault();
+      openSearchOverlay();
+    });
+    
+    // Klik pada search box (selain input) juga buka overlay
+    document.querySelector('.search-box').addEventListener('click', function(e) {
+      // Jika yang diklik bukan input, tetap buka overlay
+      if (e.target.tagName !== 'INPUT') {
+        e.preventDefault();
+        openSearchOverlay();
+      }
+    });
+    
+    // Tombol back di overlay
+    backButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      closeSearchOverlay();
+    });
+    
+    // Auto-focus (main)
     setTimeout(() => {
-      searchInput.focus();
       searchInput.placeholder = "Telusuri Google";
       setTimeout(() => searchInput.placeholder = "", 1500);
     }, 100);
     
-    // Mic button
-    document.getElementById('micButton').addEventListener('click', function(e) {
+    // Mic button (main)
+    micButton.addEventListener('click', function(e) {
       e.preventDefault();
       alert('Voice search: Fitur ini akan mengaktifkan pencarian suara. Silakan ucapkan pencarian Anda.');
       return false;
     });
     
-    // Lens button
-    document.getElementById('lensButton').addEventListener('click', function(e) {
+    // Lens button (main)
+    lensButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      openGoogleLink('https://lens.google.com');
+      return false;
+    });
+    
+    // Mic button (overlay)
+    overlayMicButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      alert('Voice search: Fitur ini akan mengaktifkan pencarian suara. Silakan ucapkan pencarian Anda.');
+      return false;
+    });
+    
+    // Lens button (overlay)
+    overlayLensButton.addEventListener('click', function(e) {
       e.preventDefault();
       openGoogleLink('https://lens.google.com');
       return false;
@@ -618,7 +863,7 @@
       });
     });
     
-    // Trending items
+    // Trending items (main)
     document.querySelectorAll('.trend').forEach(trend => {
       trend.addEventListener('click', function() {
         const searchTerm = this.querySelector('.trend-text').textContent;
@@ -657,7 +902,7 @@
     // Mulai sinkronisasi otomatis
     startAutoSync();
     
-    console.log('Google Clone dengan Sync API - Siap digunakan');
+    console.log('Google Clone dengan Sync API dan Full-Screen Search - Siap digunakan');
   }
 
   // Start
