@@ -588,7 +588,91 @@
         #card-indicator.visible {
             opacity: 1;
         }
+
+        /* Style untuk loading overlay remove background */
+        .bg-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            border-radius: 0;
+        }
+
+        .bg-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         
+        /* Style untuk status message */
+        .remove-bg-status {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .remove-bg-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .remove-bg-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Tombol remove background */
+        #remove-bg-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 5px 0;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        #remove-bg-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        #remove-bg-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #remove-bg-btn.processing {
+            background: linear-gradient(135deg, #888, #555);
+        }
     </style>
 </head>
 <body>
@@ -730,6 +814,22 @@
             </div>
         </div>
 
+        <!-- REMOVE BACKGROUND SECTION - TAMBAHAN BARU -->
+        <div class="setting-section" style="border-top: 1px solid #333; padding-top: 15px; margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin: 0; color: #4CAF50;">🧹 REMOVE BACKGROUND</h3>
+            </div>
+            
+            <!-- Tombol Remove Background -->
+            <button id="remove-bg-btn">
+                🧹 Hapus Background dari Gambar Utama
+            </button>
+            
+            <!-- Status message (hidden by default) -->
+            <div id="remove-bg-status" class="remove-bg-status" style="display: none;"></div>
+            <p style="font-size: 11px; color: #aaa; text-align: center; margin: 5px 0 0;">Proses & hasil akan tampil di preview atas (maks 5MB)</p>
+        </div>
+
         <div class="setting-section">
             <h3>Card Size</h3>
             <div class="size-control">
@@ -777,6 +877,10 @@
         const effectSliderCheckbox = document.getElementById('effect-slider');
         const effectSkatingCheckbox = document.getElementById('effect-skating');
         const sensorGerakCheckbox = document.getElementById('sensor-gerak');
+
+        // Remove Background elements
+        const removeBgBtn = document.getElementById('remove-bg-btn');
+        const removeBgStatus = document.getElementById('remove-bg-status');
 
         // GitHub API URL
         const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/images';
@@ -2225,6 +2329,181 @@
                 card.style.display = 'none';
                 card.style.visibility = 'hidden';
             }, 200);
+        });
+
+        // ===== REMOVE BACKGROUND FUNCTIONALITY =====
+        const REMOVE_BG_API_KEY = '2crJY3ybEroko55EEQeVFh9C';
+        const REMOVE_BG_API_URL = 'https://api.remove.bg/v1.0/removebg';
+
+        // Fungsi untuk menampilkan status
+        function showRemoveBgStatus(message, isError = false) {
+            removeBgStatus.style.display = 'block';
+            removeBgStatus.textContent = message;
+            removeBgStatus.className = 'remove-bg-status ' + (isError ? 'error' : 'success');
+        }
+
+        function hideRemoveBgStatus() {
+            removeBgStatus.style.display = 'none';
+        }
+
+        // Fungsi untuk set loading state
+        function setRemoveBgLoading(isLoading) {
+            if (isLoading) {
+                removeBgBtn.disabled = true;
+                removeBgBtn.classList.add('processing');
+                removeBgBtn.innerHTML = '⏳ MEMPROSES...';
+                
+                // Tampilkan loading di preview utama
+                const editorFrame = document.querySelector('.editor-frame');
+                const loadingOverlay = document.createElement('div');
+                loadingOverlay.id = 'bg-loading-overlay';
+                loadingOverlay.className = 'bg-loading-overlay';
+                loadingOverlay.innerHTML = `
+                    <div class="bg-spinner"></div>
+                    <div style="color: white; font-size: 14px;">Menghapus background...</div>
+                `;
+                
+                // Hanya tambahkan jika belum ada
+                if (!document.getElementById('bg-loading-overlay')) {
+                    editorFrame.style.position = 'relative';
+                    editorFrame.appendChild(loadingOverlay);
+                }
+            } else {
+                removeBgBtn.disabled = false;
+                removeBgBtn.classList.remove('processing');
+                removeBgBtn.innerHTML = '🧹 Hapus Background dari Gambar Utama';
+                
+                // Hapus loading overlay
+                const loadingOverlay = document.getElementById('bg-loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.remove();
+                }
+            }
+        }
+
+        // Event listener untuk tombol remove background
+        removeBgBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Ambil gambar dari preview utama (Favorite 1)
+            const currentImageSrc = mainCardPreview.src;
+            
+            if (!currentImageSrc || currentImageSrc === '') {
+                showRemoveBgStatus('Tidak ada gambar yang diproses', true);
+                setTimeout(hideRemoveBgStatus, 3000);
+                return;
+            }
+            
+            try {
+                setRemoveBgLoading(true);
+                hideRemoveBgStatus();
+                
+                // Konversi image src ke blob
+                let imageBlob;
+                
+                if (currentImageSrc.startsWith('data:')) {
+                    // Dari file upload (base64)
+                    const response = await fetch(currentImageSrc);
+                    imageBlob = await response.blob();
+                } else {
+                    // Dari URL (github atau lainnya)
+                    try {
+                        // Cek ukuran dengan HEAD request
+                        const headResponse = await fetch(currentImageSrc, { method: 'HEAD' });
+                        const contentLength = headResponse.headers.get('content-length');
+                        
+                        if (contentLength && parseInt(contentLength) > 5 * 1024 * 1024) {
+                            throw new Error('Ukuran file terlalu besar (maks 5MB)');
+                        }
+                        
+                        const response = await fetch(currentImageSrc);
+                        imageBlob = await response.blob();
+                    } catch (fetchError) {
+                        console.error('Error fetching image:', fetchError);
+                        throw new Error('Gagal mengambil gambar dari URL. Pastikan gambar dapat diakses.');
+                    }
+                }
+                
+                // Validasi ukuran
+                if (imageBlob.size > 5 * 1024 * 1024) {
+                    throw new Error('Ukuran file maksimal 5MB');
+                }
+                
+                // Siapkan form data untuk API
+                const formData = new FormData();
+                formData.append('image_file', imageBlob, 'image.png');
+                formData.append('size', 'auto');
+                
+                console.log('Mengirim request ke remove.bg API...');
+                
+                // Panggil API remove.bg
+                const response = await fetch(REMOVE_BG_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'X-Api-Key': REMOVE_BG_API_KEY
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    let errorText = '';
+                    try {
+                        errorText = await response.text();
+                    } catch (e) {
+                        errorText = response.statusText;
+                    }
+                    
+                    // Handle specific error codes
+                    if (response.status === 402) {
+                        throw new Error('API key tidak memiliki cukup kredit');
+                    } else if (response.status === 400) {
+                        throw new Error('Gambar tidak valid atau format tidak didukung');
+                    } else {
+                        throw new Error(`Error ${response.status}: ${errorText.substring(0, 100)}`);
+                    }
+                }
+                
+                // Dapatkan hasil sebagai blob
+                const resultBlob = await response.blob();
+                
+                // Konversi blob ke data URL
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const resultImageUrl = event.target.result;
+                    
+                    // Update semua gambar dengan hasil
+                    updateCardImage(resultImageUrl);
+                    
+                    // Selesai loading
+                    setRemoveBgLoading(false);
+                    
+                    // Tampilkan pesan sukses
+                    showRemoveBgStatus('✅ Background berhasil dihapus!');
+                    setTimeout(hideRemoveBgStatus, 3000);
+                    
+                    console.log('Remove background sukses!');
+                };
+                
+                reader.readAsDataURL(resultBlob);
+                
+            } catch (error) {
+                console.error('Remove background error:', error);
+                
+                // Selesai loading
+                setRemoveBgLoading(false);
+                
+                // Tampilkan pesan error
+                let errorMessage = error.message;
+                
+                // Cek apakah error karena CORS
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMessage = 'Error CORS atau jaringan. Gunakan extension CORS Unblock atau coba gambar lain.';
+                }
+                
+                showRemoveBgStatus(`❌ Gagal: ${errorMessage}`, true);
+                setTimeout(hideRemoveBgStatus, 5000);
+            }
         });
     </script>
 </body>
