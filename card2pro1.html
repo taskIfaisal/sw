@@ -1,679 +1,2743 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Google</title>
-<link rel="icon" href="https://www.google.com/favicon.ico" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Magic Card Trick</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
+    <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Card2Phone">
+    <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            font-family: 'SF Pro Display', sans-serif;
+            background-color: black;
+            background-size: cover;
+            background-position: center;
+            color: white;
+            overflow: hidden;
+            touch-action: none;
+            position: relative;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-<style>
-  body {
-    margin: 0;
-    font-family: 'Arial', sans-serif;
-    background: #fff;
-    color: #202124;
-  }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        #background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+        }
+        
+        #card {
+            position: absolute;
+            width: 100%;
+            max-width: 200px;
+            z-index: 2;
+            user-select: none;
+            -webkit-user-drag: none;
+            touch-action: none;
+            transform-origin: center center;
+            height: auto;
+            cursor: pointer;
+            transition: opacity 5s ease-in-out, transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            left: 0;
+            top: 0;
+            opacity: 0;
+            visibility: hidden;
+        }
 
-  /* ===== TOP BAR ===== */
-  .topbar {
-    display: flex;
-    align-items: center;
-    padding: 12px 14px;
-    gap: 14px;
-  }
+        .card-visible {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
 
-  .menu {
-    font-size: 22px;
-    color: #5f6368;
-    cursor: pointer;
-  }
+        .card-flipping {
+            animation: flipCard 1s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+            backface-visibility: hidden;
+        }
 
-  .tabs {
-    display: flex;
-    gap: 18px;
-    font-size: 14px;
-    font-weight: 600;
-  }
+        @keyframes flipCard {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(90deg); }
+            100% { transform: rotateY(0deg); }
+        }
 
-  .tab.active {
-    color: #1a73e8;
-    position: relative;
-  }
+        .card-moving {
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease !important;
+        }
 
-  .tab.active::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -8px;
-    height: 3px;
-    background: #1a73e8;
-    border-radius: 2px;
-  }
+        .card-exit {
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease !important;
+        }
 
-  .tab {
-    color: #5f6368;
-    cursor: pointer;
-  }
+        @keyframes muncul {
+            0% { opacity: 0; }
+            50% { opacity: 0.3; }
+            80% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
 
-  .right-icons {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
+        .size-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        input[type=range] {
+            -webkit-appearance: none;
+            height: 5px;
+            background: #4CAF50;
+            border-radius: 5px;
+            outline: none;
+            flex: 1;
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #4CAF50;
+        }
+        
+        #size-value {
+            min-width: 50px;
+            text-align: center;
+            background: rgba(255,255,255,0.2);
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        #settings {
+            position: fixed;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 3;
+            transition: top 0.5s ease;
+            color: white;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .setting-section {
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 16px;
+            font-weight: normal;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .file-upload {
+            background: #2196F3;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            display: inline-block;
+            cursor: pointer;
+            touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 16px;
+            font-weight: normal;
+            transition: background 0.3s ease;
+        }
+        
+        .file-upload:hover {
+            background: #1976D2;
+        }
 
-  .apps-icon {
-    width: 24px;
-    height: 24px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-  }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin: 10px 0;
+            touch-action: manipulation;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        /* Hijau untuk effect (eksklusif) */
+        input:checked + .toggle-slider.effect-slider {
+            background-color: #4CAF50;
+        }
+        
+        /* Orange untuk sensor gerak (non-eksklusif) */
+        input:checked + .toggle-slider.sensor-slider {
+            background-color: #FF9800;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .effect-description {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 5px;
+        }
 
-  .login {
-    background: #1a73e8;
-    color: #fff;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-  }
+        /* Grid 4 kolom untuk 4 preview */
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 20px 0;
+            padding: 10px 0;
+        }
+        
+        .preview-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .preview-label-small {
+            font-size: 10px;
+            color: #4CAF50;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .preview-box {
+            width: 65px;
+            height: 65px;
+            border: 2px solid #666;
+            border-radius: 5px;
+            overflow: visible;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #333;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 0 auto;
+            touch-action: manipulation;
+            position: relative;
+        }
+        
+        /* Toggle icon kecil di pojok preview */
+        .preview-toggle {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #4CAF50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            border: 2px solid white;
+            z-index: 10;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .preview-toggle.inactive {
+            background: #f44336;
+        }
+        
+        .preview-toggle.active::after {
+            content: "✓";
+        }
+        
+        .preview-toggle.inactive::after {
+            content: "✕";
+        }
+        
+        /* Style untuk preview aktif (border hijau) */
+        .preview-box.active {
+            border-color: #4CAF50 !important;
+            box-shadow: 0 0 15px #4CAF50 !important;
+        }
+        
+        /* Style untuk preview yang dipilih dari album */
+        .preview-box.selected {
+            border-color: #FF9800;
+            box-shadow: 0 0 10px #FF9800;
+        }
+        
+        .preview-box:hover {
+            border-color: #4CAF50;
+            transform: scale(1.05);
+        }
+        
+        .preview-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+        
+        .github-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #444;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #4CAF50;
+        }
+        
+        .modal-header button {
+            background: #f44336;
+            margin: 0;
+            padding: 8px 15px;
+        }
 
-  /* ===== LOGO ===== */
-  .logo-container {
-    text-align: center;
-    margin: 30px 0 20px;
-  }
+        .folder-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
 
-  .google-logo {
-    width: 272px;
-    height: 92px;
-    margin: 0 auto;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 272 92"><path fill="%234285f4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="%23ea4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="%23fbbc05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.43 10.16-22.09 21.25-22.09 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.14 5.71-12.14 13.52 0 7.73 5.42 13.36 12.14 13.36 6.63 0 11.84-5.63 11.84-13.36z"/><path fill="%234285f4" d="M225 3v65h-9.5V3h9.5z"/><path fill="%2334a853" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/><path fill="%23ea4335" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35 0 53.33 0 34.91 0 16.58 16.32.56 35.3.56c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-  }
+        .back-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            touch-action: manipulation;
+        }
 
-  /* ===== SEARCH BAR ===== */
-  .search-container {
-    margin: 0 16px 24px;
-  }
+        .back-button:hover {
+            background: #45a049;
+        }
+        
+        .albums-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .album-item {
+            background: #222;
+            padding: 20px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #444;
+            text-align: center;
+            aspect-ratio: 1/1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+        
+        .album-item:hover {
+            background: #333;
+            transform: scale(1.05);
+            border-color: #4CAF50;
+        }
+        
+        .album-item:active {
+            transform: scale(0.95);
+        }
+        
+        .album-item .folder-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .album-item .folder-name {
+            font-size: 14px;
+            word-break: break-word;
+        }
+        
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .grid-item {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border: 2px solid #444;
+            border-radius: 5px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #222;
+            touch-action: manipulation;
+        }
+        
+        .grid-item:hover {
+            border-color: #4CAF50;
+            transform: scale(1.02);
+        }
+        
+        .grid-item.selected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+        
+        .grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            grid-column: span 3;
+        }
+        
+        .error-msg {
+            color: #f44336;
+            text-align: center;
+            padding: 20px;
+            grid-column: span 3;
+        }
 
-  .search-box {
-    border: 1px solid #dfe1e5;
-    border-radius: 24px;
-    display: flex;
-    align-items: center;
-    padding: 10px 14px;
-    gap: 10px;
-  }
+        .preview-frame-container {
+            margin: 20px -20px;
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+        }
+        
+        .preview-label {
+            color: #4CAF50;
+            font-size: 14px;
+            margin-bottom: 8px;
+            padding-left: 20px;
+        }
+        
+        .editor-frame {
+            width: 100vw;
+            height: 280px;
+            border-top: 2px solid #4CAF50;
+            border-bottom: 2px solid #4CAF50;
+            border-left: none;
+            border-right: none;
+            background: #222;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            margin: 0;
+            box-sizing: border-box;
+            touch-action: pan-y;
+        }
+        
+        #main-card-preview {
+            position: absolute;
+            width: auto;
+            height: auto;
+            max-width: none;
+            max-height: none;
+            object-fit: contain;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        
+        #sensor-permission {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            font-size: 24px;
+            z-index: 9999;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            padding: 20px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        
+        #sensor-permission.hidden {
+            display: none;
+        }
 
-  .search-box:hover {
-    border-color: #dadce0;
-  }
+        .save-close-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            min-width: 150px;
+            font-size: 16px;
+            margin: 5px auto;
+            display: block;
+            touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-weight: normal;
+        }
+        
+        .save-close-btn:hover {
+            background: #1976D2;
+        }
 
-  .search-box input {
-    border: none;
-    outline: none;
-    flex: 1;
-    font-size: 16px;
-    font-family: 'Arial', sans-serif;
-    /* HILANGKAN POINTER (KURSOR) DI KOLOM PENCARIAN */
-    caret-color: transparent;
-  }
+        /* TITIK INDIKATOR */
+        #card-indicator {
+            position: fixed;
+            bottom: 8px;
+            right: 8px;
+            width: 1px;
+            height: 1px;
+            background-color: #FFFFFF;
+            border-radius: 50%;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        #card-indicator.visible {
+            opacity: 1;
+        }
 
-  .search-icon {
-    width: 20px;
-    height: 20px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%239aa0a6" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: center;
-  }
+        /* Style untuk loading overlay remove background */
+        .bg-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            border-radius: 0;
+        }
 
-  .mic-icon {
-    width: 24px;
-    height: 24px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-  }
+        .bg-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
 
-  /* ICON GOOGLE LENS - WARNA SAMA DENGAN MIC (#5F6368) */
-  .lens-icon {
-    width: 24px;
-    height: 24px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 1C7.19 1 3.06 4 1.57 8.25L4.1 9.69C5.23 6.28 8.36 4 12 4c3.64 0 6.77 2.28 7.9 5.69l2.53-1.44C20.94 4 16.81 1 12 1zm0 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0 1c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm-1 1.5v3h2v-3h-2zm0 4v3h2v-3h-2z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-  }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Style untuk status message */
+        .remove-bg-status {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .remove-bg-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .remove-bg-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Tombol remove background (HIJAU) - Ukuran dan font sama dengan Choose Card */
+        #remove-bg-btn {
+            flex: 3;
+            background: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 16px;
+            font-weight: normal;
+            transition: all 0.3s ease;
+            margin: 0;
+        }
 
-  /* ===== TRENDING ===== */
-  .section {
-    padding: 0 16px;
-  }
+        #remove-bg-btn:hover:not(:disabled) {
+            background: #45a049 !important;
+            transform: translateY(-1px);
+        }
 
-  .section h3 {
-    font-size: 18px;
-    font-weight: 500;
-    margin: 10px 0;
-  }
+        #remove-bg-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            background: #888 !important;
+        }
+        
+        /* Tombol download (ABU-ABU) - Ukuran dan font sama dengan Choose Card */
+        #download-result-btn {
+            flex: 1;
+            background: #6c757d;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 16px;
+            font-weight: normal;
+            transition: all 0.3s ease;
+            margin: 0;
+        }
 
-  .trend {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 0;
-    border-bottom: 1px solid #e0e0e0;
-    font-size: 16px;
-    cursor: pointer;
-  }
+        #download-result-btn:hover:not(:disabled) {
+            background: #5a6268 !important;
+            transform: translateY(-1px);
+        }
 
-  .trend:hover {
-    background-color: #f8f9fa;
-  }
-
-  .trend-icon {
-    width: 18px;
-    height: 18px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235f6368" d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: center;
-  }
-
-  .trend-text {
-    color: #202124;
-  }
-
-  .trend:hover .trend-text {
-    text-decoration: underline;
-    color: #1a0dab;
-  }
-
-  /* ===== FOOTER ===== */
-  .footer {
-    margin-top: 20px;
-    padding: 14px 10px 24px;
-    background: #f2f2f2;
-    font-size: 13px;
-    color: #5f6368;
-    text-align: center;
-  }
-
-  .footer-row {
-    margin-bottom: 8px;
-  }
-
-  .footer span {
-    margin: 0 6px;
-    cursor: pointer;
-  }
-
-  .footer span:hover {
-    text-decoration: underline;
-  }
-
-  /* RESPONSIVE DESIGN */
-  @media (max-width: 600px) {
-    .google-logo {
-      width: 200px;
-      height: 68px;
-    }
-    
-    .search-box {
-      padding: 12px 16px;
-    }
-    
-    .search-box input {
-      font-size: 16px;
-    }
-    
-    .tabs {
-      font-size: 13px;
-      gap: 12px;
-      display: flex !important;
-    }
-    
-    .tab.active::after {
-      bottom: -6px;
-    }
-    
-    .topbar {
-      padding: 10px 12px;
-      gap: 10px;
-    }
-  }
-</style>
+        #download-result-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Container tombol sejajar */
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+    </style>
 </head>
-
 <body>
-
-<div class="topbar">
-  <div class="menu" title="Menu">☰</div>
-  <div class="tabs">
-    <div class="tab active" data-tab="all">SEMUA</div>
-    <div class="tab" data-tab="images">GAMBAR</div>
-  </div>
-  <div class="right-icons">
-    <div class="apps-icon" title="Google Apps"></div>
-    <button class="login" id="loginBtn">Masuk</button>
-  </div>
-</div>
-
-<div class="logo-container">
-  <div class="google-logo" title="Google"></div>
-</div>
-
-<div class="search-container">
-  <div class="search-box" id="searchForm">
-    <div class="search-icon" title="Search"></div>
-    <input type="text" placeholder="" id="searchInput" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <div class="mic-icon" id="micButton" title="Search by voice"></div>
-    <div class="lens-icon" id="lensButton" title="Search by image with Google Lens"></div>
-  </div>
-</div>
-
-<div class="section">
-  <h3>Trending searches</h3>
-  <div id="trendingContainer">
-    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Pemilu 2024</div></div>
-    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Harga Emas Hari Ini</div></div>
-    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Gempa Terkini</div></div>
-    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Jadwal Bola Malam Ini</div></div>
-    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Rupiah vs USD</div></div>
-    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Cuaca Jakarta</div></div>
-    <div class="trend"><div class="trend-icon"></div><div class="trend-text">Berita Terkini</div></div>
-  </div>
-</div>
-
-<div class="footer">
-  <div class="footer-row">
-    <span>Dark theme: disabled</span>
-    <span id="settingsBtn">Settings</span>
-    <span id="privacyBtn">Privacy</span>
-    <span id="termsBtn">Terms</span>
-  </div>
-  <div class="footer-row">
-    <span id="advertisingBtn">Advertising</span>
-    <span id="businessBtn">Business</span>
-    <span id="aboutBtn">About</span>
-  </div>
-</div>
-
-<script>
-  // API CONFIGURATION
-  const API_URL = 'https://tinynote.pw/api/2NAK';
-  let syncInterval = null;
-  let lastNoteData = null;
-  let clickCount = 0;
-  let clickTimer = null;
-
-  // Deteksi iOS Safari untuk mencegah app opening
-  function isIOS() {
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  }
-
-  function isSafari() {
-    const ua = navigator.userAgent;
-    return /^((?!chrome|android).)*safari/i.test(ua) || 
-           (isIOS() && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua));
-  }
-
-  // ========== API FUNCTIONS ==========
-  // Ambil data dari API (field "note")
-  async function getNoteData() {
-    try {
-      const response = await fetch(API_URL);
-      if (!response.ok) return null;
-      
-      const data = await response.json();
-      
-      // Periksa apakah ada field "note"
-      if (data && data.note) {
-        lastNoteData = data.note;
+    <div id="background"></div>
+    <img id="card" src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Magic Ball">
+    
+    <!-- TITIK INDIKATOR -->
+    <div id="card-indicator"></div>
+    
+    <div id="settings">
+        <h2>Settings</h2>
         
-        // Coba parse sebagai JSON
-        try {
-          const parsedNote = JSON.parse(data.note);
-          return parsedNote;
-        } catch (e) {
-          // Jika bukan JSON, return sebagai string
-          return { search: data.note };
+        <div class="setting-section">
+            <h3>Background Image</h3>
+            <label class="file-upload">
+                Choose Background
+                <input type="file" id="bg-upload" accept="image/*">
+            </label>
+        </div>
+        
+        <div class="setting-section">
+            <h3>Card Image</h3>
+            <label class="file-upload">
+                Choose Card
+                <input type="file" id="card-upload" accept="image/*">
+            </label>
+        </div>
+
+        <div class="setting-section">
+            <h3>Quick Preview (4 Favorites)</h3>
+            <div class="preview-grid">
+                <div class="preview-item">
+                    <div class="preview-box" id="preview-1" data-index="1">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 1">
+                        <div class="preview-toggle active" data-toggle="1"></div>
+                    </div>
+                    <span class="preview-label-small">Favorite 1</span>
+                </div>
+                
+                <div class="preview-item">
+                    <div class="preview-box" id="preview-2" data-index="2">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 2">
+                        <div class="preview-toggle active" data-toggle="2"></div>
+                    </div>
+                    <span class="preview-label-small">Favorite 2</span>
+                </div>
+                
+                <div class="preview-item">
+                    <div class="preview-box" id="preview-3" data-index="3">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 3">
+                        <div class="preview-toggle active" data-toggle="3"></div>
+                    </div>
+                    <span class="preview-label-small">Favorite 3</span>
+                </div>
+
+                <div class="preview-item">
+                    <div class="preview-box" id="preview-4" data-index="4">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 4">
+                        <div class="preview-toggle active" data-toggle="4"></div>
+                    </div>
+                    <span class="preview-label-small">Favorite 4</span>
+                </div>
+            </div>
+            <p><small>✨ Klik gambar: buka album GitHub | Klik bulatan ✓/✕: aktif/nonaktifkan</small></p>
+        </div>
+
+        <div class="setting-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <h3 style="margin: 0;">Effect Standar</h3>
+                <label class="toggle-switch" style="margin: 0;">
+                    <input type="checkbox" id="effect-standar">
+                    <span class="toggle-slider effect-slider"></span>
+                </label>
+            </div>
+            <div class="effect-description">
+                ON: Double tap → tunggu 1 detik → kartu muncul langsung di tengah (gambar aktif pertama)
+            </div>
+        </div>
+
+        <div class="setting-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <h3 style="margin: 0;">Effect Shadow</h3>
+                <label class="toggle-switch" style="margin: 0;">
+                    <input type="checkbox" id="shadow-effect">
+                    <span class="toggle-slider effect-slider"></span>
+                </label>
+            </div>
+            <div class="effect-description">
+                ON: Double tap → tunggu 5 detik → kartu muncul fade in 5 detik di tengah, berganti sesuai gambar aktif (3 detik setelah sentuh), fade out 5 detik
+            </div>
+        </div>
+
+        <!-- Effect Slider (muncul dari bawah, tetap di tengah) -->
+        <div class="setting-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <h3 style="margin: 0;">Effect Slider</h3>
+                <label class="toggle-switch" style="margin: 0;">
+                    <input type="checkbox" id="effect-slider">
+                    <span class="toggle-slider effect-slider"></span>
+                </label>
+            </div>
+            <div class="effect-description">
+                ON: Double tap → tunggu 4 detik (indikator detik 3) → kartu slide dari bawah ke tengah (tetap di tengah setelah selesai)
+            </div>
+        </div>
+
+        <!-- Effect Skating (muncul dari bawah, keluar ke atas) -->
+        <div class="setting-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <h3 style="margin: 0;">Effect Skating</h3>
+                <label class="toggle-switch" style="margin: 0;">
+                    <input type="checkbox" id="effect-skating">
+                    <span class="toggle-slider effect-slider"></span>
+                </label>
+            </div>
+            <div class="effect-description">
+                ON: Double tap → tunggu 4 detik (indikator detik 3) → kartu slide dari bawah ke tengah, berganti gambar, setelah selesai tunggu 4 detik (indikator detik 3) → slide keluar ke atas
+            </div>
+        </div>
+
+        <!-- Sensor Gerak Toggle dengan warna ORANGE (non-eksklusif) -->
+        <div class="setting-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <h3 style="margin: 0;">Sensor Gerak</h3>
+                <label class="toggle-switch" style="margin: 0;">
+                    <input type="checkbox" id="sensor-gerak" checked>
+                    <span class="toggle-slider sensor-slider"></span>
+                </label>
+            </div>
+            <div class="effect-description">
+                ON: Kartu bergerak mengikuti kemiringan device (gyroscope)
+            </div>
+        </div>
+
+        <div class="preview-frame-container">
+            <div class="preview-label">🔮 PREVIEW KARTU UTAMA</div>
+            <div class="editor-frame">
+                <img id="main-card-preview" src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Main Card Preview">
+            </div>
+        </div>
+
+        <!-- REMOVE BACKGROUND SECTION - TAMBAHAN BARU -->
+        <div class="setting-section" style="border-top: 1px solid #333; padding-top: 15px; margin-top: 10px;">
+            <!-- Teks keterangan di ATAS tombol, lebih dekat ke preview -->
+            <p style="font-size: 12px; color: #4CAF50; text-align: center; margin: 0 0 10px 0; font-weight: 500;">
+                ⬆️ Proses & hasil akan tampil di preview atas (maks 5MB)
+            </p>
+            
+            <!-- Container untuk 2 tombol sejajar -->
+            <div class="button-row">
+                <!-- Tombol Hapus Background (HIJAU) -->
+                <button id="remove-bg-btn">
+                    🧹 Hapus Background
+                </button>
+                
+                <!-- Tombol Download (ABU-ABU) -->
+                <button id="download-result-btn">
+                    ⬇️ Unduh
+                </button>
+            </div>
+            
+            <!-- Status message (hidden by default) -->
+            <div id="remove-bg-status" class="remove-bg-status" style="display: none;"></div>
+        </div>
+
+        <div class="setting-section">
+            <h3>Card Size</h3>
+            <div class="size-control">
+                <input type="range" id="card-size-slider" min="100" max="400" value="200" step="5">
+                <span id="size-value">200px</span>
+            </div>
+            <small>Adjust card size (100px - 400px)</small>
+        </div>
+        
+        <div class="setting-section">
+            <button id="close-settings" class="save-close-btn">Save & Close</button>
+        </div>
+    </div>
+    
+    <button id="sensor-permission" class="hidden">
+        Allow Motion Sensor Access<br>
+        <small>(Tap to enable tilt controls)</small>
+    </button>
+
+    <script>
+        // Elements
+        const background = document.getElementById('background');
+        const card = document.getElementById('card');
+        const settings = document.getElementById('settings');
+        const bgUpload = document.getElementById('bg-upload');
+        const cardUpload = document.getElementById('card-upload');
+        const closeSettingsBtn = document.getElementById('close-settings');
+        const sensorPermissionBtn = document.getElementById('sensor-permission');
+        const cardIndicator = document.getElementById('card-indicator');
+        
+        // Card size elements
+        const cardSizeSlider = document.getElementById('card-size-slider');
+        const sizeValue = document.getElementById('size-value');
+        
+        // Preview elements (4 previews)
+        const mainCardPreview = document.getElementById('main-card-preview');
+        const preview1 = document.getElementById('preview-1');
+        const preview2 = document.getElementById('preview-2');
+        const preview3 = document.getElementById('preview-3');
+        const preview4 = document.getElementById('preview-4');
+        
+        // Effect toggles
+        const effectStandarCheckbox = document.getElementById('effect-standar');
+        const shadowEffectCheckbox = document.getElementById('shadow-effect');
+        const effectSliderCheckbox = document.getElementById('effect-slider');
+        const effectSkatingCheckbox = document.getElementById('effect-skating');
+        const sensorGerakCheckbox = document.getElementById('sensor-gerak');
+
+        // Remove Background elements
+        const removeBgBtn = document.getElementById('remove-bg-btn');
+        const downloadBtn = document.getElementById('download-result-btn');
+        const removeBgStatus = document.getElementById('remove-bg-status');
+
+        // GitHub API URL
+        const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/images';
+        
+        // State untuk album
+        let currentFolder = null;
+        let selectedImage = null;
+        let modalElement = null;
+        let activePreview = 1;
+
+        // Status aktif untuk setiap gambar favorite (4 gambar)
+        let activeImages = {
+            1: true,  // Favorite 1 aktif secara default
+            2: true,  // Favorite 2 aktif secara default
+            3: true,  // Favorite 3 aktif secara default
+            4: true   // Favorite 4 aktif secara default
+        };
+
+        // Initialize card properties
+        let posX = window.innerWidth / 2 - card.offsetWidth / 2;
+        let posY = window.innerHeight + card.offsetHeight + 100;
+        let scale = 1;
+        let isDragging = false;
+        let startX, startY;
+        let velocityX = 0;
+        let velocityY = 0;
+        let lastPosX = 0;
+        let lastPosY = 0;
+        let lastTime = 0;
+        
+        // SENSOR VARIABLES
+        let smoothBeta = 0;
+        let smoothGamma = 0;
+        const sensitivity = 0.5;
+        const smoothing = 0.2;
+        let isSensorEnabled = false;
+        let isSensorActive = true;
+        
+        // FLAG untuk menonaktifkan sensor sementara saat animasi
+        let isAnimatingMotion = false; // Untuk animasi masuk/keluar
+        
+        // ===== VARIABEL UNTUK SEQUENCE CARD =====
+        let sequenceTimer = null;
+        let sequenceStage = 0;
+        let isSequenceActive = false;
+        let activeImagesList = []; // Array gambar aktif yang sudah diurutkan
+        
+        // ===== VARIABEL UNTUK SENTUHAN KARTU =====
+        let touchToChangeTimeout = null;
+        
+        // ===== VARIABEL UNTUK EFFECT SLIDER & SKATING =====
+        let indicatorTimeout = null;
+        let cardAppearTimeout = null;
+        let isAnimating = false;
+        let hasBeenTouched = false;
+        let currentCardImageIndex = 0;
+        
+        // ===== VARIABEL UNTUK INDIKATOR KELUAR SKATING =====
+        let exitIndicatorTimeout = null;
+        let exitCardTimeout = null;
+        
+        // ===== LOCAL STORAGE SETUP =====
+        const STORAGE_KEY = 'magic_card_data';
+        
+        // Load saved data on startup
+        loadFromStorage();
+        
+        // ===== CARD SIZE CONTROL =====
+        let currentCardSize = parseInt(localStorage.getItem('card_size')) || 200;
+        
+        card.style.maxWidth = currentCardSize + 'px';
+        sizeValue.textContent = currentCardSize + 'px';
+        cardSizeSlider.value = currentCardSize;
+        
+        function updatePreviewCardSize() {
+            mainCardPreview.style.width = currentCardSize + 'px';
+            mainCardPreview.style.height = 'auto';
+            mainCardPreview.style.position = 'absolute';
+            mainCardPreview.style.top = '30px';
+            mainCardPreview.style.left = '50%';
+            mainCardPreview.style.transform = 'translateX(-50%)';
         }
-      }
-      
-      return null;
-    } catch (error) {
-      // Silent error - tidak tampilkan apa-apa
-      return null;
-    }
-  }
-
-  // Simpan data ke API (field "note")
-  async function saveNoteData(searchTerm) {
-    try {
-      // Dapatkan data saat ini
-      const currentData = await getNoteData();
-      
-      let noteData = {
-        search: searchTerm,
-        timestamp: Date.now(),
-        history: []
-      };
-      
-      // Jika ada data sebelumnya, tambahkan ke history
-      if (currentData && currentData.search) {
-        noteData.history = [currentData.search];
         
-        // Tambahkan history lama jika ada
-        if (currentData.history && Array.isArray(currentData.history)) {
-          noteData.history = [...currentData.history.slice(0, 4), currentData.search];
+        function updateMainCardPreview() {
+            mainCardPreview.src = card.src;
         }
-      }
-      
-      // Kirim ke API
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ note: JSON.stringify(noteData) })
-      });
-      
-      return response.ok;
-    } catch (error) {
-      // Silent error
-      return false;
-    }
-  }
-
-  // ========== SYNC FUNCTIONS ==========
-  // Sinkronisasi data dari API (diam-diam)
-  async function syncData() {
-    const data = await getNoteData();
-    
-    if (data && data.search) {
-      const searchInput = document.getElementById('searchInput');
-      
-      // Update search bar dengan data terbaru
-      if (searchInput && !searchInput.matches(':focus')) {
-        searchInput.value = data.search;
-      }
-    }
-  }
-
-  // Mulai sinkronisasi otomatis (setiap 3 detik)
-  function startAutoSync() {
-    // Sync pertama
-    setTimeout(syncData, 1000);
-    
-    // Sync berulang
-    syncInterval = setInterval(syncData, 3000);
-  }
-
-  // ========== SEARCH FUNCTIONS ==========
-  function createSafeGoogleURL(query) {
-    const encodedQuery = encodeURIComponent(query);
-    const timestamp = Date.now();
-    
-    return `https://www.google.com/search?q=${encodedQuery}&igu=1&client=safari&_=${timestamp}&noredirect=1&pf=1`;
-  }
-
-  function performSearch(query) {
-    const searchQuery = query.trim();
-    if (!searchQuery) return false;
-    
-    // Simpan ke API (diam-diam)
-    saveNoteData(searchQuery);
-    
-    // Redirect ke Google
-    const googleURL = createSafeGoogleURL(searchQuery);
-    
-    if (isIOS() && isSafari()) {
-      setTimeout(() => {
-        window.location.replace(googleURL);
-      }, 50);
-    } else {
-      window.location.href = googleURL;
-    }
-    
-    return false;
-  }
-
-  function openGoogleLink(url) {
-    const timestamp = Date.now();
-    const separator = url.includes('?') ? '&' : '?';
-    const safeURL = url + separator + `igu=1&client=safari&_=${timestamp}&noredirect=1`;
-    
-    if (isIOS() && isSafari()) {
-      setTimeout(() => {
-        window.location.href = safeURL;
-      }, 50);
-    } else {
-      window.location.href = safeURL;
-    }
-    
-    return false;
-  }
-
-  // ========== DOUBLE CLICK HANDLER ==========
-  function setupDoubleClickHandler() {
-    const loginBtn = document.getElementById('loginBtn');
-    
-    loginBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      clickCount++;
-      
-      if (clickCount === 1) {
-        // Click pertama - tunggu click kedua
-        clickTimer = setTimeout(() => {
-          // Single click - buka Google Account
-          clickCount = 0;
-          openGoogleLink('https://accounts.google.com');
-        }, 300);
-      } else if (clickCount === 2) {
-        // Double click - load data dari API
-        clearTimeout(clickTimer);
-        clickCount = 0;
         
-        // Ambil data terbaru dari API
-        getNoteData().then(data => {
-          if (data && data.search) {
-            // Isi search bar dengan data terakhir
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-              searchInput.value = data.search;
-              searchInput.focus();
-              
-              // Jika ada history, tambahkan ke trending area
-              if (data.history && data.history.length > 0) {
-                updateTrendingWithHistory(data.history);
-              }
+        updatePreviewCardSize();
+        updateMainCardPreview();
+        
+        // Slider event listener
+        cardSizeSlider.addEventListener('input', (e) => {
+            const newSize = e.target.value;
+            sizeValue.textContent = newSize + 'px';
+            card.style.maxWidth = newSize + 'px';
+            
+            currentCardSize = parseInt(newSize);
+            updatePreviewCardSize();
+            
+            if (card.style.display !== 'none') {
+                const oldWidth = card.offsetWidth;
+                setTimeout(() => {
+                    const newWidth = card.offsetWidth;
+                    posX = posX - (newWidth - oldWidth) / 2;
+                    applyBounds();
+                    updateCardTransform();
+                }, 10);
             }
-          }
         });
-      }
-    });
-  }
 
-  // Update trending dengan history (diam-diam)
-  function updateTrendingWithHistory(history) {
-    const trendingContainer = document.getElementById('trendingContainer');
-    if (!trendingContainer || !history || history.length === 0) return;
-    
-    // Simpan trending asli
-    const originalTrending = Array.from(trendingContainer.children).slice(0, 4);
-    
-    // Clear container
-    trendingContainer.innerHTML = '';
-    
-    // Tambahkan history sebagai trending (maksimal 4)
-    history.slice(0, 4).forEach((searchTerm, index) => {
-      const trendElement = document.createElement('div');
-      trendElement.className = 'trend';
-      trendElement.innerHTML = `
-        <div class="trend-icon"></div>
-        <div class="trend-text">${searchTerm}</div>
-      `;
-      
-      trendElement.addEventListener('click', function() {
-        const term = this.querySelector('.trend-text').textContent;
-        document.getElementById('searchInput').value = term;
-        performSearch(term);
-      });
-      
-      trendingContainer.appendChild(trendElement);
-    });
-    
-    // Tambahkan kembali trending asli
-    originalTrending.forEach(trend => {
-      trendingContainer.appendChild(trend);
-    });
-    
-    // Kembali ke trending asli setelah 10 detik
-    setTimeout(() => {
-      if (trendingContainer.children.length > 7) {
-        trendingContainer.innerHTML = '';
-        originalTrending.forEach(trend => {
-          trendingContainer.appendChild(trend.cloneNode(true));
+        cardSizeSlider.addEventListener('change', (e) => {
+            localStorage.setItem('card_size', e.target.value);
+            currentCardSize = parseInt(e.target.value);
+            autoSave();
         });
-      }
-    }, 10000);
-  }
-
-  // ========== EVENT LISTENERS ==========
-  function setupEventListeners() {
-    const searchInput = document.getElementById('searchInput');
-    const searchForm = document.getElementById('searchForm');
-    
-    // Search form
-    searchForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      performSearch(searchInput.value);
-      return false;
-    }, true);
-    
-    // Enter key
-    searchInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        performSearch(this.value);
-        return false;
-      }
-    });
-    
-    // Auto-focus
-    setTimeout(() => {
-      searchInput.focus();
-      searchInput.placeholder = "Telusuri Google";
-      setTimeout(() => searchInput.placeholder = "", 1500);
-    }, 100);
-    
-    // Mic button
-    document.getElementById('micButton').addEventListener('click', function(e) {
-      e.preventDefault();
-      alert('Voice search: Fitur ini akan mengaktifkan pencarian suara. Silakan ucapkan pencarian Anda.');
-      return false;
-    });
-    
-    // Lens button
-    document.getElementById('lensButton').addEventListener('click', function(e) {
-      e.preventDefault();
-      openGoogleLink('https://lens.google.com');
-      return false;
-    });
-    
-    // Apps icon
-    document.querySelector('.apps-icon').addEventListener('click', function(e) {
-      e.preventDefault();
-      openGoogleLink('https://www.google.com/intl/id_id/about/products');
-      return false;
-    });
-    
-    // Menu icon
-    document.querySelector('.menu').addEventListener('click', function(e) {
-      e.preventDefault();
-      alert('Menu Google\n\n• Telusuri\n• Gambar\n• Video\n• Berita\n• Peta\n• Lainnya');
-      return false;
-    });
-    
-    // Tabs
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', function(e) {
-        e.preventDefault();
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
         
-        if (this.dataset.tab === 'images') {
-          openGoogleLink('https://www.google.com/imghp');
+        updateCardTransform();
+        
+        // ===== CEGAH DOUBLE TAP ZOOM =====
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // ===== INIT SENSOR =====
+        initSensor();
+        
+        // ===== FUNGSI UNTUK MENDAPATKAN DAFTAR GAMBAR AKTIF =====
+        function getActiveImagesList() {
+            const list = [];
+            if (activeImages[1]) list.push({ index: 1, element: preview1, src: getPreviewSrc(1) });
+            if (activeImages[2]) list.push({ index: 2, element: preview2, src: getPreviewSrc(2) });
+            if (activeImages[3]) list.push({ index: 3, element: preview3, src: getPreviewSrc(3) });
+            if (activeImages[4]) list.push({ index: 4, element: preview4, src: getPreviewSrc(4) });
+            return list;
         }
-        return false;
-      });
-    });
-    
-    // Trending items
-    document.querySelectorAll('.trend').forEach(trend => {
-      trend.addEventListener('click', function() {
-        const searchTerm = this.querySelector('.trend-text').textContent;
-        searchInput.value = searchTerm;
-        performSearch(searchTerm);
-      });
-    });
-    
-    // Footer links
-    const footerLinks = {
-      'settingsBtn': 'https://www.google.com/preferences',
-      'privacyBtn': 'https://policies.google.com/privacy',
-      'termsBtn': 'https://policies.google.com/terms',
-      'advertisingBtn': 'https://www.google.com/intl/id_id/ads',
-      'businessBtn': 'https://www.google.com/services',
-      'aboutBtn': 'https://www.google.com/intl/id_id/about'
-    };
-    
-    Object.keys(footerLinks).forEach(id => {
-      document.getElementById(id).addEventListener('click', function(e) {
-        e.preventDefault();
-        openGoogleLink(footerLinks[id]);
-        return false;
-      });
-    });
-    
-    // Setup double click handler
-    setupDoubleClickHandler();
-  }
+        
+        function getPreviewSrc(index) {
+            const preview = document.getElementById(`preview-${index}`);
+            const img = preview.querySelector('img');
+            return img ? img.src : '';
+        }
+        
+        // ===== FUNGSI UNTUK UPDATE TAMPILAN AKTIF =====
+        function updateActivePreviewStyles() {
+            [preview1, preview2, preview3, preview4].forEach((preview, idx) => {
+                const index = idx + 1;
+                if (activeImages[index]) {
+                    preview.classList.add('active');
+                } else {
+                    preview.classList.remove('active');
+                }
+            });
+            
+            // Update toggle icons
+            document.querySelectorAll('.preview-toggle').forEach(toggle => {
+                const toggleIndex = parseInt(toggle.dataset.toggle);
+                if (activeImages[toggleIndex]) {
+                    toggle.classList.remove('inactive');
+                    toggle.classList.add('active');
+                } else {
+                    toggle.classList.remove('active');
+                    toggle.classList.add('inactive');
+                }
+            });
+        }
+        
+        // ===== FUNGSI GITHUB ALBUM =====
+        async function loadRootFolders() {
+            try {
+                const response = await fetch(GITHUB_API_URL);
+                if (!response.ok) throw new Error('Failed to fetch');
+                
+                const data = await response.json();
+                const folders = data.filter(item => item.type === "dir");
+                
+                folders.sort((a, b) => {
+                    return a.name.localeCompare(b.name, undefined, { 
+                        numeric: true,
+                        sensitivity: 'base' 
+                    });
+                });
+                
+                return folders;
+            } catch (error) {
+                console.error('Error loading root folders:', error);
+                return [];
+            }
+        }
+        
+        async function loadFolderContents(folderName) {
+            try {
+                const folderUrl = `${GITHUB_API_URL}/${folderName}`;
+                const response = await fetch(folderUrl);
+                if (!response.ok) throw new Error('Failed to fetch folder');
+                
+                const data = await response.json();
+                
+                const images = data.filter(file => {
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
+                });
+                
+                images.sort((a, b) => {
+                    return a.name.localeCompare(b.name, undefined, { 
+                        numeric: true,
+                        sensitivity: 'base' 
+                    });
+                });
+                
+                return images;
+            } catch (error) {
+                console.error('Error loading folder contents:', error);
+                return [];
+            }
+        }
+        
+        function showGithubModal(previewNumber) {
+            activePreview = previewNumber;
+            selectedImage = null;
+            currentFolder = null;
+            
+            modalElement = document.createElement('div');
+            modalElement.className = 'github-modal';
+            modalElement.innerHTML = `
+                <div class="modal-header">
+                    <h3>📁 Pilih Gambar untuk Preview ${previewNumber}</h3>
+                    <button id="close-modal">✕</button>
+                </div>
+                <div id="modal-content">
+                    <div class="loading">Loading folders from GitHub...</div>
+                </div>
+            `;
+            
+            document.body.appendChild(modalElement);
+            
+            document.getElementById('close-modal').addEventListener('click', () => {
+                document.body.removeChild(modalElement);
+                modalElement = null;
+            });
+            
+            renderFolders();
+        }
+        
+        async function renderFolders() {
+            const contentElement = document.getElementById('modal-content');
+            
+            const folders = await loadRootFolders();
+            
+            if (folders.length === 0) {
+                contentElement.innerHTML = '<div class="error-msg">Tidak ada folder ditemukan</div>';
+                return;
+            }
+            
+            let html = '<div class="albums-grid">';
+            
+            folders.forEach(folder => {
+                html += `
+                    <div class="album-item" onclick="window.openFolder('${folder.name}')">
+                        <div class="folder-icon">📁</div>
+                        <div class="folder-name">${folder.name}</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            contentElement.innerHTML = html;
+        }
+        
+        window.openFolder = async function(folderName) {
+            currentFolder = folderName;
+            selectedImage = null;
+            
+            const contentElement = document.getElementById('modal-content');
+            contentElement.innerHTML = '<div class="loading">Loading images...</div>';
+            
+            const images = await loadFolderContents(folderName);
+            
+            if (images.length === 0) {
+                contentElement.innerHTML = `
+                    <div class="folder-header">
+                        <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
+                        <h3>${folderName}</h3>
+                    </div>
+                    <div class="error-msg">Tidak ada gambar dalam folder ini</div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div class="folder-header">
+                    <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
+                    <h3>${folderName}</h3>
+                </div>
+                <div class="image-grid">
+            `;
+            
+            images.forEach(img => {
+                const downloadUrl = img.download_url || `https://raw.githubusercontent.com/taskIfaisal/sw/main/images/${folderName}/${img.name}`;
+                
+                html += `
+                    <div class="grid-item" data-url="${downloadUrl}">
+                        <img src="${downloadUrl}" alt="${img.name}" loading="lazy">
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            contentElement.innerHTML = html;
+            
+            // Event listener untuk single click langsung apply
+            document.querySelectorAll('.grid-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const imageUrl = this.dataset.url;
+                    
+                    // Update preview box
+                    const previewBox = document.getElementById(`preview-${activePreview}`);
+                    const previewImg = previewBox.querySelector('img');
+                    previewImg.src = imageUrl;
+                    
+                    // Jika yang dipilih Favorite 1, update kartu utama dan preview besar
+                    if (activePreview === 1) {
+                        updateCardImage(imageUrl);
+                    }
+                    
+                    // Highlight preview yang dipilih (border orange)
+                    document.querySelectorAll('.preview-box').forEach(p => p.classList.remove('selected'));
+                    previewBox.classList.add('selected');
+                    
+                    // SIMPAN SEMUA PREVIEW KE STORAGE
+                    autoSave();
+                    
+                    // Tutup modal
+                    document.body.removeChild(modalElement);
+                    modalElement = null;
+                });
+            });
+        };
+        
+        window.goBackToFolders = function() {
+            currentFolder = null;
+            selectedImage = null;
+            
+            renderFolders();
+        };
+        
+        // ===== EVENT LISTENER UNTUK PREVIEW (SINGLE KLIK BUKA ALBUM) =====
+        preview1.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('preview-toggle')) {
+                showGithubModal(1);
+            }
+        });
+        
+        preview2.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('preview-toggle')) {
+                showGithubModal(2);
+            }
+        });
+        
+        preview3.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('preview-toggle')) {
+                showGithubModal(3);
+            }
+        });
 
-  // ========== INITIALIZATION ==========
-  function init() {
-    // Setup event listeners
-    setupEventListeners();
-    
-    // Mulai sinkronisasi otomatis
-    startAutoSync();
-    
-    console.log('Google Clone dengan Sync API - Siap digunakan');
-  }
+        preview4.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('preview-toggle')) {
+                showGithubModal(4);
+            }
+        });
+        
+        // ===== EVENT LISTENER UNTUK TOGGLE ICON =====
+        document.querySelectorAll('.preview-toggle').forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const previewIndex = parseInt(toggle.dataset.toggle);
+                
+                // Toggle status aktif
+                activeImages[previewIndex] = !activeImages[previewIndex];
+                
+                // Update tampilan
+                updateActivePreviewStyles();
+                
+                // Simpan ke storage
+                autoSave();
+                
+                console.log(`Favorite ${previewIndex}: ${activeImages[previewIndex] ? 'aktif' : 'nonaktif'}`);
+            });
+        });
+        
+        // ===== FUNGSI UNTUK UPDATE CARD IMAGE =====
+        function updateCardImage(imageSrc) {
+            // Update Favorite 1
+            const preview1Img = preview1.querySelector('img');
+            if (preview1Img) {
+                preview1Img.src = imageSrc;
+            }
+            
+            // Update kartu utama
+            card.src = imageSrc;
+            
+            // Update preview besar
+            mainCardPreview.src = imageSrc;
+            updateMainCardPreview();
+            
+            // Reset scale
+            scale = 1;
+            updateCardTransform();
+            
+            // Simpan ke localStorage
+            autoSave();
+            
+            // Update tombol download (selalu aktif karena ada gambar)
+            updateDownloadButtonState();
+        }
+        
+        // ===== FUNGSI UNTUK EFFECT STANDAR (MUNCUL CEPAT DI TENGAH) =====
+        function showCardStandar() {
+            const activeList = getActiveImagesList();
+            
+            if (activeList.length === 0) {
+                console.log('Tidak ada gambar aktif');
+                return;
+            }
+            
+            // Reset semua style
+            card.style.transition = 'none';
+            card.style.transform = 'none';
+            card.style.left = '0';
+            card.style.top = '0';
+            
+            // Tampilkan kartu dulu
+            card.style.display = 'block';
+            
+            // Dapatkan ukuran kartu setelah display block
+            const cardWidth = card.offsetWidth;
+            const cardHeight = card.offsetHeight;
+            
+            // Hitung posisi tengah
+            const centerX = (window.innerWidth - cardWidth) / 2;
+            const centerY = (window.innerHeight - cardHeight) / 2;
+            
+            // Simpan posisi
+            posX = Math.round(centerX);
+            posY = Math.round(centerY);
+            
+            // Set gambar pertama
+            currentCardImageIndex = 0;
+            card.src = activeList[0].src;
+            
+            // Tampilkan kartu tanpa animasi
+            card.style.opacity = '1';
+            card.style.visibility = 'visible';
+            card.style.animation = 'none';
+            
+            // Terapkan transformasi
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            
+            // Simpan daftar aktif untuk sequence sentuhan
+            activeImagesList = activeList;
+            isSequenceActive = true;
+            sequenceStage = 1;
+            
+            console.log('Effect Standar: kartu muncul di tengah dengan gambar 1');
+        }
+        
+        // ===== FUNGSI UNTUK EFFECT SHADOW =====
+        function showCardShadow() {
+            const activeList = getActiveImagesList();
+            
+            if (activeList.length === 0) {
+                console.log('Tidak ada gambar aktif');
+                return;
+            }
+            
+            // Reset semua style
+            card.style.transition = 'none';
+            card.style.transform = 'none';
+            card.style.left = '0';
+            card.style.top = '0';
+            
+            // Tampilkan kartu dulu
+            card.style.display = 'block';
+            
+            // Dapatkan ukuran kartu setelah display block
+            const cardWidth = card.offsetWidth;
+            const cardHeight = card.offsetHeight;
+            
+            // Hitung posisi tengah
+            const centerX = (window.innerWidth - cardWidth) / 2;
+            const centerY = (window.innerHeight - cardHeight) / 2;
+            
+            // Simpan posisi
+            posX = Math.round(centerX);
+            posY = Math.round(centerY);
+            
+            // Set gambar pertama
+            currentCardImageIndex = 0;
+            card.src = activeList[0].src;
+            
+            // Set opacity dan animasi fade in
+            card.style.opacity = '1';
+            card.style.visibility = 'visible';
+            card.style.animation = 'none';
+            void card.offsetHeight;
+            card.style.animation = 'muncul 5s ease-in-out';
+            
+            setTimeout(() => {
+                card.style.animation = 'none';
+            }, 5000);
+            
+            // Terapkan transformasi
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            
+            // Simpan daftar aktif untuk sequence sentuhan
+            activeImagesList = activeList;
+            isSequenceActive = true;
+            sequenceStage = 1;
+            
+            console.log('Effect Shadow: kartu muncul fade in di tengah dengan gambar 1');
+        }
+        
+        // ===== FUNGSI UNTUK EFFECT SLIDER (MUNCUL DARI BAWAH, TETAP DI TENGAH) =====
+        function showCardSlider() {
+            const activeList = getActiveImagesList();
+            
+            if (activeList.length === 0) {
+                console.log('Tidak ada gambar aktif');
+                return;
+            }
+            
+            hasBeenTouched = false;
 
-  // Start
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+            if (touchToChangeTimeout) {
+                clearTimeout(touchToChangeTimeout);
+                touchToChangeTimeout = null;
+            }
 
-  // Cleanup
-  window.addEventListener('beforeunload', function() {
-    if (syncInterval) {
-      clearInterval(syncInterval);
-    }
-  });
-</script>
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            clearAllTimeouts();
+            
+            currentCardImageIndex = 0;
+            card.src = activeList[0].src;
+            
+            card.style.animation = 'none';
+            card.style.opacity = '0';
+            card.style.visibility = 'hidden';
+            card.style.display = 'block';
+            
+            card.style.left = '0';
+            card.style.top = '0';
+            card.style.right = 'auto';
+            card.style.bottom = 'auto';
+            card.style.margin = '0';
+            
+            card.classList.remove('card-moving', 'card-flipping', 'card-visible');
+            
+            requestAnimationFrame(() => {
+                if (card.complete) {
+                    initCardAnimation();
+                } else {
+                    card.onload = initCardAnimation;
+                    setTimeout(initCardAnimation, 500);
+                }
+            });
+            
+            function initCardAnimation() {
+                // PERBAIKAN: Matikan sensor selama animasi slider
+                isAnimatingMotion = true;
+                
+                const cardRect = card.getBoundingClientRect();
+                const cardWidth = cardRect.width;
+                const cardHeight = cardRect.height;
+                
+                posX = (window.innerWidth / 2) - (cardWidth / 2);
+                posY = window.innerHeight + 100;
+                
+                card.style.transition = 'none';
+                card.style.transform = `translate(${posX}px, ${posY}px)`;
+                
+                void card.offsetHeight;
+                
+                card.style.opacity = '1';
+                card.style.visibility = 'visible';
+                card.classList.add('card-visible');
+                
+                requestAnimationFrame(() => {
+                    card.classList.add('card-moving');
+                    card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+                    
+                    setTimeout(() => {
+                        posX = (window.innerWidth / 2) - (cardWidth / 2);
+                        posY = (window.innerHeight / 2) - (cardHeight / 2);
+                        
+                        card.style.transform = `translate(${posX}px, ${posY}px)`;
+                        
+                        setTimeout(() => {
+                            isAnimating = false;
+                            isAnimatingMotion = false; // PERBAIKAN: Hidupkan sensor kembali
+                            card.classList.remove('card-moving');
+                            
+                            // Simpan daftar aktif untuk sequence sentuhan
+                            activeImagesList = activeList;
+                            isSequenceActive = true;
+                            sequenceStage = 1;
+                        }, 800);
+                    }, 50);
+                });
+            }
+        }
+
+        // ===== FUNGSI UNTUK EFFECT SKATING (MUNCUL DARI BAWAH, KELUAR KE ATAS) =====
+        function showCardSkating() {
+            const activeList = getActiveImagesList();
+            
+            if (activeList.length === 0) {
+                console.log('Tidak ada gambar aktif');
+                return;
+            }
+            
+            hasBeenTouched = false;
+
+            if (touchToChangeTimeout) {
+                clearTimeout(touchToChangeTimeout);
+                touchToChangeTimeout = null;
+            }
+
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            clearAllTimeouts();
+            
+            currentCardImageIndex = 0;
+            card.src = activeList[0].src;
+            
+            card.style.animation = 'none';
+            card.style.opacity = '0';
+            card.style.visibility = 'hidden';
+            card.style.display = 'block';
+            
+            card.style.left = '0';
+            card.style.top = '0';
+            card.style.right = 'auto';
+            card.style.bottom = 'auto';
+            card.style.margin = '0';
+            
+            card.classList.remove('card-moving', 'card-flipping', 'card-visible');
+            
+            requestAnimationFrame(() => {
+                if (card.complete) {
+                    initCardAnimation();
+                } else {
+                    card.onload = initCardAnimation;
+                    setTimeout(initCardAnimation, 500);
+                }
+            });
+            
+            function initCardAnimation() {
+                // PERBAIKAN: Matikan sensor selama animasi masuk
+                isAnimatingMotion = true;
+                
+                const cardRect = card.getBoundingClientRect();
+                const cardWidth = cardRect.width;
+                const cardHeight = cardRect.height;
+                
+                posX = (window.innerWidth / 2) - (cardWidth / 2);
+                posY = window.innerHeight + 100;
+                
+                card.style.transition = 'none';
+                card.style.transform = `translate(${posX}px, ${posY}px)`;
+                
+                void card.offsetHeight;
+                
+                card.style.opacity = '1';
+                card.style.visibility = 'visible';
+                card.classList.add('card-visible');
+                
+                requestAnimationFrame(() => {
+                    card.classList.add('card-moving');
+                    card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+                    
+                    setTimeout(() => {
+                        posX = (window.innerWidth / 2) - (cardWidth / 2);
+                        posY = (window.innerHeight / 2) - (cardHeight / 2);
+                        
+                        card.style.transform = `translate(${posX}px, ${posY}px)`;
+                        
+                        setTimeout(() => {
+                            isAnimating = false;
+                            isAnimatingMotion = false; // PERBAIKAN: Hidupkan sensor kembali
+                            card.classList.remove('card-moving');
+                            
+                            // Simpan daftar aktif untuk sequence sentuhan
+                            activeImagesList = activeList;
+                            isSequenceActive = true;
+                            sequenceStage = 1;
+                        }, 800);
+                    }, 50);
+                });
+            }
+        }
+
+        // ===== FUNGSI UNTUK EXIT SKATING (KELUAR KE ATAS) DENGAN INDIKATOR =====
+        function scheduleExitSkating() {
+            if (card.style.display === 'none' || !isSequenceActive) return;
+            
+            console.log("Skating: menjadwalkan exit dengan indikator");
+            
+            // Clear timeout yang mungkin masih berjalan
+            if (exitIndicatorTimeout) {
+                clearTimeout(exitIndicatorTimeout);
+                exitIndicatorTimeout = null;
+            }
+            if (exitCardTimeout) {
+                clearTimeout(exitCardTimeout);
+                exitCardTimeout = null;
+            }
+            
+            // Jadwalkan indikator muncul 1 detik sebelum exit (di detik ke-3)
+            exitIndicatorTimeout = setTimeout(() => {
+                if (isSequenceActive) {
+                    console.log("Skating: indikator exit muncul");
+                    showIndicator();
+                }
+                exitIndicatorTimeout = null;
+            }, 3000); // 3 detik
+            
+            // Jadwalkan kartu keluar setelah 4 detik
+            exitCardTimeout = setTimeout(() => {
+                if (isSequenceActive) {
+                    console.log("Skating: mulai exit ke atas");
+                    hideIndicator(); // Sembunyikan indikator
+                    exitCardSkating();
+                }
+                exitCardTimeout = null;
+            }, 4000); // 4 detik
+        }
+        
+        // ===== FUNGSI UNTUK EXIT SKATING (KELUAR KE ATAS) =====
+        function exitCardSkating() {
+            if (card.style.display === 'none' || !isSequenceActive) return;
+            
+            console.log("Skating: kartu keluar ke atas");
+            
+            // PERBAIKAN: Matikan sensor selama animasi keluar
+            isAnimatingMotion = true;
+            
+            const cardWidth = card.offsetWidth;
+            
+            // Animasi keluar ke atas
+            card.classList.add('card-moving');
+            card.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+            
+            // Posisi akhir di atas layar
+            const targetY = -card.offsetHeight - 100;
+            card.style.transform = `translate(${posX}px, ${targetY}px) scale(${scale})`;
+            
+            // Setelah animasi selesai, sembunyikan kartu
+            setTimeout(() => {
+                hideCard();
+                card.classList.remove('card-moving');
+                isSequenceActive = false;
+                sequenceStage = 0;
+                isAnimatingMotion = false; // PERBAIKAN: Hidupkan sensor kembali
+                console.log("Skating: kartu hilang");
+            }, 500);
+        }
+        
+        // ===== FUNGSI UNTUK BERGANTI KE GAMBAR BERIKUTNYA (UNTUK SEMUA EFFECT) =====
+        function goToNextImage() {
+            if (!isSequenceActive || activeImagesList.length === 0) return false;
+            
+            currentCardImageIndex++;
+            
+            // Jika masih ada gambar berikutnya
+            if (currentCardImageIndex < activeImagesList.length) {
+                card.src = activeImagesList[currentCardImageIndex].src;
+                sequenceStage = currentCardImageIndex + 1;
+                console.log(`Ganti ke gambar ${currentCardImageIndex + 1}`);
+                return true;
+            } 
+            // Jika sudah habis
+            else {
+                return false;
+            }
+        }
+        
+        // ===== LOCAL STORAGE FUNCTIONS =====
+        function loadFromStorage() {
+            try {
+                const savedData = localStorage.getItem(STORAGE_KEY);
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    
+                    if (data.background) {
+                        background.style.backgroundImage = `url(${data.background})`;
+                    }
+                    
+                    // Load effect settings
+                    if (data.effectStandar !== undefined) {
+                        effectStandarCheckbox.checked = data.effectStandar;
+                    }
+                    if (data.shadowEffect !== undefined) {
+                        shadowEffectCheckbox.checked = data.shadowEffect;
+                    }
+                    if (data.effectSlider !== undefined) {
+                        effectSliderCheckbox.checked = data.effectSlider;
+                    }
+                    if (data.effectSkating !== undefined) {
+                        effectSkatingCheckbox.checked = data.effectSkating;
+                    }
+                    if (data.sensorGerak !== undefined) {
+                        sensorGerakCheckbox.checked = data.sensorGerak;
+                        isSensorActive = data.sensorGerak;
+                    }
+                    
+                    // Load status aktif gambar
+                    if (data.activeImages) {
+                        activeImages = data.activeImages;
+                    }
+                    
+                    // Load semua preview images (4 gambar)
+                    if (data.preview1) {
+                        const preview1Img = preview1.querySelector('img');
+                        if (preview1Img) {
+                            preview1Img.src = data.preview1;
+                        }
+                    }
+                    if (data.preview2) {
+                        const preview2Img = preview2.querySelector('img');
+                        if (preview2Img) preview2Img.src = data.preview2;
+                    }
+                    if (data.preview3) {
+                        const preview3Img = preview3.querySelector('img');
+                        if (preview3Img) preview3Img.src = data.preview3;
+                    }
+                    if (data.preview4) {
+                        const preview4Img = preview4.querySelector('img');
+                        if (preview4Img) preview4Img.src = data.preview4;
+                    }
+                    
+                    // Update kartu utama dan preview besar dari preview1
+                    if (data.preview1) {
+                        card.src = data.preview1;
+                        mainCardPreview.src = data.preview1;
+                        updateMainCardPreview();
+                    }
+                }
+                
+                const savedSize = localStorage.getItem('card_size');
+                if (savedSize) {
+                    currentCardSize = parseInt(savedSize);
+                    card.style.maxWidth = currentCardSize + 'px';
+                    cardSizeSlider.value = currentCardSize;
+                    sizeValue.textContent = currentCardSize + 'px';
+                    updatePreviewCardSize();
+                }
+                
+                // Update style aktif
+                updateActivePreviewStyles();
+                
+            } catch (error) {
+                console.error('Error loading from storage:', error);
+            }
+        }
+        
+        function saveToStorage() {
+            try {
+                const preview1Img = preview1.querySelector('img');
+                const preview2Img = preview2.querySelector('img');
+                const preview3Img = preview3.querySelector('img');
+                const preview4Img = preview4.querySelector('img');
+                
+                const data = {
+                    background: background.style.backgroundImage.replace('url("', '').replace('")', ''),
+                    effectStandar: effectStandarCheckbox.checked,
+                    shadowEffect: shadowEffectCheckbox.checked,
+                    effectSlider: effectSliderCheckbox.checked,
+                    effectSkating: effectSkatingCheckbox.checked,
+                    sensorGerak: sensorGerakCheckbox.checked,
+                    activeImages: activeImages,
+                    preview1: preview1Img ? preview1Img.src : '',
+                    preview2: preview2Img ? preview2Img.src : '',
+                    preview3: preview3Img ? preview3Img.src : '',
+                    preview4: preview4Img ? preview4Img.src : ''
+                };
+                
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (error) {
+                console.error('Error saving to storage:', error);
+            }
+        }
+        
+        function autoSave() {
+            saveToStorage();
+        }
+        
+        // ===== EFFECT TOGGLES - TETAP EKSKLUSIF UNTUK EFFECT SAJA =====
+        effectStandarCheckbox.addEventListener('change', (e) => {
+            if (effectStandarCheckbox.checked) {
+                shadowEffectCheckbox.checked = false;
+                effectSliderCheckbox.checked = false;
+                effectSkatingCheckbox.checked = false;
+            }
+            autoSave();
+        });
+        
+        shadowEffectCheckbox.addEventListener('change', (e) => {
+            if (shadowEffectCheckbox.checked) {
+                effectStandarCheckbox.checked = false;
+                effectSliderCheckbox.checked = false;
+                effectSkatingCheckbox.checked = false;
+            }
+            autoSave();
+        });
+        
+        effectSliderCheckbox.addEventListener('change', (e) => {
+            if (effectSliderCheckbox.checked) {
+                effectStandarCheckbox.checked = false;
+                shadowEffectCheckbox.checked = false;
+                effectSkatingCheckbox.checked = false;
+            }
+            autoSave();
+        });
+
+        effectSkatingCheckbox.addEventListener('change', (e) => {
+            if (effectSkatingCheckbox.checked) {
+                effectStandarCheckbox.checked = false;
+                shadowEffectCheckbox.checked = false;
+                effectSliderCheckbox.checked = false;
+            }
+            autoSave();
+        });
+        
+        // Sensor gerak toggle - tidak eksklusif
+        sensorGerakCheckbox.addEventListener('change', (e) => {
+            isSensorActive = sensorGerakCheckbox.checked;
+            autoSave();
+        });
+        
+        // Touch events for swipe up to open settings
+        let startYPos = 0;
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                startYPos = e.touches[0].clientY;
+            }
+        }, {passive: false});
+        
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                const currentY = e.touches[0].clientY;
+                if (currentY - startYPos > 100) {
+                    e.preventDefault();
+                    settings.style.top = '0';
+                }
+            }
+        }, {passive: false});
+        
+        // Double tap detection
+        let lastTap = 0;
+        document.addEventListener('touchend', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            
+            // Deteksi double tap
+            if (tapLength < 300 && tapLength > 0) {
+                // Double tap detected
+                e.preventDefault();
+                
+                // Clear timer yang mungkin berjalan
+                clearAllTimeouts();
+                hideIndicator();
+                
+                // CEK EFFECT YANG AKTIF
+                if (shadowEffectCheckbox.checked) {
+                    // EFFECT SHADOW ON
+                    console.log('Double tap: Effect Shadow ON');
+                    isSequenceActive = true;
+                    sequenceStage = 1;
+                    
+                    sequenceTimer = setTimeout(() => {
+                        if (isSequenceActive) {
+                            showCardShadow();
+                        }
+                        sequenceTimer = null;
+                    }, 5000);
+                    
+                } else if (effectStandarCheckbox.checked) {
+                    // EFFECT STANDAR ON
+                    console.log('Double tap: Effect Standar ON');
+                    isSequenceActive = false;
+                    
+                    sequenceTimer = setTimeout(() => {
+                        showCardStandar();
+                        sequenceTimer = null;
+                    }, 1000);
+                    
+                } else if (effectSliderCheckbox.checked) {
+                    // EFFECT SLIDER ON
+                    console.log('Double tap: Effect Slider ON');
+                    const totalDelay = 4000;
+                    const indicatorDelay = 3000;
+                    
+                    indicatorTimeout = setTimeout(() => {
+                        showIndicator();
+                    }, indicatorDelay);
+                    
+                    cardAppearTimeout = setTimeout(() => {
+                        hideIndicator();
+                        showCardSlider();
+                    }, totalDelay);
+                    
+                } else if (effectSkatingCheckbox.checked) {
+                    // EFFECT SKATING ON
+                    console.log('Double tap: Effect Skating ON');
+                    const totalDelay = 4000;
+                    const indicatorDelay = 3000;
+                    
+                    indicatorTimeout = setTimeout(() => {
+                        showIndicator();
+                    }, indicatorDelay);
+                    
+                    cardAppearTimeout = setTimeout(() => {
+                        hideIndicator();
+                        showCardSkating();
+                    }, totalDelay);
+                    
+                } else {
+                    console.log('Double tap: No effect active');
+                }
+            }
+            lastTap = currentTime;
+        });
+        
+        function clearAllTimeouts() {
+            if (sequenceTimer) {
+                clearTimeout(sequenceTimer);
+                sequenceTimer = null;
+            }
+            if (touchToChangeTimeout) {
+                clearTimeout(touchToChangeTimeout);
+                touchToChangeTimeout = null;
+            }
+            if (indicatorTimeout) {
+                clearTimeout(indicatorTimeout);
+                indicatorTimeout = null;
+            }
+            if (cardAppearTimeout) {
+                clearTimeout(cardAppearTimeout);
+                cardAppearTimeout = null;
+            }
+            if (exitIndicatorTimeout) {
+                clearTimeout(exitIndicatorTimeout);
+                exitIndicatorTimeout = null;
+            }
+            if (exitCardTimeout) {
+                clearTimeout(exitCardTimeout);
+                exitCardTimeout = null;
+            }
+        }
+        
+        function showIndicator() {
+            cardIndicator.classList.add('visible');
+        }
+        
+        function hideIndicator() {
+            cardIndicator.classList.remove('visible');
+        }
+        
+        // ===== EVENT LISTENER UNTUK KARTU =====
+        card.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                startX = e.touches[0].clientX - posX;
+                startY = e.touches[0].clientY - posY;
+                velocityX = 0;
+                velocityY = 0;
+                lastPosX = posX;
+                lastPosY = posY;
+                lastTime = Date.now();
+                card.style.transition = 'none';
+                card.style.animation = 'none';
+                e.preventDefault();
+            }
+        }, {passive: false});
+
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging && e.touches.length === 1) {
+                const now = Date.now();
+                const deltaTime = now - lastTime;
+                
+                if (deltaTime > 0) {
+                    const newPosX = e.touches[0].clientX - startX;
+                    const newPosY = e.touches[0].clientY - startY;
+                    
+                    velocityX = (newPosX - lastPosX) / deltaTime * 1000;
+                    velocityY = (newPosY - lastPosY) / deltaTime * 1000;
+                    
+                    lastPosX = newPosX;
+                    lastPosY = newPosY;
+                    lastTime = now;
+                    
+                    posX = newPosX;
+                    posY = newPosY;
+                    
+                    updateCardTransform();
+                    
+                    // PERBAIKAN: Deteksi lebih sensitif untuk kartu keluar layar
+                    const cardRect = card.getBoundingClientRect();
+                    
+                    // Cek apakah kartu sudah keluar dari layar (dengan toleransi 10px)
+                    if (cardRect.bottom < -10 || 
+                        cardRect.top > window.innerHeight + 10 ||
+                        cardRect.right < -10 || 
+                        cardRect.left > window.innerWidth + 10) {
+                        
+                        console.log("Kartu keluar layar - LANGSUNG HILANG");
+                        hideCard();
+                        
+                        // Reset semua state
+                        isSequenceActive = false;
+                        sequenceStage = 0;
+                        isDragging = false;
+                        
+                        if (touchToChangeTimeout) {
+                            clearTimeout(touchToChangeTimeout);
+                            touchToChangeTimeout = null;
+                        }
+                        
+                        // PERBAIKAN: Hentikan propagasi event
+                        e.preventDefault();
+                        return;
+                    }
+                }
+                e.preventDefault();
+            }
+        }, {passive: false});
+        
+        card.addEventListener('touchend', (e) => {
+            if (isDragging) {
+                // PERBAIKAN: Cek lagi posisi kartu saat jari diangkat
+                const cardRect = card.getBoundingClientRect();
+                
+                if (cardRect.bottom < -10 || 
+                    cardRect.top > window.innerHeight + 10 ||
+                    cardRect.right < -10 || 
+                    cardRect.left > window.innerWidth + 10) {
+                    
+                    console.log("Kartu keluar layar di touchend - LANGSUNG HILANG");
+                    hideCard();
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                    
+                    if (touchToChangeTimeout) {
+                        clearTimeout(touchToChangeTimeout);
+                        touchToChangeTimeout = null;
+                    }
+                    
+                    isDragging = false;
+                    return;
+                }
+                
+                // Kecepatan threshold
+                const speedThreshold = 800; // Diturunkan sedikit agar lebih sensitif
+                const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+                
+                // Jika kecepatan tinggi, langsung hilangkan kartu
+                if (currentSpeed > speedThreshold) {
+                    console.log("Kecepatan tinggi - kartu langsung hilang");
+                    hideCard();
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                    
+                    if (touchToChangeTimeout) {
+                        clearTimeout(touchToChangeTimeout);
+                        touchToChangeTimeout = null;
+                    }
+                    
+                    isDragging = false;
+                    return;
+                }
+                
+                isDragging = false;
+                card.style.transition = '';
+                
+                // PERBAIKAN: Selalu terapkan bounds agar kartu tetap di dalam layar
+                // jika tidak sengaja keluar sedikit
+                applyBounds();
+                updateCardTransform();
+            }
+            
+            // Proses sequence untuk ganti gambar
+            setTimeout(() => {
+                if (!isSequenceActive || card.style.display === 'none' || card.style.visibility !== 'visible') {
+                    return;
+                }
+                
+                // Clear timer yang mungkin berjalan
+                if (touchToChangeTimeout) {
+                    clearTimeout(touchToChangeTimeout);
+                }
+                
+                const activeCount = activeImagesList.length;
+                
+                // Untuk shadow effect
+                if (shadowEffectCheckbox.checked) {
+                    if (sequenceStage < activeCount) {
+                        console.log(`Shadow Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
+                        touchToChangeTimeout = setTimeout(() => {
+                            if (isSequenceActive) {
+                                if (goToNextImage()) {
+                                    console.log(`Shadow: ganti ke gambar ${currentCardImageIndex + 1}`);
+                                }
+                            }
+                            touchToChangeTimeout = null;
+                        }, 3000);
+                    } 
+                    else if (sequenceStage === activeCount && activeCount > 0) {
+                        console.log(`Shadow Stage ${sequenceStage} (FADE OUT): tunggu 5 detik`);
+                        touchToChangeTimeout = setTimeout(() => {
+                            if (isSequenceActive) {
+                                console.log("Shadow: fade out dimulai");
+                                card.style.opacity = '0';
+                                
+                                setTimeout(() => {
+                                    if (isSequenceActive) {
+                                        hideCard();
+                                        card.style.opacity = '1';
+                                        isSequenceActive = false;
+                                        sequenceStage = 0;
+                                        console.log("Shadow: kartu hilang setelah fade out");
+                                    }
+                                }, 5000);
+                            }
+                            touchToChangeTimeout = null;
+                        }, 5000);
+                    }
+                } 
+                // Untuk effect standar dan slider
+                else if (effectStandarCheckbox.checked || effectSliderCheckbox.checked) {
+                    if (sequenceStage < activeCount) {
+                        console.log(`Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
+                        touchToChangeTimeout = setTimeout(() => {
+                            if (isSequenceActive) {
+                                if (goToNextImage()) {
+                                    console.log(`Standar/Slider: ganti ke gambar ${currentCardImageIndex + 1}`);
+                                } else {
+                                    console.log("Standar/Slider: semua gambar sudah tampil");
+                                    isSequenceActive = false;
+                                    sequenceStage = 0;
+                                }
+                            }
+                            touchToChangeTimeout = null;
+                        }, 3000);
+                    } else {
+                        isSequenceActive = false;
+                        sequenceStage = 0;
+                    }
+                }
+                // Untuk effect skating
+                else if (effectSkatingCheckbox.checked) {
+                    if (sequenceStage < activeCount) {
+                        console.log(`Skating Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
+                        touchToChangeTimeout = setTimeout(() => {
+                            if (isSequenceActive) {
+                                if (goToNextImage()) {
+                                    console.log(`Skating: ganti ke gambar ${currentCardImageIndex + 1}`);
+                                }
+                            }
+                            touchToChangeTimeout = null;
+                        }, 3000);
+                    } 
+                    else if (sequenceStage === activeCount && activeCount > 0) {
+                        console.log(`Skating Stage ${sequenceStage}: semua gambar sudah tampil, menjadwalkan exit dengan indikator`);
+                        
+                        // Panggil fungsi untuk menjadwalkan exit dengan indikator
+                        scheduleExitSkating();
+                    }
+                }
+            }, 50);
+        });
+        
+        document.addEventListener('touchend', (e) => {
+            // Sudah dihandle di atas
+        });
+        
+        bgUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    background.style.backgroundImage = `url(${event.target.result})`;
+                    autoSave();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // ===== CARD UPLOAD =====
+        cardUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const imageSrc = event.target.result;
+                    updateCardImage(imageSrc);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // ===== CLOSE SETTINGS BUTTON - HANYA MENUTUP DAN MENYIMPAN =====
+        if (closeSettingsBtn) {
+            closeSettingsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Close settings button clicked - menyimpan dan menutup');
+                settings.style.top = '-100%';
+                autoSave();
+            });
+        }
+        
+        // ===== SENSOR IMPLEMENTATION =====
+        function initSensor() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === "function") {
+                sensorPermissionBtn.classList.remove('hidden');
+                
+                sensorPermissionBtn.onclick = async () => {
+                    try {
+                        const permission = await DeviceOrientationEvent.requestPermission();
+                        
+                        if (permission === "granted") {
+                            sensorPermissionBtn.classList.add('hidden');
+                            startSensor();
+                        }
+                    } catch (error) {
+                        console.error("Error requesting permission:", error);
+                        sensorPermissionBtn.innerHTML = "Error requesting permission.<br>Try refreshing the page.";
+                    }
+                };
+            } else {
+                sensorPermissionBtn.classList.add('hidden');
+                startSensor();
+            }
+        }
+        
+        function startSensor() {
+            isSensorEnabled = true;
+            
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener("deviceorientation", handleDeviceOrientation);
+                startSensorAnimation();
+            }
+        }
+        
+        function handleDeviceOrientation(e) {
+            if (isDragging) return;
+
+            const beta = e.beta || 0;
+            const gamma = e.gamma || 0;
+            
+            const limitedBeta = Math.max(-45, Math.min(45, beta));
+            const limitedGamma = Math.max(-45, Math.min(45, gamma));
+
+            smoothBeta += (limitedBeta - smoothBeta) * smoothing;
+            smoothGamma += (limitedGamma - smoothGamma) * smoothing;
+        }
+        
+        function startSensorAnimation() {
+            function animate() {
+                // PERBAIKAN: Cek flag isAnimatingMotion untuk menonaktifkan sensor saat animasi
+                if (isSensorEnabled && !isDragging && !isAnimatingMotion && sensorGerakCheckbox.checked && card.style.display !== 'none') {
+                    posX += smoothGamma * sensitivity;
+                    posY += smoothBeta * sensitivity;
+                    applyBounds();
+                    updateCardTransform();
+                }
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+        
+        function applyBounds() {
+            const cardWidth = card.offsetWidth * scale;
+            const cardHeight = card.offsetHeight * scale;
+            
+            const minX = 0;
+            const maxX = window.innerWidth - cardWidth;
+            const minY = 0;
+            const maxY = window.innerHeight - cardHeight;
+            
+            posX = Math.max(minX, Math.min(maxX, posX));
+            posY = Math.max(minY, Math.min(maxY, posY));
+        }
+        
+        function updateCardTransform() {
+            posX = Math.round(posX);
+            posY = Math.round(posY);
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        }
+        
+        function hideCard() {
+            card.style.display = 'none';
+            card.style.visibility = 'hidden';
+        }
+        
+        window.addEventListener('resize', () => {
+            if (card.style.display !== 'none') {
+                const cardWidth = card.offsetWidth;
+                const cardHeight = card.offsetHeight;
+                posX = (window.innerWidth - cardWidth) / 2;
+                posY = (window.innerHeight - cardHeight) / 2;
+                posX = Math.round(posX);
+                posY = Math.round(posY);
+                updateCardTransform();
+            }
+        });
+        
+        window.addEventListener('beforeunload', () => {
+            saveToStorage();
+        });
+
+        window.addEventListener('load', () => {
+            loadRootFolders();
+            setTimeout(() => {
+                updateMainCardPreview();
+                updatePreviewCardSize();
+                updateActivePreviewStyles();
+                
+                // Update tombol download
+                updateDownloadButtonState();
+                
+                // Set kartu di luar layar
+                card.style.display = 'block';
+                card.style.animation = 'none';
+                card.style.opacity = '1';
+                
+                posX = (window.innerWidth / 2) - (card.offsetWidth / 2);
+                posY = window.innerHeight + card.offsetHeight + 100;
+                posX = Math.round(posX);
+                posY = Math.round(posY);
+                updateCardTransform();
+                
+                card.style.display = 'none';
+                card.style.visibility = 'hidden';
+            }, 200);
+        });
+
+        // ===== REMOVE BACKGROUND FUNCTIONALITY =====
+        const REMOVE_BG_API_KEY = '2crJY3ybEroko55EEQeVFh9C';
+        const REMOVE_BG_API_URL = 'https://api.remove.bg/v1.0/removebg';
+        
+        // Variable untuk menyimpan blob hasil remove background
+        let processedImageBlob = null;
+
+        // Fungsi untuk update state tombol download (selalu aktif selama ada gambar)
+        function updateDownloadButtonState() {
+            const hasImage = mainCardPreview.src && mainCardPreview.src !== '' && !mainCardPreview.src.includes('undefined');
+            downloadBtn.disabled = !hasImage;
+        }
+
+        // Fungsi untuk menampilkan status
+        function showRemoveBgStatus(message, isError = false) {
+            removeBgStatus.style.display = 'block';
+            removeBgStatus.textContent = message;
+            removeBgStatus.className = 'remove-bg-status ' + (isError ? 'error' : 'success');
+        }
+
+        function hideRemoveBgStatus() {
+            removeBgStatus.style.display = 'none';
+        }
+
+        // Fungsi untuk auto-crop gambar (menghilangkan area transparan di pinggir)
+        function autoCropImage(imageSrc) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = function() {
+                    // Buat canvas sementara
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Set canvas ukuran gambar
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Gambar image ke canvas
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Ambil data pixel
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    
+                    // Inisialisasi batas
+                    let top = canvas.height;
+                    let bottom = 0;
+                    let left = canvas.width;
+                    let right = 0;
+                    
+                    // Scan pixel untuk mencari area non-transparan
+                    for (let y = 0; y < canvas.height; y++) {
+                        for (let x = 0; x < canvas.width; x++) {
+                            const index = (y * canvas.width + x) * 4;
+                            const alpha = data[index + 3]; // Nilai alpha (0-255)
+                            
+                            // Jika pixel tidak transparan (alpha > 0)
+                            if (alpha > 0) {
+                                top = Math.min(top, y);
+                                bottom = Math.max(bottom, y);
+                                left = Math.min(left, x);
+                                right = Math.max(right, x);
+                            }
+                        }
+                    }
+                    
+                    // Jika tidak ada pixel non-transparan, return gambar asli
+                    if (top > bottom || left > right) {
+                        resolve(imageSrc);
+                        return;
+                    }
+                    
+                    // Tambahkan padding kecil (2px) agar tidak terlalu rapat
+                    const padding = 2;
+                    top = Math.max(0, top - padding);
+                    bottom = Math.min(canvas.height, bottom + padding);
+                    left = Math.max(0, left - padding);
+                    right = Math.min(canvas.width, right + padding);
+                    
+                    // Hitung ukuran crop
+                    const cropWidth = right - left;
+                    const cropHeight = bottom - top;
+                    
+                    // Buat canvas baru untuk hasil crop
+                    const cropCanvas = document.createElement('canvas');
+                    cropCanvas.width = cropWidth;
+                    cropCanvas.height = cropHeight;
+                    const cropCtx = cropCanvas.getContext('2d');
+                    
+                    // Gambar bagian yang di-crop
+                    cropCtx.drawImage(
+                        img, 
+                        left, top, cropWidth, cropHeight,
+                        0, 0, cropWidth, cropHeight
+                    );
+                    
+                    // Konversi ke data URL
+                    const croppedDataUrl = cropCanvas.toDataURL('image/png');
+                    resolve(croppedDataUrl);
+                };
+                
+                img.onerror = function() {
+                    reject(new Error('Gagal memuat gambar untuk auto-crop'));
+                };
+                
+                img.src = imageSrc;
+            });
+        }
+
+        // Fungsi untuk set loading state
+        function setRemoveBgLoading(isLoading) {
+            if (isLoading) {
+                removeBgBtn.disabled = true;
+                removeBgBtn.innerHTML = '⏳ Memproses...';
+                
+                // Tampilkan loading di preview utama
+                const editorFrame = document.querySelector('.editor-frame');
+                const loadingOverlay = document.createElement('div');
+                loadingOverlay.id = 'bg-loading-overlay';
+                loadingOverlay.className = 'bg-loading-overlay';
+                loadingOverlay.innerHTML = `
+                    <div class="bg-spinner"></div>
+                    <div style="color: white; font-size: 14px;">Menghapus background...</div>
+                `;
+                
+                // Hanya tambahkan jika belum ada
+                if (!document.getElementById('bg-loading-overlay')) {
+                    editorFrame.style.position = 'relative';
+                    editorFrame.appendChild(loadingOverlay);
+                }
+            } else {
+                removeBgBtn.disabled = false;
+                removeBgBtn.innerHTML = '🧹 Hapus Background';
+                
+                // Hapus loading overlay
+                const loadingOverlay = document.getElementById('bg-loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.remove();
+                }
+            }
+        }
+
+        // Event listener untuk tombol remove background
+        removeBgBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Ambil gambar dari preview utama (Favorite 1)
+            const currentImageSrc = mainCardPreview.src;
+            
+            if (!currentImageSrc || currentImageSrc === '') {
+                showRemoveBgStatus('Tidak ada gambar yang diproses', true);
+                setTimeout(hideRemoveBgStatus, 3000);
+                return;
+            }
+            
+            try {
+                setRemoveBgLoading(true);
+                hideRemoveBgStatus();
+                
+                // Reset processed image
+                processedImageBlob = null;
+                
+                // Konversi image src ke blob
+                let imageBlob;
+                
+                if (currentImageSrc.startsWith('data:')) {
+                    // Dari file upload (base64)
+                    const response = await fetch(currentImageSrc);
+                    imageBlob = await response.blob();
+                } else {
+                    // Dari URL (github atau lainnya)
+                    try {
+                        // Cek ukuran dengan HEAD request
+                        const headResponse = await fetch(currentImageSrc, { method: 'HEAD' });
+                        const contentLength = headResponse.headers.get('content-length');
+                        
+                        if (contentLength && parseInt(contentLength) > 5 * 1024 * 1024) {
+                            throw new Error('Ukuran file terlalu besar (maks 5MB)');
+                        }
+                        
+                        const response = await fetch(currentImageSrc);
+                        imageBlob = await response.blob();
+                    } catch (fetchError) {
+                        console.error('Error fetching image:', fetchError);
+                        throw new Error('Gagal mengambil gambar dari URL. Pastikan gambar dapat diakses.');
+                    }
+                }
+                
+                // Validasi ukuran
+                if (imageBlob.size > 5 * 1024 * 1024) {
+                    throw new Error('Ukuran file maksimal 5MB');
+                }
+                
+                // Siapkan form data untuk API
+                const formData = new FormData();
+                formData.append('image_file', imageBlob, 'image.png');
+                formData.append('size', 'auto');
+                
+                console.log('Mengirim request ke remove.bg API...');
+                
+                // Panggil API remove.bg
+                const response = await fetch(REMOVE_BG_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'X-Api-Key': REMOVE_BG_API_KEY
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    let errorText = '';
+                    try {
+                        errorText = await response.text();
+                    } catch (e) {
+                        errorText = response.statusText;
+                    }
+                    
+                    // Handle specific error codes
+                    if (response.status === 402) {
+                        throw new Error('API key tidak memiliki cukup kredit');
+                    } else if (response.status === 400) {
+                        throw new Error('Gambar tidak valid atau format tidak didukung');
+                    } else {
+                        throw new Error(`Error ${response.status}: ${errorText.substring(0, 100)}`);
+                    }
+                }
+                
+                // Dapatkan hasil sebagai blob
+                const resultBlob = await response.blob();
+                
+                // Simpan blob untuk didownload nanti
+                processedImageBlob = resultBlob;
+                
+                // Konversi blob ke data URL
+                const reader = new FileReader();
+                reader.onload = async function(event) {
+                    const resultImageUrl = event.target.result;
+                    
+                    try {
+                        // Tampilkan pesan auto-crop
+                        showRemoveBgStatus('⏳ Merapikan pinggiran gambar...', false);
+                        
+                        // Lakukan auto-crop untuk menghilangkan area transparan
+                        const croppedImageUrl = await autoCropImage(resultImageUrl);
+                        
+                        // Update semua gambar dengan hasil yang sudah di-crop
+                        updateCardImage(croppedImageUrl);
+                        
+                        // Update blob untuk download dengan versi yang sudah di-crop
+                        const croppedResponse = await fetch(croppedImageUrl);
+                        processedImageBlob = await croppedResponse.blob();
+                        
+                        // Selesai loading
+                        setRemoveBgLoading(false);
+                        
+                        // Tampilkan pesan sukses
+                        showRemoveBgStatus('✅ Background berhasil dihapus & pinggiran dirapikan!');
+                        setTimeout(hideRemoveBgStatus, 3000);
+                        
+                        console.log('Remove background + auto-crop sukses!');
+                    } catch (cropError) {
+                        console.error('Auto-crop error:', cropError);
+                        
+                        // Jika auto-crop gagal, tetap pakai hasil remove bg
+                        updateCardImage(resultImageUrl);
+                        
+                        setRemoveBgLoading(false);
+                        showRemoveBgStatus('✅ Background terhapus (tanpa crop)', false);
+                        setTimeout(hideRemoveBgStatus, 3000);
+                    }
+                };
+                
+                reader.readAsDataURL(resultBlob);
+                
+            } catch (error) {
+                console.error('Remove background error:', error);
+                
+                // Selesai loading
+                setRemoveBgLoading(false);
+                
+                // Tampilkan pesan error
+                let errorMessage = error.message;
+                
+                // Cek apakah error karena CORS
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMessage = 'Error CORS atau jaringan. Gunakan extension CORS Unblock atau coba gambar lain.';
+                }
+                
+                showRemoveBgStatus(`❌ Gagal: ${errorMessage}`, true);
+                setTimeout(hideRemoveBgStatus, 5000);
+            }
+        });
+        
+        // Event listener untuk tombol download
+        downloadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Jika ada hasil dari remove background, download hasil tersebut
+            if (processedImageBlob) {
+                // Buat URL dari blob
+                const url = URL.createObjectURL(processedImageBlob);
+                
+                // Buat link download
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'removed-background-cropped.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // Bersihkan URL
+                URL.revokeObjectURL(url);
+                
+                // Tampilkan pesan sukses
+                showRemoveBgStatus('✅ Gambar hasil diunduh!');
+                setTimeout(hideRemoveBgStatus, 2000);
+            } else {
+                // Jika tidak ada hasil, download gambar asli dari preview
+                const currentImageSrc = mainCardPreview.src;
+                
+                if (currentImageSrc && currentImageSrc !== '') {
+                    // Buat link download untuk gambar asli
+                    const a = document.createElement('a');
+                    a.href = currentImageSrc;
+                    a.download = 'gambar-asli.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    
+                    // Tampilkan pesan sukses
+                    showRemoveBgStatus('✅ Gambar asli diunduh!');
+                    setTimeout(hideRemoveBgStatus, 2000);
+                } else {
+                    showRemoveBgStatus('Tidak ada gambar untuk diunduh', true);
+                    setTimeout(hideRemoveBgStatus, 2000);
+                }
+            }
+        });
+        
+        // Inisialisasi state tombol download
+        updateDownloadButtonState();
+    </script>
 </body>
 </html>
