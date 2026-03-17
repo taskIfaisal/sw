@@ -2343,125 +2343,167 @@
             removeBgStatus.style.display = 'none';
         }
 
-        // Fungsi auto-crop yang lebih baik
-        function autoCropImage(imageSrc) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.crossOrigin = "Anonymous";
-                
-                img.onload = function() {
-                    console.log('Auto-crop: Memproses gambar', img.width, 'x', img.height);
+        // Fungsi auto-crop yang lebih baik dengan debugging
+function autoCropImage(imageSrc) {
+    return new Promise((resolve, reject) => {
+        console.log('=== AUTO-CROP DIMULAI ===');
+        console.log('Image source:', imageSrc.substring(0, 100) + '...');
+        
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        
+        img.onload = function() {
+            console.log('Gambar berhasil dimuat:', img.width, 'x', img.height);
+            
+            // Buat canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            
+            // Gambar image ke canvas
+            ctx.drawImage(img, 0, 0);
+            
+            // Cek apakah gambar memiliki alpha channel
+            console.log('Mencoba membaca pixel...');
+            
+            // Ambil data pixel
+            let imageData;
+            try {
+                imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                console.log('Berhasil membaca pixel, total pixel:', imageData.data.length / 4);
+            } catch (e) {
+                console.error('Gagal membaca pixel (CORS):', e);
+                // Jika gagal karena CORS, return gambar asli
+                resolve(imageSrc);
+                return;
+            }
+            
+            const data = imageData.data;
+            
+            // Inisialisasi batas
+            let top = canvas.height;
+            let bottom = 0;
+            let left = canvas.width;
+            let right = 0;
+            let foundPixel = false;
+            let nonTransparentCount = 0;
+            
+            // Scan pixel untuk mencari area non-transparan
+            const threshold = 1; // Pixel dengan alpha > 1 dianggap visible (lebih sensitif)
+            
+            console.log('Scanning pixel...');
+            
+            // Scan per baris dengan sampling untuk efisiensi (tapi tetap akurat)
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    const index = (y * canvas.width + x) * 4;
+                    const alpha = data[index + 3];
                     
-                    // Buat canvas
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                    
-                    // Gambar image ke canvas
-                    ctx.drawImage(img, 0, 0);
-                    
-                    // Ambil data pixel
-                    let imageData;
-                    try {
-                        imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    } catch (e) {
-                        console.error('Gagal membaca pixel (mungkin CORS):', e);
-                        resolve(imageSrc);
-                        return;
-                    }
-                    
-                    const data = imageData.data;
-                    
-                    // Inisialisasi batas
-                    let top = canvas.height;
-                    let bottom = 0;
-                    let left = canvas.width;
-                    let right = 0;
-                    let foundPixel = false;
-                    
-                    // Scan pixel untuk mencari area non-transparan
-                    const threshold = 10; // Pixel dengan alpha > 10 dianggap visible
-                    
-                    // Scan per baris untuk efisiensi
-                    for (let y = 0; y < canvas.height; y++) {
-                        for (let x = 0; x < canvas.width; x++) {
-                            const index = (y * canvas.width + x) * 4;
-                            const alpha = data[index + 3];
-                            
-                            if (alpha > threshold) {
-                                if (!foundPixel) foundPixel = true;
-                                top = Math.min(top, y);
-                                bottom = Math.max(bottom, y);
-                                left = Math.min(left, x);
-                                right = Math.max(right, x);
-                            }
+                    if (alpha > threshold) {
+                        nonTransparentCount++;
+                        if (!foundPixel) {
+                            foundPixel = true;
+                            console.log('Pixel non-transparan pertama ditemukan di posisi:', x, y, 'alpha:', alpha);
                         }
+                        top = Math.min(top, y);
+                        bottom = Math.max(bottom, y);
+                        left = Math.min(left, x);
+                        right = Math.max(right, x);
                     }
-                    
-                    console.log('Auto-crop: Batas ditemukan', { top, bottom, left, right, foundPixel });
-                    
-                    if (!foundPixel) {
-                        console.log('Auto-crop: Tidak ada pixel non-transparan');
-                        resolve(imageSrc);
-                        return;
-                    }
-                    
-                    // Hitung ukuran objek
-                    const objWidth = right - left + 1;
-                    const objHeight = bottom - top + 1;
-                    
-                    console.log('Auto-crop: Ukuran objek', objWidth, 'x', objHeight);
-                    
-                    // Jika objek hampir sebesar gambar, tidak perlu crop
-                    if (objWidth > canvas.width * 0.95 && objHeight > canvas.height * 0.95) {
-                        console.log('Auto-crop: Objek sudah hampir memenuhi gambar');
-                        resolve(imageSrc);
-                        return;
-                    }
-                    
-                    // Tambahkan padding kecil (2px)
-                    const padding = 2;
-                    const cropLeft = Math.max(0, left - padding);
-                    const cropTop = Math.max(0, top - padding);
-                    const cropRight = Math.min(canvas.width, right + padding);
-                    const cropBottom = Math.min(canvas.height, bottom + padding);
-                    
-                    const cropWidth = cropRight - cropLeft;
-                    const cropHeight = cropBottom - cropTop;
-                    
-                    console.log('Auto-crop: Melakukan crop ke', cropWidth, 'x', cropHeight);
-                    
-                    // Buat canvas baru untuk hasil crop
-                    const cropCanvas = document.createElement('canvas');
-                    cropCanvas.width = cropWidth;
-                    cropCanvas.height = cropHeight;
-                    const cropCtx = cropCanvas.getContext('2d');
-                    
-                    // Gambar bagian yang di-crop
-                    cropCtx.drawImage(
-                        img, 
-                        cropLeft, cropTop, cropWidth, cropHeight,
-                        0, 0, cropWidth, cropHeight
-                    );
-                    
-                    // Konversi ke data URL
-                    const croppedDataUrl = cropCanvas.toDataURL('image/png');
-                    
-                    console.log('Auto-crop: Selesai');
-                    resolve(croppedDataUrl);
-                };
+                }
+            }
+            
+            console.log('Hasil scan:');
+            console.log('- Pixel non-transparan:', nonTransparentCount);
+            console.log('- Total pixel:', canvas.width * canvas.height);
+            console.log('- Persentase:', Math.round(nonTransparentCount / (canvas.width * canvas.height) * 100) + '%');
+            console.log('- Batas:', { top, bottom, left, right, foundPixel });
+            
+            if (!foundPixel) {
+                console.log('TIDAK ADA pixel non-transparan ditemukan!');
+                console.log('Kemungkinan gambar tidak memiliki alpha channel atau semua pixel transparan');
                 
-                img.onerror = function(err) {
-                    console.error('Auto-crop: Gagal memuat gambar', err);
-                    reject(new Error('Gagal memuat gambar untuk auto-crop'));
-                };
+                // Cek pixel pertama untuk debug
+                const firstPixelAlpha = data[3];
+                console.log('Alpha pixel pertama:', firstPixelAlpha);
                 
-                // Tambahkan timestamp untuk mencegah cache
-                img.src = imageSrc + (imageSrc.includes('?') ? '&' : '?') + 't=' + Date.now();
-            });
-        }
-
+                resolve(imageSrc);
+                return;
+            }
+            
+            // Hitung ukuran objek
+            const objWidth = right - left + 1;
+            const objHeight = bottom - top + 1;
+            
+            console.log('Ukuran objek:', objWidth, 'x', objHeight);
+            console.log('Ukuran canvas:', canvas.width, 'x', canvas.height);
+            
+            // Jika objek hampir sebesar gambar (lebih dari 90%), tidak perlu crop
+            if (objWidth > canvas.width * 0.9 && objHeight > canvas.height * 0.9) {
+                console.log('Objek sudah hampir memenuhi gambar (>=90%), tidak perlu crop');
+                resolve(imageSrc);
+                return;
+            }
+            
+            // Hitung area transparan di pinggir
+            const topMargin = top;
+            const bottomMargin = canvas.height - 1 - bottom;
+            const leftMargin = left;
+            const rightMargin = canvas.width - 1 - right;
+            
+            console.log('Margin:', { topMargin, bottomMargin, leftMargin, rightMargin });
+            
+            // Jika margin terlalu kecil, tidak perlu crop
+            if (topMargin < 2 && bottomMargin < 2 && leftMargin < 2 && rightMargin < 2) {
+                console.log('Margin terlalu kecil, tidak perlu crop');
+                resolve(imageSrc);
+                return;
+            }
+            
+            // Tambahkan padding kecil (2px)
+            const padding = 2;
+            const cropLeft = Math.max(0, left - padding);
+            const cropTop = Math.max(0, top - padding);
+            const cropRight = Math.min(canvas.width, right + padding);
+            const cropBottom = Math.min(canvas.height, bottom + padding);
+            
+            const cropWidth = cropRight - cropLeft;
+            const cropHeight = cropBottom - cropTop;
+            
+            console.log('Melakukan crop ke:', cropLeft, cropTop, cropWidth, cropHeight);
+            
+            // Buat canvas baru untuk hasil crop
+            const cropCanvas = document.createElement('canvas');
+            cropCanvas.width = cropWidth;
+            cropCanvas.height = cropHeight;
+            const cropCtx = cropCanvas.getContext('2d');
+            
+            // Gambar bagian yang di-crop
+            cropCtx.drawImage(
+                img, 
+                cropLeft, cropTop, cropWidth, cropHeight,
+                0, 0, cropWidth, cropHeight
+            );
+            
+            // Konversi ke data URL
+            const croppedDataUrl = cropCanvas.toDataURL('image/png');
+            
+            console.log('Auto-crop SELESAI, ukuran baru:', cropWidth, 'x', cropHeight);
+            console.log('=== AUTO-CROP SELESAI ===');
+            
+            resolve(croppedDataUrl);
+        };
+        
+        img.onerror = function(err) {
+            console.error('Gagal memuat gambar untuk auto-crop:', err);
+            reject(new Error('Gagal memuat gambar untuk auto-crop'));
+        };
+        
+        // Tambahkan timestamp untuk mencegah cache
+        img.src = imageSrc;
+    });
+}
         function setRemoveBgLoading(isLoading) {
             if (isLoading) {
                 removeBgBtn.disabled = true;
