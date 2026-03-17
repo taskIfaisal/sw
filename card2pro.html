@@ -159,6 +159,9 @@
             border-radius: 5px;
             cursor: pointer;
             touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 16px;
+            font-weight: normal;
         }
         
         input[type="file"] {
@@ -168,11 +171,19 @@
         .file-upload {
             background: #2196F3;
             color: white;
-            padding: 10px;
+            padding: 10px 15px;
             border-radius: 5px;
             display: inline-block;
             cursor: pointer;
             touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 16px;
+            font-weight: normal;
+            transition: background 0.3s ease;
+        }
+        
+        .file-upload:hover {
+            background: #1976D2;
         }
 
         .toggle-switch {
@@ -568,6 +579,12 @@
             margin: 5px auto;
             display: block;
             touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-weight: normal;
+        }
+        
+        .save-close-btn:hover {
+            background: #1976D2;
         }
 
         /* TITIK INDIKATOR */
@@ -642,60 +659,55 @@
             border: 1px solid #f5c6cb;
         }
         
-        /* Tombol remove background (HIJAU) */
+        /* Tombol remove background (HIJAU) - Ukuran dan font sama dengan Choose Card */
         #remove-bg-btn {
             flex: 3;
-            padding: 14px 10px;
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            background: #4CAF50;
             color: white;
+            padding: 10px 15px;
             border: none;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: 600;
+            border-radius: 5px;
             cursor: pointer;
+            touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 16px;
+            font-weight: normal;
             transition: all 0.3s ease;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 0;
         }
 
         #remove-bg-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(76, 175, 80, 0.3);
+            background: #45a049 !important;
+            transform: translateY(-1px);
         }
 
         #remove-bg-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
-        }
-
-        #remove-bg-btn.processing {
-            background: linear-gradient(135deg, #888, #555);
+            background: #888 !important;
         }
         
-        /* Tombol download (ABU-ABU) */
+        /* Tombol download (ABU-ABU) - Ukuran dan font sama dengan Choose Card */
         #download-result-btn {
             flex: 1;
-            padding: 14px 5px;
-            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            background: #6c757d;
             color: white;
+            padding: 10px 15px;
             border: none;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: 600;
+            border-radius: 5px;
             cursor: pointer;
+            touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 16px;
+            font-weight: normal;
             transition: all 0.3s ease;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
+            margin: 0;
         }
 
         #download-result-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(108, 117, 125, 0.3);
+            background: #5a6268 !important;
+            transform: translateY(-1px);
         }
 
         #download-result-btn:disabled {
@@ -852,27 +864,27 @@
         </div>
 
         <!-- REMOVE BACKGROUND SECTION - TAMBAHAN BARU -->
-        <div class="setting-section" style="border-top: 1px solid #333; padding-top: 15px; margin-top: 10px;">
+        <!-- <div class="setting-section" style="border-top: 1px solid #333; padding-top: 15px; margin-top: 10px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <!-- <h3 style="margin: 0; color: #4CAF50;">🧹 REMOVE BACKGROUND</h3> -->
-            </div>
+                <h3 style="margin: 0; color: #4CAF50;">🧹 REMOVE BACKGROUND</h3>
+            </div> -->
+            <!-- Status message (hidden by default) -->
+            <div id="remove-bg-status" class="remove-bg-status" style="display: none;"></div>
+            <p style="font-size: 11px; color: #aaa; text-align: center; margin: 5px 0 0;">Proses & hasil akan tampil di preview atas (maks 5MB)</p>
             
             <!-- Container untuk 2 tombol sejajar -->
             <div class="button-row">
-                <!-- Tombol Hapus Background (HIJAU) -->
+                <!-- Tombol Hapus Background (HIJAU) - Ukuran dan font sama dengan Choose Card -->
                 <button id="remove-bg-btn">
                     🧹 Hapus Background
                 </button>
                 
-                <!-- Tombol Download (ABU-ABU) -->
-                <button id="download-result-btn" disabled>
+                <!-- Tombol Download (ABU-ABU) - Ukuran dan font sama dengan Choose Card -->
+                <button id="download-result-btn">
                     ⬇️ Unduh
                 </button>
             </div>
             
-            <!-- Status message (hidden by default) -->
-            <div id="remove-bg-status" class="remove-bg-status" style="display: none;"></div>
-            <p style="font-size: 11px; color: #aaa; text-align: center; margin: 5px 0 0;">Proses & hasil akan tampil di preview atas (maks 5MB)</p>
         </div>
 
         <div class="setting-section">
@@ -1254,10 +1266,6 @@
                     // Jika yang dipilih Favorite 1, update kartu utama dan preview besar
                     if (activePreview === 1) {
                         updateCardImage(imageUrl);
-                        
-                        // Reset download button karena gambar berubah
-                        processedImageBlob = null;
-                        updateDownloadButtonState();
                     }
                     
                     // Highlight preview yang dipilih (border orange)
@@ -1348,6 +1356,9 @@
             
             // Simpan ke localStorage
             autoSave();
+            
+            // Update tombol download (selalu aktif karena ada gambar)
+            updateDownloadButtonState();
         }
         
         // ===== FUNGSI UNTUK EFFECT STANDAR (MUNCUL CEPAT DI TENGAH) =====
@@ -2243,10 +2254,6 @@
                 reader.onload = (event) => {
                     const imageSrc = event.target.result;
                     updateCardImage(imageSrc);
-                    
-                    // Reset download button karena gambar berubah
-                    processedImageBlob = null;
-                    updateDownloadButtonState();
                 };
                 reader.readAsDataURL(file);
             }
@@ -2369,6 +2376,9 @@
                 updatePreviewCardSize();
                 updateActivePreviewStyles();
                 
+                // Update tombol download
+                updateDownloadButtonState();
+                
                 // Set kartu di luar layar
                 card.style.display = 'block';
                 card.style.animation = 'none';
@@ -2392,13 +2402,10 @@
         // Variable untuk menyimpan blob hasil remove background
         let processedImageBlob = null;
 
-        // Fungsi untuk update state tombol download
+        // Fungsi untuk update state tombol download (selalu aktif selama ada gambar)
         function updateDownloadButtonState() {
-            if (processedImageBlob) {
-                downloadBtn.disabled = false;
-            } else {
-                downloadBtn.disabled = true;
-            }
+            const hasImage = mainCardPreview.src && mainCardPreview.src !== '' && !mainCardPreview.src.includes('undefined');
+            downloadBtn.disabled = !hasImage;
         }
 
         // Fungsi untuk menampilkan status
@@ -2416,7 +2423,6 @@
         function setRemoveBgLoading(isLoading) {
             if (isLoading) {
                 removeBgBtn.disabled = true;
-                removeBgBtn.classList.add('processing');
                 removeBgBtn.innerHTML = '⏳ Memproses...';
                 
                 // Tampilkan loading di preview utama
@@ -2436,7 +2442,6 @@
                 }
             } else {
                 removeBgBtn.disabled = false;
-                removeBgBtn.classList.remove('processing');
                 removeBgBtn.innerHTML = '🧹 Hapus Background';
                 
                 // Hapus loading overlay
@@ -2467,7 +2472,6 @@
                 
                 // Reset processed image
                 processedImageBlob = null;
-                updateDownloadButtonState();
                 
                 // Konversi image src ke blob
                 let imageBlob;
@@ -2551,9 +2555,6 @@
                     // Selesai loading
                     setRemoveBgLoading(false);
                     
-                    // Update tombol download
-                    updateDownloadButtonState();
-                    
                     // Tampilkan pesan sukses
                     showRemoveBgStatus('✅ Background berhasil dihapus!');
                     setTimeout(hideRemoveBgStatus, 3000);
@@ -2587,29 +2588,46 @@
             e.preventDefault();
             e.stopPropagation();
             
-            if (!processedImageBlob) {
-                showRemoveBgStatus('Tidak ada hasil untuk diunduh', true);
+            // Jika ada hasil dari remove background, download hasil tersebut
+            if (processedImageBlob) {
+                // Buat URL dari blob
+                const url = URL.createObjectURL(processedImageBlob);
+                
+                // Buat link download
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'removed-background.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // Bersihkan URL
+                URL.revokeObjectURL(url);
+                
+                // Tampilkan pesan sukses
+                showRemoveBgStatus('✅ Gambar hasil diunduh!');
                 setTimeout(hideRemoveBgStatus, 2000);
-                return;
+            } else {
+                // Jika tidak ada hasil, download gambar asli dari preview
+                const currentImageSrc = mainCardPreview.src;
+                
+                if (currentImageSrc && currentImageSrc !== '') {
+                    // Buat link download untuk gambar asli
+                    const a = document.createElement('a');
+                    a.href = currentImageSrc;
+                    a.download = 'gambar-asli.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    
+                    // Tampilkan pesan sukses
+                    showRemoveBgStatus('✅ Gambar asli diunduh!');
+                    setTimeout(hideRemoveBgStatus, 2000);
+                } else {
+                    showRemoveBgStatus('Tidak ada gambar untuk diunduh', true);
+                    setTimeout(hideRemoveBgStatus, 2000);
+                }
             }
-            
-            // Buat URL dari blob
-            const url = URL.createObjectURL(processedImageBlob);
-            
-            // Buat link download
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'removed-background.png';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            
-            // Bersihkan URL
-            URL.revokeObjectURL(url);
-            
-            // Tampilkan pesan sukses
-            showRemoveBgStatus('✅ Gambar berhasil diunduh!');
-            setTimeout(hideRemoveBgStatus, 2000);
         });
         
         // Inisialisasi state tombol download
