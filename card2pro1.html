@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Magic Card Trick</title>
-    <link rel="manifest" href="./manifest.json">
+    <!-- <link rel="manifest" href="./manifest.json"> -->
     <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
     <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -659,7 +659,7 @@
             border: 1px solid #f5c6cb;
         }
         
-        /* Tombol remove background (HIJAU) - Ukuran dan font sama dengan Choose Card */
+        /* Tombol remove background (HIJAU) */
         #remove-bg-btn {
             flex: 3;
             background: #4CAF50;
@@ -688,7 +688,7 @@
             background: #888 !important;
         }
         
-        /* Tombol download (ABU-ABU) - Ukuran dan font sama dengan Choose Card */
+        /* Tombol download (ABU-ABU) */
         #download-result-btn {
             flex: 1;
             background: #6c757d;
@@ -863,9 +863,9 @@
             </div>
         </div>
 
-        <!-- REMOVE BACKGROUND SECTION - TAMBAHAN BARU -->
+        <!-- REMOVE BACKGROUND SECTION -->
         <div class="setting-section" style="border-top: 1px solid #333; padding-top: 15px; margin-top: 10px;">
-            <!-- Teks keterangan di ATAS tombol, lebih dekat ke preview -->
+            <!-- Teks keterangan di ATAS tombol -->
             <p style="font-size: 12px; color: #4CAF50; text-align: center; margin: 0 0 10px 0; font-weight: 500;">
                 ⬆️ Proses & hasil akan tampil di preview atas (maks 5MB)
             </p>
@@ -978,13 +978,13 @@
         let isSensorActive = true;
         
         // FLAG untuk menonaktifkan sensor sementara saat animasi
-        let isAnimatingMotion = false; // Untuk animasi masuk/keluar
+        let isAnimatingMotion = false;
         
         // ===== VARIABEL UNTUK SEQUENCE CARD =====
         let sequenceTimer = null;
         let sequenceStage = 0;
         let isSequenceActive = false;
-        let activeImagesList = []; // Array gambar aktif yang sudah diurutkan
+        let activeImagesList = [];
         
         // ===== VARIABEL UNTUK SENTUHAN KARTU =====
         let touchToChangeTimeout = null;
@@ -1357,11 +1357,11 @@
             // Simpan ke localStorage
             autoSave();
             
-            // Update tombol download (selalu aktif karena ada gambar)
+            // Update tombol download
             updateDownloadButtonState();
         }
         
-        // ===== FUNGSI UNTUK EFFECT STANDAR (MUNCUL CEPAT DI TENGAH) =====
+        // ===== FUNGSI UNTUK EFFECT STANDAR =====
         function showCardStandar() {
             const activeList = getActiveImagesList();
             
@@ -1370,40 +1370,29 @@
                 return;
             }
             
-            // Reset semua style
             card.style.transition = 'none';
             card.style.transform = 'none';
             card.style.left = '0';
             card.style.top = '0';
-            
-            // Tampilkan kartu dulu
             card.style.display = 'block';
             
-            // Dapatkan ukuran kartu setelah display block
             const cardWidth = card.offsetWidth;
             const cardHeight = card.offsetHeight;
             
-            // Hitung posisi tengah
             const centerX = (window.innerWidth - cardWidth) / 2;
             const centerY = (window.innerHeight - cardHeight) / 2;
             
-            // Simpan posisi
             posX = Math.round(centerX);
             posY = Math.round(centerY);
             
-            // Set gambar pertama
             currentCardImageIndex = 0;
             card.src = activeList[0].src;
             
-            // Tampilkan kartu tanpa animasi
             card.style.opacity = '1';
             card.style.visibility = 'visible';
             card.style.animation = 'none';
-            
-            // Terapkan transformasi
             card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
             
-            // Simpan daftar aktif untuk sequence sentuhan
             activeImagesList = activeList;
             isSequenceActive = true;
             sequenceStage = 1;
@@ -1420,32 +1409,24 @@
                 return;
             }
             
-            // Reset semua style
             card.style.transition = 'none';
             card.style.transform = 'none';
             card.style.left = '0';
             card.style.top = '0';
-            
-            // Tampilkan kartu dulu
             card.style.display = 'block';
             
-            // Dapatkan ukuran kartu setelah display block
             const cardWidth = card.offsetWidth;
             const cardHeight = card.offsetHeight;
             
-            // Hitung posisi tengah
             const centerX = (window.innerWidth - cardWidth) / 2;
             const centerY = (window.innerHeight - cardHeight) / 2;
             
-            // Simpan posisi
             posX = Math.round(centerX);
             posY = Math.round(centerY);
             
-            // Set gambar pertama
             currentCardImageIndex = 0;
             card.src = activeList[0].src;
             
-            // Set opacity dan animasi fade in
             card.style.opacity = '1';
             card.style.visibility = 'visible';
             card.style.animation = 'none';
@@ -1456,10 +1437,8 @@
                 card.style.animation = 'none';
             }, 5000);
             
-            // Terapkan transformasi
             card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
             
-            // Simpan daftar aktif untuk sequence sentuhan
             activeImagesList = activeList;
             isSequenceActive = true;
             sequenceStage = 1;
@@ -1467,7 +1446,7 @@
             console.log('Effect Shadow: kartu muncul fade in di tengah dengan gambar 1');
         }
         
-        // ===== FUNGSI UNTUK EFFECT SLIDER (MUNCUL DARI BAWAH, TETAP DI TENGAH) =====
+        // ===== FUNGSI UNTUK EFFECT SLIDER =====
         function showCardSlider() {
             const activeList = getActiveImagesList();
             
@@ -1514,7 +1493,6 @@
             });
             
             function initCardAnimation() {
-                // PERBAIKAN: Matikan sensor selama animasi slider
                 isAnimatingMotion = true;
                 
                 const cardRect = card.getBoundingClientRect();
@@ -1545,10 +1523,9 @@
                         
                         setTimeout(() => {
                             isAnimating = false;
-                            isAnimatingMotion = false; // PERBAIKAN: Hidupkan sensor kembali
+                            isAnimatingMotion = false;
                             card.classList.remove('card-moving');
                             
-                            // Simpan daftar aktif untuk sequence sentuhan
                             activeImagesList = activeList;
                             isSequenceActive = true;
                             sequenceStage = 1;
@@ -1558,7 +1535,7 @@
             }
         }
 
-        // ===== FUNGSI UNTUK EFFECT SKATING (MUNCUL DARI BAWAH, KELUAR KE ATAS) =====
+        // ===== FUNGSI UNTUK EFFECT SKATING =====
         function showCardSkating() {
             const activeList = getActiveImagesList();
             
@@ -1605,7 +1582,6 @@
             });
             
             function initCardAnimation() {
-                // PERBAIKAN: Matikan sensor selama animasi masuk
                 isAnimatingMotion = true;
                 
                 const cardRect = card.getBoundingClientRect();
@@ -1636,10 +1612,9 @@
                         
                         setTimeout(() => {
                             isAnimating = false;
-                            isAnimatingMotion = false; // PERBAIKAN: Hidupkan sensor kembali
+                            isAnimatingMotion = false;
                             card.classList.remove('card-moving');
                             
-                            // Simpan daftar aktif untuk sequence sentuhan
                             activeImagesList = activeList;
                             isSequenceActive = true;
                             sequenceStage = 1;
@@ -1649,13 +1624,12 @@
             }
         }
 
-        // ===== FUNGSI UNTUK EXIT SKATING (KELUAR KE ATAS) DENGAN INDIKATOR =====
+        // ===== FUNGSI UNTUK EXIT SKATING =====
         function scheduleExitSkating() {
             if (card.style.display === 'none' || !isSequenceActive) return;
             
             console.log("Skating: menjadwalkan exit dengan indikator");
             
-            // Clear timeout yang mungkin masih berjalan
             if (exitIndicatorTimeout) {
                 clearTimeout(exitIndicatorTimeout);
                 exitIndicatorTimeout = null;
@@ -1665,71 +1639,62 @@
                 exitCardTimeout = null;
             }
             
-            // Jadwalkan indikator muncul 1 detik sebelum exit (di detik ke-3)
             exitIndicatorTimeout = setTimeout(() => {
                 if (isSequenceActive) {
                     console.log("Skating: indikator exit muncul");
                     showIndicator();
                 }
                 exitIndicatorTimeout = null;
-            }, 3000); // 3 detik
+            }, 3000);
             
-            // Jadwalkan kartu keluar setelah 4 detik
             exitCardTimeout = setTimeout(() => {
                 if (isSequenceActive) {
                     console.log("Skating: mulai exit ke atas");
-                    hideIndicator(); // Sembunyikan indikator
+                    hideIndicator();
                     exitCardSkating();
                 }
                 exitCardTimeout = null;
-            }, 4000); // 4 detik
+            }, 4000);
         }
         
-        // ===== FUNGSI UNTUK EXIT SKATING (KELUAR KE ATAS) =====
+        // ===== FUNGSI UNTUK EXIT SKATING =====
         function exitCardSkating() {
             if (card.style.display === 'none' || !isSequenceActive) return;
             
             console.log("Skating: kartu keluar ke atas");
             
-            // PERBAIKAN: Matikan sensor selama animasi keluar
             isAnimatingMotion = true;
             
             const cardWidth = card.offsetWidth;
             
-            // Animasi keluar ke atas
             card.classList.add('card-moving');
             card.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
             
-            // Posisi akhir di atas layar
             const targetY = -card.offsetHeight - 100;
             card.style.transform = `translate(${posX}px, ${targetY}px) scale(${scale})`;
             
-            // Setelah animasi selesai, sembunyikan kartu
             setTimeout(() => {
                 hideCard();
                 card.classList.remove('card-moving');
                 isSequenceActive = false;
                 sequenceStage = 0;
-                isAnimatingMotion = false; // PERBAIKAN: Hidupkan sensor kembali
+                isAnimatingMotion = false;
                 console.log("Skating: kartu hilang");
             }, 500);
         }
         
-        // ===== FUNGSI UNTUK BERGANTI KE GAMBAR BERIKUTNYA (UNTUK SEMUA EFFECT) =====
+        // ===== FUNGSI UNTUK BERGANTI KE GAMBAR BERIKUTNYA =====
         function goToNextImage() {
             if (!isSequenceActive || activeImagesList.length === 0) return false;
             
             currentCardImageIndex++;
             
-            // Jika masih ada gambar berikutnya
             if (currentCardImageIndex < activeImagesList.length) {
                 card.src = activeImagesList[currentCardImageIndex].src;
                 sequenceStage = currentCardImageIndex + 1;
                 console.log(`Ganti ke gambar ${currentCardImageIndex + 1}`);
                 return true;
-            } 
-            // Jika sudah habis
-            else {
+            } else {
                 return false;
             }
         }
@@ -1745,7 +1710,6 @@
                         background.style.backgroundImage = `url(${data.background})`;
                     }
                     
-                    // Load effect settings
                     if (data.effectStandar !== undefined) {
                         effectStandarCheckbox.checked = data.effectStandar;
                     }
@@ -1763,12 +1727,10 @@
                         isSensorActive = data.sensorGerak;
                     }
                     
-                    // Load status aktif gambar
                     if (data.activeImages) {
                         activeImages = data.activeImages;
                     }
                     
-                    // Load semua preview images (4 gambar)
                     if (data.preview1) {
                         const preview1Img = preview1.querySelector('img');
                         if (preview1Img) {
@@ -1788,7 +1750,6 @@
                         if (preview4Img) preview4Img.src = data.preview4;
                     }
                     
-                    // Update kartu utama dan preview besar dari preview1
                     if (data.preview1) {
                         card.src = data.preview1;
                         mainCardPreview.src = data.preview1;
@@ -1805,7 +1766,6 @@
                     updatePreviewCardSize();
                 }
                 
-                // Update style aktif
                 updateActivePreviewStyles();
                 
             } catch (error) {
@@ -1844,7 +1804,7 @@
             saveToStorage();
         }
         
-        // ===== EFFECT TOGGLES - TETAP EKSKLUSIF UNTUK EFFECT SAJA =====
+        // ===== EFFECT TOGGLES =====
         effectStandarCheckbox.addEventListener('change', (e) => {
             if (effectStandarCheckbox.checked) {
                 shadowEffectCheckbox.checked = false;
@@ -1881,13 +1841,12 @@
             autoSave();
         });
         
-        // Sensor gerak toggle - tidak eksklusif
         sensorGerakCheckbox.addEventListener('change', (e) => {
             isSensorActive = sensorGerakCheckbox.checked;
             autoSave();
         });
         
-        // Touch events for swipe up to open settings
+        // ===== SWIPE UP TO OPEN SETTINGS =====
         let startYPos = 0;
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
@@ -1905,24 +1864,19 @@
             }
         }, {passive: false});
         
-        // Double tap detection
+        // ===== DOUBLE TAP DETECTION =====
         let lastTap = 0;
         document.addEventListener('touchend', (e) => {
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTap;
             
-            // Deteksi double tap
             if (tapLength < 300 && tapLength > 0) {
-                // Double tap detected
                 e.preventDefault();
                 
-                // Clear timer yang mungkin berjalan
                 clearAllTimeouts();
                 hideIndicator();
                 
-                // CEK EFFECT YANG AKTIF
                 if (shadowEffectCheckbox.checked) {
-                    // EFFECT SHADOW ON
                     console.log('Double tap: Effect Shadow ON');
                     isSequenceActive = true;
                     sequenceStage = 1;
@@ -1935,7 +1889,6 @@
                     }, 5000);
                     
                 } else if (effectStandarCheckbox.checked) {
-                    // EFFECT STANDAR ON
                     console.log('Double tap: Effect Standar ON');
                     isSequenceActive = false;
                     
@@ -1945,7 +1898,6 @@
                     }, 1000);
                     
                 } else if (effectSliderCheckbox.checked) {
-                    // EFFECT SLIDER ON
                     console.log('Double tap: Effect Slider ON');
                     const totalDelay = 4000;
                     const indicatorDelay = 3000;
@@ -1960,7 +1912,6 @@
                     }, totalDelay);
                     
                 } else if (effectSkatingCheckbox.checked) {
-                    // EFFECT SKATING ON
                     console.log('Double tap: Effect Skating ON');
                     const totalDelay = 4000;
                     const indicatorDelay = 3000;
@@ -2016,7 +1967,7 @@
             cardIndicator.classList.remove('visible');
         }
         
-        // ===== EVENT LISTENER UNTUK KARTU =====
+        // ===== CARD TOUCH EVENTS =====
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 isDragging = true;
@@ -2054,10 +2005,8 @@
                     
                     updateCardTransform();
                     
-                    // PERBAIKAN: Deteksi lebih sensitif untuk kartu keluar layar
                     const cardRect = card.getBoundingClientRect();
                     
-                    // Cek apakah kartu sudah keluar dari layar (dengan toleransi 10px)
                     if (cardRect.bottom < -10 || 
                         cardRect.top > window.innerHeight + 10 ||
                         cardRect.right < -10 || 
@@ -2066,7 +2015,6 @@
                         console.log("Kartu keluar layar - LANGSUNG HILANG");
                         hideCard();
                         
-                        // Reset semua state
                         isSequenceActive = false;
                         sequenceStage = 0;
                         isDragging = false;
@@ -2076,7 +2024,6 @@
                             touchToChangeTimeout = null;
                         }
                         
-                        // PERBAIKAN: Hentikan propagasi event
                         e.preventDefault();
                         return;
                     }
@@ -2087,7 +2034,6 @@
         
         card.addEventListener('touchend', (e) => {
             if (isDragging) {
-                // PERBAIKAN: Cek lagi posisi kartu saat jari diangkat
                 const cardRect = card.getBoundingClientRect();
                 
                 if (cardRect.bottom < -10 || 
@@ -2109,11 +2055,9 @@
                     return;
                 }
                 
-                // Kecepatan threshold
-                const speedThreshold = 800; // Diturunkan sedikit agar lebih sensitif
+                const speedThreshold = 800;
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
                 
-                // Jika kecepatan tinggi, langsung hilangkan kartu
                 if (currentSpeed > speedThreshold) {
                     console.log("Kecepatan tinggi - kartu langsung hilang");
                     hideCard();
@@ -2132,26 +2076,21 @@
                 isDragging = false;
                 card.style.transition = '';
                 
-                // PERBAIKAN: Selalu terapkan bounds agar kartu tetap di dalam layar
-                // jika tidak sengaja keluar sedikit
                 applyBounds();
                 updateCardTransform();
             }
             
-            // Proses sequence untuk ganti gambar
             setTimeout(() => {
                 if (!isSequenceActive || card.style.display === 'none' || card.style.visibility !== 'visible') {
                     return;
                 }
                 
-                // Clear timer yang mungkin berjalan
                 if (touchToChangeTimeout) {
                     clearTimeout(touchToChangeTimeout);
                 }
                 
                 const activeCount = activeImagesList.length;
                 
-                // Untuk shadow effect
                 if (shadowEffectCheckbox.checked) {
                     if (sequenceStage < activeCount) {
                         console.log(`Shadow Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
@@ -2185,7 +2124,6 @@
                         }, 5000);
                     }
                 } 
-                // Untuk effect standar dan slider
                 else if (effectStandarCheckbox.checked || effectSliderCheckbox.checked) {
                     if (sequenceStage < activeCount) {
                         console.log(`Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
@@ -2206,7 +2144,6 @@
                         sequenceStage = 0;
                     }
                 }
-                // Untuk effect skating
                 else if (effectSkatingCheckbox.checked) {
                     if (sequenceStage < activeCount) {
                         console.log(`Skating Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
@@ -2221,17 +2158,13 @@
                     } 
                     else if (sequenceStage === activeCount && activeCount > 0) {
                         console.log(`Skating Stage ${sequenceStage}: semua gambar sudah tampil, menjadwalkan exit dengan indikator`);
-                        
-                        // Panggil fungsi untuk menjadwalkan exit dengan indikator
                         scheduleExitSkating();
                     }
                 }
             }, 50);
         });
         
-        document.addEventListener('touchend', (e) => {
-            // Sudah dihandle di atas
-        });
+        document.addEventListener('touchend', (e) => {});
         
         bgUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -2245,7 +2178,6 @@
             }
         });
         
-        // ===== CARD UPLOAD =====
         cardUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             
@@ -2259,7 +2191,6 @@
             }
         });
         
-        // ===== CLOSE SETTINGS BUTTON - HANYA MENUTUP DAN MENYIMPAN =====
         if (closeSettingsBtn) {
             closeSettingsBtn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -2269,7 +2200,6 @@
             });
         }
         
-        // ===== SENSOR IMPLEMENTATION =====
         function initSensor() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === "function") {
                 sensorPermissionBtn.classList.remove('hidden');
@@ -2317,7 +2247,6 @@
         
         function startSensorAnimation() {
             function animate() {
-                // PERBAIKAN: Cek flag isAnimatingMotion untuk menonaktifkan sensor saat animasi
                 if (isSensorEnabled && !isDragging && !isAnimatingMotion && sensorGerakCheckbox.checked && card.style.display !== 'none') {
                     posX += smoothGamma * sensitivity;
                     posY += smoothBeta * sensitivity;
@@ -2376,10 +2305,8 @@
                 updatePreviewCardSize();
                 updateActivePreviewStyles();
                 
-                // Update tombol download
                 updateDownloadButtonState();
                 
-                // Set kartu di luar layar
                 card.style.display = 'block';
                 card.style.animation = 'none';
                 card.style.opacity = '1';
@@ -2399,16 +2326,13 @@
         const REMOVE_BG_API_KEY = '2crJY3ybEroko55EEQeVFh9C';
         const REMOVE_BG_API_URL = 'https://api.remove.bg/v1.0/removebg';
         
-        // Variable untuk menyimpan blob hasil remove background
         let processedImageBlob = null;
 
-        // Fungsi untuk update state tombol download (selalu aktif selama ada gambar)
         function updateDownloadButtonState() {
             const hasImage = mainCardPreview.src && mainCardPreview.src !== '' && !mainCardPreview.src.includes('undefined');
             downloadBtn.disabled = !hasImage;
         }
 
-        // Fungsi untuk menampilkan status
         function showRemoveBgStatus(message, isError = false) {
             removeBgStatus.style.display = 'block';
             removeBgStatus.textContent = message;
@@ -2419,24 +2343,34 @@
             removeBgStatus.style.display = 'none';
         }
 
-        // Fungsi untuk auto-crop gambar (menghilangkan area transparan di pinggir)
+        // Fungsi auto-crop yang lebih baik
         function autoCropImage(imageSrc) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
+                img.crossOrigin = "Anonymous";
+                
                 img.onload = function() {
-                    // Buat canvas sementara
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
+                    console.log('Auto-crop: Memproses gambar', img.width, 'x', img.height);
                     
-                    // Set canvas ukuran gambar
+                    // Buat canvas
+                    const canvas = document.createElement('canvas');
                     canvas.width = img.width;
                     canvas.height = img.height;
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
                     
                     // Gambar image ke canvas
                     ctx.drawImage(img, 0, 0);
                     
                     // Ambil data pixel
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    let imageData;
+                    try {
+                        imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    } catch (e) {
+                        console.error('Gagal membaca pixel (mungkin CORS):', e);
+                        resolve(imageSrc);
+                        return;
+                    }
+                    
                     const data = imageData.data;
                     
                     // Inisialisasi batas
@@ -2444,15 +2378,19 @@
                     let bottom = 0;
                     let left = canvas.width;
                     let right = 0;
+                    let foundPixel = false;
                     
                     // Scan pixel untuk mencari area non-transparan
+                    const threshold = 10; // Pixel dengan alpha > 10 dianggap visible
+                    
+                    // Scan per baris untuk efisiensi
                     for (let y = 0; y < canvas.height; y++) {
                         for (let x = 0; x < canvas.width; x++) {
                             const index = (y * canvas.width + x) * 4;
-                            const alpha = data[index + 3]; // Nilai alpha (0-255)
+                            const alpha = data[index + 3];
                             
-                            // Jika pixel tidak transparan (alpha > 0)
-                            if (alpha > 0) {
+                            if (alpha > threshold) {
+                                if (!foundPixel) foundPixel = true;
                                 top = Math.min(top, y);
                                 bottom = Math.max(bottom, y);
                                 left = Math.min(left, x);
@@ -2461,22 +2399,38 @@
                         }
                     }
                     
-                    // Jika tidak ada pixel non-transparan, return gambar asli
-                    if (top > bottom || left > right) {
+                    console.log('Auto-crop: Batas ditemukan', { top, bottom, left, right, foundPixel });
+                    
+                    if (!foundPixel) {
+                        console.log('Auto-crop: Tidak ada pixel non-transparan');
                         resolve(imageSrc);
                         return;
                     }
                     
-                    // Tambahkan padding kecil (2px) agar tidak terlalu rapat
-                    const padding = 2;
-                    top = Math.max(0, top - padding);
-                    bottom = Math.min(canvas.height, bottom + padding);
-                    left = Math.max(0, left - padding);
-                    right = Math.min(canvas.width, right + padding);
+                    // Hitung ukuran objek
+                    const objWidth = right - left + 1;
+                    const objHeight = bottom - top + 1;
                     
-                    // Hitung ukuran crop
-                    const cropWidth = right - left;
-                    const cropHeight = bottom - top;
+                    console.log('Auto-crop: Ukuran objek', objWidth, 'x', objHeight);
+                    
+                    // Jika objek hampir sebesar gambar, tidak perlu crop
+                    if (objWidth > canvas.width * 0.95 && objHeight > canvas.height * 0.95) {
+                        console.log('Auto-crop: Objek sudah hampir memenuhi gambar');
+                        resolve(imageSrc);
+                        return;
+                    }
+                    
+                    // Tambahkan padding kecil (2px)
+                    const padding = 2;
+                    const cropLeft = Math.max(0, left - padding);
+                    const cropTop = Math.max(0, top - padding);
+                    const cropRight = Math.min(canvas.width, right + padding);
+                    const cropBottom = Math.min(canvas.height, bottom + padding);
+                    
+                    const cropWidth = cropRight - cropLeft;
+                    const cropHeight = cropBottom - cropTop;
+                    
+                    console.log('Auto-crop: Melakukan crop ke', cropWidth, 'x', cropHeight);
                     
                     // Buat canvas baru untuk hasil crop
                     const cropCanvas = document.createElement('canvas');
@@ -2487,30 +2441,32 @@
                     // Gambar bagian yang di-crop
                     cropCtx.drawImage(
                         img, 
-                        left, top, cropWidth, cropHeight,
+                        cropLeft, cropTop, cropWidth, cropHeight,
                         0, 0, cropWidth, cropHeight
                     );
                     
                     // Konversi ke data URL
                     const croppedDataUrl = cropCanvas.toDataURL('image/png');
+                    
+                    console.log('Auto-crop: Selesai');
                     resolve(croppedDataUrl);
                 };
                 
-                img.onerror = function() {
+                img.onerror = function(err) {
+                    console.error('Auto-crop: Gagal memuat gambar', err);
                     reject(new Error('Gagal memuat gambar untuk auto-crop'));
                 };
                 
-                img.src = imageSrc;
+                // Tambahkan timestamp untuk mencegah cache
+                img.src = imageSrc + (imageSrc.includes('?') ? '&' : '?') + 't=' + Date.now();
             });
         }
 
-        // Fungsi untuk set loading state
         function setRemoveBgLoading(isLoading) {
             if (isLoading) {
                 removeBgBtn.disabled = true;
                 removeBgBtn.innerHTML = '⏳ Memproses...';
                 
-                // Tampilkan loading di preview utama
                 const editorFrame = document.querySelector('.editor-frame');
                 const loadingOverlay = document.createElement('div');
                 loadingOverlay.id = 'bg-loading-overlay';
@@ -2520,7 +2476,6 @@
                     <div style="color: white; font-size: 14px;">Menghapus background...</div>
                 `;
                 
-                // Hanya tambahkan jika belum ada
                 if (!document.getElementById('bg-loading-overlay')) {
                     editorFrame.style.position = 'relative';
                     editorFrame.appendChild(loadingOverlay);
@@ -2529,7 +2484,6 @@
                 removeBgBtn.disabled = false;
                 removeBgBtn.innerHTML = '🧹 Hapus Background';
                 
-                // Hapus loading overlay
                 const loadingOverlay = document.getElementById('bg-loading-overlay');
                 if (loadingOverlay) {
                     loadingOverlay.remove();
@@ -2537,12 +2491,10 @@
             }
         }
 
-        // Event listener untuk tombol remove background
         removeBgBtn.addEventListener('click', async function(e) {
             e.preventDefault();
             e.stopPropagation();
             
-            // Ambil gambar dari preview utama (Favorite 1)
             const currentImageSrc = mainCardPreview.src;
             
             if (!currentImageSrc || currentImageSrc === '') {
@@ -2555,20 +2507,15 @@
                 setRemoveBgLoading(true);
                 hideRemoveBgStatus();
                 
-                // Reset processed image
                 processedImageBlob = null;
                 
-                // Konversi image src ke blob
                 let imageBlob;
                 
                 if (currentImageSrc.startsWith('data:')) {
-                    // Dari file upload (base64)
                     const response = await fetch(currentImageSrc);
                     imageBlob = await response.blob();
                 } else {
-                    // Dari URL (github atau lainnya)
                     try {
-                        // Cek ukuran dengan HEAD request
                         const headResponse = await fetch(currentImageSrc, { method: 'HEAD' });
                         const contentLength = headResponse.headers.get('content-length');
                         
@@ -2584,19 +2531,16 @@
                     }
                 }
                 
-                // Validasi ukuran
                 if (imageBlob.size > 5 * 1024 * 1024) {
                     throw new Error('Ukuran file maksimal 5MB');
                 }
                 
-                // Siapkan form data untuk API
                 const formData = new FormData();
                 formData.append('image_file', imageBlob, 'image.png');
                 formData.append('size', 'auto');
                 
                 console.log('Mengirim request ke remove.bg API...');
                 
-                // Panggil API remove.bg
                 const response = await fetch(REMOVE_BG_API_URL, {
                     method: 'POST',
                     headers: {
@@ -2613,7 +2557,6 @@
                         errorText = response.statusText;
                     }
                     
-                    // Handle specific error codes
                     if (response.status === 402) {
                         throw new Error('API key tidak memiliki cukup kredit');
                     } else if (response.status === 400) {
@@ -2623,43 +2566,34 @@
                     }
                 }
                 
-                // Dapatkan hasil sebagai blob
                 const resultBlob = await response.blob();
-                
-                // Simpan blob untuk didownload nanti
                 processedImageBlob = resultBlob;
                 
-                // Konversi blob ke data URL
                 const reader = new FileReader();
                 reader.onload = async function(event) {
                     const resultImageUrl = event.target.result;
                     
                     try {
-                        // Tampilkan pesan auto-crop
                         showRemoveBgStatus('⏳ Merapikan pinggiran gambar...', false);
                         
-                        // Lakukan auto-crop untuk menghilangkan area transparan
+                        console.log('Memulai auto-crop...');
                         const croppedImageUrl = await autoCropImage(resultImageUrl);
                         
-                        // Update semua gambar dengan hasil yang sudah di-crop
+                        console.log('Auto-crop selesai, mengupdate gambar');
                         updateCardImage(croppedImageUrl);
                         
-                        // Update blob untuk download dengan versi yang sudah di-crop
                         const croppedResponse = await fetch(croppedImageUrl);
                         processedImageBlob = await croppedResponse.blob();
                         
-                        // Selesai loading
                         setRemoveBgLoading(false);
                         
-                        // Tampilkan pesan sukses
-                        showRemoveBgStatus('✅ Background berhasil dihapus & pinggiran dirapikan!');
+                        showRemoveBgStatus('✅ Background terhapus & pinggiran dirapikan!');
                         setTimeout(hideRemoveBgStatus, 3000);
                         
                         console.log('Remove background + auto-crop sukses!');
                     } catch (cropError) {
                         console.error('Auto-crop error:', cropError);
                         
-                        // Jika auto-crop gagal, tetap pakai hasil remove bg
                         updateCardImage(resultImageUrl);
                         
                         setRemoveBgLoading(false);
@@ -2673,13 +2607,10 @@
             } catch (error) {
                 console.error('Remove background error:', error);
                 
-                // Selesai loading
                 setRemoveBgLoading(false);
                 
-                // Tampilkan pesan error
                 let errorMessage = error.message;
                 
-                // Cek apakah error karena CORS
                 if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
                     errorMessage = 'Error CORS atau jaringan. Gunakan extension CORS Unblock atau coba gambar lain.';
                 }
@@ -2689,17 +2620,13 @@
             }
         });
         
-        // Event listener untuk tombol download
         downloadBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             
-            // Jika ada hasil dari remove background, download hasil tersebut
             if (processedImageBlob) {
-                // Buat URL dari blob
                 const url = URL.createObjectURL(processedImageBlob);
                 
-                // Buat link download
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = 'removed-background-cropped.png';
@@ -2707,18 +2634,14 @@
                 a.click();
                 document.body.removeChild(a);
                 
-                // Bersihkan URL
                 URL.revokeObjectURL(url);
                 
-                // Tampilkan pesan sukses
                 showRemoveBgStatus('✅ Gambar hasil diunduh!');
                 setTimeout(hideRemoveBgStatus, 2000);
             } else {
-                // Jika tidak ada hasil, download gambar asli dari preview
                 const currentImageSrc = mainCardPreview.src;
                 
                 if (currentImageSrc && currentImageSrc !== '') {
-                    // Buat link download untuk gambar asli
                     const a = document.createElement('a');
                     a.href = currentImageSrc;
                     a.download = 'gambar-asli.png';
@@ -2726,7 +2649,6 @@
                     a.click();
                     document.body.removeChild(a);
                     
-                    // Tampilkan pesan sukses
                     showRemoveBgStatus('✅ Gambar asli diunduh!');
                     setTimeout(hideRemoveBgStatus, 2000);
                 } else {
@@ -2736,7 +2658,6 @@
             }
         });
         
-        // Inisialisasi state tombol download
         updateDownloadButtonState();
     </script>
 </body>
