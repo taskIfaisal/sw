@@ -360,11 +360,11 @@
     color: #1a0dab;
   }
 
-  /* PANAH ARAH JAM 11 (330°) - LEBIH KE KIRI DARI PADA KE ATAS */
+  /* PANAH DENGAN GARIS DIPANJANGKAN - ARAH JAM 11 */
 .overlay-trend-arrow {
   width: 24px;
-  height: 24px;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235f6368" d="M12 4L6 10l1.5 1.5L11 8v8h2V8l3.5 3.5L18 10l-6-6z"/></svg>');
+  height: 32px; /* TINGGI DITAMBAH AGAR GARIS PANJANG */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 32"><path fill="%235f6368" d="M12 4L6 10l1.5 1.5L11 8v16h2V8l3.5 3.5L18 10l-6-6z"/><line x1="12" y1="16" x2="12" y2="28" stroke="%235f6368" stroke-width="1.5"/></svg>');
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
