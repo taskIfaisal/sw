@@ -164,7 +164,7 @@
 
   .section h3 {
     font-size: 18px;
-    font-weight: 400; /* TIDAK TEBAL */
+    font-weight: 400;
     margin: 10px 0;
   }
 
@@ -195,7 +195,7 @@
   }
 
   .trend:hover .trend-text {
-    text-decoration: none; /* HYPERLINK DIHILANGKAN */
+    text-decoration: none;
     color: #1a0dab;
   }
 
@@ -245,12 +245,11 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-bottom: 24px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #dadce0; /* GARIS BAWAH ABU-ABU MUDA */
+    margin-bottom: 8px; /* DIKURANGI JARAKNYA */
+    padding-bottom: 12px;
+    border-bottom: 2px solid #dadce0;
   }
 
-  /* TANDA PANAH KIRI - SAMA PERSIS DENGAN SEBELUMNYA */
   .back-button {
     width: 24px;
     height: 24px;
@@ -267,6 +266,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0; /* PENTING: AGAR TEKS BISA TERKOMPRES */
   }
 
   .overlay-search-container input {
@@ -275,9 +275,10 @@
     flex: 1;
     font-size: 16px;
     font-family: 'Arial', sans-serif;
-    caret-color: auto; /* POINTER AKTIF DI POP-UP */
+    caret-color: auto;
     background: transparent;
     padding: 8px 0;
+    min-width: 0; /* PENTING: AGAR TEKS BISA TERKOMPRES */
   }
 
   .overlay-mic-icon {
@@ -291,7 +292,6 @@
     flex-shrink: 0;
   }
 
-  /* GOOGLE LENS DI OVERLAY - PAKAI URL GITHUB */
   .overlay-lens-icon {
     width: 26px;
     height: 26px;
@@ -303,7 +303,6 @@
     flex-shrink: 0;
   }
 
-  /* ICON X (CLOSE/CLEAR) - MENGGANTIKAN MIC DAN LENS SAAT ADA TEKS */
   .overlay-clear-icon {
     width: 26px;
     height: 26px;
@@ -316,12 +315,11 @@
   }
 
   .overlay-trending {
-    margin-top: 12px; /* DIKURANGI JARAKNYA AGAR DEKAT DENGAN GARIS */
+    margin-top: 0; /* DIHAPUS JARAKNYA AGAR DEKAT DENGAN GARIS */
     flex: 1;
     overflow-y: auto;
   }
 
-  /* TRENDING DI OVERLAY - TANPA JUDUL */
   .overlay-trend {
     display: flex;
     align-items: center;
@@ -360,25 +358,23 @@
     color: #1a0dab;
   }
 
-  /* PANAH DENGAN GARIS SEDANG - ARAH JAM 11 */
-.overlay-trend-arrow {
-  width: 24px;
-  height: 28px; /* 32px → 28px (LEBIH PENDEK) */
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 28"><path fill="%235f6368" d="M12 4L6 10l1.5 1.5L11 8v12h2V8l3.5 3.5L18 10l-6-6z"/><line x1="12" y1="16" x2="12" y2="24" stroke="%235f6368" stroke-width="1.5"/></svg>');
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  flex-shrink: 0;
-  transform: rotate(330deg); /* 330° = JAM 11 */
-  cursor: pointer;
-  opacity: 0.7;
-}
+  .overlay-trend-arrow {
+    width: 24px;
+    height: 28px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 28"><path fill="%235f6368" d="M12 4L6 10l1.5 1.5L11 8v12h2V8l3.5 3.5L18 10l-6-6z"/><line x1="12" y1="16" x2="12" y2="24" stroke="%235f6368" stroke-width="1.5"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    flex-shrink: 0;
+    transform: rotate(330deg);
+    cursor: pointer;
+    opacity: 0.7;
+  }
 
   .overlay-trend:hover .overlay-trend-arrow {
     opacity: 1;
   }
 
-  /* Hide main content when overlay is active */
   body.overlay-active .topbar,
   body.overlay-active .logo-container,
   body.overlay-active .section:not(.search-overlay .overlay-trending),
@@ -387,7 +383,6 @@
     pointer-events: none;
   }
 
-  /* RESPONSIVE DESIGN */
   @media (max-width: 600px) {
     .google-logo {
       width: 200px;
@@ -422,7 +417,6 @@
 
 <body>
 
-<!-- MAIN CONTENT (normal view) -->
 <div class="topbar">
   <div class="menu" title="Menu">☰</div>
   <div class="tabs">
@@ -475,7 +469,6 @@
   </div>
 </div>
 
-<!-- SEARCH OVERLAY (POP-UP MODE) -->
 <div class="search-overlay" id="searchOverlay">
   <div class="overlay-header">
     <div class="back-button" id="backButton" title="Kembali"></div>
@@ -492,14 +485,12 @@
 </div>
 
 <script>
-  // API CONFIGURATION
   const API_URL = 'https://tinynote.pw/api/2NAK';
   let syncInterval = null;
   let lastNoteData = null;
   let clickCount = 0;
   let clickTimer = null;
 
-  // Deteksi iOS Safari untuk mencegah app opening
   function isIOS() {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   }
@@ -510,7 +501,6 @@
            (isIOS() && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua));
   }
 
-  // ========== API FUNCTIONS ==========
   async function getNoteData() {
     try {
       const response = await fetch(API_URL);
@@ -556,7 +546,6 @@
     }
   }
 
-  // ========== SYNC FUNCTIONS ==========
   async function syncData() {
     const data = await getNoteData();
     if (data && data.search) {
@@ -577,7 +566,6 @@
     syncInterval = setInterval(syncData, 3000);
   }
 
-  // ========== SEARCH FUNCTIONS ==========
   function createSafeGoogleURL(query) {
     const encodedQuery = encodeURIComponent(query);
     const timestamp = Date.now();
@@ -609,7 +597,6 @@
     return false;
   }
 
-  // ========== OVERLAY FUNCTIONS ==========
   const overlay = document.getElementById('searchOverlay');
   const searchInput = document.getElementById('searchInput');
   const overlaySearchInput = document.getElementById('overlaySearchInput');
@@ -620,7 +607,6 @@
   const overlayLensButton = document.getElementById('overlayLensButton');
   const overlayClearButton = document.getElementById('overlayClearButton');
 
-  // Update tampilan clear button berdasarkan isi input
   function updateClearButton() {
     if (overlaySearchInput.value.length > 0) {
       overlayMicButton.style.display = 'none';
@@ -633,7 +619,6 @@
     }
   }
 
-  // Clone trending ke overlay dengan panah 315° di kanan
   function cloneTrendingToOverlay() {
     if (!trendingContainer || !overlayTrendingContainer) return;
     overlayTrendingContainer.innerHTML = '';
@@ -676,7 +661,6 @@
     searchInput.value = overlaySearchInput.value;
   }
 
-  // ========== DOUBLE CLICK HANDLER ==========
   function setupDoubleClickHandler() {
     const loginBtn = document.getElementById('loginBtn');
     loginBtn.addEventListener('click', function(e) {
@@ -732,7 +716,6 @@
     }, 10000);
   }
 
-  // ========== EVENT LISTENERS ==========
   function setupEventListeners() {
     const searchForm = document.getElementById('searchForm');
     const micButton = document.getElementById('micButton');
@@ -760,7 +743,6 @@
       }
     });
 
-    // Input event untuk update clear button
     overlaySearchInput.addEventListener('input', function() {
       updateClearButton();
     });
@@ -782,7 +764,6 @@
       closeSearchOverlay();
     });
 
-    // Clear button
     overlayClearButton.addEventListener('click', function(e) {
       e.preventDefault();
       overlaySearchInput.value = '';
