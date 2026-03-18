@@ -146,11 +146,11 @@
     cursor: pointer;
   }
 
-  /* GOOGLE LENS - PAKAI URL DARI GITHUB ANDA */
+  /* GOOGLE LENS - MENGGUNAKAN SVG DENGAN WARNA ABU-ABU (SAMA DENGAN MIC) */
   .lens-icon {
     width: 26px;
     height: 26px;
-    background-image: url('https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/google-lens.png');
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 1C7.19 1 3.06 4 1.57 8.25L4.1 9.69C5.23 6.28 8.36 4 12 4c3.64 0 6.77 2.28 7.9 5.69l2.53-1.44C20.94 4 16.81 1 12 1zm0 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0 1c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm-1 1.5v3h2v-3h-2zm0 4v3h2v-3h-2z"/></svg>');
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
@@ -164,7 +164,7 @@
 
   .section h3 {
     font-size: 18px;
-    font-weight: 500;
+    font-weight: 400; /* TIDAK TEBAL */
     margin: 10px 0;
   }
 
@@ -195,7 +195,7 @@
   }
 
   .trend:hover .trend-text {
-    text-decoration: underline;
+    text-decoration: none; /* HYPERLINK DIHILANGKAN */
     color: #1a0dab;
   }
 
@@ -247,13 +247,13 @@
     gap: 16px;
     margin-bottom: 24px;
     padding-bottom: 8px;
-    border-bottom: 2px solid #1a73e8; /* GARIS BAWAH BIRU */
+    border-bottom: 2px solid #dadce0; /* GARIS BAWAH ABU-ABU MUDA */
   }
 
-  /* TANDA PANAH KIRI - DIPERBESAR DAN DIPERJELAS */
+  /* TANDA PANAH KIRI - DIPERKECIL UKURANNYA */
   .back-button {
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%231a73e8" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>');
     background-repeat: no-repeat;
     background-position: center;
@@ -275,7 +275,7 @@
     flex: 1;
     font-size: 16px;
     font-family: 'Arial', sans-serif;
-    caret-color: transparent;
+    caret-color: auto; /* POINTER AKTIF DI POP-UP */
     background: transparent;
     padding: 8px 0;
   }
@@ -294,7 +294,19 @@
   .overlay-lens-icon {
     width: 26px;
     height: 26px;
-    background-image: url('https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/google-lens.png');
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 1C7.19 1 3.06 4 1.57 8.25L4.1 9.69C5.23 6.28 8.36 4 12 4c3.64 0 6.77 2.28 7.9 5.69l2.53-1.44C20.94 4 16.81 1 12 1zm0 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0 1c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm-1 1.5v3h2v-3h-2zm0 4v3h2v-3h-2z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* ICON X (CLOSE/CLEAR) - MENGGANTIKAN MIC DAN LENS SAAT ADA TEKS */
+  .overlay-clear-icon {
+    width: 26px;
+    height: 26px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>');
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
@@ -308,13 +320,7 @@
     overflow-y: auto;
   }
 
-  .overlay-trending h3 {
-    font-size: 18px;
-    font-weight: 500;
-    margin: 10px 0;
-  }
-
-  /* TRENDING DI OVERLAY - PAKAI IKON KACA PEMBESAR */
+  /* TRENDING DI OVERLAY - TANPA JUDUL */
   .overlay-trend {
     display: flex;
     align-items: center;
@@ -323,6 +329,7 @@
     border-bottom: 1px solid #e0e0e0;
     font-size: 16px;
     cursor: pointer;
+    position: relative;
   }
 
   .overlay-trend:hover {
@@ -336,15 +343,37 @@
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
+    flex-shrink: 0;
   }
 
   .overlay-trend-text {
     color: #202124;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .overlay-trend:hover .overlay-trend-text {
-    text-decoration: underline;
+    text-decoration: none;
     color: #1a0dab;
+  }
+
+  /* PANAH 315° DI KANAN (WARNA ABU-ABU) */
+  .overlay-trend-arrow {
+    width: 16px;
+    height: 16px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235f6368" d="M5 5v8l2.5-2.5L12 15l3.5-3.5L18 14V5H5z"/><path fill="%235f6368" d="M19 19H5v2h14v-2z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    flex-shrink: 0;
+    opacity: 0.7;
+    cursor: pointer;
+  }
+
+  .overlay-trend:hover .overlay-trend-arrow {
+    opacity: 1;
   }
 
   /* Hide main content when overlay is active */
@@ -452,10 +481,10 @@
       <input type="text" id="overlaySearchInput" placeholder="Telusuri Google" autocomplete="off" autocapitalize="off" spellcheck="false">
       <div class="overlay-mic-icon" id="overlayMicButton" title="Search by voice"></div>
       <div class="overlay-lens-icon" id="overlayLensButton" title="Search by image with Google Lens"></div>
+      <div class="overlay-clear-icon" id="overlayClearButton" title="Hapus" style="display: none;"></div>
     </div>
   </div>
   <div class="overlay-trending">
-    <h3>Trending searches</h3>
     <div id="overlayTrendingContainer"></div>
   </div>
 </div>
@@ -536,6 +565,7 @@
       }
       if (overlaySearchInput && !overlaySearchInput.matches(':focus')) {
         overlaySearchInput.value = data.search;
+        updateClearButton();
       }
     }
   }
@@ -584,7 +614,24 @@
   const backButton = document.getElementById('backButton');
   const trendingContainer = document.getElementById('trendingContainer');
   const overlayTrendingContainer = document.getElementById('overlayTrendingContainer');
+  const overlayMicButton = document.getElementById('overlayMicButton');
+  const overlayLensButton = document.getElementById('overlayLensButton');
+  const overlayClearButton = document.getElementById('overlayClearButton');
 
+  // Update tampilan clear button berdasarkan isi input
+  function updateClearButton() {
+    if (overlaySearchInput.value.length > 0) {
+      overlayMicButton.style.display = 'none';
+      overlayLensButton.style.display = 'none';
+      overlayClearButton.style.display = 'block';
+    } else {
+      overlayMicButton.style.display = 'block';
+      overlayLensButton.style.display = 'block';
+      overlayClearButton.style.display = 'none';
+    }
+  }
+
+  // Clone trending ke overlay dengan panah 315° di kanan
   function cloneTrendingToOverlay() {
     if (!trendingContainer || !overlayTrendingContainer) return;
     overlayTrendingContainer.innerHTML = '';
@@ -598,11 +645,13 @@
       overlayTrend.innerHTML = `
         <div class="overlay-trend-icon"></div>
         <div class="overlay-trend-text">${trendText}</div>
+        <div class="overlay-trend-arrow" title="Buka pencarian"></div>
       `;
       
       overlayTrend.addEventListener('click', function() {
         const term = this.querySelector('.overlay-trend-text').textContent;
         overlaySearchInput.value = term;
+        updateClearButton();
         performSearch(term);
       });
       
@@ -614,6 +663,7 @@
     overlay.classList.add('active');
     document.body.classList.add('overlay-active');
     overlaySearchInput.value = searchInput.value;
+    updateClearButton();
     cloneTrendingToOverlay();
     setTimeout(() => { overlaySearchInput.focus(); }, 100);
   }
@@ -685,8 +735,6 @@
     const searchForm = document.getElementById('searchForm');
     const micButton = document.getElementById('micButton');
     const lensButton = document.getElementById('lensButton');
-    const overlayMicButton = document.getElementById('overlayMicButton');
-    const overlayLensButton = document.getElementById('overlayLensButton');
     
     searchForm.addEventListener('submit', function(e) {
       e.preventDefault();
@@ -709,6 +757,11 @@
         return false;
       }
     });
+
+    // Input event untuk update clear button
+    overlaySearchInput.addEventListener('input', function() {
+      updateClearButton();
+    });
     
     searchInput.addEventListener('click', function(e) {
       e.preventDefault();
@@ -725,6 +778,14 @@
     backButton.addEventListener('click', function(e) {
       e.preventDefault();
       closeSearchOverlay();
+    });
+
+    // Clear button
+    overlayClearButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      overlaySearchInput.value = '';
+      overlaySearchInput.focus();
+      updateClearButton();
     });
     
     setTimeout(() => {
