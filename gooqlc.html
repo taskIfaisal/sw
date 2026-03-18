@@ -8,7 +8,15 @@
 
 <style>
   body {
-    margin: 0;
+    margin: 0;.overlay-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 0px;
+  padding-bottom: 2px;
+  border-bottom: 2px solid #dadce0;
+  line-height: 0; /* TAMBAHKAN INI - MENGHILANGKAN JARAK VERTIKAL DEFAULT */
+}
     font-family: 'Arial', sans-serif;
     background: #fff;
     color: #202124;
@@ -242,13 +250,14 @@
     display: flex;
   }
 
- .overlay-header {
+.overlay-header {
   display: flex;
   align-items: flex-start;
   gap: 16px;
   margin-bottom: 0px;
-  padding-bottom: 2px; /* 4px → 2px */
+  padding-bottom: 2px;
   border-bottom: 2px solid #dadce0;
+  line-height: 0; /* TAMBAHKAN INI - MENGHILANGKAN JARAK VERTIKAL DEFAULT */
 }
 
   .back-button {
