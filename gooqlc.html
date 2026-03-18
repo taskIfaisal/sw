@@ -146,11 +146,11 @@
     cursor: pointer;
   }
 
-  /* GOOGLE LENS - MENGGUNAKAN SVG DENGAN WARNA ABU-ABU (SAMA DENGAN MIC) */
+  /* GOOGLE LENS - KEMBALI MENGGUNAKAN URL GITHUB */
   .lens-icon {
     width: 26px;
     height: 26px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 1C7.19 1 3.06 4 1.57 8.25L4.1 9.69C5.23 6.28 8.36 4 12 4c3.64 0 6.77 2.28 7.9 5.69l2.53-1.44C20.94 4 16.81 1 12 1zm0 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0 1c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm-1 1.5v3h2v-3h-2zm0 4v3h2v-3h-2z"/></svg>');
+    background-image: url('https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/google-lens.png');
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
@@ -250,7 +250,7 @@
     border-bottom: 2px solid #dadce0; /* GARIS BAWAH ABU-ABU MUDA */
   }
 
-  /* TANDA PANAH KIRI - DIPERKECIL UKURANNYA */
+  /* TANDA PANAH KIRI - SAMA PERSIS DENGAN SEBELUMNYA */
   .back-button {
     width: 24px;
     height: 24px;
@@ -291,10 +291,11 @@
     flex-shrink: 0;
   }
 
+  /* GOOGLE LENS DI OVERLAY - PAKAI URL GITHUB */
   .overlay-lens-icon {
     width: 26px;
     height: 26px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235F6368" d="M12 1C7.19 1 3.06 4 1.57 8.25L4.1 9.69C5.23 6.28 8.36 4 12 4c3.64 0 6.77 2.28 7.9 5.69l2.53-1.44C20.94 4 16.81 1 12 1zm0 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6zm0 1c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm-1 1.5v3h2v-3h-2zm0 4v3h2v-3h-2z"/></svg>');
+    background-image: url('https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/google-lens.png');
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
@@ -315,7 +316,7 @@
   }
 
   .overlay-trending {
-    margin-top: 20px;
+    margin-top: 12px; /* DIKURANGI JARAKNYA AGAR DEKAT DENGAN GARIS */
     flex: 1;
     overflow-y: auto;
   }
@@ -359,17 +360,18 @@
     color: #1a0dab;
   }
 
-  /* PANAH 315° DI KANAN (WARNA ABU-ABU) */
+  /* PANAH 315° DI KANAN - SAMA PERSIS DENGAN PANAH BACK TAPI WARNA ABU-ABU DAN DIPUTAR */
   .overlay-trend-arrow {
-    width: 16px;
-    height: 16px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235f6368" d="M5 5v8l2.5-2.5L12 15l3.5-3.5L18 14V5H5z"/><path fill="%235f6368" d="M19 19H5v2h14v-2z"/></svg>');
+    width: 24px; /* SAMA DENGAN BACK BUTTON */
+    height: 24px; /* SAMA DENGAN BACK BUTTON */
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235f6368" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>');
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
     flex-shrink: 0;
-    opacity: 0.7;
+    transform: rotate(315deg); /* DIPUTAR 315 DERAJAT */
     cursor: pointer;
+    opacity: 0.7;
   }
 
   .overlay-trend:hover .overlay-trend-arrow {
