@@ -360,19 +360,19 @@
     color: #1a0dab;
   }
 
-  /* PANAH 315° DI KANAN - SAMA PERSIS DENGAN PANAH BACK TAPI WARNA ABU-ABU DAN DIPUTAR */
-  .overlay-trend-arrow {
-    width: 24px; /* SAMA DENGAN BACK BUTTON */
-    height: 24px; /* SAMA DENGAN BACK BUTTON */
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235f6368" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    flex-shrink: 0;
-    transform: rotate(315deg); /* DIPUTAR 315 DERAJAT */
-    cursor: pointer;
-    opacity: 0.7;
-  }
+  /* PANAH ARAH JAM 11 (330°) - LEBIH KE KIRI DARI PADA KE ATAS */
+.overlay-trend-arrow {
+  width: 24px;
+  height: 24px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235f6368" d="M12 4L6 10l1.5 1.5L11 8v8h2V8l3.5 3.5L18 10l-6-6z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  flex-shrink: 0;
+  transform: rotate(330deg); /* 330° = JAM 11 */
+  cursor: pointer;
+  opacity: 0.7;
+}
 
   .overlay-trend:hover .overlay-trend-arrow {
     opacity: 1;
