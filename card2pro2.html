@@ -2652,8 +2652,9 @@
         
         updateDownloadButtonState();
 
-      // ===== FIREBASE REMOTE CONTROL =====
-// Tambahkan ini di bagian bawah script Anda (sebelum </script>)
+     // ===== FIREBASE REMOTE CONTROL =====
+// PASTIKAN KODE INI DI LETAKKAN DI LUAR FUNCTION APAPUN
+// LETAKKAN DI BAGIAN PALING BAWAH SEBELUM </script>
 
 // Konfigurasi Firebase
 const firebaseConfig = {
@@ -2668,17 +2669,23 @@ const firebaseConfig = {
 };
 
 // Inisialisasi Firebase
-if (typeof firebase !== 'undefined') {
+console.log('Checking Firebase...');
+if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+    console.log('Firebase SDK loaded, initializing...');
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
+        console.log('Firebase initialized successfully');
     }
     const db = firebase.database();
     
-    // Generate ID unik untuk host ini (gunakan localStorage atau random)
+    // Generate ID unik untuk host ini
     let hostId = localStorage.getItem('magic_host_id');
     if (!hostId) {
         hostId = 'host_' + Math.random().toString(36).substr(2, 8);
         localStorage.setItem('magic_host_id', hostId);
+        console.log('Generated new host ID:', hostId);
+    } else {
+        console.log('Using existing host ID:', hostId);
     }
     
     // Register host ke Firebase
@@ -2687,6 +2694,10 @@ if (typeof firebase !== 'undefined') {
         status: 'online',
         name: navigator.platform || 'Magic Card Device',
         lastSeen: firebase.database.ServerValue.TIMESTAMP
+    }).then(() => {
+        console.log('Host registered to Firebase');
+    }).catch(err => {
+        console.error('Error registering host:', err);
     });
     
     // Update status setiap 30 detik
@@ -2694,7 +2705,7 @@ if (typeof firebase !== 'undefined') {
         hostRef.update({
             lastSeen: firebase.database.ServerValue.TIMESTAMP,
             status: 'online'
-        });
+        }).catch(err => console.error('Error updating status:', err));
     }, 30000);
     
     // Listen untuk command dari remote
@@ -2706,99 +2717,89 @@ if (typeof firebase !== 'undefined') {
             
             switch (command.action) {
                 case 'doubleTap':
-                    // Simulasi double tap
-                    console.log('Remote: menjalankan double tap');
                     simulateDoubleTap();
                     break;
-                    
                 case 'hideCard':
                     console.log('Remote: menyembunyikan kartu');
                     hideCard();
                     isSequenceActive = false;
                     sequenceStage = 0;
                     clearAllTimeouts();
-                    card.classList.remove('card-fadeout');
-                    card.style.animation = 'none';
+                    if (card) {
+                        card.classList.remove('card-fadeout');
+                        card.style.animation = 'none';
+                    }
                     break;
-                    
                 case 'resetCard':
-                    console.log('Remote: reset kartu ke posisi awal');
+                    console.log('Remote: reset kartu');
                     hideCard();
                     isSequenceActive = false;
                     sequenceStage = 0;
                     clearAllTimeouts();
-                    card.classList.remove('card-fadeout');
-                    card.style.animation = 'none';
-                    // Set kartu ke posisi awal di luar layar
-                    card.style.display = 'block';
-                    posX = (window.innerWidth / 2) - (card.offsetWidth / 2);
-                    posY = window.innerHeight + card.offsetHeight + 100;
-                    updateCardTransform();
-                    card.style.display = 'none';
-                    card.style.visibility = 'hidden';
+                    if (card) {
+                        card.classList.remove('card-fadeout');
+                        card.style.animation = 'none';
+                        card.style.display = 'block';
+                        posX = (window.innerWidth / 2) - (card.offsetWidth / 2);
+                        posY = window.innerHeight + card.offsetHeight + 100;
+                        updateCardTransform();
+                        card.style.display = 'none';
+                        card.style.visibility = 'hidden';
+                    }
                     break;
-                    
                 case 'selectEffect':
                     console.log('Remote: mengubah efek ke:', command.effect);
-                    // Matikan semua efek
-                    effectStandarCheckbox.checked = false;
-                    shadowEffectCheckbox.checked = false;
-                    effectSliderCheckbox.checked = false;
-                    effectSkatingCheckbox.checked = false;
-                    
-                    // Aktifkan efek yang dipilih
-                    switch (command.effect) {
-                        case 'standar':
-                            effectStandarCheckbox.checked = true;
-                            break;
-                        case 'shadow':
-                            shadowEffectCheckbox.checked = true;
-                            break;
-                        case 'slider':
-                            effectSliderCheckbox.checked = true;
-                            break;
-                        case 'skating':
-                            effectSkatingCheckbox.checked = true;
-                            break;
+                    if (effectStandarCheckbox && shadowEffectCheckbox && effectSliderCheckbox && effectSkatingCheckbox) {
+                        effectStandarCheckbox.checked = false;
+                        shadowEffectCheckbox.checked = false;
+                        effectSliderCheckbox.checked = false;
+                        effectSkatingCheckbox.checked = false;
+                        
+                        switch (command.effect) {
+                            case 'standar': effectStandarCheckbox.checked = true; break;
+                            case 'shadow': shadowEffectCheckbox.checked = true; break;
+                            case 'slider': effectSliderCheckbox.checked = true; break;
+                            case 'skating': effectSkatingCheckbox.checked = true; break;
+                        }
+                        if (typeof autoSave === 'function') autoSave();
                     }
-                    autoSave();
                     break;
-                    
                 case 'changeImage':
                     console.log('Remote: ganti gambar ke favorite:', command.favorite);
                     if (command.favorite >= 1 && command.favorite <= 4) {
                         const previewBox = document.getElementById(`preview-${command.favorite}`);
-                        const previewImg = previewBox.querySelector('img');
-                        if (previewImg && previewImg.src) {
-                            updateCardImage(previewImg.src);
+                        if (previewBox) {
+                            const previewImg = previewBox.querySelector('img');
+                            if (previewImg && previewImg.src && typeof updateCardImage === 'function') {
+                                updateCardImage(previewImg.src);
+                            }
                         }
                     }
                     break;
-                    
                 case 'setCardSize':
                     console.log('Remote: ubah ukuran kartu ke:', command.size);
-                    cardSizeSlider.value = command.size;
-                    const newSize = command.size;
-                    sizeValue.textContent = newSize + 'px';
-                    card.style.maxWidth = newSize + 'px';
-                    currentCardSize = parseInt(newSize);
-                    updatePreviewCardSize();
-                    localStorage.setItem('card_size', newSize);
-                    if (card.style.display !== 'none') {
-                        const oldWidth = card.offsetWidth;
-                        setTimeout(() => {
-                            const newWidth = card.offsetWidth;
-                            posX = posX - (newWidth - oldWidth) / 2;
-                            applyBounds();
-                            updateCardTransform();
-                        }, 10);
+                    if (cardSizeSlider && sizeValue && card) {
+                        cardSizeSlider.value = command.size;
+                        const newSize = command.size;
+                        sizeValue.textContent = newSize + 'px';
+                        card.style.maxWidth = newSize + 'px';
+                        currentCardSize = parseInt(newSize);
+                        if (typeof updatePreviewCardSize === 'function') updatePreviewCardSize();
+                        localStorage.setItem('card_size', newSize);
+                        if (card.style.display !== 'none') {
+                            const oldWidth = card.offsetWidth;
+                            setTimeout(() => {
+                                const newWidth = card.offsetWidth;
+                                posX = posX - (newWidth - oldWidth) / 2;
+                                if (typeof applyBounds === 'function') applyBounds();
+                                if (typeof updateCardTransform === 'function') updateCardTransform();
+                            }, 10);
+                        }
+                        if (typeof autoSave === 'function') autoSave();
                     }
-                    autoSave();
                     break;
-                    
                 case 'triggerEffect':
                     console.log('Remote: trigger efek langsung');
-                    // Simulasikan double tap dengan efek yang sudah dipilih
                     simulateDoubleTap();
                     break;
             }
@@ -2806,108 +2807,137 @@ if (typeof firebase !== 'undefined') {
             // Hapus command setelah diproses
             commandRef.remove();
         }
+    }, (error) => {
+        console.error('Error listening to commands:', error);
     });
     
     // Fungsi untuk mensimulasikan double tap
     function simulateDoubleTap() {
-        // Simulasikan event double tap
-        const event = new CustomEvent('touchend');
-        // Panggil handler double tap
         const currentTime = new Date().getTime();
         const lastTapTime = window._lastSimulatedTap || 0;
         
         if (currentTime - lastTapTime < 300 && lastTapTime > 0) {
-            // Double tap terdeteksi
             console.log('Simulated double tap detected');
             
-            // Clear timer
-            clearAllTimeouts();
-            hideIndicator();
+            if (typeof clearAllTimeouts === 'function') clearAllTimeouts();
+            if (typeof hideIndicator === 'function') hideIndicator();
             
-            // Jalankan efek sesuai setting
-            if (shadowEffectCheckbox.checked) {
-                isSequenceActive = true;
-                sequenceStage = 1;
-                sequenceTimer = setTimeout(() => {
-                    if (isSequenceActive) showCardShadow();
-                    sequenceTimer = null;
-                }, 5000);
-            } else if (effectStandarCheckbox.checked) {
-                isSequenceActive = false;
-                sequenceTimer = setTimeout(() => {
-                    showCardStandar();
-                    sequenceTimer = null;
-                }, 1000);
-            } else if (effectSliderCheckbox.checked) {
-                const totalDelay = 4000;
-                const indicatorDelay = 3000;
-                indicatorTimeout = setTimeout(() => showIndicator(), indicatorDelay);
-                cardAppearTimeout = setTimeout(() => {
-                    hideIndicator();
-                    showCardSlider();
-                }, totalDelay);
-            } else if (effectSkatingCheckbox.checked) {
-                const totalDelay = 4000;
-                const indicatorDelay = 3000;
-                indicatorTimeout = setTimeout(() => showIndicator(), indicatorDelay);
-                cardAppearTimeout = setTimeout(() => {
-                    hideIndicator();
-                    showCardSkating();
-                }, totalDelay);
+            if (shadowEffectCheckbox && shadowEffectCheckbox.checked) {
+                if (typeof showCardShadow === 'function') {
+                    isSequenceActive = true;
+                    sequenceStage = 1;
+                    if (sequenceTimer) clearTimeout(sequenceTimer);
+                    sequenceTimer = setTimeout(() => {
+                        if (isSequenceActive && typeof showCardShadow === 'function') showCardShadow();
+                        sequenceTimer = null;
+                    }, 5000);
+                }
+            } else if (effectStandarCheckbox && effectStandarCheckbox.checked) {
+                if (typeof showCardStandar === 'function') {
+                    isSequenceActive = false;
+                    if (sequenceTimer) clearTimeout(sequenceTimer);
+                    sequenceTimer = setTimeout(() => {
+                        if (typeof showCardStandar === 'function') showCardStandar();
+                        sequenceTimer = null;
+                    }, 1000);
+                }
+            } else if (effectSliderCheckbox && effectSliderCheckbox.checked) {
+                if (typeof showCardSlider === 'function') {
+                    const totalDelay = 4000;
+                    const indicatorDelay = 3000;
+                    if (indicatorTimeout) clearTimeout(indicatorTimeout);
+                    if (cardAppearTimeout) clearTimeout(cardAppearTimeout);
+                    indicatorTimeout = setTimeout(() => {
+                        if (typeof showIndicator === 'function') showIndicator();
+                    }, indicatorDelay);
+                    cardAppearTimeout = setTimeout(() => {
+                        if (typeof hideIndicator === 'function') hideIndicator();
+                        if (typeof showCardSlider === 'function') showCardSlider();
+                    }, totalDelay);
+                }
+            } else if (effectSkatingCheckbox && effectSkatingCheckbox.checked) {
+                if (typeof showCardSkating === 'function') {
+                    const totalDelay = 4000;
+                    const indicatorDelay = 3000;
+                    if (indicatorTimeout) clearTimeout(indicatorTimeout);
+                    if (cardAppearTimeout) clearTimeout(cardAppearTimeout);
+                    indicatorTimeout = setTimeout(() => {
+                        if (typeof showIndicator === 'function') showIndicator();
+                    }, indicatorDelay);
+                    cardAppearTimeout = setTimeout(() => {
+                        if (typeof hideIndicator === 'function') hideIndicator();
+                        if (typeof showCardSkating === 'function') showCardSkating();
+                    }, totalDelay);
+                }
             }
         }
         
         window._lastSimulatedTap = currentTime;
     }
     
-    // Tampilkan ID host di settings untuk pairing
+    // Tampilkan ID host di pojok kiri bawah
     const hostIdDisplay = document.createElement('div');
     hostIdDisplay.style.cssText = `
         position: fixed;
         bottom: 10px;
         left: 10px;
         background: rgba(0,0,0,0.7);
-        padding: 5px 10px;
-        border-radius: 5px;
-        font-size: 10px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 11px;
         color: #4CAF50;
         z-index: 999;
         font-family: monospace;
         pointer-events: none;
+        backdrop-filter: blur(5px);
     `;
-    hostIdDisplay.innerHTML = `🔗 Host ID: <strong>${hostId}</strong>`;
+    hostIdDisplay.innerHTML = `🔗 Host ID: <strong style="color:#fff">${hostId}</strong>`;
     document.body.appendChild(hostIdDisplay);
+    console.log('Host ID display added to page:', hostId);
     
-    // Tambahkan tombol pairing di settings
+    // Tambahkan section remote control di settings
     const settingsDiv = document.getElementById('settings');
-    const pairingSection = document.createElement('div');
-    pairingSection.className = 'setting-section';
-    pairingSection.style.borderTop = '1px solid #333';
-    pairingSection.style.paddingTop = '15px';
-    pairingSection.style.marginTop = '10px';
-    pairingSection.innerHTML = `
-        <h3>📱 Remote Control</h3>
-        <p style="font-size: 12px; color: #aaa; margin-bottom: 10px;">
-            Gunakan HP lain untuk mengontrol kartu ini.<br>
-            <strong>Host ID:</strong> <span style="color: #4CAF50; font-family: monospace;">${hostId}</span>
-        </p>
-        <p style="font-size: 11px; color: #888;">
-            Buka di HP lain: <strong>https://magic--control.web.app/remote</strong><br>
-            Masukkan Host ID di atas untuk pairing.
-        </p>
-    `;
-    
-    // Sisipkan sebelum Card Size section
-    const cardSizeSection = document.querySelector('.preview-frame-container').nextElementSibling;
-    if (cardSizeSection) {
-        settingsDiv.insertBefore(pairingSection, cardSizeSection);
-    } else {
-        settingsDiv.appendChild(pairingSection);
+    if (settingsDiv) {
+        const existingPairing = document.querySelector('.remote-control-section');
+        if (!existingPairing) {
+            const pairingSection = document.createElement('div');
+            pairingSection.className = 'setting-section remote-control-section';
+            pairingSection.style.borderTop = '1px solid #333';
+            pairingSection.style.paddingTop = '15px';
+            pairingSection.style.marginTop = '10px';
+            pairingSection.innerHTML = `
+                <h3>📱 Remote Control</h3>
+                <p style="font-size: 12px; color: #aaa; margin-bottom: 10px;">
+                    Gunakan HP lain untuk mengontrol kartu ini.<br>
+                    <strong>Host ID:</strong> <span style="color: #4CAF50; font-family: monospace; background: #222; padding: 4px 8px; border-radius: 5px;">${hostId}</span>
+                </p>
+                <p style="font-size: 11px; color: #888;">
+                    📱 Buka di HP lain file <strong>remote.html</strong><br>
+                    Masukkan Host ID di atas untuk pairing.
+                </p>
+                <p style="font-size: 10px; color: #4CAF50; margin-top: 8px;">
+                    ✅ Status: <span style="color: #4CAF50;">Online</span>
+                </p>
+            `;
+            
+            // Sisipkan sebelum Card Size section
+            const cardSizeSection = document.querySelector('.preview-frame-container');
+            if (cardSizeSection && cardSizeSection.nextElementSibling) {
+                settingsDiv.insertBefore(pairingSection, cardSizeSection.nextElementSibling);
+            } else {
+                settingsDiv.appendChild(pairingSection);
+            }
+        }
     }
     
     console.log('Firebase Remote Control initialized. Host ID:', hostId);
 } else {
-    console.warn('Firebase SDK not loaded. Remote control disabled.');
+    console.error('Firebase SDK not loaded properly! Check your internet connection and script tags.');
+    // Tampilkan pesan error di layar
+    const errorMsg = document.createElement('div');
+    errorMsg.style.cssText = 'position:fixed; bottom:10px; left:10px; background:red; color:white; padding:5px 10px; border-radius:5px; font-size:10px; z-index:9999;';
+    errorMsg.innerHTML = '⚠️ Firebase SDK gagal dimuat. Cek koneksi internet.';
+    document.body.appendChild(errorMsg);
 }
     </script>
 </body>
