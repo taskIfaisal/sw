@@ -1,0 +1,2911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Magic Card Trick</title>
+    <!-- <link rel="manifest" href="./manifest.json"> -->
+    <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
+    <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Card2Pro">
+    <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
+    <style>
+        /* Semua style tetap sama seperti sebelumnya */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            font-family: 'SF Pro Display', sans-serif;
+            background-color: black;
+            background-size: cover;
+            background-position: center;
+            color: white;
+            overflow: hidden;
+            touch-action: none;
+            position: relative;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        #background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+        }
+        
+        #card {
+            position: absolute;
+            width: 100%;
+            max-width: 200px;
+            z-index: 2;
+            user-select: none;
+            -webkit-user-drag: none;
+            touch-action: none;
+            transform-origin: center center;
+            height: auto;
+            cursor: pointer;
+            transition: opacity 5s ease-in-out, transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            left: 0;
+            top: 0;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .card-visible {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        .card-flipping {
+            animation: flipCard 1s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+            backface-visibility: hidden;
+        }
+
+        @keyframes flipCard {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(90deg); }
+            100% { transform: rotateY(0deg); }
+        }
+
+        .card-moving {
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease !important;
+        }
+
+        .card-exit {
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease !important;
+        }
+
+        @keyframes muncul {
+            0% { opacity: 0; }
+            50% { opacity: 0.3; }
+            80% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .card-fadeout {
+            animation: fadeOut 5s ease-in-out forwards !important;
+        }
+
+        .size-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        input[type=range] {
+            -webkit-appearance: none;
+            height: 5px;
+            background: #4CAF50;
+            border-radius: 5px;
+            outline: none;
+            flex: 1;
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #4CAF50;
+        }
+        
+        #size-value {
+            min-width: 50px;
+            text-align: center;
+            background: rgba(255,255,255,0.2);
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        #settings {
+            position: fixed;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 3;
+            transition: top 0.5s ease;
+            color: white;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .setting-section {
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 16px;
+            font-weight: normal;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .file-upload {
+            background: #2196F3;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            display: inline-block;
+            cursor: pointer;
+            touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 16px;
+            font-weight: normal;
+            transition: background 0.3s ease;
+        }
+        
+        .file-upload:hover {
+            background: #1976D2;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin: 10px 0;
+            touch-action: manipulation;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider.effect-slider {
+            background-color: #4CAF50;
+        }
+        
+        input:checked + .toggle-slider.sensor-slider {
+            background-color: #FF9800;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .effect-description {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 20px 0;
+            padding: 10px 0;
+        }
+        
+        .preview-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .preview-label-small {
+            font-size: 10px;
+            color: #4CAF50;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .preview-box {
+            width: 65px;
+            height: 65px;
+            border: 2px solid #666;
+            border-radius: 5px;
+            overflow: visible;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #333;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 0 auto;
+            touch-action: manipulation;
+            position: relative;
+        }
+        
+        .preview-toggle {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #4CAF50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            border: 2px solid white;
+            z-index: 10;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .preview-toggle.inactive {
+            background: #f44336;
+        }
+        
+        .preview-toggle.active::after {
+            content: "✓";
+        }
+        
+        .preview-toggle.inactive::after {
+            content: "✕";
+        }
+        
+        .preview-box.active {
+            border-color: #4CAF50 !important;
+            box-shadow: 0 0 15px #4CAF50 !important;
+        }
+        
+        .preview-box.selected {
+            border-color: #FF9800;
+            box-shadow: 0 0 10px #FF9800;
+        }
+        
+        .preview-box:hover {
+            border-color: #4CAF50;
+            transform: scale(1.05);
+        }
+        
+        .preview-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+        
+        .github-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #444;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #4CAF50;
+        }
+        
+        .modal-header button {
+            background: #f44336;
+            margin: 0;
+            padding: 8px 15px;
+        }
+
+        .folder-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            touch-action: manipulation;
+        }
+
+        .back-button:hover {
+            background: #45a049;
+        }
+        
+        .albums-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .album-item {
+            background: #222;
+            padding: 20px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #444;
+            text-align: center;
+            aspect-ratio: 1/1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+        
+        .album-item:hover {
+            background: #333;
+            transform: scale(1.05);
+            border-color: #4CAF50;
+        }
+        
+        .album-item:active {
+            transform: scale(0.95);
+        }
+        
+        .album-item .folder-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .album-item .folder-name {
+            font-size: 14px;
+            word-break: break-word;
+        }
+        
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .grid-item {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border: 2px solid #444;
+            border-radius: 5px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #222;
+            touch-action: manipulation;
+        }
+        
+        .grid-item:hover {
+            border-color: #4CAF50;
+            transform: scale(1.02);
+        }
+        
+        .grid-item.selected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+        
+        .grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            grid-column: span 3;
+        }
+        
+        .error-msg {
+            color: #f44336;
+            text-align: center;
+            padding: 20px;
+            grid-column: span 3;
+        }
+
+        .preview-frame-container {
+            margin: 20px -20px;
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+        }
+        
+        .preview-label {
+            color: #4CAF50;
+            font-size: 14px;
+            margin-bottom: 8px;
+            padding-left: 20px;
+        }
+        
+        .editor-frame {
+            width: 100vw;
+            height: 280px;
+            border-top: 2px solid #4CAF50;
+            border-bottom: 2px solid #4CAF50;
+            border-left: none;
+            border-right: none;
+            background: #222;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            margin: 0;
+            box-sizing: border-box;
+            touch-action: pan-y;
+        }
+        
+        #main-card-preview {
+            position: absolute;
+            width: auto;
+            height: auto;
+            max-width: none;
+            max-height: none;
+            object-fit: contain;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        
+        #sensor-permission {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            font-size: 24px;
+            z-index: 9999;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            padding: 20px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        
+        #sensor-permission.hidden {
+            display: none;
+        }
+
+        .save-close-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            min-width: 150px;
+            font-size: 16px;
+            margin: 5px auto;
+            display: block;
+            touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-weight: normal;
+        }
+        
+        .save-close-btn:hover {
+            background: #1976D2;
+        }
+
+        #card-indicator {
+            position: fixed;
+            bottom: 8px;
+            right: 8px;
+            width: 1px;
+            height: 1px;
+            background-color: #FFFFFF;
+            border-radius: 50%;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        #card-indicator.visible {
+            opacity: 1;
+        }
+
+        .bg-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            border-radius: 0;
+        }
+
+        .bg-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .remove-bg-status {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .remove-bg-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .remove-bg-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        #remove-bg-btn {
+            flex: 3;
+            background: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 16px;
+            font-weight: normal;
+            transition: all 0.3s ease;
+            margin: 0;
+        }
+
+        #remove-bg-btn:hover:not(:disabled) {
+            background: #45a049 !important;
+            transform: translateY(-1px);
+        }
+
+        #remove-bg-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            background: #888 !important;
+        }
+        
+        #download-result-btn {
+            flex: 1;
+            background: #6c757d;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            touch-action: manipulation;
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 16px;
+            font-weight: normal;
+            transition: all 0.3s ease;
+            margin: 0;
+        }
+
+        #download-result-btn:hover:not(:disabled) {
+            background: #5a6268 !important;
+            transform: translateY(-1px);
+        }
+
+        #download-result-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="background"></div>
+    <img id="card" src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Magic Ball">
+    
+    <div id="card-indicator"></div>
+    
+    <div id="settings">
+        <h2>Settings</h2>
+        
+        <div class="setting-section">
+            <h3>Background Image</h3>
+            <label class="file-upload">
+                Choose Background
+                <input type="file" id="bg-upload" accept="image/*">
+            </label>
+        </div>
+        
+        <div class="setting-section">
+            <h3>Card Image</h3>
+            <label class="file-upload">
+                Choose Card
+                <input type="file" id="card-upload" accept="image/*">
+            </label>
+        </div>
+
+        <div class="setting-section">
+            <h3>Quick Preview (4 Favorites)</h3>
+            <div class="preview-grid">
+                <div class="preview-item">
+                    <div class="preview-box" id="preview-1" data-index="1">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 1">
+                        <div class="preview-toggle active" data-toggle="1"></div>
+                    </div>
+                    <span class="preview-label-small">Favorite 1</span>
+                </div>
+                
+                <div class="preview-item">
+                    <div class="preview-box" id="preview-2" data-index="2">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 2">
+                        <div class="preview-toggle active" data-toggle="2"></div>
+                    </div>
+                    <span class="preview-label-small">Favorite 2</span>
+                </div>
+                
+                <div class="preview-item">
+                    <div class="preview-box" id="preview-3" data-index="3">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 3">
+                        <div class="preview-toggle active" data-toggle="3"></div>
+                    </div>
+                    <span class="preview-label-small">Favorite 3</span>
+                </div>
+
+                <div class="preview-item">
+                    <div class="preview-box" id="preview-4" data-index="4">
+                        <img src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Preview 4">
+                        <div class="preview-toggle active" data-toggle="4"></div>
+                    </div>
+                    <span class="preview-label-small">Favorite 4</span>
+                </div>
+            </div>
+            <p><small>✨ Klik gambar: buka album GitHub | Klik bulatan ✓/✕: aktif/nonaktifkan</small></p>
+        </div>
+
+        <div class="setting-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <h3 style="margin: 0;">Effect Standar</h3>
+                <label class="toggle-switch" style="margin: 0;">
+                    <input type="checkbox" id="effect-standar">
+                    <span class="toggle-slider effect-slider"></span>
+                </label>
+            </div>
+            <div class="effect-description">
+                ON: Double tap → tunggu 1 detik → kartu muncul langsung di tengah (gambar aktif pertama)
+            </div>
+        </div>
+
+        <div class="setting-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <h3 style="margin: 0;">Effect Shadow</h3>
+                <label class="toggle-switch" style="margin: 0;">
+                    <input type="checkbox" id="shadow-effect">
+                    <span class="toggle-slider effect-slider"></span>
+                </label>
+            </div>
+            <div class="effect-description">
+                ON: Double tap → tunggu 5 detik → kartu muncul fade in 5 detik di tengah, berganti sesuai gambar aktif (3 detik setelah sentuh), setelah gambar terakhir tunggu 3 detik → fade out 5 detik
+            </div>
+        </div>
+
+        <div class="setting-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <h3 style="margin: 0;">Effect Slider</h3>
+                <label class="toggle-switch" style="margin: 0;">
+                    <input type="checkbox" id="effect-slider">
+                    <span class="toggle-slider effect-slider"></span>
+                </label>
+            </div>
+            <div class="effect-description">
+                ON: Double tap → tunggu 4 detik (indikator detik 3) → kartu slide dari bawah ke tengah (tetap di tengah setelah selesai)
+            </div>
+        </div>
+
+        <div class="setting-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <h3 style="margin: 0;">Effect Skating</h3>
+                <label class="toggle-switch" style="margin: 0;">
+                    <input type="checkbox" id="effect-skating">
+                    <span class="toggle-slider effect-slider"></span>
+                </label>
+            </div>
+            <div class="effect-description">
+                ON: Double tap → tunggu 4 detik (indikator detik 3) → kartu slide dari bawah ke tengah, berganti gambar, setelah selesai tunggu 4 detik (indikator detik 3) → slide keluar ke atas
+            </div>
+        </div>
+
+        <div class="setting-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <h3 style="margin: 0;">Sensor Gerak</h3>
+                <label class="toggle-switch" style="margin: 0;">
+                    <input type="checkbox" id="sensor-gerak" checked>
+                    <span class="toggle-slider sensor-slider"></span>
+                </label>
+            </div>
+            <div class="effect-description">
+                ON: Kartu bergerak mengikuti kemiringan device (gyroscope)
+            </div>
+        </div>
+
+        <div class="preview-frame-container">
+            <div class="preview-label">🔮 PREVIEW KARTU UTAMA</div>
+            <div class="editor-frame">
+                <img id="main-card-preview" src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Main Card Preview">
+            </div>
+        </div>
+
+        <div class="setting-section" style="border-top: 1px solid #333; padding-top: 15px; margin-top: 10px;">
+            <p style="font-size: 12px; color: #4CAF50; text-align: center; margin: 0 0 10px 0; font-weight: 500;">
+                ⬆️ Proses & hasil akan tampil di preview atas (maks 5MB)
+            </p>
+            
+            <div class="button-row">
+                <button id="remove-bg-btn">
+                    🧹 Hapus Background
+                </button>
+                
+                <button id="download-result-btn">
+                    ⬇️ Unduh
+                </button>
+            </div>
+            
+            <div id="remove-bg-status" class="remove-bg-status" style="display: none;"></div>
+        </div>
+
+        <div class="setting-section">
+            <h3>Card Size</h3>
+            <div class="size-control">
+                <input type="range" id="card-size-slider" min="100" max="400" value="200" step="5">
+                <span id="size-value">200px</span>
+            </div>
+            <small>Adjust card size (100px - 400px)</small>
+        </div>
+        
+        <div class="setting-section">
+            <button id="close-settings" class="save-close-btn">Save & Close</button>
+        </div>
+    </div>
+    
+    <button id="sensor-permission" class="hidden">
+        Allow Motion Sensor Access<br>
+        <small>(Tap to enable tilt controls)</small>
+    </button>
+
+    <script>
+        // Elements
+        const background = document.getElementById('background');
+        const card = document.getElementById('card');
+        const settings = document.getElementById('settings');
+        const bgUpload = document.getElementById('bg-upload');
+        const cardUpload = document.getElementById('card-upload');
+        const closeSettingsBtn = document.getElementById('close-settings');
+        const sensorPermissionBtn = document.getElementById('sensor-permission');
+        const cardIndicator = document.getElementById('card-indicator');
+        
+        const cardSizeSlider = document.getElementById('card-size-slider');
+        const sizeValue = document.getElementById('size-value');
+        
+        const mainCardPreview = document.getElementById('main-card-preview');
+        const preview1 = document.getElementById('preview-1');
+        const preview2 = document.getElementById('preview-2');
+        const preview3 = document.getElementById('preview-3');
+        const preview4 = document.getElementById('preview-4');
+        
+        const effectStandarCheckbox = document.getElementById('effect-standar');
+        const shadowEffectCheckbox = document.getElementById('shadow-effect');
+        const effectSliderCheckbox = document.getElementById('effect-slider');
+        const effectSkatingCheckbox = document.getElementById('effect-skating');
+        const sensorGerakCheckbox = document.getElementById('sensor-gerak');
+
+        const removeBgBtn = document.getElementById('remove-bg-btn');
+        const downloadBtn = document.getElementById('download-result-btn');
+        const removeBgStatus = document.getElementById('remove-bg-status');
+
+        const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/images';
+        
+        let currentFolder = null;
+        let selectedImage = null;
+        let modalElement = null;
+        let activePreview = 1;
+
+        let activeImages = {
+            1: true, 2: true, 3: true, 4: true
+        };
+
+        let posX = window.innerWidth / 2 - card.offsetWidth / 2;
+        let posY = window.innerHeight + card.offsetHeight + 100;
+        let scale = 1;
+        let isDragging = false;
+        let startX, startY;
+        let velocityX = 0;
+        let velocityY = 0;
+        let lastPosX = 0;
+        let lastPosY = 0;
+        let lastTime = 0;
+        
+        let smoothBeta = 0;
+        let smoothGamma = 0;
+        const sensitivity = 0.5;
+        const smoothing = 0.2;
+        let isSensorEnabled = false;
+        let isSensorActive = true;
+        let isAnimatingMotion = false;
+        
+        let sequenceTimer = null;
+        let sequenceStage = 0;
+        let isSequenceActive = false;
+        let activeImagesList = [];
+        
+        let touchToChangeTimeout = null;
+        
+        let indicatorTimeout = null;
+        let cardAppearTimeout = null;
+        let isAnimating = false;
+        let hasBeenTouched = false;
+        let currentCardImageIndex = 0;
+        
+        let exitIndicatorTimeout = null;
+        let exitCardTimeout = null;
+        
+        // ===== VARIABEL UNTUK SHADOW EFFECT FADE OUT =====
+        let shadowFadeOutTimeout = null;
+        let shadowWaitTimeout = null;
+        
+        const STORAGE_KEY = 'magic_card_data';
+        
+        loadFromStorage();
+        
+        let currentCardSize = parseInt(localStorage.getItem('card_size')) || 200;
+        
+        card.style.maxWidth = currentCardSize + 'px';
+        sizeValue.textContent = currentCardSize + 'px';
+        cardSizeSlider.value = currentCardSize;
+        
+        function updatePreviewCardSize() {
+            mainCardPreview.style.width = currentCardSize + 'px';
+            mainCardPreview.style.height = 'auto';
+            mainCardPreview.style.position = 'absolute';
+            mainCardPreview.style.top = '30px';
+            mainCardPreview.style.left = '50%';
+            mainCardPreview.style.transform = 'translateX(-50%)';
+        }
+        
+        function updateMainCardPreview() {
+            mainCardPreview.src = card.src;
+        }
+        
+        updatePreviewCardSize();
+        updateMainCardPreview();
+        
+        cardSizeSlider.addEventListener('input', (e) => {
+            const newSize = e.target.value;
+            sizeValue.textContent = newSize + 'px';
+            card.style.maxWidth = newSize + 'px';
+            
+            currentCardSize = parseInt(newSize);
+            updatePreviewCardSize();
+            
+            if (card.style.display !== 'none') {
+                const oldWidth = card.offsetWidth;
+                setTimeout(() => {
+                    const newWidth = card.offsetWidth;
+                    posX = posX - (newWidth - oldWidth) / 2;
+                    applyBounds();
+                    updateCardTransform();
+                }, 10);
+            }
+        });
+
+        cardSizeSlider.addEventListener('change', (e) => {
+            localStorage.setItem('card_size', e.target.value);
+            currentCardSize = parseInt(e.target.value);
+            autoSave();
+        });
+        
+        updateCardTransform();
+        
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        initSensor();
+        
+        function getActiveImagesList() {
+            const list = [];
+            if (activeImages[1]) list.push({ index: 1, element: preview1, src: getPreviewSrc(1) });
+            if (activeImages[2]) list.push({ index: 2, element: preview2, src: getPreviewSrc(2) });
+            if (activeImages[3]) list.push({ index: 3, element: preview3, src: getPreviewSrc(3) });
+            if (activeImages[4]) list.push({ index: 4, element: preview4, src: getPreviewSrc(4) });
+            return list;
+        }
+        
+        function getPreviewSrc(index) {
+            const preview = document.getElementById(`preview-${index}`);
+            const img = preview.querySelector('img');
+            return img ? img.src : '';
+        }
+        
+        function updateActivePreviewStyles() {
+            [preview1, preview2, preview3, preview4].forEach((preview, idx) => {
+                const index = idx + 1;
+                if (activeImages[index]) {
+                    preview.classList.add('active');
+                } else {
+                    preview.classList.remove('active');
+                }
+            });
+            
+            document.querySelectorAll('.preview-toggle').forEach(toggle => {
+                const toggleIndex = parseInt(toggle.dataset.toggle);
+                if (activeImages[toggleIndex]) {
+                    toggle.classList.remove('inactive');
+                    toggle.classList.add('active');
+                } else {
+                    toggle.classList.remove('active');
+                    toggle.classList.add('inactive');
+                }
+            });
+        }
+        
+        async function loadRootFolders() {
+            try {
+                const response = await fetch(GITHUB_API_URL);
+                if (!response.ok) throw new Error('Failed to fetch');
+                
+                const data = await response.json();
+                const folders = data.filter(item => item.type === "dir");
+                
+                folders.sort((a, b) => {
+                    return a.name.localeCompare(b.name, undefined, { 
+                        numeric: true,
+                        sensitivity: 'base' 
+                    });
+                });
+                
+                return folders;
+            } catch (error) {
+                console.error('Error loading root folders:', error);
+                return [];
+            }
+        }
+        
+        async function loadFolderContents(folderName) {
+            try {
+                const folderUrl = `${GITHUB_API_URL}/${folderName}`;
+                const response = await fetch(folderUrl);
+                if (!response.ok) throw new Error('Failed to fetch folder');
+                
+                const data = await response.json();
+                
+                const images = data.filter(file => {
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    return ['png', 'jpg', 'jpeg', 'gif'].includes(ext);
+                });
+                
+                images.sort((a, b) => {
+                    return a.name.localeCompare(b.name, undefined, { 
+                        numeric: true,
+                        sensitivity: 'base' 
+                    });
+                });
+                
+                return images;
+            } catch (error) {
+                console.error('Error loading folder contents:', error);
+                return [];
+            }
+        }
+        
+        function showGithubModal(previewNumber) {
+            activePreview = previewNumber;
+            selectedImage = null;
+            currentFolder = null;
+            
+            modalElement = document.createElement('div');
+            modalElement.className = 'github-modal';
+            modalElement.innerHTML = `
+                <div class="modal-header">
+                    <h3>📁 Pilih Gambar untuk Preview ${previewNumber}</h3>
+                    <button id="close-modal">✕</button>
+                </div>
+                <div id="modal-content">
+                    <div class="loading">Loading folders from GitHub...</div>
+                </div>
+            `;
+            
+            document.body.appendChild(modalElement);
+            
+            document.getElementById('close-modal').addEventListener('click', () => {
+                document.body.removeChild(modalElement);
+                modalElement = null;
+            });
+            
+            renderFolders();
+        }
+        
+        async function renderFolders() {
+            const contentElement = document.getElementById('modal-content');
+            
+            const folders = await loadRootFolders();
+            
+            if (folders.length === 0) {
+                contentElement.innerHTML = '<div class="error-msg">Tidak ada folder ditemukan</div>';
+                return;
+            }
+            
+            let html = '<div class="albums-grid">';
+            
+            folders.forEach(folder => {
+                html += `
+                    <div class="album-item" onclick="window.openFolder('${folder.name}')">
+                        <div class="folder-icon">📁</div>
+                        <div class="folder-name">${folder.name}</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            contentElement.innerHTML = html;
+        }
+        
+        window.openFolder = async function(folderName) {
+            currentFolder = folderName;
+            selectedImage = null;
+            
+            const contentElement = document.getElementById('modal-content');
+            contentElement.innerHTML = '<div class="loading">Loading images...</div>';
+            
+            const images = await loadFolderContents(folderName);
+            
+            if (images.length === 0) {
+                contentElement.innerHTML = `
+                    <div class="folder-header">
+                        <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
+                        <h3>${folderName}</h3>
+                    </div>
+                    <div class="error-msg">Tidak ada gambar dalam folder ini</div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div class="folder-header">
+                    <button class="back-button" onclick="window.goBackToFolders()">← Back</button>
+                    <h3>${folderName}</h3>
+                </div>
+                <div class="image-grid">
+            `;
+            
+            images.forEach(img => {
+                const downloadUrl = img.download_url || `https://raw.githubusercontent.com/taskIfaisal/sw/main/images/${folderName}/${img.name}`;
+                
+                html += `
+                    <div class="grid-item" data-url="${downloadUrl}">
+                        <img src="${downloadUrl}" alt="${img.name}" loading="lazy">
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            contentElement.innerHTML = html;
+            
+            document.querySelectorAll('.grid-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const imageUrl = this.dataset.url;
+                    
+                    const previewBox = document.getElementById(`preview-${activePreview}`);
+                    const previewImg = previewBox.querySelector('img');
+                    previewImg.src = imageUrl;
+                    
+                    if (activePreview === 1) {
+                        updateCardImage(imageUrl);
+                    }
+                    
+                    document.querySelectorAll('.preview-box').forEach(p => p.classList.remove('selected'));
+                    previewBox.classList.add('selected');
+                    
+                    autoSave();
+                    
+                    document.body.removeChild(modalElement);
+                    modalElement = null;
+                });
+            });
+        };
+        
+        window.goBackToFolders = function() {
+            currentFolder = null;
+            selectedImage = null;
+            
+            renderFolders();
+        };
+        
+        preview1.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('preview-toggle')) {
+                showGithubModal(1);
+            }
+        });
+        
+        preview2.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('preview-toggle')) {
+                showGithubModal(2);
+            }
+        });
+        
+        preview3.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('preview-toggle')) {
+                showGithubModal(3);
+            }
+        });
+
+        preview4.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('preview-toggle')) {
+                showGithubModal(4);
+            }
+        });
+        
+        document.querySelectorAll('.preview-toggle').forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const previewIndex = parseInt(toggle.dataset.toggle);
+                
+                activeImages[previewIndex] = !activeImages[previewIndex];
+                
+                updateActivePreviewStyles();
+                
+                autoSave();
+                
+                console.log(`Favorite ${previewIndex}: ${activeImages[previewIndex] ? 'aktif' : 'nonaktif'}`);
+            });
+        });
+        
+        function updateCardImage(imageSrc) {
+            const preview1Img = preview1.querySelector('img');
+            if (preview1Img) {
+                preview1Img.src = imageSrc;
+            }
+            
+            card.src = imageSrc;
+            
+            mainCardPreview.src = imageSrc;
+            updateMainCardPreview();
+            
+            scale = 1;
+            updateCardTransform();
+            
+            autoSave();
+            
+            updateDownloadButtonState();
+        }
+        
+        // ===== FUNGSI UNTUK EFFECT SHADOW =====
+        function showCardShadow() {
+            const activeList = getActiveImagesList();
+            
+            if (activeList.length === 0) {
+                console.log('Tidak ada gambar aktif');
+                return;
+            }
+            
+            // Reset semua state
+            if (shadowFadeOutTimeout) {
+                clearTimeout(shadowFadeOutTimeout);
+                shadowFadeOutTimeout = null;
+            }
+            if (shadowWaitTimeout) {
+                clearTimeout(shadowWaitTimeout);
+                shadowWaitTimeout = null;
+            }
+            
+            // Reset animasi kartu
+            card.style.animation = 'none';
+            card.style.opacity = '1';
+            card.style.visibility = 'visible';
+            card.style.display = 'block';
+            card.style.transition = 'none';
+            card.style.transform = 'none';
+            card.style.left = '0';
+            card.style.top = '0';
+            card.classList.remove('card-fadeout');
+            
+            // Dapatkan ukuran kartu
+            const cardWidth = card.offsetWidth;
+            const cardHeight = card.offsetHeight;
+            
+            // Hitung posisi tengah
+            const centerX = (window.innerWidth - cardWidth) / 2;
+            const centerY = (window.innerHeight - cardHeight) / 2;
+            
+            posX = Math.round(centerX);
+            posY = Math.round(centerY);
+            
+            // Set gambar pertama
+            currentCardImageIndex = 0;
+            card.src = activeList[0].src;
+            
+            // Terapkan posisi
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            
+            // Trigger reflow untuk memastikan animasi berjalan
+            void card.offsetHeight;
+            
+            // Mulai animasi fade in
+            card.style.animation = 'muncul 5s ease-in-out';
+            
+            // Simpan daftar aktif
+            activeImagesList = activeList;
+            isSequenceActive = true;
+            sequenceStage = 1;
+            
+            console.log('Effect Shadow: kartu muncul fade in di tengah dengan gambar 1');
+        }
+        
+        // ===== FUNGSI UNTUK FADE OUT SHADOW DENGAN JEDA 3 DETIK =====
+        function fadeOutShadowCard() {
+            if (!isSequenceActive || card.style.display === 'none') return;
+            
+            console.log("Shadow: menunggu 3 detik sebelum fade out");
+            
+            // Hapus timer yang mungkin berjalan
+            if (shadowWaitTimeout) {
+                clearTimeout(shadowWaitTimeout);
+                shadowWaitTimeout = null;
+            }
+            if (shadowFadeOutTimeout) {
+                clearTimeout(shadowFadeOutTimeout);
+                shadowFadeOutTimeout = null;
+            }
+            
+            // Tunggu 3 detik sebelum memulai fade out
+            shadowWaitTimeout = setTimeout(() => {
+                if (!isSequenceActive || card.style.display === 'none') return;
+                
+                console.log("Shadow: memulai fade out selama 5 detik");
+                
+                // Hapus animasi fade in
+                card.style.animation = 'none';
+                
+                // Trigger reflow
+                void card.offsetHeight;
+                
+                // Tambah class fadeout
+                card.classList.add('card-fadeout');
+                
+                // Set timeout untuk menyembunyikan kartu setelah fade out selesai
+                shadowFadeOutTimeout = setTimeout(() => {
+                    if (isSequenceActive) {
+                        hideCard();
+                        card.classList.remove('card-fadeout');
+                        isSequenceActive = false;
+                        sequenceStage = 0;
+                        console.log("Shadow: kartu hilang setelah fade out");
+                    }
+                    shadowFadeOutTimeout = null;
+                }, 5000);
+                
+                shadowWaitTimeout = null;
+                
+            }, 3000); // Jeda 3 detik sebelum fade out dimulai
+        }
+        
+        // ===== FUNGSI UNTUK GANTI GAMBAR SHADOW =====
+        function goToNextImageShadow() {
+            if (!isSequenceActive || activeImagesList.length === 0) return false;
+            
+            currentCardImageIndex++;
+            
+            if (currentCardImageIndex < activeImagesList.length) {
+                card.src = activeImagesList[currentCardImageIndex].src;
+                sequenceStage = currentCardImageIndex + 1;
+                console.log(`Shadow: ganti ke gambar ${currentCardImageIndex + 1}`);
+                return true;
+            } else {
+                return false;
+            }
+        }
+        
+        function showCardStandar() {
+            const activeList = getActiveImagesList();
+            
+            if (activeList.length === 0) {
+                console.log('Tidak ada gambar aktif');
+                return;
+            }
+            
+            card.style.transition = 'none';
+            card.style.transform = 'none';
+            card.style.left = '0';
+            card.style.top = '0';
+            card.style.display = 'block';
+            card.style.animation = 'none';
+            card.classList.remove('card-fadeout');
+            
+            const cardWidth = card.offsetWidth;
+            const cardHeight = card.offsetHeight;
+            
+            const centerX = (window.innerWidth - cardWidth) / 2;
+            const centerY = (window.innerHeight - cardHeight) / 2;
+            
+            posX = Math.round(centerX);
+            posY = Math.round(centerY);
+            
+            currentCardImageIndex = 0;
+            card.src = activeList[0].src;
+            
+            card.style.opacity = '1';
+            card.style.visibility = 'visible';
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            
+            activeImagesList = activeList;
+            isSequenceActive = true;
+            sequenceStage = 1;
+            
+            console.log('Effect Standar: kartu muncul di tengah dengan gambar 1');
+        }
+        
+        function showCardSlider() {
+            const activeList = getActiveImagesList();
+            
+            if (activeList.length === 0) {
+                console.log('Tidak ada gambar aktif');
+                return;
+            }
+            
+            hasBeenTouched = false;
+
+            if (touchToChangeTimeout) {
+                clearTimeout(touchToChangeTimeout);
+                touchToChangeTimeout = null;
+            }
+
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            clearAllTimeouts();
+            
+            currentCardImageIndex = 0;
+            card.src = activeList[0].src;
+            
+            card.style.animation = 'none';
+            card.style.opacity = '0';
+            card.style.visibility = 'hidden';
+            card.style.display = 'block';
+            card.classList.remove('card-fadeout');
+            
+            card.style.left = '0';
+            card.style.top = '0';
+            card.style.right = 'auto';
+            card.style.bottom = 'auto';
+            card.style.margin = '0';
+            
+            card.classList.remove('card-moving', 'card-flipping', 'card-visible');
+            
+            requestAnimationFrame(() => {
+                if (card.complete) {
+                    initCardAnimation();
+                } else {
+                    card.onload = initCardAnimation;
+                    setTimeout(initCardAnimation, 500);
+                }
+            });
+            
+            function initCardAnimation() {
+                isAnimatingMotion = true;
+                
+                const cardRect = card.getBoundingClientRect();
+                const cardWidth = cardRect.width;
+                const cardHeight = cardRect.height;
+                
+                posX = (window.innerWidth / 2) - (cardWidth / 2);
+                posY = window.innerHeight + 100;
+                
+                card.style.transition = 'none';
+                card.style.transform = `translate(${posX}px, ${posY}px)`;
+                
+                void card.offsetHeight;
+                
+                card.style.opacity = '1';
+                card.style.visibility = 'visible';
+                card.classList.add('card-visible');
+                
+                requestAnimationFrame(() => {
+                    card.classList.add('card-moving');
+                    card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+                    
+                    setTimeout(() => {
+                        posX = (window.innerWidth / 2) - (cardWidth / 2);
+                        posY = (window.innerHeight / 2) - (cardHeight / 2);
+                        
+                        card.style.transform = `translate(${posX}px, ${posY}px)`;
+                        
+                        setTimeout(() => {
+                            isAnimating = false;
+                            isAnimatingMotion = false;
+                            card.classList.remove('card-moving');
+                            
+                            activeImagesList = activeList;
+                            isSequenceActive = true;
+                            sequenceStage = 1;
+                        }, 800);
+                    }, 50);
+                });
+            }
+        }
+
+        function showCardSkating() {
+            const activeList = getActiveImagesList();
+            
+            if (activeList.length === 0) {
+                console.log('Tidak ada gambar aktif');
+                return;
+            }
+            
+            hasBeenTouched = false;
+
+            if (touchToChangeTimeout) {
+                clearTimeout(touchToChangeTimeout);
+                touchToChangeTimeout = null;
+            }
+
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            clearAllTimeouts();
+            
+            currentCardImageIndex = 0;
+            card.src = activeList[0].src;
+            
+            card.style.animation = 'none';
+            card.style.opacity = '0';
+            card.style.visibility = 'hidden';
+            card.style.display = 'block';
+            card.classList.remove('card-fadeout');
+            
+            card.style.left = '0';
+            card.style.top = '0';
+            card.style.right = 'auto';
+            card.style.bottom = 'auto';
+            card.style.margin = '0';
+            
+            card.classList.remove('card-moving', 'card-flipping', 'card-visible');
+            
+            requestAnimationFrame(() => {
+                if (card.complete) {
+                    initCardAnimation();
+                } else {
+                    card.onload = initCardAnimation;
+                    setTimeout(initCardAnimation, 500);
+                }
+            });
+            
+            function initCardAnimation() {
+                isAnimatingMotion = true;
+                
+                const cardRect = card.getBoundingClientRect();
+                const cardWidth = cardRect.width;
+                const cardHeight = cardRect.height;
+                
+                posX = (window.innerWidth / 2) - (cardWidth / 2);
+                posY = window.innerHeight + 100;
+                
+                card.style.transition = 'none';
+                card.style.transform = `translate(${posX}px, ${posY}px)`;
+                
+                void card.offsetHeight;
+                
+                card.style.opacity = '1';
+                card.style.visibility = 'visible';
+                card.classList.add('card-visible');
+                
+                requestAnimationFrame(() => {
+                    card.classList.add('card-moving');
+                    card.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+                    
+                    setTimeout(() => {
+                        posX = (window.innerWidth / 2) - (cardWidth / 2);
+                        posY = (window.innerHeight / 2) - (cardHeight / 2);
+                        
+                        card.style.transform = `translate(${posX}px, ${posY}px)`;
+                        
+                        setTimeout(() => {
+                            isAnimating = false;
+                            isAnimatingMotion = false;
+                            card.classList.remove('card-moving');
+                            
+                            activeImagesList = activeList;
+                            isSequenceActive = true;
+                            sequenceStage = 1;
+                        }, 800);
+                    }, 50);
+                });
+            }
+        }
+
+        function scheduleExitSkating() {
+            if (card.style.display === 'none' || !isSequenceActive) return;
+            
+            console.log("Skating: menjadwalkan exit dengan indikator");
+            
+            if (exitIndicatorTimeout) {
+                clearTimeout(exitIndicatorTimeout);
+                exitIndicatorTimeout = null;
+            }
+            if (exitCardTimeout) {
+                clearTimeout(exitCardTimeout);
+                exitCardTimeout = null;
+            }
+            
+            exitIndicatorTimeout = setTimeout(() => {
+                if (isSequenceActive) {
+                    console.log("Skating: indikator exit muncul");
+                    showIndicator();
+                }
+                exitIndicatorTimeout = null;
+            }, 3000);
+            
+            exitCardTimeout = setTimeout(() => {
+                if (isSequenceActive) {
+                    console.log("Skating: mulai exit ke atas");
+                    hideIndicator();
+                    exitCardSkating();
+                }
+                exitCardTimeout = null;
+            }, 4000);
+        }
+        
+        function exitCardSkating() {
+            if (card.style.display === 'none' || !isSequenceActive) return;
+            
+            console.log("Skating: kartu keluar ke atas");
+            
+            isAnimatingMotion = true;
+            
+            const cardWidth = card.offsetWidth;
+            
+            card.classList.add('card-moving');
+            card.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+            
+            const targetY = -card.offsetHeight - 100;
+            card.style.transform = `translate(${posX}px, ${targetY}px) scale(${scale})`;
+            
+            setTimeout(() => {
+                hideCard();
+                card.classList.remove('card-moving');
+                isSequenceActive = false;
+                sequenceStage = 0;
+                isAnimatingMotion = false;
+                console.log("Skating: kartu hilang");
+            }, 500);
+        }
+        
+        function goToNextImage() {
+            if (!isSequenceActive || activeImagesList.length === 0) return false;
+            
+            currentCardImageIndex++;
+            
+            if (currentCardImageIndex < activeImagesList.length) {
+                card.src = activeImagesList[currentCardImageIndex].src;
+                sequenceStage = currentCardImageIndex + 1;
+                console.log(`Ganti ke gambar ${currentCardImageIndex + 1}`);
+                return true;
+            } else {
+                return false;
+            }
+        }
+        
+        function loadFromStorage() {
+            try {
+                const savedData = localStorage.getItem(STORAGE_KEY);
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    
+                    if (data.background) {
+                        background.style.backgroundImage = `url(${data.background})`;
+                    }
+                    
+                    if (data.effectStandar !== undefined) effectStandarCheckbox.checked = data.effectStandar;
+                    if (data.shadowEffect !== undefined) shadowEffectCheckbox.checked = data.shadowEffect;
+                    if (data.effectSlider !== undefined) effectSliderCheckbox.checked = data.effectSlider;
+                    if (data.effectSkating !== undefined) effectSkatingCheckbox.checked = data.effectSkating;
+                    if (data.sensorGerak !== undefined) {
+                        sensorGerakCheckbox.checked = data.sensorGerak;
+                        isSensorActive = data.sensorGerak;
+                    }
+                    
+                    if (data.activeImages) activeImages = data.activeImages;
+                    
+                    if (data.preview1) {
+                        const preview1Img = preview1.querySelector('img');
+                        if (preview1Img) preview1Img.src = data.preview1;
+                    }
+                    if (data.preview2) {
+                        const preview2Img = preview2.querySelector('img');
+                        if (preview2Img) preview2Img.src = data.preview2;
+                    }
+                    if (data.preview3) {
+                        const preview3Img = preview3.querySelector('img');
+                        if (preview3Img) preview3Img.src = data.preview3;
+                    }
+                    if (data.preview4) {
+                        const preview4Img = preview4.querySelector('img');
+                        if (preview4Img) preview4Img.src = data.preview4;
+                    }
+                    
+                    if (data.preview1) {
+                        card.src = data.preview1;
+                        mainCardPreview.src = data.preview1;
+                        updateMainCardPreview();
+                    }
+                }
+                
+                const savedSize = localStorage.getItem('card_size');
+                if (savedSize) {
+                    currentCardSize = parseInt(savedSize);
+                    card.style.maxWidth = currentCardSize + 'px';
+                    cardSizeSlider.value = currentCardSize;
+                    sizeValue.textContent = currentCardSize + 'px';
+                    updatePreviewCardSize();
+                }
+                
+                updateActivePreviewStyles();
+                
+            } catch (error) {
+                console.error('Error loading from storage:', error);
+            }
+        }
+        
+        function saveToStorage() {
+            try {
+                const preview1Img = preview1.querySelector('img');
+                const preview2Img = preview2.querySelector('img');
+                const preview3Img = preview3.querySelector('img');
+                const preview4Img = preview4.querySelector('img');
+                
+                const data = {
+                    background: background.style.backgroundImage.replace('url("', '').replace('")', ''),
+                    effectStandar: effectStandarCheckbox.checked,
+                    shadowEffect: shadowEffectCheckbox.checked,
+                    effectSlider: effectSliderCheckbox.checked,
+                    effectSkating: effectSkatingCheckbox.checked,
+                    sensorGerak: sensorGerakCheckbox.checked,
+                    activeImages: activeImages,
+                    preview1: preview1Img ? preview1Img.src : '',
+                    preview2: preview2Img ? preview2Img.src : '',
+                    preview3: preview3Img ? preview3Img.src : '',
+                    preview4: preview4Img ? preview4Img.src : ''
+                };
+                
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (error) {
+                console.error('Error saving to storage:', error);
+            }
+        }
+        
+        function autoSave() {
+            saveToStorage();
+        }
+        
+        effectStandarCheckbox.addEventListener('change', (e) => {
+            if (effectStandarCheckbox.checked) {
+                shadowEffectCheckbox.checked = false;
+                effectSliderCheckbox.checked = false;
+                effectSkatingCheckbox.checked = false;
+            }
+            autoSave();
+        });
+        
+        shadowEffectCheckbox.addEventListener('change', (e) => {
+            if (shadowEffectCheckbox.checked) {
+                effectStandarCheckbox.checked = false;
+                effectSliderCheckbox.checked = false;
+                effectSkatingCheckbox.checked = false;
+            }
+            autoSave();
+        });
+        
+        effectSliderCheckbox.addEventListener('change', (e) => {
+            if (effectSliderCheckbox.checked) {
+                effectStandarCheckbox.checked = false;
+                shadowEffectCheckbox.checked = false;
+                effectSkatingCheckbox.checked = false;
+            }
+            autoSave();
+        });
+
+        effectSkatingCheckbox.addEventListener('change', (e) => {
+            if (effectSkatingCheckbox.checked) {
+                effectStandarCheckbox.checked = false;
+                shadowEffectCheckbox.checked = false;
+                effectSliderCheckbox.checked = false;
+            }
+            autoSave();
+        });
+        
+        sensorGerakCheckbox.addEventListener('change', (e) => {
+            isSensorActive = sensorGerakCheckbox.checked;
+            autoSave();
+        });
+        
+        let startYPos = 0;
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                startYPos = e.touches[0].clientY;
+            }
+        }, {passive: false});
+        
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                const currentY = e.touches[0].clientY;
+                if (currentY - startYPos > 100) {
+                    e.preventDefault();
+                    settings.style.top = '0';
+                }
+            }
+        }, {passive: false});
+        
+        let lastTap = 0;
+        document.addEventListener('touchend', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            
+            if (tapLength < 300 && tapLength > 0) {
+                e.preventDefault();
+                
+                clearAllTimeouts();
+                hideIndicator();
+                
+                if (shadowEffectCheckbox.checked) {
+                    console.log('Double tap: Effect Shadow ON');
+                    isSequenceActive = true;
+                    sequenceStage = 1;
+                    
+                    sequenceTimer = setTimeout(() => {
+                        if (isSequenceActive) {
+                            showCardShadow();
+                        }
+                        sequenceTimer = null;
+                    }, 5000);
+                    
+                } else if (effectStandarCheckbox.checked) {
+                    console.log('Double tap: Effect Standar ON');
+                    isSequenceActive = false;
+                    
+                    sequenceTimer = setTimeout(() => {
+                        showCardStandar();
+                        sequenceTimer = null;
+                    }, 1000);
+                    
+                } else if (effectSliderCheckbox.checked) {
+                    console.log('Double tap: Effect Slider ON');
+                    const totalDelay = 4000;
+                    const indicatorDelay = 3000;
+                    
+                    indicatorTimeout = setTimeout(() => {
+                        showIndicator();
+                    }, indicatorDelay);
+                    
+                    cardAppearTimeout = setTimeout(() => {
+                        hideIndicator();
+                        showCardSlider();
+                    }, totalDelay);
+                    
+                } else if (effectSkatingCheckbox.checked) {
+                    console.log('Double tap: Effect Skating ON');
+                    const totalDelay = 4000;
+                    const indicatorDelay = 3000;
+                    
+                    indicatorTimeout = setTimeout(() => {
+                        showIndicator();
+                    }, indicatorDelay);
+                    
+                    cardAppearTimeout = setTimeout(() => {
+                        hideIndicator();
+                        showCardSkating();
+                    }, totalDelay);
+                    
+                } else {
+                    console.log('Double tap: No effect active');
+                }
+            }
+            lastTap = currentTime;
+        });
+        
+        function clearAllTimeouts() {
+            if (sequenceTimer) {
+                clearTimeout(sequenceTimer);
+                sequenceTimer = null;
+            }
+            if (touchToChangeTimeout) {
+                clearTimeout(touchToChangeTimeout);
+                touchToChangeTimeout = null;
+            }
+            if (indicatorTimeout) {
+                clearTimeout(indicatorTimeout);
+                indicatorTimeout = null;
+            }
+            if (cardAppearTimeout) {
+                clearTimeout(cardAppearTimeout);
+                cardAppearTimeout = null;
+            }
+            if (exitIndicatorTimeout) {
+                clearTimeout(exitIndicatorTimeout);
+                exitIndicatorTimeout = null;
+            }
+            if (exitCardTimeout) {
+                clearTimeout(exitCardTimeout);
+                exitCardTimeout = null;
+            }
+            if (shadowFadeOutTimeout) {
+                clearTimeout(shadowFadeOutTimeout);
+                shadowFadeOutTimeout = null;
+            }
+            if (shadowWaitTimeout) {
+                clearTimeout(shadowWaitTimeout);
+                shadowWaitTimeout = null;
+            }
+        }
+        
+        function showIndicator() {
+            cardIndicator.classList.add('visible');
+        }
+        
+        function hideIndicator() {
+            cardIndicator.classList.remove('visible');
+        }
+        
+        card.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                startX = e.touches[0].clientX - posX;
+                startY = e.touches[0].clientY - posY;
+                velocityX = 0;
+                velocityY = 0;
+                lastPosX = posX;
+                lastPosY = posY;
+                lastTime = Date.now();
+                card.style.transition = 'none';
+                card.style.animation = 'none';
+                e.preventDefault();
+            }
+        }, {passive: false});
+
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging && e.touches.length === 1) {
+                const now = Date.now();
+                const deltaTime = now - lastTime;
+                
+                if (deltaTime > 0) {
+                    const newPosX = e.touches[0].clientX - startX;
+                    const newPosY = e.touches[0].clientY - startY;
+                    
+                    velocityX = (newPosX - lastPosX) / deltaTime * 1000;
+                    velocityY = (newPosY - lastPosY) / deltaTime * 1000;
+                    
+                    lastPosX = newPosX;
+                    lastPosY = newPosY;
+                    lastTime = now;
+                    
+                    posX = newPosX;
+                    posY = newPosY;
+                    
+                    updateCardTransform();
+                    
+                    const cardRect = card.getBoundingClientRect();
+                    
+                    if (cardRect.bottom < -10 || 
+                        cardRect.top > window.innerHeight + 10 ||
+                        cardRect.right < -10 || 
+                        cardRect.left > window.innerWidth + 10) {
+                        
+                        console.log("Kartu keluar layar - LANGSUNG HILANG");
+                        hideCard();
+                        
+                        isSequenceActive = false;
+                        sequenceStage = 0;
+                        isDragging = false;
+                        
+                        if (touchToChangeTimeout) {
+                            clearTimeout(touchToChangeTimeout);
+                            touchToChangeTimeout = null;
+                        }
+                        if (shadowFadeOutTimeout) {
+                            clearTimeout(shadowFadeOutTimeout);
+                            shadowFadeOutTimeout = null;
+                        }
+                        if (shadowWaitTimeout) {
+                            clearTimeout(shadowWaitTimeout);
+                            shadowWaitTimeout = null;
+                        }
+                        card.classList.remove('card-fadeout');
+                        card.style.animation = 'none';
+                        
+                        e.preventDefault();
+                        return;
+                    }
+                }
+                e.preventDefault();
+            }
+        }, {passive: false});
+        
+        card.addEventListener('touchend', (e) => {
+            if (isDragging) {
+                const cardRect = card.getBoundingClientRect();
+                
+                if (cardRect.bottom < -10 || 
+                    cardRect.top > window.innerHeight + 10 ||
+                    cardRect.right < -10 || 
+                    cardRect.left > window.innerWidth + 10) {
+                    
+                    console.log("Kartu keluar layar di touchend - LANGSUNG HILANG");
+                    hideCard();
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                    
+                    if (touchToChangeTimeout) {
+                        clearTimeout(touchToChangeTimeout);
+                        touchToChangeTimeout = null;
+                    }
+                    if (shadowFadeOutTimeout) {
+                        clearTimeout(shadowFadeOutTimeout);
+                        shadowFadeOutTimeout = null;
+                    }
+                    if (shadowWaitTimeout) {
+                        clearTimeout(shadowWaitTimeout);
+                        shadowWaitTimeout = null;
+                    }
+                    card.classList.remove('card-fadeout');
+                    card.style.animation = 'none';
+                    
+                    isDragging = false;
+                    return;
+                }
+                
+                const speedThreshold = 800;
+                const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+                
+                if (currentSpeed > speedThreshold) {
+                    console.log("Kecepatan tinggi - kartu langsung hilang");
+                    hideCard();
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                    
+                    if (touchToChangeTimeout) {
+                        clearTimeout(touchToChangeTimeout);
+                        touchToChangeTimeout = null;
+                    }
+                    if (shadowFadeOutTimeout) {
+                        clearTimeout(shadowFadeOutTimeout);
+                        shadowFadeOutTimeout = null;
+                    }
+                    if (shadowWaitTimeout) {
+                        clearTimeout(shadowWaitTimeout);
+                        shadowWaitTimeout = null;
+                    }
+                    card.classList.remove('card-fadeout');
+                    card.style.animation = 'none';
+                    
+                    isDragging = false;
+                    return;
+                }
+                
+                isDragging = false;
+                card.style.transition = '';
+                
+                applyBounds();
+                updateCardTransform();
+            }
+            
+            setTimeout(() => {
+                if (!isSequenceActive || card.style.display === 'none' || card.style.visibility !== 'visible') {
+                    return;
+                }
+                
+                if (touchToChangeTimeout) {
+                    clearTimeout(touchToChangeTimeout);
+                }
+                
+                const activeCount = activeImagesList.length;
+                
+                // Untuk shadow effect
+                if (shadowEffectCheckbox.checked) {
+                    if (sequenceStage < activeCount) {
+                        console.log(`Shadow Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
+                        touchToChangeTimeout = setTimeout(() => {
+                            if (isSequenceActive) {
+                                if (goToNextImageShadow()) {
+                                    console.log(`Shadow: ganti ke gambar ${currentCardImageIndex + 1}`);
+                                }
+                            }
+                            touchToChangeTimeout = null;
+                        }, 3000);
+                    } 
+                    else if (sequenceStage === activeCount && activeCount > 0) {
+                        console.log(`Shadow Stage ${sequenceStage}: semua gambar sudah tampil, tunggu 3 detik lalu fade out`);
+                        // Hapus timer yang mungkin ada
+                        if (touchToChangeTimeout) clearTimeout(touchToChangeTimeout);
+                        // Langsung panggil fade out dengan jeda 3 detik
+                        fadeOutShadowCard();
+                    }
+                } 
+                else if (effectStandarCheckbox.checked || effectSliderCheckbox.checked) {
+                    if (sequenceStage < activeCount) {
+                        console.log(`Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
+                        touchToChangeTimeout = setTimeout(() => {
+                            if (isSequenceActive) {
+                                if (goToNextImage()) {
+                                    console.log(`Standar/Slider: ganti ke gambar ${currentCardImageIndex + 1}`);
+                                } else {
+                                    console.log("Standar/Slider: semua gambar sudah tampil");
+                                    isSequenceActive = false;
+                                    sequenceStage = 0;
+                                }
+                            }
+                            touchToChangeTimeout = null;
+                        }, 3000);
+                    } else {
+                        isSequenceActive = false;
+                        sequenceStage = 0;
+                    }
+                }
+                else if (effectSkatingCheckbox.checked) {
+                    if (sequenceStage < activeCount) {
+                        console.log(`Skating Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
+                        touchToChangeTimeout = setTimeout(() => {
+                            if (isSequenceActive) {
+                                if (goToNextImage()) {
+                                    console.log(`Skating: ganti ke gambar ${currentCardImageIndex + 1}`);
+                                }
+                            }
+                            touchToChangeTimeout = null;
+                        }, 3000);
+                    } 
+                    else if (sequenceStage === activeCount && activeCount > 0) {
+                        console.log(`Skating Stage ${sequenceStage}: semua gambar sudah tampil, menjadwalkan exit dengan indikator`);
+                        scheduleExitSkating();
+                    }
+                }
+            }, 50);
+        });
+        
+        bgUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    background.style.backgroundImage = `url(${event.target.result})`;
+                    autoSave();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        cardUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const imageSrc = event.target.result;
+                    updateCardImage(imageSrc);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        if (closeSettingsBtn) {
+            closeSettingsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Close settings button clicked - menyimpan dan menutup');
+                settings.style.top = '-100%';
+                autoSave();
+            });
+        }
+        
+        function initSensor() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === "function") {
+                sensorPermissionBtn.classList.remove('hidden');
+                
+                sensorPermissionBtn.onclick = async () => {
+                    try {
+                        const permission = await DeviceOrientationEvent.requestPermission();
+                        
+                        if (permission === "granted") {
+                            sensorPermissionBtn.classList.add('hidden');
+                            startSensor();
+                        }
+                    } catch (error) {
+                        console.error("Error requesting permission:", error);
+                        sensorPermissionBtn.innerHTML = "Error requesting permission.<br>Try refreshing the page.";
+                    }
+                };
+            } else {
+                sensorPermissionBtn.classList.add('hidden');
+                startSensor();
+            }
+        }
+        
+        function startSensor() {
+            isSensorEnabled = true;
+            
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener("deviceorientation", handleDeviceOrientation);
+                startSensorAnimation();
+            }
+        }
+        
+        function handleDeviceOrientation(e) {
+            if (isDragging) return;
+
+            const beta = e.beta || 0;
+            const gamma = e.gamma || 0;
+            
+            const limitedBeta = Math.max(-45, Math.min(45, beta));
+            const limitedGamma = Math.max(-45, Math.min(45, gamma));
+
+            smoothBeta += (limitedBeta - smoothBeta) * smoothing;
+            smoothGamma += (limitedGamma - smoothGamma) * smoothing;
+        }
+        
+        function startSensorAnimation() {
+            function animate() {
+                if (isSensorEnabled && !isDragging && !isAnimatingMotion && sensorGerakCheckbox.checked && card.style.display !== 'none') {
+                    posX += smoothGamma * sensitivity;
+                    posY += smoothBeta * sensitivity;
+                    applyBounds();
+                    updateCardTransform();
+                }
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+        
+        function applyBounds() {
+            const cardWidth = card.offsetWidth * scale;
+            const cardHeight = card.offsetHeight * scale;
+            
+            const minX = 0;
+            const maxX = window.innerWidth - cardWidth;
+            const minY = 0;
+            const maxY = window.innerHeight - cardHeight;
+            
+            posX = Math.max(minX, Math.min(maxX, posX));
+            posY = Math.max(minY, Math.min(maxY, posY));
+        }
+        
+        function updateCardTransform() {
+            posX = Math.round(posX);
+            posY = Math.round(posY);
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        }
+        
+        function hideCard() {
+            card.style.display = 'none';
+            card.style.visibility = 'hidden';
+            card.style.animation = 'none';
+            card.classList.remove('card-fadeout');
+        }
+        
+        window.addEventListener('resize', () => {
+            if (card.style.display !== 'none') {
+                const cardWidth = card.offsetWidth;
+                const cardHeight = card.offsetHeight;
+                posX = (window.innerWidth - cardWidth) / 2;
+                posY = (window.innerHeight - cardHeight) / 2;
+                posX = Math.round(posX);
+                posY = Math.round(posY);
+                updateCardTransform();
+            }
+        });
+        
+        window.addEventListener('beforeunload', () => {
+            saveToStorage();
+        });
+
+        window.addEventListener('load', () => {
+            loadRootFolders();
+            setTimeout(() => {
+                updateMainCardPreview();
+                updatePreviewCardSize();
+                updateActivePreviewStyles();
+                
+                updateDownloadButtonState();
+                
+                card.style.display = 'block';
+                card.style.animation = 'none';
+                card.style.opacity = '1';
+                
+                posX = (window.innerWidth / 2) - (card.offsetWidth / 2);
+                posY = window.innerHeight + card.offsetHeight + 100;
+                posX = Math.round(posX);
+                posY = Math.round(posY);
+                updateCardTransform();
+                
+                card.style.display = 'none';
+                card.style.visibility = 'hidden';
+            }, 200);
+        });
+
+        // ===== REMOVE BACKGROUND FUNCTIONALITY =====
+        const REMOVE_BG_API_KEY = '2crJY3ybEroko55EEQeVFh9C';
+        const REMOVE_BG_API_URL = 'https://api.remove.bg/v1.0/removebg';
+        
+        let processedImageBlob = null;
+
+        function updateDownloadButtonState() {
+            const hasImage = mainCardPreview.src && mainCardPreview.src !== '' && !mainCardPreview.src.includes('undefined');
+            downloadBtn.disabled = !hasImage;
+        }
+
+        function showRemoveBgStatus(message, isError = false) {
+            removeBgStatus.style.display = 'block';
+            removeBgStatus.textContent = message;
+            removeBgStatus.className = 'remove-bg-status ' + (isError ? 'error' : 'success');
+        }
+
+        function hideRemoveBgStatus() {
+            removeBgStatus.style.display = 'none';
+        }
+
+        function autoCropImage(imageSrc) {
+            return new Promise((resolve, reject) => {
+                console.log('=== AUTO-CROP DIMULAI ===');
+                
+                const img = new Image();
+                img.crossOrigin = "Anonymous";
+                
+                img.onload = function() {
+                    console.log('Gambar berhasil dimuat:', img.width, 'x', img.height);
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    
+                    ctx.drawImage(img, 0, 0);
+                    
+                    let imageData;
+                    try {
+                        imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    } catch (e) {
+                        console.error('Gagal membaca pixel (CORS):', e);
+                        resolve(imageSrc);
+                        return;
+                    }
+                    
+                    const data = imageData.data;
+                    
+                    let top = canvas.height;
+                    let bottom = 0;
+                    let left = canvas.width;
+                    let right = 0;
+                    let foundPixel = false;
+                    
+                    const threshold = 1;
+                    
+                    for (let y = 0; y < canvas.height; y++) {
+                        for (let x = 0; x < canvas.width; x++) {
+                            const index = (y * canvas.width + x) * 4;
+                            const alpha = data[index + 3];
+                            
+                            if (alpha > threshold) {
+                                if (!foundPixel) foundPixel = true;
+                                top = Math.min(top, y);
+                                bottom = Math.max(bottom, y);
+                                left = Math.min(left, x);
+                                right = Math.max(right, x);
+                            }
+                        }
+                    }
+                    
+                    if (!foundPixel) {
+                        resolve(imageSrc);
+                        return;
+                    }
+                    
+                    const objWidth = right - left + 1;
+                    const objHeight = bottom - top + 1;
+                    
+                    if (objWidth > canvas.width * 0.9 && objHeight > canvas.height * 0.9) {
+                        resolve(imageSrc);
+                        return;
+                    }
+                    
+                    const padding = 2;
+                    const cropLeft = Math.max(0, left - padding);
+                    const cropTop = Math.max(0, top - padding);
+                    const cropRight = Math.min(canvas.width, right + padding);
+                    const cropBottom = Math.min(canvas.height, bottom + padding);
+                    
+                    const cropWidth = cropRight - cropLeft;
+                    const cropHeight = cropBottom - cropTop;
+                    
+                    const cropCanvas = document.createElement('canvas');
+                    cropCanvas.width = cropWidth;
+                    cropCanvas.height = cropHeight;
+                    const cropCtx = cropCanvas.getContext('2d');
+                    
+                    cropCtx.drawImage(
+                        img, 
+                        cropLeft, cropTop, cropWidth, cropHeight,
+                        0, 0, cropWidth, cropHeight
+                    );
+                    
+                    const croppedDataUrl = cropCanvas.toDataURL('image/png');
+                    
+                    resolve(croppedDataUrl);
+                };
+                
+                img.onerror = function(err) {
+                    console.error('Gagal memuat gambar untuk auto-crop:', err);
+                    reject(new Error('Gagal memuat gambar untuk auto-crop'));
+                };
+                
+                img.src = imageSrc;
+            });
+        }
+        
+        function setRemoveBgLoading(isLoading) {
+            if (isLoading) {
+                removeBgBtn.disabled = true;
+                removeBgBtn.innerHTML = '⏳ Memproses...';
+                
+                const editorFrame = document.querySelector('.editor-frame');
+                const loadingOverlay = document.createElement('div');
+                loadingOverlay.id = 'bg-loading-overlay';
+                loadingOverlay.className = 'bg-loading-overlay';
+                loadingOverlay.innerHTML = `
+                    <div class="bg-spinner"></div>
+                    <div style="color: white; font-size: 14px;">Menghapus background...</div>
+                `;
+                
+                if (!document.getElementById('bg-loading-overlay')) {
+                    editorFrame.style.position = 'relative';
+                    editorFrame.appendChild(loadingOverlay);
+                }
+            } else {
+                removeBgBtn.disabled = false;
+                removeBgBtn.innerHTML = '🧹 Hapus Background';
+                
+                const loadingOverlay = document.getElementById('bg-loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.remove();
+                }
+            }
+        }
+
+        removeBgBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const currentImageSrc = mainCardPreview.src;
+            
+            if (!currentImageSrc || currentImageSrc === '') {
+                showRemoveBgStatus('Tidak ada gambar yang diproses', true);
+                setTimeout(hideRemoveBgStatus, 3000);
+                return;
+            }
+            
+            try {
+                setRemoveBgLoading(true);
+                hideRemoveBgStatus();
+                
+                processedImageBlob = null;
+                
+                let imageBlob;
+                
+                if (currentImageSrc.startsWith('data:')) {
+                    const response = await fetch(currentImageSrc);
+                    imageBlob = await response.blob();
+                } else {
+                    try {
+                        const headResponse = await fetch(currentImageSrc, { method: 'HEAD' });
+                        const contentLength = headResponse.headers.get('content-length');
+                        
+                        if (contentLength && parseInt(contentLength) > 5 * 1024 * 1024) {
+                            throw new Error('Ukuran file terlalu besar (maks 5MB)');
+                        }
+                        
+                        const response = await fetch(currentImageSrc);
+                        imageBlob = await response.blob();
+                    } catch (fetchError) {
+                        console.error('Error fetching image:', fetchError);
+                        throw new Error('Gagal mengambil gambar dari URL. Pastikan gambar dapat diakses.');
+                    }
+                }
+                
+                if (imageBlob.size > 5 * 1024 * 1024) {
+                    throw new Error('Ukuran file maksimal 5MB');
+                }
+                
+                const formData = new FormData();
+                formData.append('image_file', imageBlob, 'image.png');
+                formData.append('size', 'auto');
+                
+                const response = await fetch(REMOVE_BG_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'X-Api-Key': REMOVE_BG_API_KEY
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    let errorText = '';
+                    try {
+                        errorText = await response.text();
+                    } catch (e) {
+                        errorText = response.statusText;
+                    }
+                    
+                    if (response.status === 402) {
+                        throw new Error('API key tidak memiliki cukup kredit');
+                    } else if (response.status === 400) {
+                        throw new Error('Gambar tidak valid atau format tidak didukung');
+                    } else {
+                        throw new Error(`Error ${response.status}: ${errorText.substring(0, 100)}`);
+                    }
+                }
+                
+                const resultBlob = await response.blob();
+                processedImageBlob = resultBlob;
+                
+                const reader = new FileReader();
+                reader.onload = async function(event) {
+                    const resultImageUrl = event.target.result;
+                    
+                    try {
+                        showRemoveBgStatus('⏳ Merapikan pinggiran gambar...', false);
+                        const croppedImageUrl = await autoCropImage(resultImageUrl);
+                        updateCardImage(croppedImageUrl);
+                        const croppedResponse = await fetch(croppedImageUrl);
+                        processedImageBlob = await croppedResponse.blob();
+                        setRemoveBgLoading(false);
+                        showRemoveBgStatus('✅ Background terhapus & pinggiran dirapikan!');
+                        setTimeout(hideRemoveBgStatus, 3000);
+                    } catch (cropError) {
+                        console.error('Auto-crop error:', cropError);
+                        updateCardImage(resultImageUrl);
+                        setRemoveBgLoading(false);
+                        showRemoveBgStatus('✅ Background terhapus (tanpa crop)', false);
+                        setTimeout(hideRemoveBgStatus, 3000);
+                    }
+                };
+                
+                reader.readAsDataURL(resultBlob);
+                
+            } catch (error) {
+                console.error('Remove background error:', error);
+                setRemoveBgLoading(false);
+                let errorMessage = error.message;
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMessage = 'Error CORS atau jaringan. Gunakan extension CORS Unblock atau coba gambar lain.';
+                }
+                showRemoveBgStatus(`❌ Gagal: ${errorMessage}`, true);
+                setTimeout(hideRemoveBgStatus, 5000);
+            }
+        });
+        
+        downloadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (processedImageBlob) {
+                const url = URL.createObjectURL(processedImageBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'removed-background-cropped.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showRemoveBgStatus('✅ Gambar hasil diunduh!');
+                setTimeout(hideRemoveBgStatus, 2000);
+            } else {
+                const currentImageSrc = mainCardPreview.src;
+                if (currentImageSrc && currentImageSrc !== '') {
+                    const a = document.createElement('a');
+                    a.href = currentImageSrc;
+                    a.download = 'gambar-asli.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    showRemoveBgStatus('✅ Gambar asli diunduh!');
+                    setTimeout(hideRemoveBgStatus, 2000);
+                } else {
+                    showRemoveBgStatus('Tidak ada gambar untuk diunduh', true);
+                    setTimeout(hideRemoveBgStatus, 2000);
+                }
+            }
+        });
+        
+        updateDownloadButtonState();
+
+      // ===== FIREBASE REMOTE CONTROL =====
+// Tambahkan ini di bagian bawah script Anda (sebelum </script>)
+
+// Konfigurasi Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyCEmMaofxL1_ciX0wQn2X9DRM_WZFP-q9M",
+    authDomain: "magic--control.firebaseapp.com",
+    databaseURL: "https://magic--control-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "magic--control",
+    storageBucket: "magic--control.appspot.com",
+    messagingSenderId: "1040027506886",
+    appId: "1:1040027506886:web:e70e085b3d57f0e765dfc7",
+    measurementId: "G-0KSWHKL03D"
+};
+
+// Inisialisasi Firebase
+if (typeof firebase !== 'undefined') {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+    
+    // Generate ID unik untuk host ini (gunakan localStorage atau random)
+    let hostId = localStorage.getItem('magic_host_id');
+    if (!hostId) {
+        hostId = 'host_' + Math.random().toString(36).substr(2, 8);
+        localStorage.setItem('magic_host_id', hostId);
+    }
+    
+    // Register host ke Firebase
+    const hostRef = db.ref('hosts/' + hostId);
+    hostRef.set({
+        status: 'online',
+        name: navigator.platform || 'Magic Card Device',
+        lastSeen: firebase.database.ServerValue.TIMESTAMP
+    });
+    
+    // Update status setiap 30 detik
+    setInterval(() => {
+        hostRef.update({
+            lastSeen: firebase.database.ServerValue.TIMESTAMP,
+            status: 'online'
+        });
+    }, 30000);
+    
+    // Listen untuk command dari remote
+    const commandRef = db.ref('commands/' + hostId);
+    commandRef.on('value', (snapshot) => {
+        const command = snapshot.val();
+        if (command) {
+            console.log('Received command:', command);
+            
+            switch (command.action) {
+                case 'doubleTap':
+                    // Simulasi double tap
+                    console.log('Remote: menjalankan double tap');
+                    simulateDoubleTap();
+                    break;
+                    
+                case 'hideCard':
+                    console.log('Remote: menyembunyikan kartu');
+                    hideCard();
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                    clearAllTimeouts();
+                    card.classList.remove('card-fadeout');
+                    card.style.animation = 'none';
+                    break;
+                    
+                case 'resetCard':
+                    console.log('Remote: reset kartu ke posisi awal');
+                    hideCard();
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                    clearAllTimeouts();
+                    card.classList.remove('card-fadeout');
+                    card.style.animation = 'none';
+                    // Set kartu ke posisi awal di luar layar
+                    card.style.display = 'block';
+                    posX = (window.innerWidth / 2) - (card.offsetWidth / 2);
+                    posY = window.innerHeight + card.offsetHeight + 100;
+                    updateCardTransform();
+                    card.style.display = 'none';
+                    card.style.visibility = 'hidden';
+                    break;
+                    
+                case 'selectEffect':
+                    console.log('Remote: mengubah efek ke:', command.effect);
+                    // Matikan semua efek
+                    effectStandarCheckbox.checked = false;
+                    shadowEffectCheckbox.checked = false;
+                    effectSliderCheckbox.checked = false;
+                    effectSkatingCheckbox.checked = false;
+                    
+                    // Aktifkan efek yang dipilih
+                    switch (command.effect) {
+                        case 'standar':
+                            effectStandarCheckbox.checked = true;
+                            break;
+                        case 'shadow':
+                            shadowEffectCheckbox.checked = true;
+                            break;
+                        case 'slider':
+                            effectSliderCheckbox.checked = true;
+                            break;
+                        case 'skating':
+                            effectSkatingCheckbox.checked = true;
+                            break;
+                    }
+                    autoSave();
+                    break;
+                    
+                case 'changeImage':
+                    console.log('Remote: ganti gambar ke favorite:', command.favorite);
+                    if (command.favorite >= 1 && command.favorite <= 4) {
+                        const previewBox = document.getElementById(`preview-${command.favorite}`);
+                        const previewImg = previewBox.querySelector('img');
+                        if (previewImg && previewImg.src) {
+                            updateCardImage(previewImg.src);
+                        }
+                    }
+                    break;
+                    
+                case 'setCardSize':
+                    console.log('Remote: ubah ukuran kartu ke:', command.size);
+                    cardSizeSlider.value = command.size;
+                    const newSize = command.size;
+                    sizeValue.textContent = newSize + 'px';
+                    card.style.maxWidth = newSize + 'px';
+                    currentCardSize = parseInt(newSize);
+                    updatePreviewCardSize();
+                    localStorage.setItem('card_size', newSize);
+                    if (card.style.display !== 'none') {
+                        const oldWidth = card.offsetWidth;
+                        setTimeout(() => {
+                            const newWidth = card.offsetWidth;
+                            posX = posX - (newWidth - oldWidth) / 2;
+                            applyBounds();
+                            updateCardTransform();
+                        }, 10);
+                    }
+                    autoSave();
+                    break;
+                    
+                case 'triggerEffect':
+                    console.log('Remote: trigger efek langsung');
+                    // Simulasikan double tap dengan efek yang sudah dipilih
+                    simulateDoubleTap();
+                    break;
+            }
+            
+            // Hapus command setelah diproses
+            commandRef.remove();
+        }
+    });
+    
+    // Fungsi untuk mensimulasikan double tap
+    function simulateDoubleTap() {
+        // Simulasikan event double tap
+        const event = new CustomEvent('touchend');
+        // Panggil handler double tap
+        const currentTime = new Date().getTime();
+        const lastTapTime = window._lastSimulatedTap || 0;
+        
+        if (currentTime - lastTapTime < 300 && lastTapTime > 0) {
+            // Double tap terdeteksi
+            console.log('Simulated double tap detected');
+            
+            // Clear timer
+            clearAllTimeouts();
+            hideIndicator();
+            
+            // Jalankan efek sesuai setting
+            if (shadowEffectCheckbox.checked) {
+                isSequenceActive = true;
+                sequenceStage = 1;
+                sequenceTimer = setTimeout(() => {
+                    if (isSequenceActive) showCardShadow();
+                    sequenceTimer = null;
+                }, 5000);
+            } else if (effectStandarCheckbox.checked) {
+                isSequenceActive = false;
+                sequenceTimer = setTimeout(() => {
+                    showCardStandar();
+                    sequenceTimer = null;
+                }, 1000);
+            } else if (effectSliderCheckbox.checked) {
+                const totalDelay = 4000;
+                const indicatorDelay = 3000;
+                indicatorTimeout = setTimeout(() => showIndicator(), indicatorDelay);
+                cardAppearTimeout = setTimeout(() => {
+                    hideIndicator();
+                    showCardSlider();
+                }, totalDelay);
+            } else if (effectSkatingCheckbox.checked) {
+                const totalDelay = 4000;
+                const indicatorDelay = 3000;
+                indicatorTimeout = setTimeout(() => showIndicator(), indicatorDelay);
+                cardAppearTimeout = setTimeout(() => {
+                    hideIndicator();
+                    showCardSkating();
+                }, totalDelay);
+            }
+        }
+        
+        window._lastSimulatedTap = currentTime;
+    }
+    
+    // Tampilkan ID host di settings untuk pairing
+    const hostIdDisplay = document.createElement('div');
+    hostIdDisplay.style.cssText = `
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        background: rgba(0,0,0,0.7);
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 10px;
+        color: #4CAF50;
+        z-index: 999;
+        font-family: monospace;
+        pointer-events: none;
+    `;
+    hostIdDisplay.innerHTML = `🔗 Host ID: <strong>${hostId}</strong>`;
+    document.body.appendChild(hostIdDisplay);
+    
+    // Tambahkan tombol pairing di settings
+    const settingsDiv = document.getElementById('settings');
+    const pairingSection = document.createElement('div');
+    pairingSection.className = 'setting-section';
+    pairingSection.style.borderTop = '1px solid #333';
+    pairingSection.style.paddingTop = '15px';
+    pairingSection.style.marginTop = '10px';
+    pairingSection.innerHTML = `
+        <h3>📱 Remote Control</h3>
+        <p style="font-size: 12px; color: #aaa; margin-bottom: 10px;">
+            Gunakan HP lain untuk mengontrol kartu ini.<br>
+            <strong>Host ID:</strong> <span style="color: #4CAF50; font-family: monospace;">${hostId}</span>
+        </p>
+        <p style="font-size: 11px; color: #888;">
+            Buka di HP lain: <strong>https://magic--control.web.app/remote</strong><br>
+            Masukkan Host ID di atas untuk pairing.
+        </p>
+    `;
+    
+    // Sisipkan sebelum Card Size section
+    const cardSizeSection = document.querySelector('.preview-frame-container').nextElementSibling;
+    if (cardSizeSection) {
+        settingsDiv.insertBefore(pairingSection, cardSizeSection);
+    } else {
+        settingsDiv.appendChild(pairingSection);
+    }
+    
+    console.log('Firebase Remote Control initialized. Host ID:', hostId);
+} else {
+    console.warn('Firebase SDK not loaded. Remote control disabled.');
+}
+    </script>
+</body>
+</html>
