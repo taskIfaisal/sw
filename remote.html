@@ -113,6 +113,43 @@
             color: #f44336;
         }
         
+        .main-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .main-btn {
+            flex: 1;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            border: none;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .main-btn:active {
+            transform: scale(0.97);
+        }
+        
+        .main-btn .icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .main-btn .label {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .main-btn .sub {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
         .button-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -202,6 +239,10 @@
             background: #ff9800;
         }
         
+        .control-btn.next {
+            background: #2196F3;
+        }
+        
         .size-slider {
             margin-top: 20px;
             padding: 15px;
@@ -236,6 +277,16 @@
             color: #666;
             margin-top: 20px;
         }
+        
+        .info-text {
+            background: rgba(33, 150, 243, 0.2);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            text-align: center;
+            border-left: 3px solid #2196F3;
+        }
     </style>
 </head>
 <body>
@@ -255,6 +306,27 @@
         </div>
         
         <div id="controls" style="display: none;">
+            <!-- Tombol Utama: Trigger Effect & Next Image -->
+            <div class="main-buttons">
+                <div class="main-btn" id="trigger-btn">
+                    <div class="icon">🎯</div>
+                    <div class="label">TRIGGER</div>
+                    <div class="sub">Jalankan efek</div>
+                </div>
+                <div class="main-btn" id="next-image-btn" style="background: linear-gradient(135deg, #2196F3, #1976D2);">
+                    <div class="icon">🔄</div>
+                    <div class="label">NEXT IMAGE</div>
+                    <div class="sub">Ganti gambar (klik 1x)</div>
+                </div>
+            </div>
+            
+            <!-- Informasi cara kerja -->
+            <div class="info-text">
+                💡 <strong>Next Image</strong> = sama seperti menyentuh kartu.<br>
+                Kartu akan berganti ke gambar berikutnya setelah 3 detik.
+            </div>
+            
+            <!-- Pilih Efek -->
             <div class="button-grid">
                 <div class="effect-btn" data-effect="standar">
                     <div class="icon">🪄</div>
@@ -274,22 +346,21 @@
                 </div>
             </div>
             
+            <!-- Quick Favorite Images -->
             <div class="quick-actions">
-                <button class="quick-btn" data-favorite="1">❤️</button>
-                <button class="quick-btn" data-favorite="2">♦️</button>
-                <button class="quick-btn" data-favorite="3">♣️</button>
-                <button class="quick-btn" data-favorite="4">♠️</button>
+                <button class="quick-btn" data-favorite="1">❤️ Fav 1</button>
+                <button class="quick-btn" data-favorite="2">♦️ Fav 2</button>
+                <button class="quick-btn" data-favorite="3">♣️ Fav 3</button>
+                <button class="quick-btn" data-favorite="4">♠️ Fav 4</button>
             </div>
             
+            <!-- Kontrol Tambahan -->
             <div class="control-buttons">
-                <button class="control-btn hide" id="hide-btn">⬅️ HIDE CARD</button>
+                <button class="control-btn hide" id="hide-btn">⬅️ HIDE</button>
                 <button class="control-btn reset" id="reset-btn">🔄 RESET</button>
             </div>
             
-            <div class="control-buttons">
-                <button class="control-btn" id="trigger-btn" style="background: #4CAF50;">🎯 TRIGGER EFFECT</button>
-            </div>
-            
+            <!-- Ukuran Kartu -->
             <div class="size-slider">
                 <label>📏 Card Size: <span id="size-display">200</span>px</label>
                 <input type="range" id="size-slider" min="100" max="400" value="200" step="5">
@@ -298,7 +369,7 @@
         </div>
         
         <div class="footer">
-            Magic Card Remote Controller v1.0
+            Magic Card Remote Controller v1.1 | Klik 1x NEXT IMAGE untuk ganti gambar
         </div>
     </div>
     
@@ -329,12 +400,16 @@
         const controlsDiv = document.getElementById('controls');
         const sizeSlider = document.getElementById('size-slider');
         const sizeDisplay = document.getElementById('size-display');
+        const triggerBtn = document.getElementById('trigger-btn');
+        const nextImageBtn = document.getElementById('next-image-btn');
+        const hideBtn = document.getElementById('hide-btn');
+        const resetBtn = document.getElementById('reset-btn');
         
         // Send command function
         function sendCommand(action, data = {}) {
             if (!currentHostId || !isConnected) {
                 showStatus('Belum terhubung ke host', false);
-                return;
+                return false;
             }
             
             const command = {
@@ -348,15 +423,12 @@
                 .then(() => {
                     console.log('Command sent:', command);
                     // Visual feedback
-                    const btn = document.activeElement;
-                    if (btn && btn.classList) {
-                        btn.style.transform = 'scale(0.95)';
-                        setTimeout(() => { btn.style.transform = ''; }, 150);
-                    }
+                    return true;
                 })
                 .catch(err => {
                     console.error('Error sending command:', err);
                     showStatus('Gagal mengirim perintah', false);
+                    return false;
                 });
         }
         
@@ -376,7 +448,7 @@
                 if (host && host.status === 'online') {
                     const lastSeen = host.lastSeen;
                     const now = Date.now();
-                    if (now - lastSeen < 60000) { // Within 1 minute
+                    if (now - lastSeen < 60000) {
                         isConnected = true;
                         showStatus(`✅ Terhubung ke: ${host.name || 'Magic Card'}`, true);
                         controlsDiv.style.display = 'block';
@@ -397,7 +469,7 @@
             });
         }
         
-        // Monitor host status periodically
+        // Monitor host status
         let statusInterval = null;
         
         // Connect button handler
@@ -411,10 +483,45 @@
             currentHostId = hostId;
             checkHostStatus();
             
-            // Clear previous interval
             if (statusInterval) clearInterval(statusInterval);
-            // Check every 10 seconds
             statusInterval = setInterval(checkHostStatus, 10000);
+        });
+        
+        // TRIGGER EFFECT - menjalankan efek yang sedang dipilih (simulasi double tap)
+        triggerBtn.addEventListener('click', () => {
+            if (!isConnected) {
+                showStatus('Belum terhubung ke host', false);
+                return;
+            }
+            sendCommand('triggerEffect');
+            
+            // Visual feedback
+            triggerBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => { triggerBtn.style.transform = ''; }, 200);
+        });
+        
+        // NEXT IMAGE - sama seperti menyentuh kartu (ganti gambar berikutnya setelah 3 detik)
+        nextImageBtn.addEventListener('click', () => {
+            if (!isConnected) {
+                showStatus('Belum terhubung ke host', false);
+                return;
+            }
+            
+            // Kirim command doubleTap karena di host, sentuhan kartu memicu ganti gambar
+            // Di host, sentuhan kartu akan menjalankan sequence ganti gambar setelah 3 detik
+            sendCommand('doubleTap');
+            
+            // Visual feedback
+            nextImageBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => { nextImageBtn.style.transform = ''; }, 200);
+            
+            // Tampilkan notifikasi singkat
+            showStatus('🔄 Mengganti gambar... (tunggu 3 detik)', true);
+            setTimeout(() => {
+                if (isConnected) {
+                    showStatus(`✅ Terhubung ke host`, true);
+                }
+            }, 2000);
         });
         
         // Effect buttons
@@ -423,7 +530,6 @@
                 const effect = btn.dataset.effect;
                 sendCommand('selectEffect', { effect: effect });
                 
-                // Visual feedback - highlight active
                 document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 setTimeout(() => btn.classList.remove('active'), 500);
@@ -439,18 +545,13 @@
         });
         
         // Hide button
-        document.getElementById('hide-btn').addEventListener('click', () => {
+        hideBtn.addEventListener('click', () => {
             sendCommand('hideCard');
         });
         
         // Reset button
-        document.getElementById('reset-btn').addEventListener('click', () => {
+        resetBtn.addEventListener('click', () => {
             sendCommand('resetCard');
-        });
-        
-        // Trigger effect button (simulate double tap)
-        document.getElementById('trigger-btn').addEventListener('click', () => {
-            sendCommand('triggerEffect');
         });
         
         // Size slider
