@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Card Trick - Keyboard Control</title>
+    <title>Magic Card Trick</title>
     <!-- <link rel="manifest" href="./manifest.json"> -->
     <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
     <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
@@ -720,21 +720,6 @@
             gap: 10px;
             margin-bottom: 5px;
         }
-
-        /* Keyboard status indicator */
-        .keyboard-status {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.7);
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            z-index: 1000;
-            pointer-events: none;
-            font-family: monospace;
-            border: 1px solid #4CAF50;
-        }
     </style>
 </head>
 <body>
@@ -742,11 +727,6 @@
     <img id="card" src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Magic Ball">
     
     <div id="card-indicator"></div>
-    
-    <!-- Keyboard status indicator -->
-    <div class="keyboard-status" id="keyboard-status">
-        ⌨️ Waiting for input (1 or 2)
-    </div>
     
     <div id="settings">
         <h2>Settings</h2>
@@ -924,7 +904,6 @@
         const closeSettingsBtn = document.getElementById('close-settings');
         const sensorPermissionBtn = document.getElementById('sensor-permission');
         const cardIndicator = document.getElementById('card-indicator');
-        const keyboardStatus = document.getElementById('keyboard-status');
         
         const cardSizeSlider = document.getElementById('card-size-slider');
         const sizeValue = document.getElementById('size-value');
@@ -995,10 +974,6 @@
         let shadowFadeOutTimeout = null;
         let shadowWaitTimeout = null;
         
-        // ===== VARIABEL UNTUK KEYBOARD INPUT =====
-        let lastKeyPressTime = 0;
-        let keyPressTimeout = null;
-        
         const STORAGE_KEY = 'magic_card_data';
         
         loadFromStorage();
@@ -1060,102 +1035,53 @@
         
         initSensor();
         
-        // ========== KEYBOARD INPUT HANDLER ==========
+        // ========== KEYBOARD INPUT HANDLER - SILENT MODE ==========
         // Fungsi untuk memproses angka 1 (tap biasa)
         function handleTapOne() {
-            console.log('Keyboard: Received "1" - Tap biasa');
-            updateKeyboardStatus('🔵 Received: 1 (Tap biasa)', '#4CAF50');
-            
             // Trigger seperti tap biasa pada kartu yang sedang muncul
-            // Ini akan memicu pergantian kartu jika kartu sedang aktif
             if (card.style.display !== 'none' && card.style.visibility === 'visible') {
-                // Simulasi tap pada kartu
                 triggerCardTap();
-            } else {
-                console.log('Kartu tidak aktif, abaikan tap 1');
-                updateKeyboardStatus('⚠️ Card not active, ignored', '#FF9800');
-                setTimeout(() => {
-                    if (keyboardStatus.style.opacity !== '0') {
-                        updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
-                    }
-                }, 1500);
             }
         }
         
         // Fungsi untuk memproses angka 2 (double tap / trigger effect)
         function handleTapTwo() {
-            console.log('Keyboard: Received "2" - Double tap (trigger effect)');
-            updateKeyboardStatus('🔴 Received: 2 (Trigger effect)', '#f44336');
-            
-            // Trigger double tap effect
             triggerDoubleTapEffect();
         }
         
         // Fungsi untuk mensimulasi tap pada kartu (pergantian gambar)
         function triggerCardTap() {
             if (!isSequenceActive || card.style.display === 'none' || card.style.visibility !== 'visible') {
-                console.log('Kartu tidak dalam state aktif untuk pergantian');
                 return;
             }
             
-            // Hapus timer yang mungkin ada
             if (touchToChangeTimeout) {
                 clearTimeout(touchToChangeTimeout);
             }
             
             const activeCount = activeImagesList.length;
             
-            // Untuk shadow effect
             if (shadowEffectCheckbox.checked) {
                 if (sequenceStage < activeCount) {
-                    console.log(`Shadow Stage ${sequenceStage}: keyboard tap - ganti gambar dalam 3 detik`);
-                    updateKeyboardStatus(`🎴 Shadow: akan ganti ke gambar ${sequenceStage + 1} dalam 3 detik`, '#FF9800');
                     touchToChangeTimeout = setTimeout(() => {
                         if (isSequenceActive) {
-                            if (goToNextImageShadow()) {
-                                console.log(`Shadow: ganti ke gambar ${currentCardImageIndex + 1}`);
-                                updateKeyboardStatus(`🎴 Ganti ke gambar ${currentCardImageIndex + 1}`, '#4CAF50');
-                                setTimeout(() => {
-                                    if (keyboardStatus.style.opacity !== '0') {
-                                        updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
-                                    }
-                                }, 1500);
-                            }
+                            goToNextImageShadow();
                         }
                         touchToChangeTimeout = null;
                     }, 3000);
                 } 
                 else if (sequenceStage === activeCount && activeCount > 0) {
-                    console.log(`Shadow Stage ${sequenceStage}: semua gambar sudah tampil, fade out dalam 3 detik`);
-                    updateKeyboardStatus(`✨ Shadow: fade out dalam 3 detik`, '#FF9800');
                     if (touchToChangeTimeout) clearTimeout(touchToChangeTimeout);
                     fadeOutShadowCard();
                 }
             } 
             else if (effectStandarCheckbox.checked || effectSliderCheckbox.checked) {
                 if (sequenceStage < activeCount) {
-                    console.log(`Stage ${sequenceStage}: keyboard tap - ganti gambar dalam 3 detik`);
-                    updateKeyboardStatus(`🎴 Akan ganti ke gambar ${sequenceStage + 1} dalam 3 detik`, '#FF9800');
                     touchToChangeTimeout = setTimeout(() => {
                         if (isSequenceActive) {
-                            if (goToNextImage()) {
-                                console.log(`Standar/Slider: ganti ke gambar ${currentCardImageIndex + 1}`);
-                                updateKeyboardStatus(`🎴 Ganti ke gambar ${currentCardImageIndex + 1}`, '#4CAF50');
-                                setTimeout(() => {
-                                    if (keyboardStatus.style.opacity !== '0') {
-                                        updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
-                                    }
-                                }, 1500);
-                            } else {
-                                console.log("Standar/Slider: semua gambar sudah tampil");
+                            if (!goToNextImage()) {
                                 isSequenceActive = false;
                                 sequenceStage = 0;
-                                updateKeyboardStatus('✅ Selesai', '#4CAF50');
-                                setTimeout(() => {
-                                    if (keyboardStatus.style.opacity !== '0') {
-                                        updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
-                                    }
-                                }, 1500);
                             }
                         }
                         touchToChangeTimeout = null;
@@ -1167,26 +1093,14 @@
             }
             else if (effectSkatingCheckbox.checked) {
                 if (sequenceStage < activeCount) {
-                    console.log(`Skating Stage ${sequenceStage}: keyboard tap - ganti gambar dalam 3 detik`);
-                    updateKeyboardStatus(`🎴 Skating: akan ganti ke gambar ${sequenceStage + 1} dalam 3 detik`, '#FF9800');
                     touchToChangeTimeout = setTimeout(() => {
                         if (isSequenceActive) {
-                            if (goToNextImage()) {
-                                console.log(`Skating: ganti ke gambar ${currentCardImageIndex + 1}`);
-                                updateKeyboardStatus(`🎴 Ganti ke gambar ${currentCardImageIndex + 1}`, '#4CAF50');
-                                setTimeout(() => {
-                                    if (keyboardStatus.style.opacity !== '0') {
-                                        updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
-                                    }
-                                }, 1500);
-                            }
+                            goToNextImage();
                         }
                         touchToChangeTimeout = null;
                     }, 3000);
                 } 
                 else if (sequenceStage === activeCount && activeCount > 0) {
-                    console.log(`Skating Stage ${sequenceStage}: semua gambar sudah tampil, schedule exit`);
-                    updateKeyboardStatus(`🚪 Skating: akan keluar dalam 4 detik`, '#FF9800');
                     scheduleExitSkating();
                 }
             }
@@ -1198,43 +1112,25 @@
             hideIndicator();
             
             if (shadowEffectCheckbox.checked) {
-                console.log('Keyboard Double tap: Effect Shadow ON');
-                updateKeyboardStatus('🎭 Effect Shadow: kartu akan muncul dalam 5 detik', '#FF9800');
                 isSequenceActive = true;
                 sequenceStage = 1;
                 
                 sequenceTimer = setTimeout(() => {
                     if (isSequenceActive) {
                         showCardShadow();
-                        updateKeyboardStatus('🎭 Shadow effect running...', '#4CAF50');
-                        setTimeout(() => {
-                            if (keyboardStatus.style.opacity !== '0') {
-                                updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
-                            }
-                        }, 3000);
                     }
                     sequenceTimer = null;
                 }, 5000);
                 
             } else if (effectStandarCheckbox.checked) {
-                console.log('Keyboard Double tap: Effect Standar ON');
-                updateKeyboardStatus('✨ Effect Standar: kartu akan muncul dalam 1 detik', '#FF9800');
                 isSequenceActive = false;
                 
                 sequenceTimer = setTimeout(() => {
                     showCardStandar();
-                    updateKeyboardStatus('✨ Standar effect running...', '#4CAF50');
-                    setTimeout(() => {
-                        if (keyboardStatus.style.opacity !== '0') {
-                            updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
-                        }
-                    }, 2000);
                     sequenceTimer = null;
                 }, 1000);
                 
             } else if (effectSliderCheckbox.checked) {
-                console.log('Keyboard Double tap: Effect Slider ON');
-                updateKeyboardStatus('📱 Effect Slider: kartu akan muncul dalam 4 detik', '#FF9800');
                 const totalDelay = 4000;
                 const indicatorDelay = 3000;
                 
@@ -1245,17 +1141,9 @@
                 cardAppearTimeout = setTimeout(() => {
                     hideIndicator();
                     showCardSlider();
-                    updateKeyboardStatus('📱 Slider effect running...', '#4CAF50');
-                    setTimeout(() => {
-                        if (keyboardStatus.style.opacity !== '0') {
-                            updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
-                        }
-                    }, 2000);
                 }, totalDelay);
                 
             } else if (effectSkatingCheckbox.checked) {
-                console.log('Keyboard Double tap: Effect Skating ON');
-                updateKeyboardStatus('⛸️ Effect Skating: kartu akan muncul dalam 4 detik', '#FF9800');
                 const totalDelay = 4000;
                 const indicatorDelay = 3000;
                 
@@ -1266,63 +1154,25 @@
                 cardAppearTimeout = setTimeout(() => {
                     hideIndicator();
                     showCardSkating();
-                    updateKeyboardStatus('⛸️ Skating effect running...', '#4CAF50');
-                    setTimeout(() => {
-                        if (keyboardStatus.style.opacity !== '0') {
-                            updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
-                        }
-                    }, 2000);
                 }, totalDelay);
-                
-            } else {
-                console.log('Keyboard Double tap: No effect active');
-                updateKeyboardStatus('⚠️ No effect active, enable one in settings', '#f44336');
-                setTimeout(() => {
-                    if (keyboardStatus.style.opacity !== '0') {
-                        updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
-                    }
-                }, 2000);
             }
         }
         
-        // Update keyboard status display
-        function updateKeyboardStatus(message, color = '#4CAF50') {
-            keyboardStatus.textContent = message;
-            keyboardStatus.style.borderColor = color;
-            keyboardStatus.style.opacity = '1';
-            
-            // Auto fade after 3 seconds
-            setTimeout(() => {
-                if (keyboardStatus.textContent === message) {
-                    keyboardStatus.style.opacity = '0.7';
-                }
-            }, 3000);
-        }
-        
-        // Keyboard event listener untuk menerima input dari ESP32 (keyboard Bluetooth)
+        // Keyboard event listener - SILENT (tanpa console log)
         document.addEventListener('keydown', function(event) {
-            // Cegah default behavior untuk tombol angka
-            if (event.key === '1' || event.key === '2' || 
-                event.key === '1' || event.key === '2') {
+            if (event.key === '1' || event.key === '2') {
                 event.preventDefault();
                 
-                const now = Date.now();
-                const keyValue = event.key;
-                
-                console.log(`Keyboard key pressed: ${keyValue}`);
-                
-                if (keyValue === '1') {
+                if (event.key === '1') {
                     handleTapOne();
-                } else if (keyValue === '2') {
+                } else if (event.key === '2') {
                     handleTapTwo();
                 }
             }
         });
         
-        // Juga support untuk numpad
         document.addEventListener('keydown', function(event) {
-            if (event.key === '1' || event.key === '2' || 
-                event.key === '1' || event.key === '2') {
+            if (event.key === '1' || event.key === '2') {
                 event.preventDefault();
             }
         });
@@ -1575,8 +1425,6 @@
                 updateActivePreviewStyles();
                 
                 autoSave();
-                
-                console.log(`Favorite ${previewIndex}: ${activeImages[previewIndex] ? 'aktif' : 'nonaktif'}`);
             });
         });
         
@@ -1599,16 +1447,13 @@
             updateDownloadButtonState();
         }
         
-        // ===== FUNGSI UNTUK EFFECT SHADOW =====
         function showCardShadow() {
             const activeList = getActiveImagesList();
             
             if (activeList.length === 0) {
-                console.log('Tidak ada gambar aktif');
                 return;
             }
             
-            // Reset semua state
             if (shadowFadeOutTimeout) {
                 clearTimeout(shadowFadeOutTimeout);
                 shadowFadeOutTimeout = null;
@@ -1618,7 +1463,6 @@
                 shadowWaitTimeout = null;
             }
             
-            // Reset animasi kartu
             card.style.animation = 'none';
             card.style.opacity = '1';
             card.style.visibility = 'visible';
@@ -1629,45 +1473,32 @@
             card.style.top = '0';
             card.classList.remove('card-fadeout');
             
-            // Dapatkan ukuran kartu
             const cardWidth = card.offsetWidth;
             const cardHeight = card.offsetHeight;
             
-            // Hitung posisi tengah
             const centerX = (window.innerWidth - cardWidth) / 2;
             const centerY = (window.innerHeight - cardHeight) / 2;
             
             posX = Math.round(centerX);
             posY = Math.round(centerY);
             
-            // Set gambar pertama
             currentCardImageIndex = 0;
             card.src = activeList[0].src;
             
-            // Terapkan posisi
             card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
             
-            // Trigger reflow untuk memastikan animasi berjalan
             void card.offsetHeight;
             
-            // Mulai animasi fade in
             card.style.animation = 'muncul 5s ease-in-out';
             
-            // Simpan daftar aktif
             activeImagesList = activeList;
             isSequenceActive = true;
             sequenceStage = 1;
-            
-            console.log('Effect Shadow: kartu muncul fade in di tengah dengan gambar 1');
         }
         
-        // ===== FUNGSI UNTUK FADE OUT SHADOW DENGAN JEDA 3 DETIK =====
         function fadeOutShadowCard() {
             if (!isSequenceActive || card.style.display === 'none') return;
             
-            console.log("Shadow: menunggu 3 detik sebelum fade out");
-            
-            // Hapus timer yang mungkin berjalan
             if (shadowWaitTimeout) {
                 clearTimeout(shadowWaitTimeout);
                 shadowWaitTimeout = null;
@@ -1677,39 +1508,30 @@
                 shadowFadeOutTimeout = null;
             }
             
-            // Tunggu 3 detik sebelum memulai fade out
             shadowWaitTimeout = setTimeout(() => {
                 if (!isSequenceActive || card.style.display === 'none') return;
                 
-                console.log("Shadow: memulai fade out selama 5 detik");
-                
-                // Hapus animasi fade in
                 card.style.animation = 'none';
                 
-                // Trigger reflow
                 void card.offsetHeight;
                 
-                // Tambah class fadeout
                 card.classList.add('card-fadeout');
                 
-                // Set timeout untuk menyembunyikan kartu setelah fade out selesai
                 shadowFadeOutTimeout = setTimeout(() => {
                     if (isSequenceActive) {
                         hideCard();
                         card.classList.remove('card-fadeout');
                         isSequenceActive = false;
                         sequenceStage = 0;
-                        console.log("Shadow: kartu hilang setelah fade out");
                     }
                     shadowFadeOutTimeout = null;
                 }, 5000);
                 
                 shadowWaitTimeout = null;
                 
-            }, 3000); // Jeda 3 detik sebelum fade out dimulai
+            }, 3000);
         }
         
-        // ===== FUNGSI UNTUK GANTI GAMBAR SHADOW =====
         function goToNextImageShadow() {
             if (!isSequenceActive || activeImagesList.length === 0) return false;
             
@@ -1718,7 +1540,6 @@
             if (currentCardImageIndex < activeImagesList.length) {
                 card.src = activeImagesList[currentCardImageIndex].src;
                 sequenceStage = currentCardImageIndex + 1;
-                console.log(`Shadow: ganti ke gambar ${currentCardImageIndex + 1}`);
                 return true;
             } else {
                 return false;
@@ -1729,7 +1550,6 @@
             const activeList = getActiveImagesList();
             
             if (activeList.length === 0) {
-                console.log('Tidak ada gambar aktif');
                 return;
             }
             
@@ -1760,15 +1580,12 @@
             activeImagesList = activeList;
             isSequenceActive = true;
             sequenceStage = 1;
-            
-            console.log('Effect Standar: kartu muncul di tengah dengan gambar 1');
         }
         
         function showCardSlider() {
             const activeList = getActiveImagesList();
             
             if (activeList.length === 0) {
-                console.log('Tidak ada gambar aktif');
                 return;
             }
             
@@ -1857,7 +1674,6 @@
             const activeList = getActiveImagesList();
             
             if (activeList.length === 0) {
-                console.log('Tidak ada gambar aktif');
                 return;
             }
             
@@ -1945,8 +1761,6 @@
         function scheduleExitSkating() {
             if (card.style.display === 'none' || !isSequenceActive) return;
             
-            console.log("Skating: menjadwalkan exit dengan indikator");
-            
             if (exitIndicatorTimeout) {
                 clearTimeout(exitIndicatorTimeout);
                 exitIndicatorTimeout = null;
@@ -1958,7 +1772,6 @@
             
             exitIndicatorTimeout = setTimeout(() => {
                 if (isSequenceActive) {
-                    console.log("Skating: indikator exit muncul");
                     showIndicator();
                 }
                 exitIndicatorTimeout = null;
@@ -1966,7 +1779,6 @@
             
             exitCardTimeout = setTimeout(() => {
                 if (isSequenceActive) {
-                    console.log("Skating: mulai exit ke atas");
                     hideIndicator();
                     exitCardSkating();
                 }
@@ -1976,8 +1788,6 @@
         
         function exitCardSkating() {
             if (card.style.display === 'none' || !isSequenceActive) return;
-            
-            console.log("Skating: kartu keluar ke atas");
             
             isAnimatingMotion = true;
             
@@ -1995,7 +1805,6 @@
                 isSequenceActive = false;
                 sequenceStage = 0;
                 isAnimatingMotion = false;
-                console.log("Skating: kartu hilang");
             }, 500);
         }
         
@@ -2007,7 +1816,6 @@
             if (currentCardImageIndex < activeImagesList.length) {
                 card.src = activeImagesList[currentCardImageIndex].src;
                 sequenceStage = currentCardImageIndex + 1;
-                console.log(`Ganti ke gambar ${currentCardImageIndex + 1}`);
                 return true;
             } else {
                 return false;
@@ -2176,7 +1984,6 @@
                 hideIndicator();
                 
                 if (shadowEffectCheckbox.checked) {
-                    console.log('Double tap: Effect Shadow ON');
                     isSequenceActive = true;
                     sequenceStage = 1;
                     
@@ -2188,7 +1995,6 @@
                     }, 5000);
                     
                 } else if (effectStandarCheckbox.checked) {
-                    console.log('Double tap: Effect Standar ON');
                     isSequenceActive = false;
                     
                     sequenceTimer = setTimeout(() => {
@@ -2197,7 +2003,6 @@
                     }, 1000);
                     
                 } else if (effectSliderCheckbox.checked) {
-                    console.log('Double tap: Effect Slider ON');
                     const totalDelay = 4000;
                     const indicatorDelay = 3000;
                     
@@ -2211,7 +2016,6 @@
                     }, totalDelay);
                     
                 } else if (effectSkatingCheckbox.checked) {
-                    console.log('Double tap: Effect Skating ON');
                     const totalDelay = 4000;
                     const indicatorDelay = 3000;
                     
@@ -2223,9 +2027,6 @@
                         hideIndicator();
                         showCardSkating();
                     }, totalDelay);
-                    
-                } else {
-                    console.log('Double tap: No effect active');
                 }
             }
             lastTap = currentTime;
@@ -2318,7 +2119,6 @@
                         cardRect.right < -10 || 
                         cardRect.left > window.innerWidth + 10) {
                         
-                        console.log("Kartu keluar layar - LANGSUNG HILANG");
                         hideCard();
                         
                         isSequenceActive = false;
@@ -2357,7 +2157,6 @@
                     cardRect.right < -10 || 
                     cardRect.left > window.innerWidth + 10) {
                     
-                    console.log("Kartu keluar layar di touchend - LANGSUNG HILANG");
                     hideCard();
                     isSequenceActive = false;
                     sequenceStage = 0;
@@ -2385,7 +2184,6 @@
                 const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
                 
                 if (currentSpeed > speedThreshold) {
-                    console.log("Kecepatan tinggi - kartu langsung hilang");
                     hideCard();
                     isSequenceActive = false;
                     sequenceStage = 0;
@@ -2427,36 +2225,25 @@
                 
                 const activeCount = activeImagesList.length;
                 
-                // Untuk shadow effect
                 if (shadowEffectCheckbox.checked) {
                     if (sequenceStage < activeCount) {
-                        console.log(`Shadow Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
                         touchToChangeTimeout = setTimeout(() => {
                             if (isSequenceActive) {
-                                if (goToNextImageShadow()) {
-                                    console.log(`Shadow: ganti ke gambar ${currentCardImageIndex + 1}`);
-                                }
+                                goToNextImageShadow();
                             }
                             touchToChangeTimeout = null;
                         }, 3000);
                     } 
                     else if (sequenceStage === activeCount && activeCount > 0) {
-                        console.log(`Shadow Stage ${sequenceStage}: semua gambar sudah tampil, tunggu 3 detik lalu fade out`);
-                        // Hapus timer yang mungkin ada
                         if (touchToChangeTimeout) clearTimeout(touchToChangeTimeout);
-                        // Langsung panggil fade out dengan jeda 3 detik
                         fadeOutShadowCard();
                     }
                 } 
                 else if (effectStandarCheckbox.checked || effectSliderCheckbox.checked) {
                     if (sequenceStage < activeCount) {
-                        console.log(`Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
                         touchToChangeTimeout = setTimeout(() => {
                             if (isSequenceActive) {
-                                if (goToNextImage()) {
-                                    console.log(`Standar/Slider: ganti ke gambar ${currentCardImageIndex + 1}`);
-                                } else {
-                                    console.log("Standar/Slider: semua gambar sudah tampil");
+                                if (!goToNextImage()) {
                                     isSequenceActive = false;
                                     sequenceStage = 0;
                                 }
@@ -2470,18 +2257,14 @@
                 }
                 else if (effectSkatingCheckbox.checked) {
                     if (sequenceStage < activeCount) {
-                        console.log(`Skating Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
                         touchToChangeTimeout = setTimeout(() => {
                             if (isSequenceActive) {
-                                if (goToNextImage()) {
-                                    console.log(`Skating: ganti ke gambar ${currentCardImageIndex + 1}`);
-                                }
+                                goToNextImage();
                             }
                             touchToChangeTimeout = null;
                         }, 3000);
                     } 
                     else if (sequenceStage === activeCount && activeCount > 0) {
-                        console.log(`Skating Stage ${sequenceStage}: semua gambar sudah tampil, menjadwalkan exit dengan indikator`);
                         scheduleExitSkating();
                     }
                 }
@@ -2516,7 +2299,6 @@
         if (closeSettingsBtn) {
             closeSettingsBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                console.log('Close settings button clicked - menyimpan dan menutup');
                 settings.style.top = '-100%';
                 autoSave();
             });
@@ -2643,12 +2425,6 @@
                 
                 card.style.display = 'none';
                 card.style.visibility = 'hidden';
-                
-                // Tampilkan instruksi keyboard
-                updateKeyboardStatus('⌨️ Ready - Press 1 (tap) or 2 (double tap)', '#4CAF50');
-                setTimeout(() => {
-                    updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
-                }, 3000);
             }, 200);
         });
 
@@ -2675,14 +2451,10 @@
 
         function autoCropImage(imageSrc) {
             return new Promise((resolve, reject) => {
-                console.log('=== AUTO-CROP DIMULAI ===');
-                
                 const img = new Image();
                 img.crossOrigin = "Anonymous";
                 
                 img.onload = function() {
-                    console.log('Gambar berhasil dimuat:', img.width, 'x', img.height);
-                    
                     const canvas = document.createElement('canvas');
                     canvas.width = img.width;
                     canvas.height = img.height;
@@ -2694,7 +2466,6 @@
                     try {
                         imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     } catch (e) {
-                        console.error('Gagal membaca pixel (CORS):', e);
                         resolve(imageSrc);
                         return;
                     }
@@ -2763,7 +2534,6 @@
                 };
                 
                 img.onerror = function(err) {
-                    console.error('Gagal memuat gambar untuk auto-crop:', err);
                     reject(new Error('Gagal memuat gambar untuk auto-crop'));
                 };
                 
@@ -2835,7 +2605,6 @@
                         const response = await fetch(currentImageSrc);
                         imageBlob = await response.blob();
                     } catch (fetchError) {
-                        console.error('Error fetching image:', fetchError);
                         throw new Error('Gagal mengambil gambar dari URL. Pastikan gambar dapat diakses.');
                     }
                 }
@@ -2890,7 +2659,6 @@
                         showRemoveBgStatus('✅ Background terhapus & pinggiran dirapikan!');
                         setTimeout(hideRemoveBgStatus, 3000);
                     } catch (cropError) {
-                        console.error('Auto-crop error:', cropError);
                         updateCardImage(resultImageUrl);
                         setRemoveBgLoading(false);
                         showRemoveBgStatus('✅ Background terhapus (tanpa crop)', false);
@@ -2901,7 +2669,6 @@
                 reader.readAsDataURL(resultBlob);
                 
             } catch (error) {
-                console.error('Remove background error:', error);
                 setRemoveBgLoading(false);
                 let errorMessage = error.message;
                 if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
