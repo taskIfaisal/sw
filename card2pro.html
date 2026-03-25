@@ -13,6 +13,7 @@
     <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
     <style>
+        /* Semua style tetap sama seperti kode Anda */
         html, body {
             margin: 0;
             padding: 0;
@@ -93,6 +94,15 @@
             50% { opacity: 0.3; }
             80% { opacity: 0.7; }
             100% { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .card-fadeout {
+            animation: fadeOut 5s ease-in-out forwards !important;
         }
 
         .size-control {
@@ -225,12 +235,10 @@
             border-radius: 50%;
         }
         
-        /* Hijau untuk effect (eksklusif) */
         input:checked + .toggle-slider.effect-slider {
             background-color: #4CAF50;
         }
         
-        /* Orange untuk sensor gerak (non-eksklusif) */
         input:checked + .toggle-slider.sensor-slider {
             background-color: #FF9800;
         }
@@ -245,7 +253,6 @@
             margin-top: 5px;
         }
 
-        /* Grid 4 kolom untuk 4 preview */
         .preview-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -285,7 +292,6 @@
             position: relative;
         }
         
-        /* Toggle icon kecil di pojok preview */
         .preview-toggle {
             position: absolute;
             top: -8px;
@@ -319,13 +325,11 @@
             content: "✕";
         }
         
-        /* Style untuk preview aktif (border hijau) */
         .preview-box.active {
             border-color: #4CAF50 !important;
             box-shadow: 0 0 15px #4CAF50 !important;
         }
         
-        /* Style untuk preview yang dipilih dari album */
         .preview-box.selected {
             border-color: #FF9800;
             box-shadow: 0 0 10px #FF9800;
@@ -587,7 +591,6 @@
             background: #1976D2;
         }
 
-        /* TITIK INDIKATOR */
         #card-indicator {
             position: fixed;
             bottom: 8px;
@@ -606,7 +609,6 @@
             opacity: 1;
         }
 
-        /* Style untuk loading overlay remove background */
         .bg-loading-overlay {
             position: absolute;
             top: 0;
@@ -637,7 +639,6 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* Style untuk status message */
         .remove-bg-status {
             margin-top: 8px;
             padding: 8px;
@@ -659,7 +660,6 @@
             border: 1px solid #f5c6cb;
         }
         
-        /* Tombol remove background (HIJAU) */
         #remove-bg-btn {
             flex: 3;
             background: #4CAF50;
@@ -688,7 +688,6 @@
             background: #888 !important;
         }
         
-        /* Tombol download (ABU-ABU) */
         #download-result-btn {
             flex: 1;
             background: #6c757d;
@@ -716,7 +715,6 @@
             transform: none;
         }
         
-        /* Container tombol sejajar */
         .button-row {
             display: flex;
             gap: 10px;
@@ -728,7 +726,6 @@
     <div id="background"></div>
     <img id="card" src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Magic Ball">
     
-    <!-- TITIK INDIKATOR -->
     <div id="card-indicator"></div>
     
     <div id="settings">
@@ -814,7 +811,6 @@
             </div>
         </div>
 
-        <!-- Effect Slider (muncul dari bawah, tetap di tengah) -->
         <div class="setting-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <h3 style="margin: 0;">Effect Slider</h3>
@@ -828,7 +824,6 @@
             </div>
         </div>
 
-        <!-- Effect Skating (muncul dari bawah, keluar ke atas) -->
         <div class="setting-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <h3 style="margin: 0;">Effect Skating</h3>
@@ -842,7 +837,6 @@
             </div>
         </div>
 
-        <!-- Sensor Gerak Toggle dengan warna ORANGE (non-eksklusif) -->
         <div class="setting-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <h3 style="margin: 0;">Sensor Gerak</h3>
@@ -863,27 +857,21 @@
             </div>
         </div>
 
-        <!-- REMOVE BACKGROUND SECTION -->
         <div class="setting-section" style="border-top: 1px solid #333; padding-top: 15px; margin-top: 10px;">
-            <!-- Teks keterangan di ATAS tombol -->
             <p style="font-size: 12px; color: #4CAF50; text-align: center; margin: 0 0 10px 0; font-weight: 500;">
                 ⬆️ Proses & hasil akan tampil di preview atas (maks 5MB)
             </p>
             
-            <!-- Container untuk 2 tombol sejajar -->
             <div class="button-row">
-                <!-- Tombol Hapus Background (HIJAU) -->
                 <button id="remove-bg-btn">
                     🧹 Hapus Background
                 </button>
                 
-                <!-- Tombol Download (ABU-ABU) -->
                 <button id="download-result-btn">
                     ⬇️ Unduh
                 </button>
             </div>
             
-            <!-- Status message (hidden by default) -->
             <div id="remove-bg-status" class="remove-bg-status" style="display: none;"></div>
         </div>
 
@@ -907,7 +895,7 @@
     </button>
 
     <script>
-        // Elements
+        // Elements (semua sama seperti kode Anda)
         const background = document.getElementById('background');
         const card = document.getElementById('card');
         const settings = document.getElementById('settings');
@@ -917,47 +905,36 @@
         const sensorPermissionBtn = document.getElementById('sensor-permission');
         const cardIndicator = document.getElementById('card-indicator');
         
-        // Card size elements
         const cardSizeSlider = document.getElementById('card-size-slider');
         const sizeValue = document.getElementById('size-value');
         
-        // Preview elements (4 previews)
         const mainCardPreview = document.getElementById('main-card-preview');
         const preview1 = document.getElementById('preview-1');
         const preview2 = document.getElementById('preview-2');
         const preview3 = document.getElementById('preview-3');
         const preview4 = document.getElementById('preview-4');
         
-        // Effect toggles
         const effectStandarCheckbox = document.getElementById('effect-standar');
         const shadowEffectCheckbox = document.getElementById('shadow-effect');
         const effectSliderCheckbox = document.getElementById('effect-slider');
         const effectSkatingCheckbox = document.getElementById('effect-skating');
         const sensorGerakCheckbox = document.getElementById('sensor-gerak');
 
-        // Remove Background elements
         const removeBgBtn = document.getElementById('remove-bg-btn');
         const downloadBtn = document.getElementById('download-result-btn');
         const removeBgStatus = document.getElementById('remove-bg-status');
 
-        // GitHub API URL
         const GITHUB_API_URL = 'https://api.github.com/repos/taskIfaisal/sw/contents/images';
         
-        // State untuk album
         let currentFolder = null;
         let selectedImage = null;
         let modalElement = null;
         let activePreview = 1;
 
-        // Status aktif untuk setiap gambar favorite (4 gambar)
         let activeImages = {
-            1: true,  // Favorite 1 aktif secara default
-            2: true,  // Favorite 2 aktif secara default
-            3: true,  // Favorite 3 aktif secara default
-            4: true   // Favorite 4 aktif secara default
+            1: true, 2: true, 3: true, 4: true
         };
 
-        // Initialize card properties
         let posX = window.innerWidth / 2 - card.offsetWidth / 2;
         let posY = window.innerHeight + card.offsetHeight + 100;
         let scale = 1;
@@ -969,44 +946,37 @@
         let lastPosY = 0;
         let lastTime = 0;
         
-        // SENSOR VARIABLES
         let smoothBeta = 0;
         let smoothGamma = 0;
         const sensitivity = 0.5;
         const smoothing = 0.2;
         let isSensorEnabled = false;
         let isSensorActive = true;
-        
-        // FLAG untuk menonaktifkan sensor sementara saat animasi
         let isAnimatingMotion = false;
         
-        // ===== VARIABEL UNTUK SEQUENCE CARD =====
         let sequenceTimer = null;
         let sequenceStage = 0;
         let isSequenceActive = false;
         let activeImagesList = [];
         
-        // ===== VARIABEL UNTUK SENTUHAN KARTU =====
         let touchToChangeTimeout = null;
         
-        // ===== VARIABEL UNTUK EFFECT SLIDER & SKATING =====
         let indicatorTimeout = null;
         let cardAppearTimeout = null;
         let isAnimating = false;
         let hasBeenTouched = false;
         let currentCardImageIndex = 0;
         
-        // ===== VARIABEL UNTUK INDIKATOR KELUAR SKATING =====
         let exitIndicatorTimeout = null;
         let exitCardTimeout = null;
         
-        // ===== LOCAL STORAGE SETUP =====
+        // ===== VARIABEL UNTUK SHADOW EFFECT FADE OUT =====
+        let shadowFadeOutTimeout = null;
+        
         const STORAGE_KEY = 'magic_card_data';
         
-        // Load saved data on startup
         loadFromStorage();
         
-        // ===== CARD SIZE CONTROL =====
         let currentCardSize = parseInt(localStorage.getItem('card_size')) || 200;
         
         card.style.maxWidth = currentCardSize + 'px';
@@ -1029,7 +999,6 @@
         updatePreviewCardSize();
         updateMainCardPreview();
         
-        // Slider event listener
         cardSizeSlider.addEventListener('input', (e) => {
             const newSize = e.target.value;
             sizeValue.textContent = newSize + 'px';
@@ -1057,17 +1026,14 @@
         
         updateCardTransform();
         
-        // ===== CEGAH DOUBLE TAP ZOOM =====
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length > 1) {
                 e.preventDefault();
             }
         }, { passive: false });
         
-        // ===== INIT SENSOR =====
         initSensor();
         
-        // ===== FUNGSI UNTUK MENDAPATKAN DAFTAR GAMBAR AKTIF =====
         function getActiveImagesList() {
             const list = [];
             if (activeImages[1]) list.push({ index: 1, element: preview1, src: getPreviewSrc(1) });
@@ -1083,7 +1049,6 @@
             return img ? img.src : '';
         }
         
-        // ===== FUNGSI UNTUK UPDATE TAMPILAN AKTIF =====
         function updateActivePreviewStyles() {
             [preview1, preview2, preview3, preview4].forEach((preview, idx) => {
                 const index = idx + 1;
@@ -1094,7 +1059,6 @@
                 }
             });
             
-            // Update toggle icons
             document.querySelectorAll('.preview-toggle').forEach(toggle => {
                 const toggleIndex = parseInt(toggle.dataset.toggle);
                 if (activeImages[toggleIndex]) {
@@ -1107,7 +1071,6 @@
             });
         }
         
-        // ===== FUNGSI GITHUB ALBUM =====
         async function loadRootFolders() {
             try {
                 const response = await fetch(GITHUB_API_URL);
@@ -1250,7 +1213,6 @@
             html += '</div>';
             contentElement.innerHTML = html;
             
-            // Event listener untuk single click langsung apply
             document.querySelectorAll('.grid-item').forEach(item => {
                 item.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -1258,24 +1220,19 @@
                     
                     const imageUrl = this.dataset.url;
                     
-                    // Update preview box
                     const previewBox = document.getElementById(`preview-${activePreview}`);
                     const previewImg = previewBox.querySelector('img');
                     previewImg.src = imageUrl;
                     
-                    // Jika yang dipilih Favorite 1, update kartu utama dan preview besar
                     if (activePreview === 1) {
                         updateCardImage(imageUrl);
                     }
                     
-                    // Highlight preview yang dipilih (border orange)
                     document.querySelectorAll('.preview-box').forEach(p => p.classList.remove('selected'));
                     previewBox.classList.add('selected');
                     
-                    // SIMPAN SEMUA PREVIEW KE STORAGE
                     autoSave();
                     
-                    // Tutup modal
                     document.body.removeChild(modalElement);
                     modalElement = null;
                 });
@@ -1289,7 +1246,6 @@
             renderFolders();
         };
         
-        // ===== EVENT LISTENER UNTUK PREVIEW (SINGLE KLIK BUKA ALBUM) =====
         preview1.addEventListener('click', (e) => {
             if (!e.target.classList.contains('preview-toggle')) {
                 showGithubModal(1);
@@ -1314,7 +1270,6 @@
             }
         });
         
-        // ===== EVENT LISTENER UNTUK TOGGLE ICON =====
         document.querySelectorAll('.preview-toggle').forEach(toggle => {
             toggle.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -1322,46 +1277,139 @@
                 
                 const previewIndex = parseInt(toggle.dataset.toggle);
                 
-                // Toggle status aktif
                 activeImages[previewIndex] = !activeImages[previewIndex];
                 
-                // Update tampilan
                 updateActivePreviewStyles();
                 
-                // Simpan ke storage
                 autoSave();
                 
                 console.log(`Favorite ${previewIndex}: ${activeImages[previewIndex] ? 'aktif' : 'nonaktif'}`);
             });
         });
         
-        // ===== FUNGSI UNTUK UPDATE CARD IMAGE =====
         function updateCardImage(imageSrc) {
-            // Update Favorite 1
             const preview1Img = preview1.querySelector('img');
             if (preview1Img) {
                 preview1Img.src = imageSrc;
             }
             
-            // Update kartu utama
             card.src = imageSrc;
             
-            // Update preview besar
             mainCardPreview.src = imageSrc;
             updateMainCardPreview();
             
-            // Reset scale
             scale = 1;
             updateCardTransform();
             
-            // Simpan ke localStorage
             autoSave();
             
-            // Update tombol download
             updateDownloadButtonState();
         }
         
-        // ===== FUNGSI UNTUK EFFECT STANDAR =====
+        // ===== PERBAIKAN EFFECT SHADOW =====
+        function showCardShadow() {
+            const activeList = getActiveImagesList();
+            
+            if (activeList.length === 0) {
+                console.log('Tidak ada gambar aktif');
+                return;
+            }
+            
+            // Reset semua state
+            if (shadowFadeOutTimeout) {
+                clearTimeout(shadowFadeOutTimeout);
+                shadowFadeOutTimeout = null;
+            }
+            
+            // Reset animasi kartu
+            card.style.animation = 'none';
+            card.style.opacity = '1';
+            card.style.visibility = 'visible';
+            card.style.display = 'block';
+            card.style.transition = 'none';
+            card.style.transform = 'none';
+            card.style.left = '0';
+            card.style.top = '0';
+            
+            // Dapatkan ukuran kartu
+            const cardWidth = card.offsetWidth;
+            const cardHeight = card.offsetHeight;
+            
+            // Hitung posisi tengah
+            const centerX = (window.innerWidth - cardWidth) / 2;
+            const centerY = (window.innerHeight - cardHeight) / 2;
+            
+            posX = Math.round(centerX);
+            posY = Math.round(centerY);
+            
+            // Set gambar pertama
+            currentCardImageIndex = 0;
+            card.src = activeList[0].src;
+            
+            // Terapkan posisi
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            
+            // Trigger reflow untuk memastikan animasi berjalan
+            void card.offsetHeight;
+            
+            // Hapus class fadeout jika ada
+            card.classList.remove('card-fadeout');
+            
+            // Mulai animasi fade in
+            card.style.animation = 'muncul 5s ease-in-out';
+            
+            // Simpan daftar aktif
+            activeImagesList = activeList;
+            isSequenceActive = true;
+            sequenceStage = 1;
+            
+            console.log('Effect Shadow: kartu muncul fade in di tengah dengan gambar 1');
+        }
+        
+        // ===== FUNGSI UNTUK FADE OUT SHADOW =====
+        function fadeOutShadowCard() {
+            if (!isSequenceActive || card.style.display === 'none') return;
+            
+            console.log("Shadow: memulai fade out selama 5 detik");
+            
+            // Hapus animasi fade in
+            card.style.animation = 'none';
+            
+            // Trigger reflow
+            void card.offsetHeight;
+            
+            // Tambah class fadeout
+            card.classList.add('card-fadeout');
+            
+            // Set timeout untuk menyembunyikan kartu setelah fade out selesai
+            shadowFadeOutTimeout = setTimeout(() => {
+                if (isSequenceActive) {
+                    hideCard();
+                    card.classList.remove('card-fadeout');
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                    console.log("Shadow: kartu hilang setelah fade out");
+                }
+                shadowFadeOutTimeout = null;
+            }, 5000);
+        }
+        
+        // ===== FUNGSI UNTUK GANTI GAMBAR SHADOW =====
+        function goToNextImageShadow() {
+            if (!isSequenceActive || activeImagesList.length === 0) return false;
+            
+            currentCardImageIndex++;
+            
+            if (currentCardImageIndex < activeImagesList.length) {
+                card.src = activeImagesList[currentCardImageIndex].src;
+                sequenceStage = currentCardImageIndex + 1;
+                console.log(`Shadow: ganti ke gambar ${currentCardImageIndex + 1}`);
+                return true;
+            } else {
+                return false;
+            }
+        }
+        
         function showCardStandar() {
             const activeList = getActiveImagesList();
             
@@ -1375,6 +1423,8 @@
             card.style.left = '0';
             card.style.top = '0';
             card.style.display = 'block';
+            card.style.animation = 'none';
+            card.classList.remove('card-fadeout');
             
             const cardWidth = card.offsetWidth;
             const cardHeight = card.offsetHeight;
@@ -1390,7 +1440,6 @@
             
             card.style.opacity = '1';
             card.style.visibility = 'visible';
-            card.style.animation = 'none';
             card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
             
             activeImagesList = activeList;
@@ -1400,53 +1449,6 @@
             console.log('Effect Standar: kartu muncul di tengah dengan gambar 1');
         }
         
-        // ===== FUNGSI UNTUK EFFECT SHADOW =====
-        function showCardShadow() {
-            const activeList = getActiveImagesList();
-            
-            if (activeList.length === 0) {
-                console.log('Tidak ada gambar aktif');
-                return;
-            }
-            
-            card.style.transition = 'none';
-            card.style.transform = 'none';
-            card.style.left = '0';
-            card.style.top = '0';
-            card.style.display = 'block';
-            
-            const cardWidth = card.offsetWidth;
-            const cardHeight = card.offsetHeight;
-            
-            const centerX = (window.innerWidth - cardWidth) / 2;
-            const centerY = (window.innerHeight - cardHeight) / 2;
-            
-            posX = Math.round(centerX);
-            posY = Math.round(centerY);
-            
-            currentCardImageIndex = 0;
-            card.src = activeList[0].src;
-            
-            card.style.opacity = '1';
-            card.style.visibility = 'visible';
-            card.style.animation = 'none';
-            void card.offsetHeight;
-            card.style.animation = 'muncul 5s ease-in-out';
-            
-            setTimeout(() => {
-                card.style.animation = 'none';
-            }, 5000);
-            
-            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-            
-            activeImagesList = activeList;
-            isSequenceActive = true;
-            sequenceStage = 1;
-            
-            console.log('Effect Shadow: kartu muncul fade in di tengah dengan gambar 1');
-        }
-        
-        // ===== FUNGSI UNTUK EFFECT SLIDER =====
         function showCardSlider() {
             const activeList = getActiveImagesList();
             
@@ -1474,6 +1476,7 @@
             card.style.opacity = '0';
             card.style.visibility = 'hidden';
             card.style.display = 'block';
+            card.classList.remove('card-fadeout');
             
             card.style.left = '0';
             card.style.top = '0';
@@ -1535,7 +1538,6 @@
             }
         }
 
-        // ===== FUNGSI UNTUK EFFECT SKATING =====
         function showCardSkating() {
             const activeList = getActiveImagesList();
             
@@ -1563,6 +1565,7 @@
             card.style.opacity = '0';
             card.style.visibility = 'hidden';
             card.style.display = 'block';
+            card.classList.remove('card-fadeout');
             
             card.style.left = '0';
             card.style.top = '0';
@@ -1624,7 +1627,6 @@
             }
         }
 
-        // ===== FUNGSI UNTUK EXIT SKATING =====
         function scheduleExitSkating() {
             if (card.style.display === 'none' || !isSequenceActive) return;
             
@@ -1657,7 +1659,6 @@
             }, 4000);
         }
         
-        // ===== FUNGSI UNTUK EXIT SKATING =====
         function exitCardSkating() {
             if (card.style.display === 'none' || !isSequenceActive) return;
             
@@ -1683,7 +1684,6 @@
             }, 500);
         }
         
-        // ===== FUNGSI UNTUK BERGANTI KE GAMBAR BERIKUTNYA =====
         function goToNextImage() {
             if (!isSequenceActive || activeImagesList.length === 0) return false;
             
@@ -1699,7 +1699,6 @@
             }
         }
         
-        // ===== LOCAL STORAGE FUNCTIONS =====
         function loadFromStorage() {
             try {
                 const savedData = localStorage.getItem(STORAGE_KEY);
@@ -1710,32 +1709,20 @@
                         background.style.backgroundImage = `url(${data.background})`;
                     }
                     
-                    if (data.effectStandar !== undefined) {
-                        effectStandarCheckbox.checked = data.effectStandar;
-                    }
-                    if (data.shadowEffect !== undefined) {
-                        shadowEffectCheckbox.checked = data.shadowEffect;
-                    }
-                    if (data.effectSlider !== undefined) {
-                        effectSliderCheckbox.checked = data.effectSlider;
-                    }
-                    if (data.effectSkating !== undefined) {
-                        effectSkatingCheckbox.checked = data.effectSkating;
-                    }
+                    if (data.effectStandar !== undefined) effectStandarCheckbox.checked = data.effectStandar;
+                    if (data.shadowEffect !== undefined) shadowEffectCheckbox.checked = data.shadowEffect;
+                    if (data.effectSlider !== undefined) effectSliderCheckbox.checked = data.effectSlider;
+                    if (data.effectSkating !== undefined) effectSkatingCheckbox.checked = data.effectSkating;
                     if (data.sensorGerak !== undefined) {
                         sensorGerakCheckbox.checked = data.sensorGerak;
                         isSensorActive = data.sensorGerak;
                     }
                     
-                    if (data.activeImages) {
-                        activeImages = data.activeImages;
-                    }
+                    if (data.activeImages) activeImages = data.activeImages;
                     
                     if (data.preview1) {
                         const preview1Img = preview1.querySelector('img');
-                        if (preview1Img) {
-                            preview1Img.src = data.preview1;
-                        }
+                        if (preview1Img) preview1Img.src = data.preview1;
                     }
                     if (data.preview2) {
                         const preview2Img = preview2.querySelector('img');
@@ -1804,7 +1791,6 @@
             saveToStorage();
         }
         
-        // ===== EFFECT TOGGLES =====
         effectStandarCheckbox.addEventListener('change', (e) => {
             if (effectStandarCheckbox.checked) {
                 shadowEffectCheckbox.checked = false;
@@ -1846,7 +1832,6 @@
             autoSave();
         });
         
-        // ===== SWIPE UP TO OPEN SETTINGS =====
         let startYPos = 0;
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
@@ -1864,7 +1849,6 @@
             }
         }, {passive: false});
         
-        // ===== DOUBLE TAP DETECTION =====
         let lastTap = 0;
         document.addEventListener('touchend', (e) => {
             const currentTime = new Date().getTime();
@@ -1957,6 +1941,10 @@
                 clearTimeout(exitCardTimeout);
                 exitCardTimeout = null;
             }
+            if (shadowFadeOutTimeout) {
+                clearTimeout(shadowFadeOutTimeout);
+                shadowFadeOutTimeout = null;
+            }
         }
         
         function showIndicator() {
@@ -1967,7 +1955,6 @@
             cardIndicator.classList.remove('visible');
         }
         
-        // ===== CARD TOUCH EVENTS =====
         card.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 isDragging = true;
@@ -2023,6 +2010,12 @@
                             clearTimeout(touchToChangeTimeout);
                             touchToChangeTimeout = null;
                         }
+                        if (shadowFadeOutTimeout) {
+                            clearTimeout(shadowFadeOutTimeout);
+                            shadowFadeOutTimeout = null;
+                        }
+                        card.classList.remove('card-fadeout');
+                        card.style.animation = 'none';
                         
                         e.preventDefault();
                         return;
@@ -2050,6 +2043,12 @@
                         clearTimeout(touchToChangeTimeout);
                         touchToChangeTimeout = null;
                     }
+                    if (shadowFadeOutTimeout) {
+                        clearTimeout(shadowFadeOutTimeout);
+                        shadowFadeOutTimeout = null;
+                    }
+                    card.classList.remove('card-fadeout');
+                    card.style.animation = 'none';
                     
                     isDragging = false;
                     return;
@@ -2068,6 +2067,12 @@
                         clearTimeout(touchToChangeTimeout);
                         touchToChangeTimeout = null;
                     }
+                    if (shadowFadeOutTimeout) {
+                        clearTimeout(shadowFadeOutTimeout);
+                        shadowFadeOutTimeout = null;
+                    }
+                    card.classList.remove('card-fadeout');
+                    card.style.animation = 'none';
                     
                     isDragging = false;
                     return;
@@ -2091,12 +2096,13 @@
                 
                 const activeCount = activeImagesList.length;
                 
+                // PERBAIKAN: Untuk shadow effect
                 if (shadowEffectCheckbox.checked) {
                     if (sequenceStage < activeCount) {
                         console.log(`Shadow Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
                         touchToChangeTimeout = setTimeout(() => {
                             if (isSequenceActive) {
-                                if (goToNextImage()) {
+                                if (goToNextImageShadow()) {
                                     console.log(`Shadow: ganti ke gambar ${currentCardImageIndex + 1}`);
                                 }
                             }
@@ -2104,24 +2110,11 @@
                         }, 3000);
                     } 
                     else if (sequenceStage === activeCount && activeCount > 0) {
-                        console.log(`Shadow Stage ${sequenceStage} (FADE OUT): tunggu 5 detik`);
-                        touchToChangeTimeout = setTimeout(() => {
-                            if (isSequenceActive) {
-                                console.log("Shadow: fade out dimulai");
-                                card.style.opacity = '0';
-                                
-                                setTimeout(() => {
-                                    if (isSequenceActive) {
-                                        hideCard();
-                                        card.style.opacity = '1';
-                                        isSequenceActive = false;
-                                        sequenceStage = 0;
-                                        console.log("Shadow: kartu hilang setelah fade out");
-                                    }
-                                }, 5000);
-                            }
-                            touchToChangeTimeout = null;
-                        }, 5000);
+                        console.log(`Shadow Stage ${sequenceStage}: memulai fade out setelah sentuh`);
+                        // Hapus timer yang mungkin ada
+                        if (touchToChangeTimeout) clearTimeout(touchToChangeTimeout);
+                        // Langsung mulai fade out
+                        fadeOutShadowCard();
                     }
                 } 
                 else if (effectStandarCheckbox.checked || effectSliderCheckbox.checked) {
@@ -2163,8 +2156,6 @@
                 }
             }, 50);
         });
-        
-        document.addEventListener('touchend', (e) => {});
         
         bgUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -2280,6 +2271,8 @@
         function hideCard() {
             card.style.display = 'none';
             card.style.visibility = 'hidden';
+            card.style.animation = 'none';
+            card.classList.remove('card-fadeout');
         }
         
         window.addEventListener('resize', () => {
@@ -2343,167 +2336,104 @@
             removeBgStatus.style.display = 'none';
         }
 
-        // Fungsi auto-crop yang lebih baik dengan debugging
-function autoCropImage(imageSrc) {
-    return new Promise((resolve, reject) => {
-        console.log('=== AUTO-CROP DIMULAI ===');
-        console.log('Image source:', imageSrc.substring(0, 100) + '...');
-        
-        const img = new Image();
-        img.crossOrigin = "Anonymous";
-        
-        img.onload = function() {
-            console.log('Gambar berhasil dimuat:', img.width, 'x', img.height);
-            
-            // Buat canvas
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            
-            // Gambar image ke canvas
-            ctx.drawImage(img, 0, 0);
-            
-            // Cek apakah gambar memiliki alpha channel
-            console.log('Mencoba membaca pixel...');
-            
-            // Ambil data pixel
-            let imageData;
-            try {
-                imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                console.log('Berhasil membaca pixel, total pixel:', imageData.data.length / 4);
-            } catch (e) {
-                console.error('Gagal membaca pixel (CORS):', e);
-                // Jika gagal karena CORS, return gambar asli
-                resolve(imageSrc);
-                return;
-            }
-            
-            const data = imageData.data;
-            
-            // Inisialisasi batas
-            let top = canvas.height;
-            let bottom = 0;
-            let left = canvas.width;
-            let right = 0;
-            let foundPixel = false;
-            let nonTransparentCount = 0;
-            
-            // Scan pixel untuk mencari area non-transparan
-            const threshold = 1; // Pixel dengan alpha > 1 dianggap visible (lebih sensitif)
-            
-            console.log('Scanning pixel...');
-            
-            // Scan per baris dengan sampling untuk efisiensi (tapi tetap akurat)
-            for (let y = 0; y < canvas.height; y++) {
-                for (let x = 0; x < canvas.width; x++) {
-                    const index = (y * canvas.width + x) * 4;
-                    const alpha = data[index + 3];
+        function autoCropImage(imageSrc) {
+            return new Promise((resolve, reject) => {
+                console.log('=== AUTO-CROP DIMULAI ===');
+                
+                const img = new Image();
+                img.crossOrigin = "Anonymous";
+                
+                img.onload = function() {
+                    console.log('Gambar berhasil dimuat:', img.width, 'x', img.height);
                     
-                    if (alpha > threshold) {
-                        nonTransparentCount++;
-                        if (!foundPixel) {
-                            foundPixel = true;
-                            console.log('Pixel non-transparan pertama ditemukan di posisi:', x, y, 'alpha:', alpha);
-                        }
-                        top = Math.min(top, y);
-                        bottom = Math.max(bottom, y);
-                        left = Math.min(left, x);
-                        right = Math.max(right, x);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    
+                    ctx.drawImage(img, 0, 0);
+                    
+                    let imageData;
+                    try {
+                        imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    } catch (e) {
+                        console.error('Gagal membaca pixel (CORS):', e);
+                        resolve(imageSrc);
+                        return;
                     }
-                }
-            }
-            
-            console.log('Hasil scan:');
-            console.log('- Pixel non-transparan:', nonTransparentCount);
-            console.log('- Total pixel:', canvas.width * canvas.height);
-            console.log('- Persentase:', Math.round(nonTransparentCount / (canvas.width * canvas.height) * 100) + '%');
-            console.log('- Batas:', { top, bottom, left, right, foundPixel });
-            
-            if (!foundPixel) {
-                console.log('TIDAK ADA pixel non-transparan ditemukan!');
-                console.log('Kemungkinan gambar tidak memiliki alpha channel atau semua pixel transparan');
+                    
+                    const data = imageData.data;
+                    
+                    let top = canvas.height;
+                    let bottom = 0;
+                    let left = canvas.width;
+                    let right = 0;
+                    let foundPixel = false;
+                    
+                    const threshold = 1;
+                    
+                    for (let y = 0; y < canvas.height; y++) {
+                        for (let x = 0; x < canvas.width; x++) {
+                            const index = (y * canvas.width + x) * 4;
+                            const alpha = data[index + 3];
+                            
+                            if (alpha > threshold) {
+                                if (!foundPixel) foundPixel = true;
+                                top = Math.min(top, y);
+                                bottom = Math.max(bottom, y);
+                                left = Math.min(left, x);
+                                right = Math.max(right, x);
+                            }
+                        }
+                    }
+                    
+                    if (!foundPixel) {
+                        resolve(imageSrc);
+                        return;
+                    }
+                    
+                    const objWidth = right - left + 1;
+                    const objHeight = bottom - top + 1;
+                    
+                    if (objWidth > canvas.width * 0.9 && objHeight > canvas.height * 0.9) {
+                        resolve(imageSrc);
+                        return;
+                    }
+                    
+                    const padding = 2;
+                    const cropLeft = Math.max(0, left - padding);
+                    const cropTop = Math.max(0, top - padding);
+                    const cropRight = Math.min(canvas.width, right + padding);
+                    const cropBottom = Math.min(canvas.height, bottom + padding);
+                    
+                    const cropWidth = cropRight - cropLeft;
+                    const cropHeight = cropBottom - cropTop;
+                    
+                    const cropCanvas = document.createElement('canvas');
+                    cropCanvas.width = cropWidth;
+                    cropCanvas.height = cropHeight;
+                    const cropCtx = cropCanvas.getContext('2d');
+                    
+                    cropCtx.drawImage(
+                        img, 
+                        cropLeft, cropTop, cropWidth, cropHeight,
+                        0, 0, cropWidth, cropHeight
+                    );
+                    
+                    const croppedDataUrl = cropCanvas.toDataURL('image/png');
+                    
+                    resolve(croppedDataUrl);
+                };
                 
-                // Cek pixel pertama untuk debug
-                const firstPixelAlpha = data[3];
-                console.log('Alpha pixel pertama:', firstPixelAlpha);
+                img.onerror = function(err) {
+                    console.error('Gagal memuat gambar untuk auto-crop:', err);
+                    reject(new Error('Gagal memuat gambar untuk auto-crop'));
+                };
                 
-                resolve(imageSrc);
-                return;
-            }
-            
-            // Hitung ukuran objek
-            const objWidth = right - left + 1;
-            const objHeight = bottom - top + 1;
-            
-            console.log('Ukuran objek:', objWidth, 'x', objHeight);
-            console.log('Ukuran canvas:', canvas.width, 'x', canvas.height);
-            
-            // Jika objek hampir sebesar gambar (lebih dari 90%), tidak perlu crop
-            if (objWidth > canvas.width * 0.9 && objHeight > canvas.height * 0.9) {
-                console.log('Objek sudah hampir memenuhi gambar (>=90%), tidak perlu crop');
-                resolve(imageSrc);
-                return;
-            }
-            
-            // Hitung area transparan di pinggir
-            const topMargin = top;
-            const bottomMargin = canvas.height - 1 - bottom;
-            const leftMargin = left;
-            const rightMargin = canvas.width - 1 - right;
-            
-            console.log('Margin:', { topMargin, bottomMargin, leftMargin, rightMargin });
-            
-            // Jika margin terlalu kecil, tidak perlu crop
-            if (topMargin < 2 && bottomMargin < 2 && leftMargin < 2 && rightMargin < 2) {
-                console.log('Margin terlalu kecil, tidak perlu crop');
-                resolve(imageSrc);
-                return;
-            }
-            
-            // Tambahkan padding kecil (2px)
-            const padding = 2;
-            const cropLeft = Math.max(0, left - padding);
-            const cropTop = Math.max(0, top - padding);
-            const cropRight = Math.min(canvas.width, right + padding);
-            const cropBottom = Math.min(canvas.height, bottom + padding);
-            
-            const cropWidth = cropRight - cropLeft;
-            const cropHeight = cropBottom - cropTop;
-            
-            console.log('Melakukan crop ke:', cropLeft, cropTop, cropWidth, cropHeight);
-            
-            // Buat canvas baru untuk hasil crop
-            const cropCanvas = document.createElement('canvas');
-            cropCanvas.width = cropWidth;
-            cropCanvas.height = cropHeight;
-            const cropCtx = cropCanvas.getContext('2d');
-            
-            // Gambar bagian yang di-crop
-            cropCtx.drawImage(
-                img, 
-                cropLeft, cropTop, cropWidth, cropHeight,
-                0, 0, cropWidth, cropHeight
-            );
-            
-            // Konversi ke data URL
-            const croppedDataUrl = cropCanvas.toDataURL('image/png');
-            
-            console.log('Auto-crop SELESAI, ukuran baru:', cropWidth, 'x', cropHeight);
-            console.log('=== AUTO-CROP SELESAI ===');
-            
-            resolve(croppedDataUrl);
-        };
+                img.src = imageSrc;
+            });
+        }
         
-        img.onerror = function(err) {
-            console.error('Gagal memuat gambar untuk auto-crop:', err);
-            reject(new Error('Gagal memuat gambar untuk auto-crop'));
-        };
-        
-        // Tambahkan timestamp untuk mencegah cache
-        img.src = imageSrc;
-    });
-}
         function setRemoveBgLoading(isLoading) {
             if (isLoading) {
                 removeBgBtn.disabled = true;
@@ -2581,8 +2511,6 @@ function autoCropImage(imageSrc) {
                 formData.append('image_file', imageBlob, 'image.png');
                 formData.append('size', 'auto');
                 
-                console.log('Mengirim request ke remove.bg API...');
-                
                 const response = await fetch(REMOVE_BG_API_URL, {
                     method: 'POST',
                     headers: {
@@ -2617,27 +2545,16 @@ function autoCropImage(imageSrc) {
                     
                     try {
                         showRemoveBgStatus('⏳ Merapikan pinggiran gambar...', false);
-                        
-                        console.log('Memulai auto-crop...');
                         const croppedImageUrl = await autoCropImage(resultImageUrl);
-                        
-                        console.log('Auto-crop selesai, mengupdate gambar');
                         updateCardImage(croppedImageUrl);
-                        
                         const croppedResponse = await fetch(croppedImageUrl);
                         processedImageBlob = await croppedResponse.blob();
-                        
                         setRemoveBgLoading(false);
-                        
                         showRemoveBgStatus('✅ Background terhapus & pinggiran dirapikan!');
                         setTimeout(hideRemoveBgStatus, 3000);
-                        
-                        console.log('Remove background + auto-crop sukses!');
                     } catch (cropError) {
                         console.error('Auto-crop error:', cropError);
-                        
                         updateCardImage(resultImageUrl);
-                        
                         setRemoveBgLoading(false);
                         showRemoveBgStatus('✅ Background terhapus (tanpa crop)', false);
                         setTimeout(hideRemoveBgStatus, 3000);
@@ -2648,15 +2565,11 @@ function autoCropImage(imageSrc) {
                 
             } catch (error) {
                 console.error('Remove background error:', error);
-                
                 setRemoveBgLoading(false);
-                
                 let errorMessage = error.message;
-                
                 if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
                     errorMessage = 'Error CORS atau jaringan. Gunakan extension CORS Unblock atau coba gambar lain.';
                 }
-                
                 showRemoveBgStatus(`❌ Gagal: ${errorMessage}`, true);
                 setTimeout(hideRemoveBgStatus, 5000);
             }
@@ -2668,21 +2581,17 @@ function autoCropImage(imageSrc) {
             
             if (processedImageBlob) {
                 const url = URL.createObjectURL(processedImageBlob);
-                
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = 'removed-background-cropped.png';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                
                 URL.revokeObjectURL(url);
-                
                 showRemoveBgStatus('✅ Gambar hasil diunduh!');
                 setTimeout(hideRemoveBgStatus, 2000);
             } else {
                 const currentImageSrc = mainCardPreview.src;
-                
                 if (currentImageSrc && currentImageSrc !== '') {
                     const a = document.createElement('a');
                     a.href = currentImageSrc;
@@ -2690,7 +2599,6 @@ function autoCropImage(imageSrc) {
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
-                    
                     showRemoveBgStatus('✅ Gambar asli diunduh!');
                     setTimeout(hideRemoveBgStatus, 2000);
                 } else {
