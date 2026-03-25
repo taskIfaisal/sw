@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Card Trick</title>
+    <title>Magic Card Trick - Keyboard Control</title>
     <!-- <link rel="manifest" href="./manifest.json"> -->
     <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
     <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
@@ -720,6 +720,21 @@
             gap: 10px;
             margin-bottom: 5px;
         }
+
+        /* Keyboard status indicator */
+        .keyboard-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 1000;
+            pointer-events: none;
+            font-family: monospace;
+            border: 1px solid #4CAF50;
+        }
     </style>
 </head>
 <body>
@@ -727,6 +742,11 @@
     <img id="card" src="https://raw.githubusercontent.com/taskIfaisal/sw/main/icon/Basketball.png" alt="Magic Ball">
     
     <div id="card-indicator"></div>
+    
+    <!-- Keyboard status indicator -->
+    <div class="keyboard-status" id="keyboard-status">
+        ⌨️ Waiting for input (1 or 2)
+    </div>
     
     <div id="settings">
         <h2>Settings</h2>
@@ -904,6 +924,7 @@
         const closeSettingsBtn = document.getElementById('close-settings');
         const sensorPermissionBtn = document.getElementById('sensor-permission');
         const cardIndicator = document.getElementById('card-indicator');
+        const keyboardStatus = document.getElementById('keyboard-status');
         
         const cardSizeSlider = document.getElementById('card-size-slider');
         const sizeValue = document.getElementById('size-value');
@@ -974,6 +995,10 @@
         let shadowFadeOutTimeout = null;
         let shadowWaitTimeout = null;
         
+        // ===== VARIABEL UNTUK KEYBOARD INPUT =====
+        let lastKeyPressTime = 0;
+        let keyPressTimeout = null;
+        
         const STORAGE_KEY = 'magic_card_data';
         
         loadFromStorage();
@@ -1034,6 +1059,273 @@
         }, { passive: false });
         
         initSensor();
+        
+        // ========== KEYBOARD INPUT HANDLER ==========
+        // Fungsi untuk memproses angka 1 (tap biasa)
+        function handleTapOne() {
+            console.log('Keyboard: Received "1" - Tap biasa');
+            updateKeyboardStatus('🔵 Received: 1 (Tap biasa)', '#4CAF50');
+            
+            // Trigger seperti tap biasa pada kartu yang sedang muncul
+            // Ini akan memicu pergantian kartu jika kartu sedang aktif
+            if (card.style.display !== 'none' && card.style.visibility === 'visible') {
+                // Simulasi tap pada kartu
+                triggerCardTap();
+            } else {
+                console.log('Kartu tidak aktif, abaikan tap 1');
+                updateKeyboardStatus('⚠️ Card not active, ignored', '#FF9800');
+                setTimeout(() => {
+                    if (keyboardStatus.style.opacity !== '0') {
+                        updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
+                    }
+                }, 1500);
+            }
+        }
+        
+        // Fungsi untuk memproses angka 2 (double tap / trigger effect)
+        function handleTapTwo() {
+            console.log('Keyboard: Received "2" - Double tap (trigger effect)');
+            updateKeyboardStatus('🔴 Received: 2 (Trigger effect)', '#f44336');
+            
+            // Trigger double tap effect
+            triggerDoubleTapEffect();
+        }
+        
+        // Fungsi untuk mensimulasi tap pada kartu (pergantian gambar)
+        function triggerCardTap() {
+            if (!isSequenceActive || card.style.display === 'none' || card.style.visibility !== 'visible') {
+                console.log('Kartu tidak dalam state aktif untuk pergantian');
+                return;
+            }
+            
+            // Hapus timer yang mungkin ada
+            if (touchToChangeTimeout) {
+                clearTimeout(touchToChangeTimeout);
+            }
+            
+            const activeCount = activeImagesList.length;
+            
+            // Untuk shadow effect
+            if (shadowEffectCheckbox.checked) {
+                if (sequenceStage < activeCount) {
+                    console.log(`Shadow Stage ${sequenceStage}: keyboard tap - ganti gambar dalam 3 detik`);
+                    updateKeyboardStatus(`🎴 Shadow: akan ganti ke gambar ${sequenceStage + 1} dalam 3 detik`, '#FF9800');
+                    touchToChangeTimeout = setTimeout(() => {
+                        if (isSequenceActive) {
+                            if (goToNextImageShadow()) {
+                                console.log(`Shadow: ganti ke gambar ${currentCardImageIndex + 1}`);
+                                updateKeyboardStatus(`🎴 Ganti ke gambar ${currentCardImageIndex + 1}`, '#4CAF50');
+                                setTimeout(() => {
+                                    if (keyboardStatus.style.opacity !== '0') {
+                                        updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
+                                    }
+                                }, 1500);
+                            }
+                        }
+                        touchToChangeTimeout = null;
+                    }, 3000);
+                } 
+                else if (sequenceStage === activeCount && activeCount > 0) {
+                    console.log(`Shadow Stage ${sequenceStage}: semua gambar sudah tampil, fade out dalam 3 detik`);
+                    updateKeyboardStatus(`✨ Shadow: fade out dalam 3 detik`, '#FF9800');
+                    if (touchToChangeTimeout) clearTimeout(touchToChangeTimeout);
+                    fadeOutShadowCard();
+                }
+            } 
+            else if (effectStandarCheckbox.checked || effectSliderCheckbox.checked) {
+                if (sequenceStage < activeCount) {
+                    console.log(`Stage ${sequenceStage}: keyboard tap - ganti gambar dalam 3 detik`);
+                    updateKeyboardStatus(`🎴 Akan ganti ke gambar ${sequenceStage + 1} dalam 3 detik`, '#FF9800');
+                    touchToChangeTimeout = setTimeout(() => {
+                        if (isSequenceActive) {
+                            if (goToNextImage()) {
+                                console.log(`Standar/Slider: ganti ke gambar ${currentCardImageIndex + 1}`);
+                                updateKeyboardStatus(`🎴 Ganti ke gambar ${currentCardImageIndex + 1}`, '#4CAF50');
+                                setTimeout(() => {
+                                    if (keyboardStatus.style.opacity !== '0') {
+                                        updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
+                                    }
+                                }, 1500);
+                            } else {
+                                console.log("Standar/Slider: semua gambar sudah tampil");
+                                isSequenceActive = false;
+                                sequenceStage = 0;
+                                updateKeyboardStatus('✅ Selesai', '#4CAF50');
+                                setTimeout(() => {
+                                    if (keyboardStatus.style.opacity !== '0') {
+                                        updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
+                                    }
+                                }, 1500);
+                            }
+                        }
+                        touchToChangeTimeout = null;
+                    }, 3000);
+                } else {
+                    isSequenceActive = false;
+                    sequenceStage = 0;
+                }
+            }
+            else if (effectSkatingCheckbox.checked) {
+                if (sequenceStage < activeCount) {
+                    console.log(`Skating Stage ${sequenceStage}: keyboard tap - ganti gambar dalam 3 detik`);
+                    updateKeyboardStatus(`🎴 Skating: akan ganti ke gambar ${sequenceStage + 1} dalam 3 detik`, '#FF9800');
+                    touchToChangeTimeout = setTimeout(() => {
+                        if (isSequenceActive) {
+                            if (goToNextImage()) {
+                                console.log(`Skating: ganti ke gambar ${currentCardImageIndex + 1}`);
+                                updateKeyboardStatus(`🎴 Ganti ke gambar ${currentCardImageIndex + 1}`, '#4CAF50');
+                                setTimeout(() => {
+                                    if (keyboardStatus.style.opacity !== '0') {
+                                        updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
+                                    }
+                                }, 1500);
+                            }
+                        }
+                        touchToChangeTimeout = null;
+                    }, 3000);
+                } 
+                else if (sequenceStage === activeCount && activeCount > 0) {
+                    console.log(`Skating Stage ${sequenceStage}: semua gambar sudah tampil, schedule exit`);
+                    updateKeyboardStatus(`🚪 Skating: akan keluar dalam 4 detik`, '#FF9800');
+                    scheduleExitSkating();
+                }
+            }
+        }
+        
+        // Fungsi untuk mensimulasi double tap (trigger effect)
+        function triggerDoubleTapEffect() {
+            clearAllTimeouts();
+            hideIndicator();
+            
+            if (shadowEffectCheckbox.checked) {
+                console.log('Keyboard Double tap: Effect Shadow ON');
+                updateKeyboardStatus('🎭 Effect Shadow: kartu akan muncul dalam 5 detik', '#FF9800');
+                isSequenceActive = true;
+                sequenceStage = 1;
+                
+                sequenceTimer = setTimeout(() => {
+                    if (isSequenceActive) {
+                        showCardShadow();
+                        updateKeyboardStatus('🎭 Shadow effect running...', '#4CAF50');
+                        setTimeout(() => {
+                            if (keyboardStatus.style.opacity !== '0') {
+                                updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
+                            }
+                        }, 3000);
+                    }
+                    sequenceTimer = null;
+                }, 5000);
+                
+            } else if (effectStandarCheckbox.checked) {
+                console.log('Keyboard Double tap: Effect Standar ON');
+                updateKeyboardStatus('✨ Effect Standar: kartu akan muncul dalam 1 detik', '#FF9800');
+                isSequenceActive = false;
+                
+                sequenceTimer = setTimeout(() => {
+                    showCardStandar();
+                    updateKeyboardStatus('✨ Standar effect running...', '#4CAF50');
+                    setTimeout(() => {
+                        if (keyboardStatus.style.opacity !== '0') {
+                            updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
+                        }
+                    }, 2000);
+                    sequenceTimer = null;
+                }, 1000);
+                
+            } else if (effectSliderCheckbox.checked) {
+                console.log('Keyboard Double tap: Effect Slider ON');
+                updateKeyboardStatus('📱 Effect Slider: kartu akan muncul dalam 4 detik', '#FF9800');
+                const totalDelay = 4000;
+                const indicatorDelay = 3000;
+                
+                indicatorTimeout = setTimeout(() => {
+                    showIndicator();
+                }, indicatorDelay);
+                
+                cardAppearTimeout = setTimeout(() => {
+                    hideIndicator();
+                    showCardSlider();
+                    updateKeyboardStatus('📱 Slider effect running...', '#4CAF50');
+                    setTimeout(() => {
+                        if (keyboardStatus.style.opacity !== '0') {
+                            updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
+                        }
+                    }, 2000);
+                }, totalDelay);
+                
+            } else if (effectSkatingCheckbox.checked) {
+                console.log('Keyboard Double tap: Effect Skating ON');
+                updateKeyboardStatus('⛸️ Effect Skating: kartu akan muncul dalam 4 detik', '#FF9800');
+                const totalDelay = 4000;
+                const indicatorDelay = 3000;
+                
+                indicatorTimeout = setTimeout(() => {
+                    showIndicator();
+                }, indicatorDelay);
+                
+                cardAppearTimeout = setTimeout(() => {
+                    hideIndicator();
+                    showCardSkating();
+                    updateKeyboardStatus('⛸️ Skating effect running...', '#4CAF50');
+                    setTimeout(() => {
+                        if (keyboardStatus.style.opacity !== '0') {
+                            updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
+                        }
+                    }, 2000);
+                }, totalDelay);
+                
+            } else {
+                console.log('Keyboard Double tap: No effect active');
+                updateKeyboardStatus('⚠️ No effect active, enable one in settings', '#f44336');
+                setTimeout(() => {
+                    if (keyboardStatus.style.opacity !== '0') {
+                        updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
+                    }
+                }, 2000);
+            }
+        }
+        
+        // Update keyboard status display
+        function updateKeyboardStatus(message, color = '#4CAF50') {
+            keyboardStatus.textContent = message;
+            keyboardStatus.style.borderColor = color;
+            keyboardStatus.style.opacity = '1';
+            
+            // Auto fade after 3 seconds
+            setTimeout(() => {
+                if (keyboardStatus.textContent === message) {
+                    keyboardStatus.style.opacity = '0.7';
+                }
+            }, 3000);
+        }
+        
+        // Keyboard event listener untuk menerima input dari ESP32 (keyboard Bluetooth)
+        document.addEventListener('keydown', function(event) {
+            // Cegah default behavior untuk tombol angka
+            if (event.key === '1' || event.key === '2' || 
+                event.key === '1' || event.key === '2') {
+                event.preventDefault();
+                
+                const now = Date.now();
+                const keyValue = event.key;
+                
+                console.log(`Keyboard key pressed: ${keyValue}`);
+                
+                if (keyValue === '1') {
+                    handleTapOne();
+                } else if (keyValue === '2') {
+                    handleTapTwo();
+                }
+            }
+        });
+        
+        // Juga support untuk numpad
+        document.addEventListener('keydown', function(event) {
+            if (event.key === '1' || event.key === '2' || 
+                event.key === '1' || event.key === '2') {
+                event.preventDefault();
+            }
+        });
         
         function getActiveImagesList() {
             const list = [];
@@ -2351,6 +2643,12 @@
                 
                 card.style.display = 'none';
                 card.style.visibility = 'hidden';
+                
+                // Tampilkan instruksi keyboard
+                updateKeyboardStatus('⌨️ Ready - Press 1 (tap) or 2 (double tap)', '#4CAF50');
+                setTimeout(() => {
+                    updateKeyboardStatus('⌨️ Waiting for input (1 or 2)', '#4CAF50');
+                }, 3000);
             }, 200);
         });
 
@@ -2648,631 +2946,6 @@
         });
         
         updateDownloadButtonState();
-
-      //code baru
-      // ============ BLUETOOTH CONTROL ============
-class BluetoothController {
-    constructor() {
-        this.device = null;
-        this.server = null;
-        this.characteristic = null;
-        this.isConnected = false;
-        this.onCommandCallback = null;
-        
-        // UUID untuk Serial Bluetooth
-        this.SERVICE_UUID = '00001101-0000-1000-8000-00805f9b34fb';
-        this.CHARACTERISTIC_UUID = '00001101-0000-1000-8000-00805f9b34fb';
-        
-        this.initUI();
-    }
-    
-    initUI() {
-        // Tambahkan tombol Bluetooth ke settings panel
-        const settingsDiv = document.getElementById('settings');
-        const bluetoothSection = document.createElement('div');
-        bluetoothSection.className = 'setting-section';
-        bluetoothSection.innerHTML = `
-            <h3>🎮 Bluetooth Controller</h3>
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <button id="bt-connect-btn" style="background: #2196F3;">🔌 Connect ESP32</button>
-                <button id="bt-disconnect-btn" style="background: #f44336; display: none;">🔌 Disconnect</button>
-            </div>
-            <div id="bt-status" style="font-size: 12px; color: #aaa; padding: 5px;">
-                Status: Not connected
-            </div>
-            <div style="font-size: 11px; color: #888; margin-top: 5px;">
-                💡 Connect to "ESP32_Magic_Card" via Bluetooth
-            </div>
-        `;
-        
-        // Insert before close-settings button
-        const closeBtn = document.getElementById('close-settings');
-        settingsDiv.insertBefore(bluetoothSection, closeBtn);
-        
-        // Add event listeners
-        document.getElementById('bt-connect-btn').addEventListener('click', () => this.connect());
-        document.getElementById('bt-disconnect-btn').addEventListener('click', () => this.disconnect());
-    }
-    
-    async connect() {
-        try {
-            // Request Bluetooth device
-            this.device = await navigator.bluetooth.requestDevice({
-                filters: [
-                    { name: 'ESP32_Magic_Card' },
-                    { services: [this.SERVICE_UUID] }
-                ],
-                optionalServices: [this.SERVICE_UUID]
-            });
-            
-            // Connect to device
-            this.server = await this.device.gatt.connect();
-            const service = await this.server.getPrimaryService(this.SERVICE_UUID);
-            this.characteristic = await service.getCharacteristic(this.CHARACTERISTIC_UUID);
-            
-            // Start notifications
-            await this.characteristic.startNotifications();
-            this.characteristic.addEventListener('characteristicvaluechanged', 
-                this.handleNotification.bind(this));
-            
-            this.isConnected = true;
-            this.updateUI(true);
-            
-            // Send ready signal
-            this.sendCommand('READY');
-            
-            console.log('Connected to ESP32!');
-            
-        } catch (error) {
-            console.error('Bluetooth connection error:', error);
-            alert('Failed to connect: ' + error.message);
-        }
-    }
-    
-    async disconnect() {
-        if (this.device && this.device.gatt.connected) {
-            await this.device.gatt.disconnect();
-        }
-        this.isConnected = false;
-        this.updateUI(false);
-        console.log('Disconnected from ESP32');
-    }
-    
-    handleNotification(event) {
-        const value = event.target.value;
-        const command = new TextDecoder().decode(value);
-        this.processCommand(command.trim());
-    }
-    
-    processCommand(command) {
-        console.log('Received command from ESP32:', command);
-        
-        if (this.onCommandCallback) {
-            this.onCommandCallback(command);
-        }
-        
-        // Auto-execute commands
-        switch(command) {
-            case 'TOGGLE_CARD':
-                this.toggleCard();
-                break;
-            case 'NEXT_CARD':
-                this.nextCard();
-                break;
-            case 'RESET':
-                this.resetEffects();
-                break;
-            case 'READY':
-                this.showStatus('Connected! Ready to control');
-                break;
-        }
-    }
-    
-    async sendCommand(command) {
-        if (!this.isConnected || !this.characteristic) {
-            console.warn('Not connected to ESP32');
-            return;
-        }
-        
-        try {
-            const encoder = new TextEncoder();
-            await this.characteristic.writeValue(encoder.encode(command + '\n'));
-            console.log('Sent command:', command);
-        } catch (error) {
-            console.error('Error sending command:', error);
-        }
-    }
-    
-    toggleCard() {
-        // Simulate double tap on screen
-        const doubleTapEvent = new CustomEvent('doubletap');
-        document.dispatchEvent(doubleTapEvent);
-        
-        // Call the existing double tap handler
-        const currentTime = new Date().getTime();
-        if (window.lastTapTime && (currentTime - window.lastTapTime) < 300) {
-            // Already handling
-        }
-        window.lastTapTime = currentTime;
-        
-        // Trigger the existing touch handler
-        const touchEndEvent = new TouchEvent('touchend', {
-            bubbles: true,
-            cancelable: true
-        });
-        document.dispatchEvent(touchEndEvent);
-        
-        this.showStatus('Toggle card triggered');
-    }
-    
-    nextCard() {
-        // Trigger next card by simulating touch and change
-        const activeList = getActiveImagesList();
-        if (activeList.length > 0) {
-            // Find current card index
-            let currentIndex = -1;
-            for (let i = 0; i < activeList.length; i++) {
-                if (card.src === activeList[i].src) {
-                    currentIndex = i;
-                    break;
-                }
-            }
-            
-            // Go to next card
-            let nextIndex = (currentIndex + 1) % activeList.length;
-            if (card.style.display !== 'none' && card.style.visibility === 'visible') {
-                card.src = activeList[nextIndex].src;
-                this.showStatus(`Changed to card ${nextIndex + 1}`);
-            } else {
-                this.showStatus('Card not visible. Double tap first to show card');
-            }
-        } else {
-            this.showStatus('No active cards', true);
-        }
-    }
-    
-    resetEffects() {
-        // Clear all timeouts and hide card
-        if (window.clearAllTimeouts) window.clearAllTimeouts();
-        if (window.hideCard) window.hideCard();
-        
-        // Reset sequences
-        window.isSequenceActive = false;
-        window.sequenceStage = 0;
-        
-        this.showStatus('All effects reset');
-    }
-    
-    updateUI(connected) {
-        const connectBtn = document.getElementById('bt-connect-btn');
-        const disconnectBtn = document.getElementById('bt-disconnect-btn');
-        const statusDiv = document.getElementById('bt-status');
-        
-        if (connected) {
-            connectBtn.style.display = 'none';
-            disconnectBtn.style.display = 'inline-block';
-            statusDiv.innerHTML = 'Status: ✅ Connected to ESP32';
-            statusDiv.style.color = '#4CAF50';
-        } else {
-            connectBtn.style.display = 'inline-block';
-            disconnectBtn.style.display = 'none';
-            statusDiv.innerHTML = 'Status: ❌ Not connected';
-            statusDiv.style.color = '#aaa';
-        }
-    }
-    
-    showStatus(message, isError = false) {
-        const statusDiv = document.getElementById('bt-status');
-        statusDiv.innerHTML = `Status: ${message}`;
-        statusDiv.style.color = isError ? '#f44336' : '#FF9800';
-        
-        setTimeout(() => {
-            if (this.isConnected) {
-                statusDiv.innerHTML = 'Status: ✅ Connected to ESP32';
-                statusDiv.style.color = '#4CAF50';
-            } else {
-                statusDiv.innerHTML = 'Status: ❌ Not connected';
-                statusDiv.style.color = '#aaa';
-            }
-        }, 3000);
-    }
-}
-
-// Initialize Bluetooth controller when page loads
-let btController = null;
-
-// Modified load event to include Bluetooth
-window.addEventListener('load', () => {
-    // Check if Web Bluetooth is supported
-    if (navigator.bluetooth) {
-        btController = new BluetoothController();
-        console.log('Web Bluetooth supported!');
-    } else {
-        console.warn('Web Bluetooth not supported in this browser');
-        // Add notification in settings
-        const settingsDiv = document.getElementById('settings');
-        const warning = document.createElement('div');
-        warning.className = 'setting-section';
-        warning.innerHTML = `
-            <h3>🎮 Bluetooth Controller</h3>
-            <div style="color: #f44336; padding: 10px; background: rgba(244,67,54,0.1); border-radius: 5px;">
-                ⚠️ Web Bluetooth not supported in this browser.<br>
-                Please use Chrome, Edge, or Opera on Android/Desktop.
-            </div>
-        `;
-        const closeBtn = document.getElementById('close-settings');
-        settingsDiv.insertBefore(warning, closeBtn);
-    }
-});
-
-// Add custom double tap event handler
-document.addEventListener('doubletap', () => {
-    // Trigger the existing double tap logic
-    const currentTime = new Date().getTime();
-    if (window.lastTapTime && (currentTime - window.lastTapTime) < 300) {
-        // Existing double tap logic will handle
-    }
-    window.lastTapTime = currentTime;
-});
-
-//code baru
-        // ============ ESP32 CONTROL VIA BLUETOOTH/USB ============
-// Tambahkan indikator status ESP32
-const esp32Status = document.createElement('div');
-esp32Status.id = 'esp32-status';
-esp32Status.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    background: rgba(0,0,0,0.8);
-    color: #4CAF50;
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-family: monospace;
-    z-index: 1000;
-    backdrop-filter: blur(5px);
-    border: 1px solid #4CAF50;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-`;
-esp32Status.innerHTML = '🎮 ESP32: <span id="esp32-cmd">Ready</span>';
-document.body.appendChild(esp32Status);
-
-// Fungsi untuk simulasi tap pada kartu (angka 1)
-function simulateCardTap() {
-    const card = document.getElementById('card');
-    
-    // Cek apakah kartu visible
-    if (card.style.display !== 'none' && card.style.visibility === 'visible') {
-        const rect = card.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        
-        console.log(`Simulating tap on card at (${centerX}, ${centerY})`);
-        
-        // Buat touch event pada kartu
-        const touchObj = new Touch({
-            identifier: Date.now(),
-            target: card,
-            clientX: centerX,
-            clientY: centerY,
-            screenX: centerX,
-            screenY: centerY,
-            pageX: centerX,
-            pageY: centerY,
-            radiusX: 5,
-            radiusY: 5,
-            force: 1
-        });
-        
-        // Touch start
-        const touchStartEvent = new TouchEvent('touchstart', {
-            touches: [touchObj],
-            targetTouches: [touchObj],
-            changedTouches: [touchObj],
-            bubbles: true,
-            cancelable: true
-        });
-        
-        card.dispatchEvent(touchStartEvent);
-        
-        // Touch end setelah 100ms (seperti tap biasa)
-        setTimeout(() => {
-            const touchEndEvent = new TouchEvent('touchend', {
-                touches: [],
-                targetTouches: [],
-                changedTouches: [touchObj],
-                bubbles: true,
-                cancelable: true
-            });
-            card.dispatchEvent(touchEndEvent);
-            
-            // Efek visual feedback
-            card.style.transform += ' scale(0.98)';
-            setTimeout(() => {
-                card.style.transform = card.style.transform.replace(' scale(0.98)', '');
-            }, 100);
-            
-            console.log("Card tap simulation completed");
-        }, 100);
-        
-    } else {
-        console.log("Card not visible, tap ignored");
-    }
-}
-
-// Fungsi untuk simulasi double tap di tengah layar (angka 2)
-function simulateDoubleTapScreen() {
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-    
-    console.log(`Simulating double tap at screen center`);
-    
-    // Fungsi untuk tap di posisi
-    function tapAtPosition(x, y) {
-        const elementAtPosition = document.elementFromPoint(x, y);
-        const target = elementAtPosition || document.body;
-        
-        const touchObj = new Touch({
-            identifier: Date.now(),
-            target: target,
-            clientX: x,
-            clientY: y,
-            screenX: x,
-            screenY: y,
-            pageX: x,
-            pageY: y,
-            radiusX: 5,
-            radiusY: 5,
-            force: 1
-        });
-        
-        // Touch start
-        const touchStartEvent = new TouchEvent('touchstart', {
-            touches: [touchObj],
-            targetTouches: [touchObj],
-            changedTouches: [touchObj],
-            bubbles: true,
-            cancelable: true
-        });
-        
-        target.dispatchEvent(touchStartEvent);
-        
-        // Touch end setelah 50ms
-        setTimeout(() => {
-            const touchEndEvent = new TouchEvent('touchend', {
-                touches: [],
-                targetTouches: [],
-                changedTouches: [touchObj],
-                bubbles: true,
-                cancelable: true
-            });
-            target.dispatchEvent(touchEndEvent);
-        }, 50);
-    }
-    
-    // Tap pertama
-    tapAtPosition(centerX, centerY);
-    
-    // Tap kedua setelah 150ms
-    setTimeout(() => {
-        tapAtPosition(centerX, centerY);
-        console.log("Double tap simulation completed");
-    }, 150);
-}
-
-// Fungsi untuk menerima perintah dari ESP32
-window.receiveESP32Command = function(command) {
-    console.log("Received ESP32 command:", command);
-    
-    // Tampilkan status
-    const cmdSpan = document.getElementById('esp32-cmd');
-    const statusDiv = document.getElementById('esp32-status');
-    
-    if (command === '1') {
-        cmdSpan.textContent = 'Tap Card';
-        cmdSpan.style.color = '#FF9800';
-        statusDiv.style.opacity = '1';
-        simulateCardTap();
-        
-        setTimeout(() => {
-            statusDiv.style.opacity = '0';
-            cmdSpan.style.color = '#4CAF50';
-            setTimeout(() => {
-                cmdSpan.textContent = 'Ready';
-            }, 500);
-        }, 1500);
-        
-    } else if (command === '2') {
-        cmdSpan.textContent = 'Double Tap';
-        cmdSpan.style.color = '#FF9800';
-        statusDiv.style.opacity = '1';
-        simulateDoubleTapScreen();
-        
-        setTimeout(() => {
-            statusDiv.style.opacity = '0';
-            cmdSpan.style.color = '#4CAF50';
-            setTimeout(() => {
-                cmdSpan.textContent = 'Ready';
-            }, 500);
-        }, 1500);
-    }
-};
-
-// ============ WEBSOCKET / SERIAL CONNECTION (Opsional) ============
-// Untuk koneksi via Web Serial (USB)
-class ESP32Controller {
-    constructor() {
-        this.port = null;
-        this.reader = null;
-        this.isConnected = false;
-        this.initUI();
-    }
-    
-    initUI() {
-        // Tambahkan tombol connect di settings
-        const settingsDiv = document.getElementById('settings');
-        const closeBtn = document.getElementById('close-settings');
-        
-        // Cek apakah sudah ada
-        if (!document.getElementById('esp32-connect-section')) {
-            const esp32Section = document.createElement('div');
-            esp32Section.id = 'esp32-connect-section';
-            esp32Section.className = 'setting-section';
-            esp32Section.innerHTML = `
-                <h3>🎮 ESP32 Controller</h3>
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <button id="esp32-connect-btn" style="background: #4CAF50;">🔌 Connect ESP32</button>
-                    <button id="esp32-disconnect-btn" style="background: #f44336; display: none;">🔌 Disconnect</button>
-                </div>
-                <div id="esp32-connection-status" style="font-size: 12px; color: #aaa;">
-                    Status: Not connected
-                </div>
-                <div style="font-size: 11px; color: #888; margin-top: 5px;">
-                    💡 ESP32 akan mengirim angka 1 atau 2 via USB/Bluetooth
-                </div>
-            `;
-            
-            settingsDiv.insertBefore(esp32Section, closeBtn);
-            
-            document.getElementById('esp32-connect-btn').addEventListener('click', () => this.connectSerial());
-            document.getElementById('esp32-disconnect-btn').addEventListener('click', () => this.disconnect());
-        }
-    }
-    
-    async connectSerial() {
-        try {
-            if ('serial' in navigator) {
-                // Web Serial API
-                this.port = await navigator.serial.requestPort();
-                await this.port.open({ baudRate: 115200 });
-                this.isConnected = true;
-                this.updateUI(true);
-                this.readSerial();
-                console.log('Connected via USB Serial');
-            } else if ('bluetooth' in navigator) {
-                // Web Bluetooth
-                const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: ['00001101-0000-1000-8000-00805f9b34fb'] }]
-                });
-                const server = await device.gatt.connect();
-                const service = await server.getPrimaryService('00001101-0000-1000-8000-00805f9b34fb');
-                const characteristic = await service.getCharacteristic('00001101-0000-1000-8000-00805f9b34fb');
-                
-                await characteristic.startNotifications();
-                characteristic.addEventListener('characteristicvaluechanged', (event) => {
-                    const value = new TextDecoder().decode(event.target.value);
-                    this.processCommand(value.trim());
-                });
-                
-                this.isConnected = true;
-                this.updateUI(true);
-                console.log('Connected via Bluetooth');
-            } else {
-                alert('Web Serial/Bluetooth not supported in this browser. Use Chrome/Edge.');
-            }
-        } catch (error) {
-            console.error('Connection error:', error);
-            alert('Failed to connect: ' + error.message);
-        }
-    }
-    
-    async readSerial() {
-        const decoder = new TextDecoder();
-        try {
-            while (this.port && this.port.readable) {
-                const reader = this.port.readable.getReader();
-                this.reader = reader;
-                
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-                    if (value) {
-                        const text = decoder.decode(value);
-                        const lines = text.split('\n');
-                        for (const line of lines) {
-                            const cmd = line.trim();
-                            if (cmd === '1' || cmd === '2') {
-                                this.processCommand(cmd);
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Read error:', error);
-            this.disconnect();
-        }
-    }
-    
-    processCommand(command) {
-        console.log('ESP32 command:', command);
-        receiveESP32Command(command);
-    }
-    
-    async disconnect() {
-        if (this.reader) {
-            await this.reader.cancel();
-            this.reader = null;
-        }
-        if (this.port) {
-            await this.port.close();
-            this.port = null;
-        }
-        this.isConnected = false;
-        this.updateUI(false);
-    }
-    
-    updateUI(connected) {
-        const connectBtn = document.getElementById('esp32-connect-btn');
-        const disconnectBtn = document.getElementById('esp32-disconnect-btn');
-        const statusDiv = document.getElementById('esp32-connection-status');
-        
-        if (connected) {
-            connectBtn.style.display = 'none';
-            disconnectBtn.style.display = 'inline-block';
-            statusDiv.innerHTML = 'Status: ✅ Connected to ESP32';
-            statusDiv.style.color = '#4CAF50';
-        } else {
-            connectBtn.style.display = 'inline-block';
-            disconnectBtn.style.display = 'none';
-            statusDiv.innerHTML = 'Status: ❌ Not connected';
-            statusDiv.style.color = '#aaa';
-        }
-    }
-}
-
-// Inisialisasi controller saat halaman dimuat
-let esp32Controller = null;
-
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        if ('serial' in navigator || 'bluetooth' in navigator) {
-            esp32Controller = new ESP32Controller();
-            console.log('ESP32 Controller initialized');
-        } else {
-            console.log('Web Serial/Bluetooth not supported');
-            // Tampilkan notifikasi di settings
-            const settingsDiv = document.getElementById('settings');
-            const closeBtn = document.getElementById('close-settings');
-            const warning = document.createElement('div');
-            warning.className = 'setting-section';
-            warning.innerHTML = `
-                <h3>🎮 ESP32 Controller</h3>
-                <div style="color: #f44336; padding: 10px; background: rgba(244,67,54,0.1); border-radius: 5px;">
-                    ⚠️ Web Serial/Bluetooth not supported.<br>
-                    Use Chrome/Edge on Desktop or Chrome on Android.
-                </div>
-            `;
-            if (!document.getElementById('esp32-warning')) {
-                warning.id = 'esp32-warning';
-                settingsDiv.insertBefore(warning, closeBtn);
-            }
-        }
-    }, 1000);
-});
     </script>
 </body>
 </html>
