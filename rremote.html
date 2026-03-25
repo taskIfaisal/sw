@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Magic Card Remote Control</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            background: linear-gradient(135deg, #4CAF50, #2196F3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            color: #888;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .pairing-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .pairing-card h3 {
+            margin-bottom: 15px;
+            color: #4CAF50;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 16px;
+            font-family: monospace;
+        }
+        
+        .input-group input::placeholder {
+            color: #aaa;
+        }
+        
+        .input-group button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: #4CAF50;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .input-group button:active {
+            transform: scale(0.95);
+        }
+        
+        .status {
+            font-size: 12px;
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .status.connected {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4CAF50;
+        }
+        
+        .status.disconnected {
+            background: rgba(244, 67, 54, 0.3);
+            color: #f44336;
+        }
+        
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .effect-btn {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .effect-btn:active {
+            transform: scale(0.96);
+        }
+        
+        .effect-btn.active {
+            background: #4CAF50;
+            border-color: #4CAF50;
+        }
+        
+        .effect-btn .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        
+        .effect-btn .label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .quick-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 20px;
+        }
+        
+        .quick-btn:active {
+            transform: scale(0.95);
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .control-btn {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+        
+        .control-btn:active {
+            transform: scale(0.97);
+        }
+        
+        .control-btn.hide {
+            background: #f44336;
+        }
+        
+        .control-btn.reset {
+            background: #ff9800;
+        }
+        
+        .size-slider {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+        }
+        
+        .size-slider label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .size-slider input {
+            width: 100%;
+            height: 5px;
+            border-radius: 5px;
+            background: #4CAF50;
+            outline: none;
+        }
+        
+        .size-value {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #4CAF50;
+        }
+        
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 CARD REMOTE</h1>
+            <p>Kontrol kartu dari HP ini</p>
+        </div>
+        
+        <div class="pairing-card">
+            <h3>🔗 Pairing</h3>
+            <div class="input-group">
+                <input type="text" id="host-id" placeholder="Masukkan Host ID" autocomplete="off">
+                <button id="connect-btn">Connect</button>
+            </div>
+            <div id="status" class="status disconnected">⚪ Belum terhubung</div>
+        </div>
+        
+        <div id="controls" style="display: none;">
+            <div class="button-grid">
+                <div class="effect-btn" data-effect="standar">
+                    <div class="icon">🪄</div>
+                    <div class="label">Effect Standar</div>
+                </div>
+                <div class="effect-btn" data-effect="shadow">
+                    <div class="icon">🌑</div>
+                    <div class="label">Effect Shadow</div>
+                </div>
+                <div class="effect-btn" data-effect="slider">
+                    <div class="icon">📍</div>
+                    <div class="label">Effect Slider</div>
+                </div>
+                <div class="effect-btn" data-effect="skating">
+                    <div class="icon">⛸️</div>
+                    <div class="label">Effect Skating</div>
+                </div>
+            </div>
+            
+            <div class="quick-actions">
+                <button class="quick-btn" data-favorite="1">❤️</button>
+                <button class="quick-btn" data-favorite="2">♦️</button>
+                <button class="quick-btn" data-favorite="3">♣️</button>
+                <button class="quick-btn" data-favorite="4">♠️</button>
+            </div>
+            
+            <div class="control-buttons">
+                <button class="control-btn hide" id="hide-btn">⬅️ HIDE CARD</button>
+                <button class="control-btn reset" id="reset-btn">🔄 RESET</button>
+            </div>
+            
+            <div class="control-buttons">
+                <button class="control-btn" id="trigger-btn" style="background: #4CAF50;">🎯 TRIGGER EFFECT</button>
+            </div>
+            
+            <div class="size-slider">
+                <label>📏 Card Size: <span id="size-display">200</span>px</label>
+                <input type="range" id="size-slider" min="100" max="400" value="200" step="5">
+                <div class="size-value">⬅️ Geser untuk mengubah ukuran kartu</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            Magic Card Remote Controller v1.0
+        </div>
+    </div>
+    
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCEmMaofxL1_ciX0wQn2X9DRM_WZFP-q9M",
+            authDomain: "magic--control.firebaseapp.com",
+            databaseURL: "https://magic--control-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "magic--control",
+            storageBucket: "magic--control.appspot.com",
+            messagingSenderId: "1040027506886",
+            appId: "1:1040027506886:web:e70e085b3d57f0e765dfc7",
+            measurementId: "G-0KSWHKL03D"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        let currentHostId = null;
+        let isConnected = false;
+        
+        // DOM Elements
+        const hostIdInput = document.getElementById('host-id');
+        const connectBtn = document.getElementById('connect-btn');
+        const statusDiv = document.getElementById('status');
+        const controlsDiv = document.getElementById('controls');
+        const sizeSlider = document.getElementById('size-slider');
+        const sizeDisplay = document.getElementById('size-display');
+        
+        // Send command function
+        function sendCommand(action, data = {}) {
+            if (!currentHostId || !isConnected) {
+                showStatus('Belum terhubung ke host', false);
+                return;
+            }
+            
+            const command = {
+                action: action,
+                ...data,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            const commandRef = db.ref('commands/' + currentHostId);
+            commandRef.set(command)
+                .then(() => {
+                    console.log('Command sent:', command);
+                    // Visual feedback
+                    const btn = document.activeElement;
+                    if (btn && btn.classList) {
+                        btn.style.transform = 'scale(0.95)';
+                        setTimeout(() => { btn.style.transform = ''; }, 150);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error sending command:', err);
+                    showStatus('Gagal mengirim perintah', false);
+                });
+        }
+        
+        // Show status message
+        function showStatus(message, isConnectedStatus) {
+            statusDiv.textContent = message;
+            statusDiv.className = isConnectedStatus ? 'status connected' : 'status disconnected';
+        }
+        
+        // Check host online status
+        function checkHostStatus() {
+            if (!currentHostId) return;
+            
+            const hostRef = db.ref('hosts/' + currentHostId);
+            hostRef.once('value', (snapshot) => {
+                const host = snapshot.val();
+                if (host && host.status === 'online') {
+                    const lastSeen = host.lastSeen;
+                    const now = Date.now();
+                    if (now - lastSeen < 60000) { // Within 1 minute
+                        isConnected = true;
+                        showStatus(`✅ Terhubung ke: ${host.name || 'Magic Card'}`, true);
+                        controlsDiv.style.display = 'block';
+                    } else {
+                        isConnected = false;
+                        showStatus('⚠️ Host offline, coba lagi', false);
+                        controlsDiv.style.display = 'none';
+                    }
+                } else {
+                    isConnected = false;
+                    showStatus('❌ Host tidak ditemukan', false);
+                    controlsDiv.style.display = 'none';
+                }
+            }).catch(err => {
+                console.error('Error checking host:', err);
+                showStatus('Error koneksi', false);
+                controlsDiv.style.display = 'none';
+            });
+        }
+        
+        // Monitor host status periodically
+        let statusInterval = null;
+        
+        // Connect button handler
+        connectBtn.addEventListener('click', () => {
+            const hostId = hostIdInput.value.trim();
+            if (!hostId) {
+                showStatus('Masukkan Host ID', false);
+                return;
+            }
+            
+            currentHostId = hostId;
+            checkHostStatus();
+            
+            // Clear previous interval
+            if (statusInterval) clearInterval(statusInterval);
+            // Check every 10 seconds
+            statusInterval = setInterval(checkHostStatus, 10000);
+        });
+        
+        // Effect buttons
+        document.querySelectorAll('.effect-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const effect = btn.dataset.effect;
+                sendCommand('selectEffect', { effect: effect });
+                
+                // Visual feedback - highlight active
+                document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                setTimeout(() => btn.classList.remove('active'), 500);
+            });
+        });
+        
+        // Quick action buttons (favorite images)
+        document.querySelectorAll('.quick-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const favorite = parseInt(btn.dataset.favorite);
+                sendCommand('changeImage', { favorite: favorite });
+            });
+        });
+        
+        // Hide button
+        document.getElementById('hide-btn').addEventListener('click', () => {
+            sendCommand('hideCard');
+        });
+        
+        // Reset button
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            sendCommand('resetCard');
+        });
+        
+        // Trigger effect button (simulate double tap)
+        document.getElementById('trigger-btn').addEventListener('click', () => {
+            sendCommand('triggerEffect');
+        });
+        
+        // Size slider
+        sizeSlider.addEventListener('input', (e) => {
+            const size = e.target.value;
+            sizeDisplay.textContent = size;
+            sendCommand('setCardSize', { size: parseInt(size) });
+        });
+        
+        // Auto-connect if hostId saved
+        const savedHostId = localStorage.getItem('remote_host_id');
+        if (savedHostId) {
+            hostIdInput.value = savedHostId;
+            currentHostId = savedHostId;
+            checkHostStatus();
+            statusInterval = setInterval(checkHostStatus, 10000);
+        }
+        
+        // Save hostId on connect
+        connectBtn.addEventListener('click', () => {
+            localStorage.setItem('remote_host_id', currentHostId);
+        });
+        
+        console.log('Remote controller ready');
+    </script>
+</body>
+</html>
