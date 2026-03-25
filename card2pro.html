@@ -13,7 +13,7 @@
     <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
     <style>
-        /* Semua style tetap sama seperti kode Anda */
+        /* Semua style tetap sama seperti sebelumnya */
         html, body {
             margin: 0;
             padding: 0;
@@ -807,7 +807,7 @@
                 </label>
             </div>
             <div class="effect-description">
-                ON: Double tap → tunggu 5 detik → kartu muncul fade in 5 detik di tengah, berganti sesuai gambar aktif (3 detik setelah sentuh), fade out 5 detik
+                ON: Double tap → tunggu 5 detik → kartu muncul fade in 5 detik di tengah, berganti sesuai gambar aktif (3 detik setelah sentuh), setelah gambar terakhir tunggu 3 detik → fade out 5 detik
             </div>
         </div>
 
@@ -895,7 +895,7 @@
     </button>
 
     <script>
-        // Elements (semua sama seperti kode Anda)
+        // Elements
         const background = document.getElementById('background');
         const card = document.getElementById('card');
         const settings = document.getElementById('settings');
@@ -972,6 +972,7 @@
         
         // ===== VARIABEL UNTUK SHADOW EFFECT FADE OUT =====
         let shadowFadeOutTimeout = null;
+        let shadowWaitTimeout = null;
         
         const STORAGE_KEY = 'magic_card_data';
         
@@ -1306,7 +1307,7 @@
             updateDownloadButtonState();
         }
         
-        // ===== PERBAIKAN EFFECT SHADOW =====
+        // ===== FUNGSI UNTUK EFFECT SHADOW =====
         function showCardShadow() {
             const activeList = getActiveImagesList();
             
@@ -1320,6 +1321,10 @@
                 clearTimeout(shadowFadeOutTimeout);
                 shadowFadeOutTimeout = null;
             }
+            if (shadowWaitTimeout) {
+                clearTimeout(shadowWaitTimeout);
+                shadowWaitTimeout = null;
+            }
             
             // Reset animasi kartu
             card.style.animation = 'none';
@@ -1330,6 +1335,7 @@
             card.style.transform = 'none';
             card.style.left = '0';
             card.style.top = '0';
+            card.classList.remove('card-fadeout');
             
             // Dapatkan ukuran kartu
             const cardWidth = card.offsetWidth;
@@ -1352,9 +1358,6 @@
             // Trigger reflow untuk memastikan animasi berjalan
             void card.offsetHeight;
             
-            // Hapus class fadeout jika ada
-            card.classList.remove('card-fadeout');
-            
             // Mulai animasi fade in
             card.style.animation = 'muncul 5s ease-in-out';
             
@@ -1366,32 +1369,52 @@
             console.log('Effect Shadow: kartu muncul fade in di tengah dengan gambar 1');
         }
         
-        // ===== FUNGSI UNTUK FADE OUT SHADOW =====
+        // ===== FUNGSI UNTUK FADE OUT SHADOW DENGAN JEDA 3 DETIK =====
         function fadeOutShadowCard() {
             if (!isSequenceActive || card.style.display === 'none') return;
             
-            console.log("Shadow: memulai fade out selama 5 detik");
+            console.log("Shadow: menunggu 3 detik sebelum fade out");
             
-            // Hapus animasi fade in
-            card.style.animation = 'none';
-            
-            // Trigger reflow
-            void card.offsetHeight;
-            
-            // Tambah class fadeout
-            card.classList.add('card-fadeout');
-            
-            // Set timeout untuk menyembunyikan kartu setelah fade out selesai
-            shadowFadeOutTimeout = setTimeout(() => {
-                if (isSequenceActive) {
-                    hideCard();
-                    card.classList.remove('card-fadeout');
-                    isSequenceActive = false;
-                    sequenceStage = 0;
-                    console.log("Shadow: kartu hilang setelah fade out");
-                }
+            // Hapus timer yang mungkin berjalan
+            if (shadowWaitTimeout) {
+                clearTimeout(shadowWaitTimeout);
+                shadowWaitTimeout = null;
+            }
+            if (shadowFadeOutTimeout) {
+                clearTimeout(shadowFadeOutTimeout);
                 shadowFadeOutTimeout = null;
-            }, 5000);
+            }
+            
+            // Tunggu 3 detik sebelum memulai fade out
+            shadowWaitTimeout = setTimeout(() => {
+                if (!isSequenceActive || card.style.display === 'none') return;
+                
+                console.log("Shadow: memulai fade out selama 5 detik");
+                
+                // Hapus animasi fade in
+                card.style.animation = 'none';
+                
+                // Trigger reflow
+                void card.offsetHeight;
+                
+                // Tambah class fadeout
+                card.classList.add('card-fadeout');
+                
+                // Set timeout untuk menyembunyikan kartu setelah fade out selesai
+                shadowFadeOutTimeout = setTimeout(() => {
+                    if (isSequenceActive) {
+                        hideCard();
+                        card.classList.remove('card-fadeout');
+                        isSequenceActive = false;
+                        sequenceStage = 0;
+                        console.log("Shadow: kartu hilang setelah fade out");
+                    }
+                    shadowFadeOutTimeout = null;
+                }, 5000);
+                
+                shadowWaitTimeout = null;
+                
+            }, 3000); // Jeda 3 detik sebelum fade out dimulai
         }
         
         // ===== FUNGSI UNTUK GANTI GAMBAR SHADOW =====
@@ -1945,6 +1968,10 @@
                 clearTimeout(shadowFadeOutTimeout);
                 shadowFadeOutTimeout = null;
             }
+            if (shadowWaitTimeout) {
+                clearTimeout(shadowWaitTimeout);
+                shadowWaitTimeout = null;
+            }
         }
         
         function showIndicator() {
@@ -2014,6 +2041,10 @@
                             clearTimeout(shadowFadeOutTimeout);
                             shadowFadeOutTimeout = null;
                         }
+                        if (shadowWaitTimeout) {
+                            clearTimeout(shadowWaitTimeout);
+                            shadowWaitTimeout = null;
+                        }
                         card.classList.remove('card-fadeout');
                         card.style.animation = 'none';
                         
@@ -2047,6 +2078,10 @@
                         clearTimeout(shadowFadeOutTimeout);
                         shadowFadeOutTimeout = null;
                     }
+                    if (shadowWaitTimeout) {
+                        clearTimeout(shadowWaitTimeout);
+                        shadowWaitTimeout = null;
+                    }
                     card.classList.remove('card-fadeout');
                     card.style.animation = 'none';
                     
@@ -2070,6 +2105,10 @@
                     if (shadowFadeOutTimeout) {
                         clearTimeout(shadowFadeOutTimeout);
                         shadowFadeOutTimeout = null;
+                    }
+                    if (shadowWaitTimeout) {
+                        clearTimeout(shadowWaitTimeout);
+                        shadowWaitTimeout = null;
                     }
                     card.classList.remove('card-fadeout');
                     card.style.animation = 'none';
@@ -2096,7 +2135,7 @@
                 
                 const activeCount = activeImagesList.length;
                 
-                // PERBAIKAN: Untuk shadow effect
+                // Untuk shadow effect
                 if (shadowEffectCheckbox.checked) {
                     if (sequenceStage < activeCount) {
                         console.log(`Shadow Stage ${sequenceStage}: tunggu 3 detik untuk ganti gambar`);
@@ -2110,10 +2149,10 @@
                         }, 3000);
                     } 
                     else if (sequenceStage === activeCount && activeCount > 0) {
-                        console.log(`Shadow Stage ${sequenceStage}: memulai fade out setelah sentuh`);
+                        console.log(`Shadow Stage ${sequenceStage}: semua gambar sudah tampil, tunggu 3 detik lalu fade out`);
                         // Hapus timer yang mungkin ada
                         if (touchToChangeTimeout) clearTimeout(touchToChangeTimeout);
-                        // Langsung mulai fade out
+                        // Langsung panggil fade out dengan jeda 3 detik
                         fadeOutShadowCard();
                     }
                 } 
