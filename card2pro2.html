@@ -2653,9 +2653,6 @@
         updateDownloadButtonState();
 
      // ===== FIREBASE REMOTE CONTROL =====
-// PASTIKAN KODE INI DI LETAKKAN DI LUAR FUNCTION APAPUN
-// LETAKKAN DI BAGIAN PALING BAWAH SEBELUM </script>
-
 // Konfigurasi Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyCEmMaofxL1_ciX0wQn2X9DRM_WZFP-q9M",
@@ -2719,34 +2716,37 @@ if (typeof firebase !== 'undefined' && firebase.initializeApp) {
                 case 'doubleTap':
                     simulateDoubleTap();
                     break;
+                    
                 case 'hideCard':
                     console.log('Remote: menyembunyikan kartu');
-                    hideCard();
+                    if (typeof hideCard === 'function') hideCard();
                     isSequenceActive = false;
                     sequenceStage = 0;
-                    clearAllTimeouts();
+                    if (typeof clearAllTimeouts === 'function') clearAllTimeouts();
                     if (card) {
                         card.classList.remove('card-fadeout');
                         card.style.animation = 'none';
                     }
                     break;
+                    
                 case 'resetCard':
                     console.log('Remote: reset kartu');
-                    hideCard();
+                    if (typeof hideCard === 'function') hideCard();
                     isSequenceActive = false;
                     sequenceStage = 0;
-                    clearAllTimeouts();
+                    if (typeof clearAllTimeouts === 'function') clearAllTimeouts();
                     if (card) {
                         card.classList.remove('card-fadeout');
                         card.style.animation = 'none';
                         card.style.display = 'block';
                         posX = (window.innerWidth / 2) - (card.offsetWidth / 2);
                         posY = window.innerHeight + card.offsetHeight + 100;
-                        updateCardTransform();
+                        if (typeof updateCardTransform === 'function') updateCardTransform();
                         card.style.display = 'none';
                         card.style.visibility = 'hidden';
                     }
                     break;
+                    
                 case 'selectEffect':
                     console.log('Remote: mengubah efek ke:', command.effect);
                     if (effectStandarCheckbox && shadowEffectCheckbox && effectSliderCheckbox && effectSkatingCheckbox) {
@@ -2764,10 +2764,11 @@ if (typeof firebase !== 'undefined' && firebase.initializeApp) {
                         if (typeof autoSave === 'function') autoSave();
                     }
                     break;
+                    
                 case 'changeImage':
                     console.log('Remote: ganti gambar ke favorite:', command.favorite);
                     if (command.favorite >= 1 && command.favorite <= 4) {
-                        const previewBox = document.getElementById(`preview-${command.favorite}`);
+                        const previewBox = document.getElementById('preview-' + command.favorite);
                         if (previewBox) {
                             const previewImg = previewBox.querySelector('img');
                             if (previewImg && previewImg.src && typeof updateCardImage === 'function') {
@@ -2776,6 +2777,7 @@ if (typeof firebase !== 'undefined' && firebase.initializeApp) {
                         }
                     }
                     break;
+                    
                 case 'setCardSize':
                     console.log('Remote: ubah ukuran kartu ke:', command.size);
                     if (cardSizeSlider && sizeValue && card) {
@@ -2798,6 +2800,7 @@ if (typeof firebase !== 'undefined' && firebase.initializeApp) {
                         if (typeof autoSave === 'function') autoSave();
                     }
                     break;
+                    
                 case 'triggerEffect':
                     console.log('Remote: trigger efek langsung');
                     simulateDoubleTap();
@@ -2877,21 +2880,8 @@ if (typeof firebase !== 'undefined' && firebase.initializeApp) {
     
     // Tampilkan ID host di pojok kiri bawah
     const hostIdDisplay = document.createElement('div');
-    hostIdDisplay.style.cssText = `
-        position: fixed;
-        bottom: 10px;
-        left: 10px;
-        background: rgba(0,0,0,0.7);
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 11px;
-        color: #4CAF50;
-        z-index: 999;
-        font-family: monospace;
-        pointer-events: none;
-        backdrop-filter: blur(5px);
-    `;
-    hostIdDisplay.innerHTML = `🔗 Host ID: <strong style="color:#fff">${hostId}</strong>`;
+    hostIdDisplay.style.cssText = 'position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 6px 12px; border-radius: 8px; font-size: 11px; color: #4CAF50; z-index: 999; font-family: monospace; pointer-events: none; backdrop-filter: blur(5px);';
+    hostIdDisplay.innerHTML = '🔗 Host ID: <strong style="color:#fff">' + hostId + '</strong>';
     document.body.appendChild(hostIdDisplay);
     console.log('Host ID display added to page:', hostId);
     
@@ -2905,20 +2895,18 @@ if (typeof firebase !== 'undefined' && firebase.initializeApp) {
             pairingSection.style.borderTop = '1px solid #333';
             pairingSection.style.paddingTop = '15px';
             pairingSection.style.marginTop = '10px';
-            pairingSection.innerHTML = `
-                <h3>📱 Remote Control</h3>
-                <p style="font-size: 12px; color: #aaa; margin-bottom: 10px;">
-                    Gunakan HP lain untuk mengontrol kartu ini.<br>
-                    <strong>Host ID:</strong> <span style="color: #4CAF50; font-family: monospace; background: #222; padding: 4px 8px; border-radius: 5px;">${hostId}</span>
-                </p>
-                <p style="font-size: 11px; color: #888;">
-                    📱 Buka di HP lain file <strong>remote.html</strong><br>
-                    Masukkan Host ID di atas untuk pairing.
-                </p>
-                <p style="font-size: 10px; color: #4CAF50; margin-top: 8px;">
-                    ✅ Status: <span style="color: #4CAF50;">Online</span>
-                </p>
-            `;
+            pairingSection.innerHTML = '<h3>📱 Remote Control</h3>' +
+                '<p style="font-size: 12px; color: #aaa; margin-bottom: 10px;">' +
+                'Gunakan HP lain untuk mengontrol kartu ini.<br>' +
+                '<strong>Host ID:</strong> <span style="color: #4CAF50; font-family: monospace; background: #222; padding: 4px 8px; border-radius: 5px;">' + hostId + '</span>' +
+                '</p>' +
+                '<p style="font-size: 11px; color: #888;">' +
+                '📱 Buka di HP lain file <strong>remote.html</strong><br>' +
+                'Masukkan Host ID di atas untuk pairing.' +
+                '</p>' +
+                '<p style="font-size: 10px; color: #4CAF50; margin-top: 8px;">' +
+                '✅ Status: <span style="color: #4CAF50;">Online</span>' +
+                '</p>';
             
             // Sisipkan sebelum Card Size section
             const cardSizeSection = document.querySelector('.preview-frame-container');
