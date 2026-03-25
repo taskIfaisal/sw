@@ -2914,6 +2914,365 @@ document.addEventListener('doubletap', () => {
     }
     window.lastTapTime = currentTime;
 });
+
+//code baru
+        // ============ ESP32 CONTROL VIA BLUETOOTH/USB ============
+// Tambahkan indikator status ESP32
+const esp32Status = document.createElement('div');
+esp32Status.id = 'esp32-status';
+esp32Status.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(0,0,0,0.8);
+    color: #4CAF50;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: monospace;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+    border: 1px solid #4CAF50;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+`;
+esp32Status.innerHTML = '🎮 ESP32: <span id="esp32-cmd">Ready</span>';
+document.body.appendChild(esp32Status);
+
+// Fungsi untuk simulasi tap pada kartu (angka 1)
+function simulateCardTap() {
+    const card = document.getElementById('card');
+    
+    // Cek apakah kartu visible
+    if (card.style.display !== 'none' && card.style.visibility === 'visible') {
+        const rect = card.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        console.log(`Simulating tap on card at (${centerX}, ${centerY})`);
+        
+        // Buat touch event pada kartu
+        const touchObj = new Touch({
+            identifier: Date.now(),
+            target: card,
+            clientX: centerX,
+            clientY: centerY,
+            screenX: centerX,
+            screenY: centerY,
+            pageX: centerX,
+            pageY: centerY,
+            radiusX: 5,
+            radiusY: 5,
+            force: 1
+        });
+        
+        // Touch start
+        const touchStartEvent = new TouchEvent('touchstart', {
+            touches: [touchObj],
+            targetTouches: [touchObj],
+            changedTouches: [touchObj],
+            bubbles: true,
+            cancelable: true
+        });
+        
+        card.dispatchEvent(touchStartEvent);
+        
+        // Touch end setelah 100ms (seperti tap biasa)
+        setTimeout(() => {
+            const touchEndEvent = new TouchEvent('touchend', {
+                touches: [],
+                targetTouches: [],
+                changedTouches: [touchObj],
+                bubbles: true,
+                cancelable: true
+            });
+            card.dispatchEvent(touchEndEvent);
+            
+            // Efek visual feedback
+            card.style.transform += ' scale(0.98)';
+            setTimeout(() => {
+                card.style.transform = card.style.transform.replace(' scale(0.98)', '');
+            }, 100);
+            
+            console.log("Card tap simulation completed");
+        }, 100);
+        
+    } else {
+        console.log("Card not visible, tap ignored");
+    }
+}
+
+// Fungsi untuk simulasi double tap di tengah layar (angka 2)
+function simulateDoubleTapScreen() {
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    
+    console.log(`Simulating double tap at screen center`);
+    
+    // Fungsi untuk tap di posisi
+    function tapAtPosition(x, y) {
+        const elementAtPosition = document.elementFromPoint(x, y);
+        const target = elementAtPosition || document.body;
+        
+        const touchObj = new Touch({
+            identifier: Date.now(),
+            target: target,
+            clientX: x,
+            clientY: y,
+            screenX: x,
+            screenY: y,
+            pageX: x,
+            pageY: y,
+            radiusX: 5,
+            radiusY: 5,
+            force: 1
+        });
+        
+        // Touch start
+        const touchStartEvent = new TouchEvent('touchstart', {
+            touches: [touchObj],
+            targetTouches: [touchObj],
+            changedTouches: [touchObj],
+            bubbles: true,
+            cancelable: true
+        });
+        
+        target.dispatchEvent(touchStartEvent);
+        
+        // Touch end setelah 50ms
+        setTimeout(() => {
+            const touchEndEvent = new TouchEvent('touchend', {
+                touches: [],
+                targetTouches: [],
+                changedTouches: [touchObj],
+                bubbles: true,
+                cancelable: true
+            });
+            target.dispatchEvent(touchEndEvent);
+        }, 50);
+    }
+    
+    // Tap pertama
+    tapAtPosition(centerX, centerY);
+    
+    // Tap kedua setelah 150ms
+    setTimeout(() => {
+        tapAtPosition(centerX, centerY);
+        console.log("Double tap simulation completed");
+    }, 150);
+}
+
+// Fungsi untuk menerima perintah dari ESP32
+window.receiveESP32Command = function(command) {
+    console.log("Received ESP32 command:", command);
+    
+    // Tampilkan status
+    const cmdSpan = document.getElementById('esp32-cmd');
+    const statusDiv = document.getElementById('esp32-status');
+    
+    if (command === '1') {
+        cmdSpan.textContent = 'Tap Card';
+        cmdSpan.style.color = '#FF9800';
+        statusDiv.style.opacity = '1';
+        simulateCardTap();
+        
+        setTimeout(() => {
+            statusDiv.style.opacity = '0';
+            cmdSpan.style.color = '#4CAF50';
+            setTimeout(() => {
+                cmdSpan.textContent = 'Ready';
+            }, 500);
+        }, 1500);
+        
+    } else if (command === '2') {
+        cmdSpan.textContent = 'Double Tap';
+        cmdSpan.style.color = '#FF9800';
+        statusDiv.style.opacity = '1';
+        simulateDoubleTapScreen();
+        
+        setTimeout(() => {
+            statusDiv.style.opacity = '0';
+            cmdSpan.style.color = '#4CAF50';
+            setTimeout(() => {
+                cmdSpan.textContent = 'Ready';
+            }, 500);
+        }, 1500);
+    }
+};
+
+// ============ WEBSOCKET / SERIAL CONNECTION (Opsional) ============
+// Untuk koneksi via Web Serial (USB)
+class ESP32Controller {
+    constructor() {
+        this.port = null;
+        this.reader = null;
+        this.isConnected = false;
+        this.initUI();
+    }
+    
+    initUI() {
+        // Tambahkan tombol connect di settings
+        const settingsDiv = document.getElementById('settings');
+        const closeBtn = document.getElementById('close-settings');
+        
+        // Cek apakah sudah ada
+        if (!document.getElementById('esp32-connect-section')) {
+            const esp32Section = document.createElement('div');
+            esp32Section.id = 'esp32-connect-section';
+            esp32Section.className = 'setting-section';
+            esp32Section.innerHTML = `
+                <h3>🎮 ESP32 Controller</h3>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button id="esp32-connect-btn" style="background: #4CAF50;">🔌 Connect ESP32</button>
+                    <button id="esp32-disconnect-btn" style="background: #f44336; display: none;">🔌 Disconnect</button>
+                </div>
+                <div id="esp32-connection-status" style="font-size: 12px; color: #aaa;">
+                    Status: Not connected
+                </div>
+                <div style="font-size: 11px; color: #888; margin-top: 5px;">
+                    💡 ESP32 akan mengirim angka 1 atau 2 via USB/Bluetooth
+                </div>
+            `;
+            
+            settingsDiv.insertBefore(esp32Section, closeBtn);
+            
+            document.getElementById('esp32-connect-btn').addEventListener('click', () => this.connectSerial());
+            document.getElementById('esp32-disconnect-btn').addEventListener('click', () => this.disconnect());
+        }
+    }
+    
+    async connectSerial() {
+        try {
+            if ('serial' in navigator) {
+                // Web Serial API
+                this.port = await navigator.serial.requestPort();
+                await this.port.open({ baudRate: 115200 });
+                this.isConnected = true;
+                this.updateUI(true);
+                this.readSerial();
+                console.log('Connected via USB Serial');
+            } else if ('bluetooth' in navigator) {
+                // Web Bluetooth
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: ['00001101-0000-1000-8000-00805f9b34fb'] }]
+                });
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService('00001101-0000-1000-8000-00805f9b34fb');
+                const characteristic = await service.getCharacteristic('00001101-0000-1000-8000-00805f9b34fb');
+                
+                await characteristic.startNotifications();
+                characteristic.addEventListener('characteristicvaluechanged', (event) => {
+                    const value = new TextDecoder().decode(event.target.value);
+                    this.processCommand(value.trim());
+                });
+                
+                this.isConnected = true;
+                this.updateUI(true);
+                console.log('Connected via Bluetooth');
+            } else {
+                alert('Web Serial/Bluetooth not supported in this browser. Use Chrome/Edge.');
+            }
+        } catch (error) {
+            console.error('Connection error:', error);
+            alert('Failed to connect: ' + error.message);
+        }
+    }
+    
+    async readSerial() {
+        const decoder = new TextDecoder();
+        try {
+            while (this.port && this.port.readable) {
+                const reader = this.port.readable.getReader();
+                this.reader = reader;
+                
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    if (value) {
+                        const text = decoder.decode(value);
+                        const lines = text.split('\n');
+                        for (const line of lines) {
+                            const cmd = line.trim();
+                            if (cmd === '1' || cmd === '2') {
+                                this.processCommand(cmd);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Read error:', error);
+            this.disconnect();
+        }
+    }
+    
+    processCommand(command) {
+        console.log('ESP32 command:', command);
+        receiveESP32Command(command);
+    }
+    
+    async disconnect() {
+        if (this.reader) {
+            await this.reader.cancel();
+            this.reader = null;
+        }
+        if (this.port) {
+            await this.port.close();
+            this.port = null;
+        }
+        this.isConnected = false;
+        this.updateUI(false);
+    }
+    
+    updateUI(connected) {
+        const connectBtn = document.getElementById('esp32-connect-btn');
+        const disconnectBtn = document.getElementById('esp32-disconnect-btn');
+        const statusDiv = document.getElementById('esp32-connection-status');
+        
+        if (connected) {
+            connectBtn.style.display = 'none';
+            disconnectBtn.style.display = 'inline-block';
+            statusDiv.innerHTML = 'Status: ✅ Connected to ESP32';
+            statusDiv.style.color = '#4CAF50';
+        } else {
+            connectBtn.style.display = 'inline-block';
+            disconnectBtn.style.display = 'none';
+            statusDiv.innerHTML = 'Status: ❌ Not connected';
+            statusDiv.style.color = '#aaa';
+        }
+    }
+}
+
+// Inisialisasi controller saat halaman dimuat
+let esp32Controller = null;
+
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        if ('serial' in navigator || 'bluetooth' in navigator) {
+            esp32Controller = new ESP32Controller();
+            console.log('ESP32 Controller initialized');
+        } else {
+            console.log('Web Serial/Bluetooth not supported');
+            // Tampilkan notifikasi di settings
+            const settingsDiv = document.getElementById('settings');
+            const closeBtn = document.getElementById('close-settings');
+            const warning = document.createElement('div');
+            warning.className = 'setting-section';
+            warning.innerHTML = `
+                <h3>🎮 ESP32 Controller</h3>
+                <div style="color: #f44336; padding: 10px; background: rgba(244,67,54,0.1); border-radius: 5px;">
+                    ⚠️ Web Serial/Bluetooth not supported.<br>
+                    Use Chrome/Edge on Desktop or Chrome on Android.
+                </div>
+            `;
+            if (!document.getElementById('esp32-warning')) {
+                warning.id = 'esp32-warning';
+                settingsDiv.insertBefore(warning, closeBtn);
+            }
+        }
+    }, 1000);
+});
     </script>
 </body>
 </html>
