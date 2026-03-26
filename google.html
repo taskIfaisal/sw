@@ -234,7 +234,8 @@
     z-index: 1000;
     display: none;
     flex-direction: column;
-    padding: 12px 16px;
+    overflow-y: auto;
+    overflow-x: hidden;
     box-sizing: border-box;
   }
 
@@ -244,11 +245,15 @@
 
   .overlay-header {
     display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 8px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #dadce0;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
   }
 
   .back-button {
@@ -260,7 +265,7 @@
     background-size: contain;
     cursor: pointer;
     flex-shrink: 0;
-    margin-top: 8px;
+    margin-top: 2px;
   }
 
   .overlay-search-container {
@@ -271,23 +276,35 @@
     min-width: 0;
   }
 
+  .textarea-wrapper {
+    flex: 1;
+    min-width: 0;
+  }
+
   .overlay-search-container textarea {
+    width: 100%;
     border: none;
     outline: none;
-    flex: 1;
     font-size: 16px;
     font-family: 'Arial', sans-serif;
-    caret-color: auto;
     background: transparent;
-    padding: 8px 0;
+    padding: 0;
     min-width: 0;
     resize: none;
     overflow-y: auto;
-    max-height: 80px;
+    max-height: 120px;
     line-height: 1.4;
     white-space: pre-wrap;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    box-sizing: border-box;
+  }
+
+  .icon-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
   }
 
   .overlay-mic-icon {
@@ -299,7 +316,6 @@
     background-size: contain;
     cursor: pointer;
     flex-shrink: 0;
-    margin-top: 8px;
   }
 
   .overlay-lens-icon {
@@ -311,7 +327,6 @@
     background-size: contain;
     cursor: pointer;
     flex-shrink: 0;
-    margin-top: 8px;
   }
 
   .overlay-clear-icon {
@@ -323,75 +338,16 @@
     background-size: contain;
     cursor: pointer;
     flex-shrink: 0;
-    margin-top: 8px;
   }
 
-  .overlay-trending {
-    margin-top: 0;
+  .overlay-content {
     flex: 1;
     overflow-y: auto;
+    padding: 0 16px;
   }
 
-  .overlay-trend {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 0;
-    border-bottom: 1px solid #e0e0e0;
-    font-size: 16px;
-    cursor: pointer;
-    position: relative;
-  }
-
-  .overlay-trend:hover {
-    background-color: #f8f9fa;
-  }
-
-  .overlay-trend-icon {
-    width: 24px;
-    height: 24px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235f6368" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    flex-shrink: 0;
-  }
-
-  .overlay-trend-text {
-    color: #202124;
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .overlay-trend:hover .overlay-trend-text {
-    text-decoration: none;
-    color: #202124;
-  }
-
-  .overlay-trend-arrow {
-    width: 24px;
-    height: 28px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 28"><path fill="%235f6368" d="M12 4L6 10l1.5 1.5L11 8v12h2V8l3.5 3.5L18 10l-6-6z"/><line x1="12" y1="16" x2="12" y2="24" stroke="%235f6368" stroke-width="1.5"/></svg>');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    flex-shrink: 0;
-    transform: rotate(330deg);
-    cursor: pointer;
-    opacity: 0.7;
-  }
-
-  .overlay-trend:hover .overlay-trend-arrow {
-    opacity: 1;
-  }
-
-  /* SARAN PENCARIAN */
   .overlay-suggestions {
     margin-top: 0;
-    flex: 1;
-    overflow-y: auto;
     display: none;
   }
 
@@ -407,7 +363,6 @@
     border-bottom: 1px solid #e0e0e0;
     font-size: 16px;
     cursor: pointer;
-    position: relative;
   }
 
   .overlay-suggestion:hover {
@@ -434,13 +389,13 @@
 
   .overlay-suggestion-arrow {
     width: 24px;
-    height: 28px;
+    height: 24px;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 28"><path fill="%235f6368" d="M12 4L6 10l1.5 1.5L11 8v12h2V8l3.5 3.5L18 10l-6-6z"/><line x1="12" y1="16" x2="12" y2="24" stroke="%235f6368" stroke-width="1.5"/></svg>');
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
     flex-shrink: 0;
-    transform: rotate(330deg);
+    transform: rotate(300deg);
     cursor: pointer;
     opacity: 0.7;
   }
@@ -449,9 +404,67 @@
     opacity: 1;
   }
 
+  .overlay-trending {
+    margin-top: 0;
+    display: block;
+  }
+
+  .overlay-trending.hide {
+    display: none;
+  }
+
+  .overlay-trend {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .overlay-trend:hover {
+    background-color: #f8f9fa;
+  }
+
+  .overlay-trend-icon {
+    width: 24px;
+    height: 24px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%239aa0a6" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    flex-shrink: 0;
+  }
+
+  .overlay-trend-text {
+    color: #202124;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .overlay-trend-arrow {
+    width: 24px;
+    height: 24px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 28"><path fill="%235f6368" d="M12 4L6 10l1.5 1.5L11 8v12h2V8l3.5 3.5L18 10l-6-6z"/><line x1="12" y1="16" x2="12" y2="24" stroke="%235f6368" stroke-width="1.5"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    flex-shrink: 0;
+    transform: rotate(300deg);
+    cursor: pointer;
+    opacity: 0.7;
+  }
+
+  .overlay-trend:hover .overlay-trend-arrow {
+    opacity: 1;
+  }
+
   body.overlay-active .topbar,
   body.overlay-active .logo-container,
-  body.overlay-active .section:not(.search-overlay .overlay-trending, .search-overlay .overlay-suggestions),
+  body.overlay-active .section:not(.search-overlay .overlay-content),
   body.overlay-active .footer {
     opacity: 0;
     pointer-events: none;
@@ -547,26 +560,28 @@
   <div class="overlay-header">
     <div class="back-button" id="backButton" title="Kembali"></div>
     <div class="overlay-search-container">
-      <textarea id="overlaySearchInput" placeholder="Telusuri Google" autocomplete="off" autocapitalize="off" spellcheck="false" rows="1"></textarea>
-      <div class="overlay-mic-icon" id="overlayMicButton" title="Search by voice"></div>
-      <div class="overlay-lens-icon" id="overlayLensButton" title="Search by image with Google Lens"></div>
-      <div class="overlay-clear-icon" id="overlayClearButton" title="Hapus" style="display: none;"></div>
+      <div class="textarea-wrapper">
+        <textarea id="overlaySearchInput" placeholder="Telusuri Google" autocomplete="off" autocapitalize="off" spellcheck="false" rows="1"></textarea>
+      </div>
+      <div class="icon-group">
+        <div class="overlay-mic-icon" id="overlayMicButton" title="Search by voice"></div>
+        <div class="overlay-lens-icon" id="overlayLensButton" title="Search by image with Google Lens"></div>
+        <div class="overlay-clear-icon" id="overlayClearButton" title="Hapus" style="display: none;"></div>
+      </div>
     </div>
   </div>
-  <div class="overlay-suggestions" id="overlaySuggestions">
-    <div id="suggestionsContainer"></div>
-  </div>
-  <div class="overlay-trending" id="overlayTrending">
-    <div id="overlayTrendingContainer"></div>
+  <div class="overlay-content">
+    <div class="overlay-suggestions" id="overlaySuggestions">
+      <div id="suggestionsContainer"></div>
+    </div>
+    <div class="overlay-trending" id="overlayTrending">
+      <div id="overlayTrendingContainer"></div>
+    </div>
   </div>
 </div>
 
 <script>
-  const API_URL = 'https://tinynote.pw/api/2NAK';
-  let syncInterval = null;
-  let lastNoteData = null;
-  let clickCount = 0;
-  let clickTimer = null;
+  let lastSearchTerm = '';
 
   function isIOS() {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -578,71 +593,6 @@
            (isIOS() && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua));
   }
 
-  async function getNoteData() {
-    try {
-      const response = await fetch(API_URL);
-      if (!response.ok) return null;
-      const data = await response.json();
-      if (data && data.note) {
-        lastNoteData = data.note;
-        try {
-          const parsedNote = JSON.parse(data.note);
-          return parsedNote;
-        } catch (e) {
-          return { search: data.note };
-        }
-      }
-      return null;
-    } catch (error) {
-      return null;
-    }
-  }
-
-  async function saveNoteData(searchTerm) {
-    try {
-      const currentData = await getNoteData();
-      let noteData = {
-        search: searchTerm,
-        timestamp: Date.now(),
-        history: []
-      };
-      if (currentData && currentData.search) {
-        noteData.history = [currentData.search];
-        if (currentData.history && Array.isArray(currentData.history)) {
-          noteData.history = [...currentData.history.slice(0, 4), currentData.search];
-        }
-      }
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ note: JSON.stringify(noteData) })
-      });
-      return response.ok;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  async function syncData() {
-    const data = await getNoteData();
-    if (data && data.search) {
-      const searchInput = document.getElementById('searchInput');
-      const overlaySearchInput = document.getElementById('overlaySearchInput');
-      if (searchInput && !searchInput.matches(':focus')) {
-        searchInput.value = data.search;
-      }
-      if (overlaySearchInput && !overlaySearchInput.matches(':focus')) {
-        overlaySearchInput.value = data.search;
-        updateClearButton();
-      }
-    }
-  }
-
-  function startAutoSync() {
-    setTimeout(syncData, 1000);
-    syncInterval = setInterval(syncData, 3000);
-  }
-
   function createSafeGoogleURL(query) {
     const encodedQuery = encodeURIComponent(query);
     const timestamp = Date.now();
@@ -652,7 +602,6 @@
   function performSearch(query) {
     const searchQuery = query.trim();
     if (!searchQuery) return false;
-    saveNoteData(searchQuery);
     const googleURL = createSafeGoogleURL(searchQuery);
     if (isIOS() && isSafari()) {
       setTimeout(() => { window.location.replace(googleURL); }, 50);
@@ -685,30 +634,26 @@
   const overlayClearButton = document.getElementById('overlayClearButton');
   const overlaySuggestions = document.getElementById('overlaySuggestions');
   const suggestionsContainer = document.getElementById('suggestionsContainer');
+  const overlayTrending = document.getElementById('overlayTrending');
 
-  // Data saran pencarian
+  // Data saran pencarian - tanpa duplikasi
   const suggestionData = [
     "gempa terkini",
-    "gempa hari ini",
-    "gempa bumi terbaru",
-    "gempa jakarta",
-    "gempa dirasakan",
-    "gempa BMKG",
-    "gempa magnitudo",
     "harga emas hari ini",
-    "harga emas 24 karat",
-    "harga emas antam",
     "jadwal bola malam ini",
-    "jadwal bola liga inggris",
-    "cuaca jakarta hari ini",
-    "cuaca bogor",
+    "cuaca jakarta",
     "rupiah ke dolar",
-    "rupiah melemah"
+    "berita terkini",
+    "pemilu 2024",
+    "gempa bumi",
+    "harga emas antam",
+    "jadwal liga inggris"
   ];
 
   function showSuggestions(query) {
     if (!query || query.trim() === '') {
       overlaySuggestions.classList.remove('active');
+      overlayTrending.classList.remove('hide');
       return;
     }
     
@@ -718,6 +663,7 @@
     
     if (filtered.length === 0) {
       overlaySuggestions.classList.remove('active');
+      overlayTrending.classList.remove('hide');
       return;
     }
     
@@ -727,7 +673,7 @@
       div.className = 'overlay-suggestion';
       div.innerHTML = `
         <div class="overlay-suggestion-icon"></div>
-        <div class="overlay-suggestion-text">${text}</div>
+        <div class="overlay-suggestion-text">${escapeHtml(text)}</div>
         <div class="overlay-suggestion-arrow" title="Cari"></div>
       `;
       div.addEventListener('click', () => {
@@ -740,6 +686,13 @@
     });
     
     overlaySuggestions.classList.add('active');
+    overlayTrending.classList.add('hide');
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   function updateClearButton() {
@@ -756,7 +709,7 @@
 
   function adjustTextareaHeight() {
     overlaySearchInput.style.height = 'auto';
-    overlaySearchInput.style.height = (overlaySearchInput.scrollHeight) + 'px';
+    overlaySearchInput.style.height = Math.min(overlaySearchInput.scrollHeight, 120) + 'px';
   }
 
   function cloneTrendingToOverlay() {
@@ -771,7 +724,7 @@
       overlayTrend.className = 'overlay-trend';
       overlayTrend.innerHTML = `
         <div class="overlay-trend-icon"></div>
-        <div class="overlay-trend-text">${trendText}</div>
+        <div class="overlay-trend-text">${escapeHtml(trendText)}</div>
         <div class="overlay-trend-arrow" title="Buka pencarian"></div>
       `;
       
@@ -795,7 +748,12 @@
     updateClearButton();
     cloneTrendingToOverlay();
     overlaySuggestions.classList.remove('active');
-    setTimeout(() => { overlaySearchInput.focus(); }, 100);
+    overlayTrending.classList.remove('hide');
+    setTimeout(() => { 
+      overlaySearchInput.focus();
+      const len = overlaySearchInput.value.length;
+      overlaySearchInput.setSelectionRange(len, len);
+    }, 100);
   }
 
   function closeSearchOverlay() {
@@ -809,54 +767,8 @@
     loginBtn.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      clickCount++;
-      if (clickCount === 1) {
-        clickTimer = setTimeout(() => {
-          clickCount = 0;
-          openGoogleLink('https://accounts.google.com');
-        }, 300);
-      } else if (clickCount === 2) {
-        clearTimeout(clickTimer);
-        clickCount = 0;
-        getNoteData().then(data => {
-          if (data && data.search) {
-            if (searchInput) {
-              searchInput.value = data.search;
-              searchInput.focus();
-              if (data.history && data.history.length > 0) {
-                updateTrendingWithHistory(data.history);
-              }
-            }
-          }
-        });
-      }
+      openGoogleLink('https://accounts.google.com');
     });
-  }
-
-  function updateTrendingWithHistory(history) {
-    if (!trendingContainer || !history || history.length === 0) return;
-    const originalTrending = Array.from(trendingContainer.children).slice(0, 4);
-    trendingContainer.innerHTML = '';
-    history.slice(0, 4).forEach((searchTerm) => {
-      const trendElement = document.createElement('div');
-      trendElement.className = 'trend';
-      trendElement.innerHTML = `<div class="trend-icon"></div><div class="trend-text">${searchTerm}</div>`;
-      trendElement.addEventListener('click', function() {
-        const term = this.querySelector('.trend-text').textContent;
-        searchInput.value = term;
-        performSearch(term);
-      });
-      trendingContainer.appendChild(trendElement);
-    });
-    originalTrending.forEach(trend => { trendingContainer.appendChild(trend); });
-    cloneTrendingToOverlay();
-    setTimeout(() => {
-      if (trendingContainer.children.length > 7) {
-        trendingContainer.innerHTML = '';
-        originalTrending.forEach(trend => { trendingContainer.appendChild(trend.cloneNode(true)); });
-        cloneTrendingToOverlay();
-      }
-    }, 10000);
   }
 
   function setupEventListeners() {
@@ -898,7 +810,7 @@
     });
     
     document.querySelector('.search-box').addEventListener('click', function(e) {
-      if (e.target.tagName !== 'INPUT') {
+      if (e.target.tagName !== 'INPUT' && !e.target.classList.contains('mic-icon') && !e.target.classList.contains('lens-icon')) {
         e.preventDefault();
         openSearchOverlay();
       }
@@ -1001,8 +913,7 @@
 
   function init() {
     setupEventListeners();
-    startAutoSync();
-    console.log('Google Clone dengan Saran Pencarian - Siap digunakan');
+    console.log('Google Clone - Siap digunakan');
   }
 
   if (document.readyState === 'loading') {
@@ -1010,12 +921,6 @@
   } else {
     init();
   }
-
-  window.addEventListener('beforeunload', function() {
-    if (syncInterval) {
-      clearInterval(syncInterval);
-    }
-  });
 </script>
 </body>
 </html>
