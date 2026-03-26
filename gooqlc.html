@@ -245,7 +245,7 @@
 
   .overlay-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     padding: 12px 16px;
     border-bottom: 1px solid #e0e0e0;
@@ -265,21 +265,26 @@
     background-size: contain;
     cursor: pointer;
     flex-shrink: 0;
+    margin-top: 2px;
   }
 
   .overlay-search-container {
     flex: 1;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     min-width: 0;
-    line-height: 1.4;
+  }
+
+  .textarea-wrapper {
+    flex: 1;
+    min-width: 0;
   }
 
   .overlay-search-container textarea {
+    width: 100%;
     border: none;
     outline: none;
-    flex: 1;
     font-size: 16px;
     font-family: 'Arial', sans-serif;
     background: transparent;
@@ -287,11 +292,19 @@
     min-width: 0;
     resize: none;
     overflow-y: auto;
-    max-height: 80px;
+    max-height: 120px;
     line-height: 1.4;
     white-space: pre-wrap;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    box-sizing: border-box;
+  }
+
+  .icon-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
   }
 
   .overlay-mic-icon {
@@ -545,10 +558,14 @@
   <div class="overlay-header">
     <div class="back-button" id="backButton" title="Kembali"></div>
     <div class="overlay-search-container">
-      <textarea id="overlaySearchInput" placeholder="Telusuri Google" autocomplete="off" autocapitalize="off" spellcheck="false" rows="1"></textarea>
-      <div class="overlay-mic-icon" id="overlayMicButton" title="Search by voice"></div>
-      <div class="overlay-lens-icon" id="overlayLensButton" title="Search by image with Google Lens"></div>
-      <div class="overlay-clear-icon" id="overlayClearButton" title="Hapus" style="display: none;"></div>
+      <div class="textarea-wrapper">
+        <textarea id="overlaySearchInput" placeholder="Telusuri Google" autocomplete="off" autocapitalize="off" spellcheck="false" rows="1"></textarea>
+      </div>
+      <div class="icon-group">
+        <div class="overlay-mic-icon" id="overlayMicButton" title="Search by voice"></div>
+        <div class="overlay-lens-icon" id="overlayLensButton" title="Search by image with Google Lens"></div>
+        <div class="overlay-clear-icon" id="overlayClearButton" title="Hapus" style="display: none;"></div>
+      </div>
     </div>
   </div>
   <div class="overlay-content">
@@ -690,7 +707,7 @@
 
   function adjustTextareaHeight() {
     overlaySearchInput.style.height = 'auto';
-    overlaySearchInput.style.height = Math.min(overlaySearchInput.scrollHeight, 80) + 'px';
+    overlaySearchInput.style.height = Math.min(overlaySearchInput.scrollHeight, 120) + 'px';
   }
 
   function cloneTrendingToOverlay() {
