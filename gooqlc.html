@@ -307,17 +307,6 @@
     flex-shrink: 0;
   }
 
-  .overlay-search-icon {
-    width: 24px;
-    height: 24px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%239aa0a6" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-
   .overlay-mic-icon {
     width: 24px;
     height: 24px;
@@ -575,7 +564,6 @@
         <textarea id="overlaySearchInput" placeholder="Telusuri Google" autocomplete="off" autocapitalize="off" spellcheck="false" rows="1"></textarea>
       </div>
       <div class="icon-group">
-        <div class="overlay-search-icon" id="overlaySearchIcon" title="Cari"></div>
         <div class="overlay-mic-icon" id="overlayMicButton" title="Search by voice"></div>
         <div class="overlay-lens-icon" id="overlayLensButton" title="Search by image with Google Lens"></div>
         <div class="overlay-clear-icon" id="overlayClearButton" title="Hapus" style="display: none;"></div>
@@ -641,7 +629,6 @@
   const backButton = document.getElementById('backButton');
   const trendingContainer = document.getElementById('trendingContainer');
   const overlayTrendingContainer = document.getElementById('overlayTrendingContainer');
-  const overlaySearchIcon = document.getElementById('overlaySearchIcon');
   const overlayMicButton = document.getElementById('overlayMicButton');
   const overlayLensButton = document.getElementById('overlayLensButton');
   const overlayClearButton = document.getElementById('overlayClearButton');
@@ -710,12 +697,10 @@
 
   function updateClearButton() {
     if (overlaySearchInput.value.length > 0) {
-      overlaySearchIcon.style.display = 'none';
       overlayMicButton.style.display = 'none';
       overlayLensButton.style.display = 'none';
       overlayClearButton.style.display = 'block';
     } else {
-      overlaySearchIcon.style.display = 'block';
       overlayMicButton.style.display = 'block';
       overlayLensButton.style.display = 'block';
       overlayClearButton.style.display = 'none';
@@ -817,11 +802,6 @@
       adjustTextareaHeight();
       updateClearButton();
       showSuggestions(this.value);
-    });
-    
-    overlaySearchIcon.addEventListener('click', function(e) {
-      e.preventDefault();
-      performSearch(overlaySearchInput.value);
     });
     
     searchInput.addEventListener('click', function(e) {
