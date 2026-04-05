@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Magic Card Trick</title>
-    <!-- <link rel="manifest" href="./manifest.json"> -->
     <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
     <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,7 +12,6 @@
     <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
     <style>
-        /* Semua style tetap sama seperti sebelumnya */
         html, body {
             margin: 0;
             padding: 0;
@@ -33,7 +31,7 @@
         }
         body {
             position: fixed;
-            inset: 0; /* ini kunci anti safe-area */
+            inset: 0;
         }
 
         * {
@@ -46,8 +44,7 @@
             top: 0;
             left: 0;
             width: 100vw;
-            height: 100vh; /* pakai viewport full */
-            
+            height: 100vh;
             background-size: cover;
             background-position: center;
             z-index: 1;
@@ -75,46 +72,36 @@
             visibility: visible !important;
         }
 
-        .card-flipping {
-            animation: flipCard 1s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
-            backface-visibility: hidden;
-        }
-
-        @keyframes flipCard {
-            0% { transform: rotateY(0deg); }
-            50% { transform: rotateY(90deg); }
-            100% { transform: rotateY(0deg); }
-        }
-
-        /* Animasi Flip 3D untuk Effect Flip 3D - 0.8 detik */
-        @keyframes flip3DAnimation {
-            0% { transform: rotateY(0deg); }
-            50% { transform: rotateY(90deg); }
-            100% { transform: rotateY(0deg); }
-        }
-
+        /* Animasi Flip 3D - menggunakan preserve-3d dan rotateY */
         .card-flip-3d-effect {
-            animation: flip3DAnimation 0.8s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+            transform-style: preserve-3d;
+            animation: flip3D 0.8s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
             backface-visibility: hidden;
         }
 
-        /* Animasi Crossfade untuk morph gambar (3 detik) */
-        @keyframes crossfadeOut {
+        @keyframes flip3D {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(90deg); }
+            100% { transform: rotateY(0deg); }
+        }
+
+        /* Animasi Crossfade untuk shadow effect (3 detik) */
+        @keyframes shadowFadeOut {
             0% { opacity: 1; }
             100% { opacity: 0; }
         }
 
-        @keyframes crossfadeIn {
+        @keyframes shadowFadeIn {
             0% { opacity: 0; }
             100% { opacity: 1; }
         }
 
-        .card-crossfade-out {
-            animation: crossfadeOut 3s ease-in-out forwards;
+        .card-shadow-out {
+            animation: shadowFadeOut 3s ease-in-out forwards;
         }
 
-        .card-crossfade-in {
-            animation: crossfadeIn 3s ease-in-out forwards;
+        .card-shadow-in {
+            animation: shadowFadeIn 3s ease-in-out forwards;
         }
 
         .card-moving {
@@ -873,7 +860,7 @@
             </div>
         </div>
 
-        <!-- EFFECT FLIP 3D BARU -->
+        <!-- EFFECT FLIP 3D -->
         <div class="setting-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <h3 style="margin: 0;">Effect Flip 3D</h3>
@@ -883,7 +870,7 @@
                 </label>
             </div>
             <div class="effect-description">
-                ON: Double tap → kartu muncul → sentuh kartu → FLIP 3D (0.8dt) ke gambar 2 → crossfade 3dt ke gambar berikutnya → exit slide ke atas
+                ON: Double tap → kartu muncul di tengah → sentuh kartu → FLIP 3D (0.8dt) ke gambar 2 → sentuh lagi → shadow 3dt ke gambar 3 → sentuh lagi → shadow 3dt ke gambar 4 → tunggu 1dt → slide keluar ke atas
             </div>
         </div>
 
@@ -1028,13 +1015,10 @@
         // ===== VARIABEL UNTUK EFFECT FLIP 3D =====
         let isFlip3DActive = false;
         let isFlipping = false;
-        let isCrossfading = false;
-        let flip3DSequenceTimer = null;
-        let flip3DCrossfadeTimer = null;
+        let isShadowChanging = false;
         let flip3DExitTimer = null;
         let flip3DCurrentImageIndex = 0;
         let flip3DActiveImagesList = [];
-        let flip3DOriginalTransform = '';
         
         const STORAGE_KEY = 'magic_card_data';
         
@@ -1097,27 +1081,23 @@
         
         initSensor();
         
-        // ========== KEYBOARD INPUT HANDLER - SILENT MODE ==========
-        // Fungsi untuk memproses angka 1 (tap biasa)
+        // ========== KEYBOARD INPUT HANDLER ==========
         function handleTapOne() {
-            // Trigger seperti tap biasa pada kartu yang sedang muncul
             if (card.style.display !== 'none' && card.style.visibility === 'visible') {
                 triggerCardTap();
             }
         }
         
-        // Fungsi untuk memproses angka 2 (double tap / trigger effect)
         function handleTapTwo() {
             triggerDoubleTapEffect();
         }
         
-        // Fungsi untuk mensimulasi tap pada kartu (pergantian gambar)
         function triggerCardTap() {
             if (!isSequenceActive || card.style.display === 'none' || card.style.visibility !== 'visible') {
                 return;
             }
             
-            // CEK EFFECT FLIP 3D TERLEBIH DAHULU
+            // CEK EFFECT FLIP 3D
             if (effectFlip3dCheckbox.checked && isFlip3DActive) {
                 handleFlip3DTap();
                 return;
@@ -1174,12 +1154,11 @@
             }
         }
         
-        // Fungsi untuk mensimulasi double tap (trigger effect)
         function triggerDoubleTapEffect() {
             clearAllTimeouts();
             hideIndicator();
             
-            // CEK EFFECT FLIP 3D TERLEBIH DAHULU
+            // CEK EFFECT FLIP 3D
             if (effectFlip3dCheckbox.checked) {
                 triggerFlip3DEffect();
                 return;
@@ -1232,7 +1211,7 @@
             }
         }
         
-        // Keyboard event listener - SILENT (tanpa console log)
+        // Keyboard event listener
         document.addEventListener('keydown', function(event) {
             if (event.key === '1' || event.key === '2') {
                 event.preventDefault();
@@ -1242,12 +1221,6 @@
                 } else if (event.key === '2') {
                     handleTapTwo();
                 }
-            }
-        });
-        
-        document.addEventListener('keydown', function(event) {
-            if (event.key === '1' || event.key === '2') {
-                event.preventDefault();
             }
         });
         
@@ -1530,28 +1503,21 @@
                 return;
             }
             
-            // Bersihkan semua timer dan state
-            clearAllFlip3DTimers();
-            
             // Reset state
             isFlip3DActive = true;
             isFlipping = false;
-            isCrossfading = false;
+            isShadowChanging = false;
             flip3DCurrentImageIndex = 0;
             flip3DActiveImagesList = [...activeList];
             
-            // Sembunyikan kartu dulu
-            card.style.display = 'none';
-            card.style.visibility = 'hidden';
-            
             // Hapus semua class animasi
-            card.classList.remove('card-flip-3d-effect', 'card-crossfade-out', 'card-crossfade-in', 'card-moving', 'card-fadeout');
+            card.classList.remove('card-flip-3d-effect', 'card-shadow-out', 'card-shadow-in', 'card-moving', 'card-fadeout');
             card.style.animation = 'none';
             
             // Set gambar pertama
             card.src = flip3DActiveImagesList[0].src;
             
-            // Hitung posisi tengah
+            // Hitung posisi tengah (seperti effect standar)
             const cardWidth = card.offsetWidth;
             const cardHeight = card.offsetHeight;
             const centerX = (window.innerWidth - cardWidth) / 2;
@@ -1559,7 +1525,7 @@
             posX = Math.round(centerX);
             posY = Math.round(centerY);
             
-            // Reset transform
+            // Reset transform ke posisi tengah
             card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
             card.style.transition = 'none';
             
@@ -1568,16 +1534,13 @@
             card.style.visibility = 'visible';
             card.style.opacity = '1';
             
-            // Simpan original transform untuk restore nanti
-            flip3DOriginalTransform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            // Set sequence
+            sequenceStage = 1;
+            isSequenceActive = true;
             
             // Jika hanya 1 gambar, langsung jadwalkan exit
             if (flip3DActiveImagesList.length === 1) {
                 scheduleFlip3DExit();
-            } else {
-                // Set sequence stage ke 1 (menunggu tap untuk flip)
-                sequenceStage = 1;
-                isSequenceActive = true;
             }
         }
         
@@ -1594,12 +1557,11 @@
                 const wasSensorActive = isSensorActive;
                 isSensorActive = false;
                 
-                // Simpan transform saat ini
+                // Simpan posisi saat ini
                 const currentTransform = card.style.transform;
                 
                 // Reset ke transform dasar untuk animasi flip
                 card.style.transition = 'none';
-                card.style.transform = flip3DOriginalTransform;
                 
                 // Force reflow
                 void card.offsetHeight;
@@ -1607,7 +1569,7 @@
                 // Tambah class animasi flip
                 card.classList.add('card-flip-3d-effect');
                 
-                // Di tengah animasi (400ms dari 800ms total), ganti gambar
+                // Di tengah animasi (400ms), ganti gambar
                 setTimeout(() => {
                     if (flip3DActiveImagesList.length > 1 && flip3DCurrentImageIndex + 1 < flip3DActiveImagesList.length) {
                         flip3DCurrentImageIndex++;
@@ -1619,7 +1581,6 @@
                 // Setelah animasi selesai
                 setTimeout(() => {
                     card.classList.remove('card-flip-3d-effect');
-                    // Restore transform dengan posisi yang benar
                     card.style.transition = '';
                     card.style.transform = currentTransform;
                     
@@ -1632,9 +1593,9 @@
             });
         }
         
-        function performCrossfadeToNextImage() {
+        function performShadowTransition() {
             return new Promise((resolve) => {
-                if (isCrossfading) {
+                if (isShadowChanging) {
                     resolve(false);
                     return;
                 }
@@ -1645,47 +1606,42 @@
                     return;
                 }
                 
-                isCrossfading = true;
+                isShadowChanging = true;
                 
                 // Matikan sensor gerak sementara
                 const wasSensorActive = isSensorActive;
                 isSensorActive = false;
                 
-                // Simpan gambar berikutnya
                 const nextImageSrc = flip3DActiveImagesList[nextIndex].src;
                 
-                card.style.transition = 'none';
-                
                 // Mulai fade out
-                card.classList.add('card-crossfade-out');
+                card.classList.add('card-shadow-out');
                 
-                // Di tengah fade out (1.5 detik), ganti gambar
+                // Setelah fade out selesai (3 detik), ganti gambar dan fade in
                 setTimeout(() => {
-                    card.classList.remove('card-crossfade-out');
+                    card.classList.remove('card-shadow-out');
                     card.src = nextImageSrc;
                     flip3DCurrentImageIndex = nextIndex;
                     sequenceStage = flip3DCurrentImageIndex + 1;
                     
                     // Fade in
-                    card.classList.add('card-crossfade-in');
+                    card.classList.add('card-shadow-in');
                     
                     // Selesai fade in
                     setTimeout(() => {
-                        card.classList.remove('card-crossfade-in');
-                        card.style.transition = '';
+                        card.classList.remove('card-shadow-in');
                         
                         // Kembalikan sensor gerak
                         isSensorActive = wasSensorActive;
                         
-                        isCrossfading = false;
+                        isShadowChanging = false;
                         resolve(true);
                     }, 3000);
-                }, 1500);
+                }, 3000);
             });
         }
         
         function scheduleFlip3DExit() {
-            // Bersihkan timer exit sebelumnya
             if (flip3DExitTimer) clearTimeout(flip3DExitTimer);
             
             flip3DExitTimer = setTimeout(() => {
@@ -1716,39 +1672,23 @@
                 isSequenceActive = false;
                 sequenceStage = 0;
                 isFlipping = false;
-                isCrossfading = false;
+                isShadowChanging = false;
                 
                 // Kembalikan sensor gerak
                 isSensorActive = wasSensorActive;
                 
-                // Bersihkan semua timer
-                clearAllFlip3DTimers();
+                if (flip3DExitTimer) clearTimeout(flip3DExitTimer);
             }, 500);
-        }
-        
-        function clearAllFlip3DTimers() {
-            if (flip3DSequenceTimer) {
-                clearTimeout(flip3DSequenceTimer);
-                flip3DSequenceTimer = null;
-            }
-            if (flip3DCrossfadeTimer) {
-                clearTimeout(flip3DCrossfadeTimer);
-                flip3DCrossfadeTimer = null;
-            }
-            if (flip3DExitTimer) {
-                clearTimeout(flip3DExitTimer);
-                flip3DExitTimer = null;
-            }
         }
         
         function handleFlip3DTap() {
             // Jangan proses jika sedang animasi
-            if (isFlipping || isCrossfading) return;
+            if (isFlipping || isShadowChanging) return;
             if (!isFlip3DActive || card.style.display === 'none') return;
             
             const totalImages = flip3DActiveImagesList.length;
             
-            // Kasus 1: Hanya 1 gambar - tidak ada yang perlu dilakukan (exit sudah terjadwal)
+            // Kasus 1: Hanya 1 gambar - exit sudah terjadwal
             if (totalImages === 1) {
                 return;
             }
@@ -1756,57 +1696,26 @@
             // Kasus 2: Sedang di gambar 1 - lakukan FLIP 3D ke gambar 2
             if (flip3DCurrentImageIndex === 0 && totalImages >= 2) {
                 performFlip3DAnimation().then(() => {
-                    // Setelah flip selesai, cek apakah masih perlu crossfade
                     if (flip3DCurrentImageIndex + 1 >= totalImages) {
-                        // Sudah di gambar terakhir, jadwalkan exit
                         scheduleFlip3DExit();
-                    } else {
-                        // Mulai crossfade otomatis setelah 3 detik
-                        startAutoCrossfade();
                     }
                 });
                 return;
             }
             
-            // Kasus 3: Sudah di gambar 2 atau lebih - manual tap untuk skip crossfade
+            // Kasus 3: Sudah di gambar 2 atau lebih - lakukan shadow transition
             if (flip3DCurrentImageIndex >= 1 && flip3DCurrentImageIndex + 1 < totalImages) {
-                // Batalkan auto crossfade yang sedang berjalan
-                if (flip3DCrossfadeTimer) {
-                    clearTimeout(flip3DCrossfadeTimer);
-                    flip3DCrossfadeTimer = null;
-                }
-                // Langsung lakukan crossfade
-                performCrossfadeToNextImage().then(() => {
+                performShadowTransition().then(() => {
                     if (flip3DCurrentImageIndex + 1 >= totalImages) {
                         scheduleFlip3DExit();
-                    } else {
-                        startAutoCrossfade();
                     }
                 });
             }
         }
         
-        function startAutoCrossfade() {
-            if (flip3DCrossfadeTimer) clearTimeout(flip3DCrossfadeTimer);
-            
-            flip3DCrossfadeTimer = setTimeout(() => {
-                if (isFlip3DActive && !isFlipping && !isCrossfading) {
-                    performCrossfadeToNextImage().then(() => {
-                        if (flip3DCurrentImageIndex + 1 >= flip3DActiveImagesList.length) {
-                            scheduleFlip3DExit();
-                        } else {
-                            startAutoCrossfade();
-                        }
-                    });
-                }
-                flip3DCrossfadeTimer = null;
-            }, 3000);
-        }
-        
         function triggerFlip3DEffect() {
             // Bersihkan semua state sebelumnya
             clearAllTimeouts();
-            clearAllFlip3DTimers();
             hideIndicator();
             
             // Nonaktifkan effect lain
@@ -1821,14 +1730,16 @@
             // Reset state
             isFlip3DActive = false;
             isFlipping = false;
-            isCrossfading = false;
+            isShadowChanging = false;
             
-            // Delay 1 detik lalu muncul kartu
+            // Delay 1 detik lalu muncul kartu (sama seperti effect standar)
             sequenceTimer = setTimeout(() => {
                 showCardFlip3D();
                 sequenceTimer = null;
             }, 1000);
         }
+        
+        // ========== FUNGSI EFFECT LAINNYA (TIDAK BERUBAH) ==========
         
         function showCardShadow() {
             const activeList = getActiveImagesList();
@@ -2380,7 +2291,6 @@
                 e.preventDefault();
                 
                 clearAllTimeouts();
-                clearAllFlip3DTimers();
                 hideIndicator();
                 
                 if (effectFlip3dCheckbox.checked) {
@@ -2467,6 +2377,10 @@
             if (shadowWaitTimeout) {
                 clearTimeout(shadowWaitTimeout);
                 shadowWaitTimeout = null;
+            }
+            if (flip3DExitTimer) {
+                clearTimeout(flip3DExitTimer);
+                flip3DExitTimer = null;
             }
         }
         
