@@ -41,7 +41,9 @@
             top: -env(safe-area-inset-top);
             left: 0;
             width: 100%;
-            height: calc(100% + env(safe-area-inset-top));
+            
+            height: calc(100% + env(safe-area-inset-top) + env(safe-area-inset-bottom));
+            
             background-size: cover;
             background-position: center;
             z-index: 1;
