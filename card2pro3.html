@@ -86,6 +86,37 @@
             100% { transform: rotateY(0deg); }
         }
 
+        /* Animasi Flip 3D untuk Effect Flip 3D - 0.8 detik */
+        @keyframes flip3DAnimation {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(90deg); }
+            100% { transform: rotateY(0deg); }
+        }
+
+        .card-flip-3d-effect {
+            animation: flip3DAnimation 0.8s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+            backface-visibility: hidden;
+        }
+
+        /* Animasi Crossfade untuk morph gambar (3 detik) */
+        @keyframes crossfadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes crossfadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .card-crossfade-out {
+            animation: crossfadeOut 3s ease-in-out forwards;
+        }
+
+        .card-crossfade-in {
+            animation: crossfadeIn 3s ease-in-out forwards;
+        }
+
         .card-moving {
             transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease !important;
         }
@@ -842,6 +873,20 @@
             </div>
         </div>
 
+        <!-- EFFECT FLIP 3D BARU -->
+        <div class="setting-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <h3 style="margin: 0;">Effect Flip 3D</h3>
+                <label class="toggle-switch" style="margin: 0;">
+                    <input type="checkbox" id="effect-flip3d">
+                    <span class="toggle-slider effect-slider"></span>
+                </label>
+            </div>
+            <div class="effect-description">
+                ON: Double tap → kartu muncul → sentuh kartu → FLIP 3D (0.8dt) ke gambar 2 → crossfade 3dt ke gambar berikutnya → exit slide ke atas
+            </div>
+        </div>
+
         <div class="setting-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <h3 style="margin: 0;">Sensor Gerak</h3>
@@ -923,6 +968,7 @@
         const shadowEffectCheckbox = document.getElementById('shadow-effect');
         const effectSliderCheckbox = document.getElementById('effect-slider');
         const effectSkatingCheckbox = document.getElementById('effect-skating');
+        const effectFlip3dCheckbox = document.getElementById('effect-flip3d');
         const sensorGerakCheckbox = document.getElementById('sensor-gerak');
 
         const removeBgBtn = document.getElementById('remove-bg-btn');
@@ -978,6 +1024,17 @@
         // ===== VARIABEL UNTUK SHADOW EFFECT FADE OUT =====
         let shadowFadeOutTimeout = null;
         let shadowWaitTimeout = null;
+        
+        // ===== VARIABEL UNTUK EFFECT FLIP 3D =====
+        let isFlip3DActive = false;
+        let isFlipping = false;
+        let isCrossfading = false;
+        let flip3DSequenceTimer = null;
+        let flip3DCrossfadeTimer = null;
+        let flip3DExitTimer = null;
+        let flip3DCurrentImageIndex = 0;
+        let flip3DActiveImagesList = [];
+        let flip3DOriginalTransform = '';
         
         const STORAGE_KEY = 'magic_card_data';
         
@@ -1060,6 +1117,12 @@
                 return;
             }
             
+            // CEK EFFECT FLIP 3D TERLEBIH DAHULU
+            if (effectFlip3dCheckbox.checked && isFlip3DActive) {
+                handleFlip3DTap();
+                return;
+            }
+            
             if (touchToChangeTimeout) {
                 clearTimeout(touchToChangeTimeout);
             }
@@ -1115,6 +1178,12 @@
         function triggerDoubleTapEffect() {
             clearAllTimeouts();
             hideIndicator();
+            
+            // CEK EFFECT FLIP 3D TERLEBIH DAHULU
+            if (effectFlip3dCheckbox.checked) {
+                triggerFlip3DEffect();
+                return;
+            }
             
             if (shadowEffectCheckbox.checked) {
                 isSequenceActive = true;
@@ -1450,6 +1519,315 @@
             autoSave();
             
             updateDownloadButtonState();
+        }
+        
+        // ========== FUNGSI EFFECT FLIP 3D ==========
+        
+        function showCardFlip3D() {
+            const activeList = getActiveImagesList();
+            
+            if (activeList.length === 0) {
+                return;
+            }
+            
+            // Bersihkan semua timer dan state
+            clearAllFlip3DTimers();
+            
+            // Reset state
+            isFlip3DActive = true;
+            isFlipping = false;
+            isCrossfading = false;
+            flip3DCurrentImageIndex = 0;
+            flip3DActiveImagesList = [...activeList];
+            
+            // Sembunyikan kartu dulu
+            card.style.display = 'none';
+            card.style.visibility = 'hidden';
+            
+            // Hapus semua class animasi
+            card.classList.remove('card-flip-3d-effect', 'card-crossfade-out', 'card-crossfade-in', 'card-moving', 'card-fadeout');
+            card.style.animation = 'none';
+            
+            // Set gambar pertama
+            card.src = flip3DActiveImagesList[0].src;
+            
+            // Hitung posisi tengah
+            const cardWidth = card.offsetWidth;
+            const cardHeight = card.offsetHeight;
+            const centerX = (window.innerWidth - cardWidth) / 2;
+            const centerY = (window.innerHeight - cardHeight) / 2;
+            posX = Math.round(centerX);
+            posY = Math.round(centerY);
+            
+            // Reset transform
+            card.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            card.style.transition = 'none';
+            
+            // Tampilkan kartu
+            card.style.display = 'block';
+            card.style.visibility = 'visible';
+            card.style.opacity = '1';
+            
+            // Simpan original transform untuk restore nanti
+            flip3DOriginalTransform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            
+            // Jika hanya 1 gambar, langsung jadwalkan exit
+            if (flip3DActiveImagesList.length === 1) {
+                scheduleFlip3DExit();
+            } else {
+                // Set sequence stage ke 1 (menunggu tap untuk flip)
+                sequenceStage = 1;
+                isSequenceActive = true;
+            }
+        }
+        
+        function performFlip3DAnimation() {
+            return new Promise((resolve) => {
+                if (isFlipping || flip3DActiveImagesList.length < 2) {
+                    resolve(false);
+                    return;
+                }
+                
+                isFlipping = true;
+                
+                // Matikan sensor gerak sementara
+                const wasSensorActive = isSensorActive;
+                isSensorActive = false;
+                
+                // Simpan transform saat ini
+                const currentTransform = card.style.transform;
+                
+                // Reset ke transform dasar untuk animasi flip
+                card.style.transition = 'none';
+                card.style.transform = flip3DOriginalTransform;
+                
+                // Force reflow
+                void card.offsetHeight;
+                
+                // Tambah class animasi flip
+                card.classList.add('card-flip-3d-effect');
+                
+                // Di tengah animasi (400ms dari 800ms total), ganti gambar
+                setTimeout(() => {
+                    if (flip3DActiveImagesList.length > 1 && flip3DCurrentImageIndex + 1 < flip3DActiveImagesList.length) {
+                        flip3DCurrentImageIndex++;
+                        card.src = flip3DActiveImagesList[flip3DCurrentImageIndex].src;
+                        sequenceStage = flip3DCurrentImageIndex + 1;
+                    }
+                }, 400);
+                
+                // Setelah animasi selesai
+                setTimeout(() => {
+                    card.classList.remove('card-flip-3d-effect');
+                    // Restore transform dengan posisi yang benar
+                    card.style.transition = '';
+                    card.style.transform = currentTransform;
+                    
+                    // Kembalikan sensor gerak
+                    isSensorActive = wasSensorActive;
+                    
+                    isFlipping = false;
+                    resolve(true);
+                }, 800);
+            });
+        }
+        
+        function performCrossfadeToNextImage() {
+            return new Promise((resolve) => {
+                if (isCrossfading) {
+                    resolve(false);
+                    return;
+                }
+                
+                const nextIndex = flip3DCurrentImageIndex + 1;
+                if (nextIndex >= flip3DActiveImagesList.length) {
+                    resolve(false);
+                    return;
+                }
+                
+                isCrossfading = true;
+                
+                // Matikan sensor gerak sementara
+                const wasSensorActive = isSensorActive;
+                isSensorActive = false;
+                
+                // Simpan gambar berikutnya
+                const nextImageSrc = flip3DActiveImagesList[nextIndex].src;
+                
+                card.style.transition = 'none';
+                
+                // Mulai fade out
+                card.classList.add('card-crossfade-out');
+                
+                // Di tengah fade out (1.5 detik), ganti gambar
+                setTimeout(() => {
+                    card.classList.remove('card-crossfade-out');
+                    card.src = nextImageSrc;
+                    flip3DCurrentImageIndex = nextIndex;
+                    sequenceStage = flip3DCurrentImageIndex + 1;
+                    
+                    // Fade in
+                    card.classList.add('card-crossfade-in');
+                    
+                    // Selesai fade in
+                    setTimeout(() => {
+                        card.classList.remove('card-crossfade-in');
+                        card.style.transition = '';
+                        
+                        // Kembalikan sensor gerak
+                        isSensorActive = wasSensorActive;
+                        
+                        isCrossfading = false;
+                        resolve(true);
+                    }, 3000);
+                }, 1500);
+            });
+        }
+        
+        function scheduleFlip3DExit() {
+            // Bersihkan timer exit sebelumnya
+            if (flip3DExitTimer) clearTimeout(flip3DExitTimer);
+            
+            flip3DExitTimer = setTimeout(() => {
+                if (isFlip3DActive && card.style.display !== 'none') {
+                    exitCardFlip3D();
+                }
+                flip3DExitTimer = null;
+            }, 1000);
+        }
+        
+        function exitCardFlip3D() {
+            if (card.style.display === 'none' || !isFlip3DActive) return;
+            
+            // Matikan sensor gerak sementara
+            const wasSensorActive = isSensorActive;
+            isSensorActive = false;
+            
+            card.classList.add('card-moving');
+            card.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+            
+            const targetY = -card.offsetHeight - 100;
+            card.style.transform = `translate(${posX}px, ${targetY}px) scale(${scale})`;
+            
+            setTimeout(() => {
+                hideCard();
+                card.classList.remove('card-moving');
+                isFlip3DActive = false;
+                isSequenceActive = false;
+                sequenceStage = 0;
+                isFlipping = false;
+                isCrossfading = false;
+                
+                // Kembalikan sensor gerak
+                isSensorActive = wasSensorActive;
+                
+                // Bersihkan semua timer
+                clearAllFlip3DTimers();
+            }, 500);
+        }
+        
+        function clearAllFlip3DTimers() {
+            if (flip3DSequenceTimer) {
+                clearTimeout(flip3DSequenceTimer);
+                flip3DSequenceTimer = null;
+            }
+            if (flip3DCrossfadeTimer) {
+                clearTimeout(flip3DCrossfadeTimer);
+                flip3DCrossfadeTimer = null;
+            }
+            if (flip3DExitTimer) {
+                clearTimeout(flip3DExitTimer);
+                flip3DExitTimer = null;
+            }
+        }
+        
+        function handleFlip3DTap() {
+            // Jangan proses jika sedang animasi
+            if (isFlipping || isCrossfading) return;
+            if (!isFlip3DActive || card.style.display === 'none') return;
+            
+            const totalImages = flip3DActiveImagesList.length;
+            
+            // Kasus 1: Hanya 1 gambar - tidak ada yang perlu dilakukan (exit sudah terjadwal)
+            if (totalImages === 1) {
+                return;
+            }
+            
+            // Kasus 2: Sedang di gambar 1 - lakukan FLIP 3D ke gambar 2
+            if (flip3DCurrentImageIndex === 0 && totalImages >= 2) {
+                performFlip3DAnimation().then(() => {
+                    // Setelah flip selesai, cek apakah masih perlu crossfade
+                    if (flip3DCurrentImageIndex + 1 >= totalImages) {
+                        // Sudah di gambar terakhir, jadwalkan exit
+                        scheduleFlip3DExit();
+                    } else {
+                        // Mulai crossfade otomatis setelah 3 detik
+                        startAutoCrossfade();
+                    }
+                });
+                return;
+            }
+            
+            // Kasus 3: Sudah di gambar 2 atau lebih - manual tap untuk skip crossfade
+            if (flip3DCurrentImageIndex >= 1 && flip3DCurrentImageIndex + 1 < totalImages) {
+                // Batalkan auto crossfade yang sedang berjalan
+                if (flip3DCrossfadeTimer) {
+                    clearTimeout(flip3DCrossfadeTimer);
+                    flip3DCrossfadeTimer = null;
+                }
+                // Langsung lakukan crossfade
+                performCrossfadeToNextImage().then(() => {
+                    if (flip3DCurrentImageIndex + 1 >= totalImages) {
+                        scheduleFlip3DExit();
+                    } else {
+                        startAutoCrossfade();
+                    }
+                });
+            }
+        }
+        
+        function startAutoCrossfade() {
+            if (flip3DCrossfadeTimer) clearTimeout(flip3DCrossfadeTimer);
+            
+            flip3DCrossfadeTimer = setTimeout(() => {
+                if (isFlip3DActive && !isFlipping && !isCrossfading) {
+                    performCrossfadeToNextImage().then(() => {
+                        if (flip3DCurrentImageIndex + 1 >= flip3DActiveImagesList.length) {
+                            scheduleFlip3DExit();
+                        } else {
+                            startAutoCrossfade();
+                        }
+                    });
+                }
+                flip3DCrossfadeTimer = null;
+            }, 3000);
+        }
+        
+        function triggerFlip3DEffect() {
+            // Bersihkan semua state sebelumnya
+            clearAllTimeouts();
+            clearAllFlip3DTimers();
+            hideIndicator();
+            
+            // Nonaktifkan effect lain
+            if (effectStandarCheckbox.checked) effectStandarCheckbox.checked = false;
+            if (shadowEffectCheckbox.checked) shadowEffectCheckbox.checked = false;
+            if (effectSliderCheckbox.checked) effectSliderCheckbox.checked = false;
+            if (effectSkatingCheckbox.checked) effectSkatingCheckbox.checked = false;
+            
+            // Aktifkan effect ini
+            effectFlip3dCheckbox.checked = true;
+            
+            // Reset state
+            isFlip3DActive = false;
+            isFlipping = false;
+            isCrossfading = false;
+            
+            // Delay 1 detik lalu muncul kartu
+            sequenceTimer = setTimeout(() => {
+                showCardFlip3D();
+                sequenceTimer = null;
+            }, 1000);
         }
         
         function showCardShadow() {
@@ -1841,6 +2219,7 @@
                     if (data.shadowEffect !== undefined) shadowEffectCheckbox.checked = data.shadowEffect;
                     if (data.effectSlider !== undefined) effectSliderCheckbox.checked = data.effectSlider;
                     if (data.effectSkating !== undefined) effectSkatingCheckbox.checked = data.effectSkating;
+                    if (data.effectFlip3d !== undefined) effectFlip3dCheckbox.checked = data.effectFlip3d;
                     if (data.sensorGerak !== undefined) {
                         sensorGerakCheckbox.checked = data.sensorGerak;
                         isSensorActive = data.sensorGerak;
@@ -1901,6 +2280,7 @@
                     shadowEffect: shadowEffectCheckbox.checked,
                     effectSlider: effectSliderCheckbox.checked,
                     effectSkating: effectSkatingCheckbox.checked,
+                    effectFlip3d: effectFlip3dCheckbox.checked,
                     sensorGerak: sensorGerakCheckbox.checked,
                     activeImages: activeImages,
                     preview1: preview1Img ? preview1Img.src : '',
@@ -1924,6 +2304,7 @@
                 shadowEffectCheckbox.checked = false;
                 effectSliderCheckbox.checked = false;
                 effectSkatingCheckbox.checked = false;
+                effectFlip3dCheckbox.checked = false;
             }
             autoSave();
         });
@@ -1933,6 +2314,7 @@
                 effectStandarCheckbox.checked = false;
                 effectSliderCheckbox.checked = false;
                 effectSkatingCheckbox.checked = false;
+                effectFlip3dCheckbox.checked = false;
             }
             autoSave();
         });
@@ -1942,6 +2324,7 @@
                 effectStandarCheckbox.checked = false;
                 shadowEffectCheckbox.checked = false;
                 effectSkatingCheckbox.checked = false;
+                effectFlip3dCheckbox.checked = false;
             }
             autoSave();
         });
@@ -1951,6 +2334,17 @@
                 effectStandarCheckbox.checked = false;
                 shadowEffectCheckbox.checked = false;
                 effectSliderCheckbox.checked = false;
+                effectFlip3dCheckbox.checked = false;
+            }
+            autoSave();
+        });
+        
+        effectFlip3dCheckbox.addEventListener('change', (e) => {
+            if (effectFlip3dCheckbox.checked) {
+                effectStandarCheckbox.checked = false;
+                shadowEffectCheckbox.checked = false;
+                effectSliderCheckbox.checked = false;
+                effectSkatingCheckbox.checked = false;
             }
             autoSave();
         });
@@ -1986,9 +2380,13 @@
                 e.preventDefault();
                 
                 clearAllTimeouts();
+                clearAllFlip3DTimers();
                 hideIndicator();
                 
-                if (shadowEffectCheckbox.checked) {
+                if (effectFlip3dCheckbox.checked) {
+                    triggerFlip3DEffect();
+                }
+                else if (shadowEffectCheckbox.checked) {
                     isSequenceActive = true;
                     sequenceStage = 1;
                     
