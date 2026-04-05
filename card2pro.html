@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Magic Card Trick</title>
     <!-- <link rel="manifest" href="./manifest.json"> -->
     <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
@@ -17,8 +17,8 @@
         html, body {
             margin: 0;
             padding: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             font-family: 'SF Pro Display', sans-serif;
             background-color: black;
             background-size: cover;
@@ -38,10 +38,12 @@
         
         #background {
             position: fixed;
-            top: 0;
+            top: -env(safe-area-inset-top);
             left: 0;
             width: 100%;
-            height: 100%;
+            
+            height: calc(100% + env(safe-area-inset-top) + env(safe-area-inset-bottom));
+            
             background-size: cover;
             background-position: center;
             z-index: 1;
