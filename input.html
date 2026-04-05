@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Magic Card Trick - Card App Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            touch-action: manipulation;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Button styling */
+        .app-icon {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(145deg, rgba(40, 40, 40, 0.9), rgba(20, 20, 20, 0.9));
+            border-radius: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            z-index: 10;
+        }
+
+        .position-edit-mode .app-icon {
+            cursor: grab;
+            border: 2px solid #007aff;
+            box-shadow: 0 0 20px rgba(0, 122, 255, 0.5);
+        }
+
+        .position-edit-mode .app-icon.dragging {
+            opacity: 0.8;
+            transform: scale(1.1);
+            cursor: grabbing;
+        }
+
+        .app-icon:hover {
+            transform: scale(1.05);
+            background: linear-gradient(145deg, rgba(50, 50, 50, 0.95), rgba(30, 30, 30, 0.95));
+        }
+
+        .app-icon:active {
+            transform: scale(0.95);
+        }
+
+        .icon-content {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+
+        .app-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 4px;
+            font-weight: 500;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .settings-icon .icon-content { color: #007aff; font-size: 24px; }
+        .settings-icon .app-label { color: #007aff; }
+        .heart .icon-content { color: #ff2d55; }
+        .diamond .icon-content { color: #34c759; }
+        .club .icon-content { color: #5856d6; }
+        .spade .icon-content { color: #ff9500; }
+        .heart .app-label { color: #ff2d55; }
+        .diamond .app-label { color: #34c759; }
+        .club .app-label { color: #5856d6; }
+        .spade .app-label { color: #ff9500; }
+
+        /* Edit mode controls */
+        .edit-mode-indicator {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: #007aff;
+            font-size: 16px;
+            font-weight: 600;
+            z-index: 200;
+            display: none;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .position-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            z-index: 200;
+            padding: 0 20px;
+            display: none;
+        }
+
+        .position-edit-mode .edit-mode-indicator,
+        .position-edit-mode .position-controls {
+            display: flex;
+        }
+
+        .position-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .save-position-btn { background: linear-gradient(145deg, #007aff, #0056cc); color: white; }
+        .cancel-position-btn { background: linear-gradient(145deg, rgba(255, 59, 48, 0.9), rgba(255, 40, 40, 0.9)); color: white; }
+
+        /* Settings overlay */
+        .settings-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .settings-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .settings-panel {
+            background: rgba(28, 28, 30, 0.98);
+            width: 90%;
+            max-width: 400px;
+            border-radius: 20px;
+            transform: translateY(30px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .settings-overlay.active .settings-panel {
+            transform: translateY(0);
+        }
+
+        .settings-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            position: relative;
+        }
+
+        .settings-header h2 { color: #fff; font-size: 22px; font-weight: 700; }
+
+        .settings-content {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .settings-section { margin-bottom: 24px; }
+        .settings-section h3 { color: #8e8e93; margin-bottom: 12px; font-size: 17px; font-weight: 600; text-transform: uppercase; }
+
+        .settings-option-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(145deg, rgba(60, 60, 60, 0.9), rgba(40, 40, 40, 0.9));
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        /* Toggle switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: rgba(60, 60, 60, 0.3);
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-checkbox {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .toggle-checkbox:checked + .toggle-slider { background-color: #007aff; }
+        .toggle-checkbox:checked + .toggle-slider:before { transform: translateX(30px); }
+
+        /* Management pages */
+        .management-page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .management-page.active { display: flex; }
+
+        .management-header {
+            padding: 20px;
+            background: rgba(28, 28, 30, 0.98);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .management-header h2 { color: #fff; font-size: 22px; font-weight: 700; }
+
+        .management-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .management-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: rgba(60, 60, 60, 0.3);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .card-name {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 500;
+            min-width: 150px;
+        }
+
+        .card-input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            color: #fff;
+            font-size: 16px;
+            width: 80px;
+            text-align: center;
+            text-transform: lowercase;
+        }
+
+        .card-input:focus {
+            outline: none;
+            border-color: #007aff;
+        }
+
+        .output-option {
+            background: rgba(60, 60, 60, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .output-option h4 {
+            color: #fff;
+            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .api-input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .sticky-save-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2001;
+            padding: 12px 24px;
+            background: linear-gradient(145deg, #007aff, #0056cc);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+            gap: 8px;
+        }
+
+        .sticky-save-btn.active { display: flex; }
+
+        .close-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(145deg, rgba(60, 60, 60, 0.9), rgba(40, 40, 40, 0.9));
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .image-preview-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .image-preview-container.active { display: block; }
+
+        .image-preview {
+            width: 100%;
+            height: 200px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .preview-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .preview-image.active { display: block; }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .save-btn {
+            background: linear-gradient(145deg, #007aff, #0056cc);
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .save-btn.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .clear-btn { background: linear-gradient(145deg, rgba(255, 59, 48, 0.9), rgba(255, 40, 40, 0.9)); }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(40, 40, 40, 0.95);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            z-index: 10000;
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            display: block;
+        }
+
+        .instruction {
+            position: absolute;
+            bottom: 100px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+            padding: 0 20px;
+            z-index: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .instruction.hidden { opacity: 0; }
+
+        .test-mode-invisible { opacity: 0 !important; }
+        .file-input { display: none; }
+
+        @media (max-width: 480px) {
+            .app-icon { width: 70px; height: 70px; }
+            .icon-content { font-size: 24px; }
+            .app-label { font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <div id="buttonContainer"></div>
+        
+        <div class="edit-mode-indicator" id="editModeIndicator">🎯 Edit Mode: Drag buttons to reposition</div>
+        
+        <div class="position-controls" id="positionControls">
+            <button class="position-btn cancel-position-btn" id="cancelPositionEdit">✕ Cancel</button>
+            <button class="position-btn save-position-btn" id="savePositionEdit">💾 Save Positions</button>
+        </div>
+        
+        <button class="sticky-save-btn" id="stickySaveBtn">💾 Save All Changes</button>
+        <div class="toast" id="toast"></div>
+        <div class="instruction" id="instruction">Tap the ⚙️ Settings button to customize</div>
+        
+        <div class="settings-overlay" id="settingsOverlay">
+            <button class="close-btn" id="closeSettings">×</button>
+            <div class="settings-panel">
+                <div class="settings-header"><h2>Settings</h2></div>
+                <div class="settings-content">
+                    <div class="settings-section">
+                        <h3>Test Mode</h3>
+                        <div class="toggle-container">
+                            <div class="toggle-label">Test Mode</div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" class="toggle-checkbox" id="testModeToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Customize Interface</h3>
+                        <button class="settings-option-btn" id="bgSettingsBtn">🖼️ Background Image ›</button>
+                        <button class="settings-option-btn" id="positionSettingsBtn">🎯 Adjust Button Positions ›</button>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Card Management</h3>
+                        <button class="settings-option-btn" id="inputManagementBtn">🃏 Input Management ›</button>
+                        <button class="settings-option-btn" id="outputManagementBtn">📤 Output Management ›</button>
+                    </div>
+                    
+                    <div class="settings-section" id="bgSettingsSection" style="display: none;">
+                        <h3>Select Background Image</h3>
+                        <input type="file" id="imageUpload" class="file-input" accept="image/*">
+                        <button class="upload-btn" id="uploadTrigger">
+                            <div class="upload-icon">📁</div>
+                            <div>Select from Gallery</div>
+                        </button>
+                        <div class="image-preview-container" id="previewContainer">
+                            <div class="image-preview">
+                                <img id="previewImage" class="preview-image" src="">
+                                <div id="noImagePlaceholder">No image selected</div>
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="action-btn save-btn" id="saveBackground">💾 Save</button>
+                            <button class="action-btn clear-btn" id="clearSelection">🗑️ Clear</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="management-page" id="inputManagementPage">
+            <div class="management-header">
+                <button class="close-btn" id="closeInputManagement">×</button>
+                <h2>Input Management</h2>
+                <div style="width: 40px;"></div>
+            </div>
+            <div class="management-content" id="inputManagementContent"></div>
+        </div>
+        
+        <div class="management-page" id="outputManagementPage">
+            <div class="management-header">
+                <button class="close-btn" id="closeOutputManagement">×</button>
+                <h2>Output Management</h2>
+                <div style="width: 40px;"></div>
+            </div>
+            <div class="management-content">
+                <div class="output-option">
+                    <div class="toggle-container">
+                        <div class="toggle-label">Copy to clipboard</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="toggle-checkbox" id="copyToClipboardToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="output-option">
+                    <h4>Shahul API Setup</h4>
+                    <input type="text" class="api-input" id="shahulUsername" placeholder="Enter username">
+                </div>
+                <div class="output-option">
+                    <h4>Inject Setup</h4>
+                    <input type="text" class="api-input" id="injectId" placeholder="Enter inject ID">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONFIGURATION ====================
+        const buttonDefinitions = [
+            { id: 'btn-1', type: 'number', label: 'One', content: '1', dataNumber: '1' },
+            { id: 'btn-2', type: 'number', label: 'Two', content: '2', dataNumber: '2' },
+            { id: 'btn-3', type: 'number', label: 'Three', content: '3', dataNumber: '3' },
+            { id: 'btn-4', type: 'number', label: 'Four', content: '4', dataNumber: '4' },
+            { id: 'btn-5', type: 'number', label: 'Five', content: '5', dataNumber: '5' },
+            { id: 'btn-6', type: 'number', label: 'Six', content: '6', dataNumber: '6' },
+            { id: 'btn-7', type: 'number', label: 'Seven', content: '7', dataNumber: '7' },
+            { id: 'btn-8', type: 'number', label: 'Eight', content: '8', dataNumber: '8' },
+            { id: 'btn-9', type: 'number', label: 'Nine', content: '9', dataNumber: '9' },
+            { id: 'btn-10', type: 'number', label: 'Ten', content: '10', dataNumber: '10' },
+            { id: 'btn-11', type: 'number', label: 'Eleven', content: '11', dataNumber: '11' },
+            { id: 'btn-12', type: 'number', label: 'Twelve', content: '12', dataNumber: '12' },
+            { id: 'btn-13', type: 'number', label: 'Thirteen', content: '13', dataNumber: '13' },
+            { id: 'btn-heart', type: 'suite', label: 'Hearts', content: '♥', suite: 'heart' },
+            { id: 'btn-diamond', type: 'suite', label: 'Diamonds', content: '♦', suite: 'diamond' },
+            { id: 'btn-club', type: 'suite', label: 'Clubs', content: '♣', suite: 'club' },
+            { id: 'btn-spade', type: 'suite', label: 'Spades', content: '♠', suite: 'spade' },
+            { id: 'btn-settings', type: 'settings', label: 'Settings', content: '⚙️' }
+        ];
+
+        const defaultPositions = {
+            'btn-1': { x: 50, y: 50 }, 'btn-2': { x: 150, y: 50 }, 'btn-3': { x: 250, y: 50 }, 'btn-4': { x: 350, y: 50 },
+            'btn-5': { x: 50, y: 150 }, 'btn-6': { x: 150, y: 150 }, 'btn-7': { x: 250, y: 150 }, 'btn-8': { x: 350, y: 150 },
+            'btn-9': { x: 50, y: 250 }, 'btn-10': { x: 150, y: 250 }, 'btn-11': { x: 250, y: 250 }, 'btn-12': { x: 350, y: 250 },
+            'btn-13': { x: 50, y: 350 }, 'btn-heart': { x: 150, y: 450 }, 'btn-diamond': { x: 250, y: 450 },
+            'btn-club': { x: 350, y: 450 }, 'btn-spade': { x: 230, y: 250 }, 'btn-settings': { x: 150, y: 350 }
+        };
+
+        const defaultCardValues = {
+            'ace of spades': 'as', 'king of spades': 'ks', 'queen of spades': 'qs', 'jack of spades': 'js', 'ten of spades': 'xs',
+            'nine of spades': '9s', 'eight of spades': '8s', 'seven of spades': '7s', 'six of spades': '6s', 'five of spades': '5s',
+            'four of spades': '4s', 'three of spades': '3s', 'two of spades': '2s',
+            'ace of hearts': 'ah', 'king of hearts': 'kh', 'queen of hearts': 'qh', 'jack of hearts': 'jh', 'ten of hearts': 'xh',
+            'nine of hearts': '9h', 'eight of hearts': '8h', 'seven of hearts': '7h', 'six of hearts': '6h', 'five of hearts': '5h',
+            'four of hearts': '4h', 'three of hearts': '3h', 'two of hearts': '2h',
+            'ace of diamonds': 'ad', 'king of diamonds': 'kd', 'queen of diamonds': 'qd', 'jack of diamonds': 'jd', 'ten of diamonds': 'xd',
+            'nine of diamonds': '9d', 'eight of diamonds': '8d', 'seven of diamonds': '7d', 'six of diamonds': '6d', 'five of diamonds': '5d',
+            'four of diamonds': '4d', 'three of diamonds': '3d', 'two of diamonds': '2d',
+            'ace of clubs': 'ac', 'king of clubs': 'kc', 'queen of clubs': 'qc', 'jack of clubs': 'jc', 'ten of clubs': 'xc',
+            'nine of clubs': '9c', 'eight of clubs': '8c', 'seven of clubs': '7c', 'six of clubs': '6c', 'five of clubs': '5c',
+            'four of clubs': '4c', 'three of clubs': '3c', 'two of clubs': '2c'
+        };
+
+        const numberToCardName = { '1': 'ace', '2': 'two', '3': 'three', '4': 'four', '5': 'five', '6': 'six', '7': 'seven', 
+            '8': 'eight', '9': 'nine', '10': 'ten', '11': 'jack', '12': 'queen', '13': 'king' };
+        const suitToCardName = { 'heart': 'hearts', 'diamond': 'diamonds', 'club': 'clubs', 'spade': 'spades' };
+
+        // ==================== DOM ELEMENTS ====================
+        const container = document.getElementById('container');
+        const buttonContainer = document.getElementById('buttonContainer');
+        const settingsOverlay = document.getElementById('settingsOverlay');
+        const closeSettingsBtn = document.getElementById('closeSettings');
+        const bgSettingsBtn = document.getElementById('bgSettingsBtn');
+        const positionSettingsBtn = document.getElementById('positionSettingsBtn');
+        const bgSettingsSection = document.getElementById('bgSettingsSection');
+        const imageUpload = document.getElementById('imageUpload');
+        const uploadTrigger = document.getElementById('uploadTrigger');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const saveBackgroundBtn = document.getElementById('saveBackground');
+        const clearSelectionBtn = document.getElementById('clearSelection');
+        const savePositionEditBtn = document.getElementById('savePositionEdit');
+        const cancelPositionEditBtn = document.getElementById('cancelPositionEdit');
+        const editModeIndicator = document.getElementById('editModeIndicator');
+        const positionControls = document.getElementById('positionControls');
+        const testModeToggle = document.getElementById('testModeToggle');
+        const inputManagementBtn = document.getElementById('inputManagementBtn');
+        const outputManagementBtn = document.getElementById('outputManagementBtn');
+        const inputManagementPage = document.getElementById('inputManagementPage');
+        const outputManagementPage = document.getElementById('outputManagementPage');
+        const closeInputManagement = document.getElementById('closeInputManagement');
+        const closeOutputManagement = document.getElementById('closeOutputManagement');
+        const inputManagementContent = document.getElementById('inputManagementContent');
+        const copyToClipboardToggle = document.getElementById('copyToClipboardToggle');
+        const shahulUsername = document.getElementById('shahulUsername');
+        const injectId = document.getElementById('injectId');
+        const stickySaveBtn = document.getElementById('stickySaveBtn');
+        const toast = document.getElementById('toast');
+        const instruction = document.getElementById('instruction');
+
+        // ==================== STATE ====================
+        let selectedImageDataUrl = null;
+        let isPositionEditMode = false;
+        let isDragging = false;
+        let dragOffsetX = 0, dragOffsetY = 0;
+        let activeButton = null;
+        let originalPositions = {};
+        let testMode = true;
+        let selectedNumber = null, selectedSuit = null;
+        let cardValues = {};
+        let copyToClipboardEnabled = false;
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function showToast(message, duration = 2000) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), duration);
+        }
+
+        // ==================== STORAGE FUNCTIONS ====================
+        function getSavedButtonPositions() {
+            try {
+                const saved = localStorage.getItem('buttonPositions');
+                return saved ? JSON.parse(saved) : {};
+            } catch { return {}; }
+        }
+
+        function saveButtonPositions() {
+            const positions = {};
+            buttonDefinitions.forEach(def => {
+                const btn = document.getElementById(def.id);
+                if (btn) positions[def.id] = { x: parseInt(btn.style.left), y: parseInt(btn.style.top) };
+            });
+            localStorage.setItem('buttonPositions', JSON.stringify(positions));
+        }
+
+        function loadSavedBackground() {
+            const saved = localStorage.getItem('selectedBackground');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.type === 'dataurl' && data.data) {
+                        container.style.backgroundImage = `url(${data.data})`;
+                        container.style.backgroundColor = 'transparent';
+                    }
+                } catch(e) { container.style.backgroundColor = '#000'; }
+            }
+        }
+
+        function saveTestMode() { localStorage.setItem('testMode', JSON.stringify(testMode)); }
+        function loadTestMode() { testMode = localStorage.getItem('testMode') !== null ? JSON.parse(localStorage.getItem('testMode')) : true; testModeToggle.checked = testMode; }
+        
+        function loadCardValues() { cardValues = localStorage.getItem('cardValues') ? JSON.parse(localStorage.getItem('cardValues')) : { ...defaultCardValues }; }
+        function saveCardValues() { localStorage.setItem('cardValues', JSON.stringify(cardValues)); showToast('Card values saved!'); }
+        
+        function loadOutputSettings() {
+            copyToClipboardEnabled = localStorage.getItem('copyToClipboard') !== null ? JSON.parse(localStorage.getItem('copyToClipboard')) : false;
+            copyToClipboardToggle.checked = copyToClipboardEnabled;
+            shahulUsername.value = localStorage.getItem('shahulUsername') || '';
+            injectId.value = localStorage.getItem('injectId') || '';
+        }
+        
+        function saveOutputSettings() {
+            localStorage.setItem('copyToClipboard', JSON.stringify(copyToClipboardEnabled));
+            localStorage.setItem('shahulUsername', shahulUsername.value.trim());
+            localStorage.setItem('injectId', injectId.value.trim());
+            showToast('Output settings saved!');
+        }
+
+        // ==================== OUTPUT PROCESSING ====================
+        function processOutputs(value) {
+            if (copyToClipboardEnabled) {
+                navigator.clipboard.writeText(value).then(() => showToast(`Copied: ${value}`)).catch(() => {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = value;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showToast(`Copied: ${value}`);
+                });
+            }
+            
+            const username = shahulUsername.value.trim();
+            if (username) {
+                const apiUrl = `https://shahulbreaker.in/api/storedata.php?user=${username.replace(/\s+/g, '')}&data=${value}`;
+                fetch(apiUrl, { method: 'GET', mode: 'no-cors', cache: 'no-cache' }).catch(() => {});
+            }
+            
+            const injectIdValue = injectId.value.trim();
+            if (injectIdValue) {
+                const apiUrl = `https://11z.co/_w/${injectIdValue.replace(/\s+/g, '')}/selection`;
+                fetch(apiUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ value: value }) })
+                    .catch(() => fetch(apiUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ value: value }) }).catch(() => {}));
+            }
+        }
+
+        function handleCardSelection(buttonDef) {
+            if (buttonDef.type === 'number') selectedNumber = buttonDef.dataNumber;
+            else if (buttonDef.type === 'suite') selectedSuit = buttonDef.suite;
+            
+            if (selectedNumber && selectedSuit) {
+                const cardName = `${numberToCardName[selectedNumber]} of ${suitToCardName[selectedSuit]}`;
+                const outputValue = cardValues[cardName] || defaultCardValues[cardName];
+                processOutputs(outputValue);
+                setTimeout(() => { selectedNumber = null; selectedSuit = null; }, 100);
+            }
+        }
+
+        // ==================== UI CREATION ====================
+        function createButtons() {
+            buttonContainer.innerHTML = '';
+            buttonDefinitions.forEach(def => {
+                const btn = document.createElement('div');
+                btn.id = def.id;
+                btn.className = `app-icon ${def.type === 'suite' ? def.suite : ''} ${def.type === 'settings' ? 'settings-icon' : ''}`;
+                const pos = getSavedButtonPositions()[def.id] || defaultPositions[def.id];
+                btn.style.left = `${pos.x}px`;
+                btn.style.top = `${pos.y}px`;
+                btn.innerHTML = `<div class="icon-content">${def.content}</div><div class="app-label">${def.label}</div>`;
+                buttonContainer.appendChild(btn);
+            });
+        }
+
+        function updateButtonVisibility() {
+            document.querySelectorAll('.app-icon').forEach(btn => {
+                if (!testMode && !btn.classList.contains('settings-icon')) btn.classList.add('test-mode-invisible');
+                else btn.classList.remove('test-mode-invisible');
+            });
+        }
+
+        function generateInputManagementPage() {
+            inputManagementContent.innerHTML = '';
+            const suits = ['spades', 'hearts', 'diamonds', 'clubs'];
+            const ranks = ['ace', 'king', 'queen', 'jack', 'ten', 'nine', 'eight', 'seven', 'six', 'five', 'four', 'three', 'two'];
+            
+            suits.forEach(suit => {
+                const header = document.createElement('div');
+                header.style.cssText = 'color:#007aff;font-size:18px;font-weight:bold;margin:20px 0 10px 0;text-transform:uppercase';
+                header.textContent = suit;
+                inputManagementContent.appendChild(header);
+                
+                ranks.forEach(rank => {
+                    const cardName = `${rank} of ${suit}`;
+                    const item = document.createElement('div');
+                    item.className = 'management-item';
+                    item.innerHTML = `<div class="card-name">${cardName}</div><input type="text" class="card-input" value="${cardValues[cardName] || defaultCardValues[cardName] || ''}" maxlength="10">`;
+                    const input = item.querySelector('.card-input');
+                    input.addEventListener('input', (e) => {
+                        cardValues[cardName] = e.target.value.toLowerCase();
+                        stickySaveBtn.classList.add('active');
+                    });
+                    inputManagementContent.appendChild(item);
+                });
+            });
+        }
+
+        // ==================== DRAG & DROP ====================
+        function startDragging(e, button) {
+            if (!isPositionEditMode) return;
+            e.preventDefault();
+            isDragging = true;
+            activeButton = button;
+            activeButton.classList.add('dragging');
+            const rect = button.getBoundingClientRect();
+            dragOffsetX = e.clientX - rect.left;
+            dragOffsetY = e.clientY - rect.top;
+        }
+
+        function updateButtonPosition(clientX, clientY) {
+            if (!isDragging || !activeButton) return;
+            const containerRect = container.getBoundingClientRect();
+            let newX = clientX - containerRect.left - dragOffsetX;
+            let newY = clientY - containerRect.top - dragOffsetY;
+            const maxX = containerRect.width - activeButton.offsetWidth;
+            const maxY = containerRect.height - activeButton.offsetHeight;
+            newX = Math.max(0, Math.min(newX, maxX));
+            newY = Math.max(0, Math.min(newY, maxY));
+            activeButton.style.left = `${newX}px`;
+            activeButton.style.top = `${newY}px`;
+        }
+
+        function stopDragging() {
+            if (!isDragging) return;
+            isDragging = false;
+            if (activeButton) activeButton.classList.remove('dragging');
+            activeButton = null;
+        }
+
+        function setupDragAndDrop() {
+            buttonDefinitions.forEach(def => {
+                const btn = document.getElementById(def.id);
+                if (!btn) return;
+                btn.onmousedown = (e) => startDragging(e, btn);
+                btn.ontouchstart = (e) => { if (e.touches.length === 1) startDragging(e.touches[0], btn); };
+            });
+            document.onmousemove = (e) => updateButtonPosition(e.clientX, e.clientY);
+            document.ontouchmove = (e) => { if (e.touches.length === 1) updateButtonPosition(e.touches[0].clientX, e.touches[0].clientY); };
+            document.onmouseup = stopDragging;
+            document.ontouchend = stopDragging;
+        }
+
+        // ==================== CLICK HANDLERS ====================
+        function setupClickHandlers() {
+            buttonDefinitions.forEach(def => {
+                const btn = document.getElementById(def.id);
+                if (!btn) return;
+                btn.onclick = (e) => {
+                    if (isPositionEditMode || isDragging) { e.preventDefault(); return; }
+                    if (def.type === 'settings') openSettings();
+                    else handleCardSelection(def);
+                    if (testMode) {
+                        btn.style.transform = 'scale(0.95)';
+                        setTimeout(() => btn.style.transform = '', 150);
+                    }
+                };
+            });
+        }
+
+        // ==================== POSITION EDIT MODE ====================
+        function startPositionEditMode() {
+            isPositionEditMode = true;
+            container.classList.add('position-edit-mode');
+            originalPositions = getSavedButtonPositions();
+            closeSettings();
+        }
+
+        function endPositionEditMode() {
+            isPositionEditMode = false;
+            container.classList.remove('position-edit-mode');
+            isDragging = false;
+            if (activeButton) activeButton.classList.remove('dragging');
+            activeButton = null;
+        }
+
+        function savePositions() {
+            saveButtonPositions();
+            endPositionEditMode();
+            showToast('Positions saved!');
+        }
+
+        function cancelPositionEdit() {
+            buttonDefinitions.forEach(def => {
+                const btn = document.getElementById(def.id);
+                if (btn && originalPositions[def.id]) {
+                    btn.style.left = `${originalPositions[def.id].x}px`;
+                    btn.style.top = `${originalPositions[def.id].y}px`;
+                }
+            });
+            endPositionEditMode();
+        }
+
+        // ==================== BACKGROUND HANDLERS ====================
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (file && file.type.match('image.*') && file.size <= 5 * 1024 * 1024) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    selectedImageDataUrl = e.target.result;
+                    previewContainer.classList.add('active');
+                    previewImage.src = selectedImageDataUrl;
+                    previewImage.classList.add('active');
+                    saveBackgroundBtn.classList.add('active');
+                };
+                reader.readAsDataURL(file);
+            } else if (file) alert('Image must be JPG/PNG/GIF and less than 5MB');
+        }
+
+        function saveBackground() {
+            if (selectedImageDataUrl) {
+                localStorage.setItem('selectedBackground', JSON.stringify({ type: 'dataurl', data: selectedImageDataUrl }));
+                container.style.backgroundImage = `url(${selectedImageDataUrl})`;
+                container.style.backgroundColor = 'transparent';
+                showToast('Background saved!');
+                setTimeout(() => closeSettings(), 800);
+                instruction.classList.add('hidden');
+                localStorage.setItem('instructionShown', 'true');
+            }
+        }
+
+        function clearSelectedImage() {
+            selectedImageDataUrl = null;
+            previewContainer.classList.remove('active');
+            previewImage.src = '';
+            previewImage.classList.remove('active');
+            saveBackgroundBtn.classList.remove('active');
+            imageUpload.value = '';
+        }
+
+        // ==================== SETTINGS & MODALS ====================
+        function openSettings() { settingsOverlay.classList.add('active'); }
+        function closeSettings() {
+            const saved = localStorage.getItem('selectedBackground');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.data) container.style.backgroundImage = `url(${data.data})`;
+                } catch(e) { container.style.backgroundColor = '#000'; }
+            } else { container.style.backgroundColor = '#000'; }
+            clearSelectedImage();
+            bgSettingsSection.style.display = 'none';
+            settingsOverlay.classList.remove('active');
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        function setupEventListeners() {
+            closeSettingsBtn.onclick = closeSettings;
+            settingsOverlay.onclick = (e) => { if (e.target === settingsOverlay) closeSettings(); };
+            bgSettingsBtn.onclick = () => { bgSettingsSection.style.display = 'block'; };
+            positionSettingsBtn.onclick = () => startPositionEditMode();
+            uploadTrigger.onclick = () => imageUpload.click();
+            imageUpload.onchange = handleImageSelect;
+            saveBackgroundBtn.onclick = saveBackground;
+            clearSelectionBtn.onclick = clearSelectedImage;
+            savePositionEditBtn.onclick = savePositions;
+            cancelPositionEditBtn.onclick = cancelPositionEdit;
+            
+            testModeToggle.onchange = function() { testMode = this.checked; saveTestMode(); updateButtonVisibility(); };
+            inputManagementBtn.onclick = () => { settingsOverlay.classList.remove('active'); generateInputManagementPage(); inputManagementPage.classList.add('active'); };
+            outputManagementBtn.onclick = () => { settingsOverlay.classList.remove('active'); outputManagementPage.classList.add('active'); };
+            closeInputManagement.onclick = () => { inputManagementPage.classList.remove('active'); stickySaveBtn.classList.remove('active'); };
+            closeOutputManagement.onclick = () => { outputManagementPage.classList.remove('active'); saveOutputSettings(); };
+            stickySaveBtn.onclick = () => { saveCardValues(); stickySaveBtn.classList.remove('active'); };
+            copyToClipboardToggle.onchange = function() { copyToClipboardEnabled = this.checked; saveOutputSettings(); };
+            shahulUsername.oninput = function() { this.value = this.value.replace(/\s+/g, ''); };
+            injectId.oninput = function() { this.value = this.value.replace(/\s+/g, ''); };
+            
+            document.addEventListener('contextmenu', (e) => e.preventDefault());
+            window.addEventListener('beforeunload', () => { saveTestMode(); saveCardValues(); saveOutputSettings(); });
+        }
+
+        function checkInstruction() {
+            if (localStorage.getItem('instructionShown') === 'true') instruction.classList.add('hidden');
+            else setTimeout(() => { instruction.classList.add('hidden'); localStorage.setItem('instructionShown', 'true'); }, 5000);
+        }
+
+        // ==================== INITIALIZATION ====================
+        function init() {
+            loadSavedBackground();
+            loadTestMode();
+            loadCardValues();
+            loadOutputSettings();
+            createButtons();
+            setupDragAndDrop();
+            setupClickHandlers();
+            setupEventListeners();
+            updateButtonVisibility();
+            checkInstruction();
+        }
+
+        init();
+    </script>
+</body>
+</html>
