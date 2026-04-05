@@ -47,7 +47,6 @@
             left: 0;
             width: 100vw;
             height: 100vh; /* pakai viewport full */
-            
             background-size: cover;
             background-position: center;
             z-index: 1;
@@ -1040,18 +1039,66 @@
         
         initSensor();
         
-        // ========== KEYBOARD INPUT HANDLER - SILENT MODE ==========
-        // Fungsi untuk memproses angka 1 (tap biasa)
-        function handleTapOne() {
-            // Trigger seperti tap biasa pada kartu yang sedang muncul
-            if (card.style.display !== 'none' && card.style.visibility === 'visible') {
-                triggerCardTap();
-            }
-        }
+        // ========== KEYBOARD INPUT HANDLER - FULL SUPPORT MOBILE ==========
+        let keyboardCatcher = null;
         
-        // Fungsi untuk memproses angka 2 (double tap / trigger effect)
-        function handleTapTwo() {
-            triggerDoubleTapEffect();
+        function initKeyboardSupport() {
+            // Buat input catcher untuk mobile
+            keyboardCatcher = document.createElement('input');
+            keyboardCatcher.type = 'text';
+            keyboardCatcher.setAttribute('inputmode', 'numeric');
+            keyboardCatcher.style.position = 'fixed';
+            keyboardCatcher.style.top = '-50px';
+            keyboardCatcher.style.left = '-50px';
+            keyboardCatcher.style.width = '1px';
+            keyboardCatcher.style.height = '1px';
+            keyboardCatcher.style.opacity = '0';
+            keyboardCatcher.style.pointerEvents = 'none';
+            document.body.appendChild(keyboardCatcher);
+            
+            const handleKey = (e) => {
+                const key = e.key;
+                if (key === '1') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (card.style.display !== 'none' && card.style.visibility === 'visible') {
+                        triggerCardTap();
+                    }
+                    if (keyboardCatcher) keyboardCatcher.value = '';
+                } else if (key === '2') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    triggerDoubleTapEffect();
+                    if (keyboardCatcher) keyboardCatcher.value = '';
+                }
+            };
+            
+            // Event listener untuk document
+            document.addEventListener('keydown', handleKey);
+            document.addEventListener('keypress', handleKey);
+            
+            // Event listener untuk catcher
+            if (keyboardCatcher) {
+                keyboardCatcher.addEventListener('keydown', handleKey);
+                keyboardCatcher.addEventListener('keypress', handleKey);
+            }
+            
+            // Auto focus catcher
+            setTimeout(() => {
+                if (keyboardCatcher) keyboardCatcher.focus();
+            }, 500);
+            
+            // Re-focus saat interaksi dengan area kosong
+            document.body.addEventListener('touchstart', (e) => {
+                if (!e.target.closest('#card') && 
+                    !e.target.closest('#settings') && 
+                    !e.target.closest('.preview-box') &&
+                    !e.target.closest('.preview-toggle')) {
+                    setTimeout(() => {
+                        if (keyboardCatcher) keyboardCatcher.focus();
+                    }, 100);
+                }
+            });
         }
         
         // Fungsi untuk mensimulasi tap pada kartu (pergantian gambar)
@@ -1163,24 +1210,8 @@
             }
         }
         
-        // Keyboard event listener - SILENT (tanpa console log)
-        document.addEventListener('keydown', function(event) {
-            if (event.key === '1' || event.key === '2') {
-                event.preventDefault();
-                
-                if (event.key === '1') {
-                    handleTapOne();
-                } else if (event.key === '2') {
-                    handleTapTwo();
-                }
-            }
-        });
-        
-        document.addEventListener('keydown', function(event) {
-            if (event.key === '1' || event.key === '2') {
-                event.preventDefault();
-            }
-        });
+        // Panggil init keyboard support
+        initKeyboardSupport();
         
         function getActiveImagesList() {
             const list = [];
