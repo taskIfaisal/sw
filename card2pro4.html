@@ -2,61 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Magic Card Trick</title>
-    <link rel="manifest" href="./manifest.json">
+    <!-- <link rel="manifest" href="./manifest.json"> -->
     <link rel="apple-touch-icon" href="./icon/card2phone-512x512.png">
     <link rel="apple-touch-startup-image" href="./icon/card2phone-512x512.png">
-    
-    <!-- PWA Fullscreen untuk iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Card2Pro">
-    
-    <!-- PWA Fullscreen untuk Android -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#000000">
-    
     <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/card2phone-512x512.png">
     <style>
-        /* FULLSCREEN CSS - Status Bar Hilang Total */
-        * {
+        /* Semua style tetap sama seperti sebelumnya */
+        html, body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            width: 100%;
+            height: 100%;
+            font-family: 'SF Pro Display', sans-serif;
+            background-color: black;
+            background-size: cover;
+            background-position: center;
+            color: white;
+            overflow: hidden;
+            touch-action: none;
+            position: relative;
+            -webkit-text-size-adjust: 100%;
             -webkit-tap-highlight-color: transparent;
         }
 
-        html, body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            font-family: 'SF Pro Display', sans-serif;
-            background-color: black;
-            color: white;
-            touch-action: none;
-            -webkit-text-size-adjust: 100%;
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
         
         #background {
             position: fixed;
-            top: 0;
+            top: -env(safe-area-inset-top);
             left: 0;
-            right: 0;
-            bottom: 0;
             width: 100%;
-            height: 100%;
+            height: calc(100% + env(safe-area-inset-top));
             background-size: cover;
             background-position: center;
-            background-repeat: no-repeat;
             z-index: 1;
         }
         
@@ -732,28 +719,6 @@
             display: flex;
             gap: 10px;
             margin-bottom: 5px;
-        }
-
-        /* PWA Mode Fullscreen - Status Bar Hilang Total */
-        @media all and (display-mode: standalone) {
-            body {
-                margin-top: 0px;
-                padding-top: 0px;
-            }
-            #background {
-                top: 0 !important;
-                height: 100% !important;
-            }
-        }
-
-        :-webkit-full-screen #background {
-            width: 100%;
-            height: 100%;
-        }
-
-        :fullscreen #background {
-            width: 100%;
-            height: 100%;
         }
     </style>
 </head>
@@ -2388,115 +2353,6 @@
                 card.style.visibility = 'hidden';
             }, 200);
         });
-
-        // ===== FULLSCREEN CONTROLLER UNTUK PWA =====
-        class FullscreenController {
-            constructor() {
-                this.isFullscreen = false;
-                this.fullscreenRequested = false;
-                this.init();
-            }
-
-            init() {
-                // Deteksi jika sudah dalam mode PWA
-                if (this.isInPWAStandaloneMode()) {
-                    console.log('Running in PWA standalone/fullscreen mode - Status bar hidden');
-                    this.isFullscreen = true;
-                    document.documentElement.classList.add('pwa-mode');
-                    this.applyFullscreenStyles();
-                    return;
-                }
-
-                // Setup fullscreen triggers
-                this.setupFullscreenTriggers();
-                this.listenForFullscreenChanges();
-            }
-
-            isInPWAStandaloneMode() {
-                return window.matchMedia('(display-mode: standalone)').matches ||
-                       window.matchMedia('(display-mode: fullscreen)').matches ||
-                       window.navigator.standalone === true;
-            }
-
-            setupFullscreenTriggers() {
-                const enableFullscreen = async () => {
-                    if (!this.fullscreenRequested && !this.isFullscreen) {
-                        await this.requestFullscreen();
-                        this.fullscreenRequested = true;
-                    }
-                };
-
-                document.addEventListener('touchstart', enableFullscreen, { once: true });
-                document.addEventListener('click', enableFullscreen, { once: true });
-                
-                setTimeout(() => {
-                    if (!this.fullscreenRequested && !this.isFullscreen) {
-                        this.requestFullscreen();
-                    }
-                }, 1000);
-            }
-
-            async requestFullscreen() {
-                const elem = document.documentElement;
-                const methods = [
-                    'requestFullscreen',
-                    'webkitRequestFullscreen',
-                    'webkitEnterFullscreen',
-                    'msRequestFullscreen',
-                    'mozRequestFullScreen'
-                ];
-
-                for (let method of methods) {
-                    if (elem[method]) {
-                        try {
-                            await elem[method]();
-                            console.log(`Fullscreen activated via ${method}`);
-                            this.isFullscreen = true;
-                            this.applyFullscreenStyles();
-                            break;
-                        } catch (err) {
-                            console.log(`Fullscreen ${method} failed:`, err);
-                        }
-                    }
-                }
-            }
-
-            listenForFullscreenChanges() {
-                const events = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
-                
-                events.forEach(event => {
-                    document.addEventListener(event, () => {
-                        this.isFullscreen = !!(
-                            document.fullscreenElement ||
-                            document.webkitFullscreenElement ||
-                            document.mozFullScreenElement ||
-                            document.msFullscreenElement
-                        );
-                        
-                        if (this.isFullscreen) {
-                            this.applyFullscreenStyles();
-                        } else {
-                            this.removeFullscreenStyles();
-                        }
-                    });
-                });
-            }
-
-            applyFullscreenStyles() {
-                document.body.classList.add('fullscreen-active');
-                const viewport = document.querySelector('meta[name=viewport]');
-                if (viewport) {
-                    viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
-                }
-            }
-
-            removeFullscreenStyles() {
-                document.body.classList.remove('fullscreen-active');
-            }
-        }
-
-        // Initialize fullscreen controller
-        const fullscreenController = new FullscreenController();
 
         // ===== REMOVE BACKGROUND FUNCTIONALITY =====
         const REMOVE_BG_API_KEY = '2crJY3ybEroko55EEQeVFh9C';
