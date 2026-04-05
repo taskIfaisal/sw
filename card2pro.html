@@ -17,8 +17,9 @@
         html, body {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
+            background: black;
             font-family: 'SF Pro Display', sans-serif;
             background-color: black;
             background-size: cover;
@@ -30,6 +31,10 @@
             -webkit-text-size-adjust: 100%;
             -webkit-tap-highlight-color: transparent;
         }
+        body {
+            position: fixed;
+            inset: 0; /* ini kunci anti safe-area */
+        }
 
         * {
             box-sizing: border-box;
@@ -38,11 +43,10 @@
         
         #background {
             position: fixed;
-            top: -env(safe-area-inset-top);
+            top: 0;
             left: 0;
-            width: 100%;
-            
-            height: calc(100% + env(safe-area-inset-top) + env(safe-area-inset-bottom));
+            width: 100vw;
+            height: 100vh; /* pakai viewport full */
             
             background-size: cover;
             background-position: center;
