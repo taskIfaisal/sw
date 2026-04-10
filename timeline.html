@@ -9,17 +9,15 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Timeline">
-  <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
   <link rel="icon" type="image/png" sizes="192x192" href="./icon/timeline-192x192.png">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;600&display=swap');
 
+  <style>
     html, body {
       margin: 0;
       padding: 0;
       width: 100vw;
       height: 100vh;
-      font-family: 'SF Pro Display', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
       background-color: black;
       background-size: cover;
       background-position: center;
@@ -55,12 +53,16 @@
       margin: 6px auto 0;
     }
 
+    /* 🔥 FONT JAM FIX DI SINI */
     #time {
       font-size: 11vh;
       font-weight: 200;
       letter-spacing: -2px;
       text-align: center;
       margin-top: 5vh;
+
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
 
     #date {
@@ -69,7 +71,6 @@
       margin-top: -1vh;
     }
 
-    /* PERBAIKAN: bottom-text sekarang center sempurna */
     #bottom-text {
       font-size: 2.5vh;
       font-weight: bold;
@@ -100,7 +101,6 @@
       width: 14px;
     }
 
-    /* Setting Layer */
     #setting-layer {
       position: absolute;
       top: 0;
@@ -129,7 +129,6 @@
       cursor: pointer;
     }
 
-    /* tap-zone sebagai flex container */
     #tap-zone {
       width: 100%;
       height: 100%;
@@ -140,7 +139,6 @@
       align-items: center;
     }
 
-    /* class untuk membungkus konten atas (gembok, jam, tanggal) */
     .top-content {
       display: flex;
       flex-direction: column;
@@ -151,9 +149,9 @@
     }
   </style>
 </head>
+
 <body>
   <div id="tap-zone">
-    <!-- konten atas dibungkus dengan div class top-content -->
     <div class="top-content">
       <img id="lock-icon" src="icon/lock.png" alt="lock">
       <div>
@@ -162,7 +160,6 @@
       </div>
     </div>
 
-    <!-- konten bawah (teks dan bottom bar) -->
     <div>
       <div id="bottom-text">Tekan tombol utama - buka kunci</div>
       <div id="bottom-bar">
@@ -188,10 +185,8 @@
     let rewindInterval = null;
     let hasStartedRewind = false;
 
-    // Key untuk localStorage
     const BG_STORAGE_KEY = 'timeline_background_image';
 
-    // Load background dari localStorage saat halaman dibuka
     window.addEventListener('load', function() {
       const savedBackground = localStorage.getItem(BG_STORAGE_KEY);
       if (savedBackground) {
@@ -199,7 +194,6 @@
       }
     });
 
-    // Saat tombol "Simpan & Tutup" ditekan
     document.getElementById('apply-time-travel').addEventListener('click', () => {
       const inputMinutes = parseInt(document.getElementById('extra-minutes').value, 10);
       if (!isNaN(inputMinutes) && inputMinutes > 0) {
@@ -209,7 +203,6 @@
       document.getElementById('setting-layer').style.display = 'none';
     });
 
-    // Fungsi untuk update tampilan waktu
     function updateTimeDisplay(dateObj) {
       const jam = dateObj.getHours().toString().padStart(2, '0');
       const menit = dateObj.getMinutes().toString().padStart(2, '0');
@@ -223,7 +216,6 @@
       document.getElementById('date').textContent = `${hariIni}, ${tanggal} ${bulanIni}`;
     }
 
-    // Fungsi utama update waktu
     function updateTime() {
       const now = new Date();
       let displayTime = new Date(now.getTime() + fakeOffset * 60000);
@@ -241,10 +233,8 @@
       updateTimeDisplay(displayTime);
     }
 
-    // Update waktu setiap 300ms
     setInterval(updateTime, 300);
 
-    // Klik di area jam atau tanggal untuk mulai rewind
     const clockArea = document.getElementById('time');
     const dateArea = document.getElementById('date');
 
@@ -258,7 +248,6 @@
       });
     });
 
-    // Gesture dua jari tarik ke bawah untuk membuka pengaturan
     let startY = null;
     document.addEventListener('touchstart', function(e) {
       if (e.touches.length === 2) {
