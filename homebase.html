@@ -15,14 +15,16 @@
     body {
       margin: 0;
       padding: 0;
-      width: 100vw;
-      height: 100vh;
+      
+      width: 100%;
+      height: 100dvh; /* 🔥 ini kunci utama */
+      
       background-color: black;
-      background-size: cover;
-      background-position: center;
-      color: white;
       overflow: hidden;
-      position: relative;
+      
+      position: fixed;
+      inset: 0;
+      
       font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
 
@@ -39,10 +41,10 @@
 
     #background {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      inset: 0; /* lebih aman dari top/left */
+      width: 100%;
+      height: 100dvh; /* 🔥 samakan dengan body */
+      
       background-size: cover;
       background-position: center;
       z-index: 1;
