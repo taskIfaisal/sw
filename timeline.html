@@ -4,36 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Timeline</title>
-
   <link rel="apple-touch-icon" href="./icon/timeline-192x192.png">
   <link rel="apple-touch-startup-image" href="./icon/timeline-512x512.png">
-
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Timeline">
-
   <link rel="icon" type="image/png" sizes="192x192" href="./icon/timeline-192x192.png">
 
-  <!-- Font iPhone Style -->
   <style>
-    @font-face {
-      font-family: 'SF Pro Display';
-      src: local('SF Pro Display'), local('San Francisco');
-      font-weight: 100 900;
-    }
-
     html, body {
       margin: 0;
       padding: 0;
       width: 100vw;
       height: 100vh;
-      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
       background-color: black;
+      background-size: cover;
+      background-position: center;
       color: white;
       overflow: hidden;
+      touch-action: none;
       position: relative;
     }
-
+    
     body {
       position: fixed;
       inset: 0;
@@ -45,21 +38,22 @@
 
     #background {
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
       width: 100vw;
       height: 100vh;
       background-size: cover;
       background-position: center;
       z-index: 1;
     }
-
+    
     #lock-icon {
       width: 10px;
       display: block;
       margin: 6px auto 0;
     }
 
-    /* 🔥 FONT JAM MIRIP IPHONE */
+    /* 🔥 FONT JAM FIX DI SINI */
     #time {
       font-size: 11vh;
       font-weight: 200;
@@ -67,7 +61,8 @@
       text-align: center;
       margin-top: 5vh;
 
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
 
     #date {
@@ -98,10 +93,8 @@
       gap: 1vw;
     }
 
-    /* 🔥 FIX DOT AGAR NORMAL */
     #dot {
-      font-size: 1.6vh; /* ukuran normal kecil */
-      line-height: 1;
+      font-size: 2.7vh;
     }
 
     #camera-icon {
@@ -116,11 +109,12 @@
       width: 100%;
       background-color: rgba(0,0,0,0.95);
       color: white;
-      display: none;
+      display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       z-index: 100;
+      display: none;
     }
 
     #setting-layer input {
@@ -157,7 +151,6 @@
 </head>
 
 <body>
-
   <div id="tap-zone">
     <div class="top-content">
       <img id="lock-icon" src="icon/lock.png" alt="lock">
@@ -181,104 +174,125 @@
     <h2>Ganti Background</h2>
     <input type="file" accept="image/*" id="bg-input">
     <h2>Atur Menit Mundur</h2>
-    <input type="number" id="extra-minutes" placeholder="Tambah menit (misal 7)" min="1">
-    <button id="apply-time-travel">Simpan & Tutup</button>
+    <input type="number" id="extra-minutes" placeholder="Tambah menit (misal 7)" min="1" style="margin-top: 1vh;">
+    <button id="apply-time-travel" style="margin-top: 2vh;">Simpan & Tutup</button>
   </div>
 
-<script>
-let extraMinutes = 0;
-let fakeOffset = 0;
-let isRewinding = false;
+  <script>
+    let extraMinutes = 0;
+    let fakeOffset = 0;
+    let isRewinding = false;
+    let rewindInterval = null;
+    let hasStartedRewind = false;
 
-const BG_STORAGE_KEY = 'timeline_background_image';
+    const BG_STORAGE_KEY = 'timeline_background_image';
 
-window.addEventListener('load', function() {
-  const savedBackground = localStorage.getItem(BG_STORAGE_KEY);
-  if (savedBackground) {
-    document.body.style.backgroundImage = `url('${savedBackground}')`;
-  }
-});
+    window.addEventListener('load', function() {
+      const savedBackground = localStorage.getItem(BG_STORAGE_KEY);
+      if (savedBackground) {
+        document.body.style.backgroundImage = `url('${savedBackground}')`;
+      }
+    });
 
-document.getElementById('apply-time-travel').addEventListener('click', () => {
-  const inputMinutes = parseInt(document.getElementById('extra-minutes').value, 10);
-  if (!isNaN(inputMinutes) && inputMinutes > 0) {
-    extraMinutes = inputMinutes;
-    fakeOffset = extraMinutes;
-  }
-  document.getElementById('setting-layer').style.display = 'none';
-});
+    document.getElementById('apply-time-travel').addEventListener('click', () => {
+      const inputMinutes = parseInt(document.getElementById('extra-minutes').value, 10);
+      if (!isNaN(inputMinutes) && inputMinutes > 0) {
+        extraMinutes = inputMinutes;
+        fakeOffset = extraMinutes;
+      }
+      document.getElementById('setting-layer').style.display = 'none';
+    });
 
-function updateTimeDisplay(dateObj) {
-  const jam = dateObj.getHours().toString().padStart(2, '0');
-  const menit = dateObj.getMinutes().toString().padStart(2, '0');
-  document.getElementById('time').textContent = `${jam}.${menit}`;
+    function updateTimeDisplay(dateObj) {
+      const jam = dateObj.getHours().toString().padStart(2, '0');
+      const menit = dateObj.getMinutes().toString().padStart(2, '0');
+      document.getElementById('time').textContent = `${jam}.${menit}`;
 
-  const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-  const bulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-
-  document.getElementById('date').textContent =
-    `${hari[dateObj.getDay()]}, ${dateObj.getDate()} ${bulan[dateObj.getMonth()]}`;
-}
-
-function updateTime() {
-  const now = new Date();
-  let displayTime = new Date(now.getTime() + fakeOffset * 60000);
-
-  if (isRewinding) {
-    fakeOffset -= 0.3;
-    if (fakeOffset <= 0) {
-      fakeOffset = 0;
-      isRewinding = false;
+      const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+      const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+      const tanggal = dateObj.getDate();
+      const hariIni = hari[dateObj.getDay()];
+      const bulanIni = bulan[dateObj.getMonth()];
+      document.getElementById('date').textContent = `${hariIni}, ${tanggal} ${bulanIni}`;
     }
-    displayTime = new Date(now.getTime() + fakeOffset * 60000);
-  }
 
-  updateTimeDisplay(displayTime);
-}
+    function updateTime() {
+      const now = new Date();
+      let displayTime = new Date(now.getTime() + fakeOffset * 60000);
 
-setInterval(updateTime, 300);
+      if (isRewinding) {
+        fakeOffset -= 0.3;
+        if (fakeOffset <= 0) {
+          fakeOffset = 0;
+          isRewinding = false;
+          clearInterval(rewindInterval);
+        }
+        displayTime = new Date(now.getTime() + fakeOffset * 60000);
+      }
 
-document.getElementById('time').addEventListener('touchend', startRewind);
-document.getElementById('date').addEventListener('touchend', startRewind);
-
-function startRewind() {
-  if (fakeOffset > 0 && !isRewinding) {
-    isRewinding = true;
-  }
-}
-
-document.addEventListener('touchstart', function(e) {
-  if (e.touches.length === 2) {
-    startY = Math.min(e.touches[0].clientY, e.touches[1].clientY);
-  }
-});
-
-document.addEventListener('touchmove', function(e) {
-  if (e.touches.length === 2) {
-    const currentY = Math.min(e.touches[0].clientY, e.touches[1].clientY);
-    if (currentY - startY > 80) {
-      document.getElementById('setting-layer').style.display = 'flex';
+      updateTimeDisplay(displayTime);
     }
-  }
-});
 
-document.getElementById('close-setting').onclick = () => {
-  document.getElementById('setting-layer').style.display = 'none';
-};
+    setInterval(updateTime, 300);
 
-document.getElementById('bg-input').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-      const imageData = evt.target.result;
-      localStorage.setItem(BG_STORAGE_KEY, imageData);
-      document.body.style.backgroundImage = `url('${imageData}')`;
-    };
-    reader.readAsDataURL(file);
-  }
-});
-</script>
+    const clockArea = document.getElementById('time');
+    const dateArea = document.getElementById('date');
 
+    [clockArea, dateArea].forEach(el => {
+      el.addEventListener('touchend', (e) => {
+        if (document.getElementById('setting-layer').style.display === 'flex') return;
+        if (fakeOffset > 0 && !isRewinding) {
+          isRewinding = true;
+          hasStartedRewind = true;
+        }
+      });
+    });
+
+    let startY = null;
+    document.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 2) {
+        startY = Math.min(e.touches[0].clientY, e.touches[1].clientY);
+      }
+    });
+
+    document.addEventListener('touchmove', function(e) {
+      if (e.touches.length === 2 && startY !== null) {
+        const currentY = Math.min(e.touches[0].clientY, e.touches[1].clientY);
+        if (currentY - startY > 80) {
+          document.getElementById('setting-layer').style.display = 'flex';
+          startY = null;
+        }
+      }
+    });
+
+    document.getElementById('close-setting').addEventListener('click', () => {
+      document.getElementById('setting-layer').style.display = 'none';
+    });
+
+    document.getElementById('bg-input').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const imageData = evt.target.result;
+          localStorage.setItem(BG_STORAGE_KEY, imageData);
+          document.body.style.backgroundImage = `url('${imageData}')`;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    const tapZone = document.getElementById('tap-zone');
+
+    tapZone.addEventListener('click', () => {
+      if (document.getElementById('setting-layer').style.display === 'flex') return;
+      if (fakeOffset > 0 && !isRewinding) {
+        setTimeout(() => {
+          isRewinding = true;
+          hasStartedRewind = true;
+        }, 3000);
+      }
+    });
+  </script>
 </body>
 </html>
