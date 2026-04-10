@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Timeline</title>
   <link rel="apple-touch-icon" href="./icon/timeline-192x192.png">
   <link rel="apple-touch-startup-image" href="./icon/timeline-512x512.png">
@@ -28,11 +28,28 @@
       touch-action: none;
       position: relative;
     }
+    
+    body {
+    position: fixed;
+    inset: 0; /* ini kunci anti safe-area */
+}
 
     * {
       box-sizing: border-box;
     }
 
+    #background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh; /* pakai viewport full */
+            
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+        }
+    
     #lock-icon {
       width: 10px;
       display: block;
