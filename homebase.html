@@ -1,168 +1,69 @@
-<!doctype html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Peek</title>
-
-  <link rel="apple-touch-icon" href="./icon/inject-192x192.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html {
-      height: -webkit-fill-available;
-    }
-
-    body {
-      position: fixed;
-      inset: 0;
-
-      width: 100%;
-      height: -webkit-fill-available; /* 🔥 INI KUNCI iOS 15 */
-
-      overflow: hidden;
-      background: black;
-
-      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    }
-
-    #preview {
-      position: fixed;
-      inset: 0;
-
-      width: 100%;
-      height: 100%;
-
-      object-fit: cover;
-      object-position: center;
-
-      display: none;
-      z-index: 2;
-    }
-
-    #uploadMenu {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(255,255,255,0.9);
-      padding: 20px;
-      border-radius: 10px;
-      z-index: 10;
-    }
-
-    #textOverlay, #textOverlay2 {
-      position: absolute;
-      color: white;
-      font-size: 12px;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-      display: none;
-      z-index: 5;
-    }
-
-    #textOverlay {
-      top: 25.5%;
-      left: 38.5%;
-      transform: translateX(-50%);
-    }
-
-    #textOverlay2 {
-      top: 25.5%;
-      left: 61.5%;
-      transform: translateX(-50%);
-    }
-  </style>
-</head>
-
-<body>
-
-  <div id="uploadMenu">
-    <input type="file" id="fileInput" accept="image/*">
-  </div>
-
-  <div id="textOverlay">Facebook</div>
-  <div id="textOverlay2">Mail</div>
-
-  <img id="preview" alt="" />
-
-<script>
-const uploadMenu = document.getElementById('uploadMenu');
-const fileInput = document.getElementById('fileInput');
-const preview = document.getElementById('preview');
-const textOverlay = document.getElementById('textOverlay');
-const textOverlay2 = document.getElementById('textOverlay2');
-
-const STORAGE_KEY = 'peek_saved_image';
-
-// Load gambar
-window.addEventListener('load', function() {
-  const savedImage = localStorage.getItem(STORAGE_KEY);
-  if (savedImage) {
-    preview.src = savedImage;
-    preview.style.display = 'block';
-    textOverlay.style.display = 'block';
-    textOverlay2.style.display = 'block';
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
   }
-  updateTextFromAPI();
-});
 
-// Double click upload
-document.body.addEventListener('dblclick', () => {
-  uploadMenu.style.display = 'block';
-});
-
-// Upload gambar
-fileInput.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-      const imageData = evt.target.result;
-
-      localStorage.setItem(STORAGE_KEY, imageData);
-
-      preview.src = imageData;
-      preview.style.display = 'block';
-      uploadMenu.style.display = 'none';
-      textOverlay.style.display = 'block';
-      textOverlay2.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
+  html, body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: black;
   }
-});
 
-// Capitalize
-function capitalize(str) {
-  if (!str) return "";
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-// API text
-async function updateTextFromAPI() {
-  try {
-    const response = await fetch('https://11z.co/_w/6804/selection?_t=' + Date.now());
-    const data = await response.json();
-
-    if (data.value) {
-      const words = data.value.trim().split(/\s+/);
-      textOverlay.textContent = capitalize(words[0] || '');
-      textOverlay2.textContent = capitalize(words[1] || 'Mail');
-    }
-  } catch (err) {
-    textOverlay2.textContent = 'Mail';
+  body {
+    position: fixed;
+    inset: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
   }
-}
 
-setInterval(updateTextFromAPI, 2000);
-</script>
+  /* 🔥 INI YANG PENTING */
+  #preview {
+    position: fixed;
+    top: 0;
+    left: 0;
 
-</body>
-</html>
+    width: 100vw;
+    height: 100vh;
+
+    object-fit: cover;
+    object-position: center;
+
+    display: none;
+    z-index: 2;
+  }
+
+  #uploadMenu {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255,255,255,0.9);
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 10;
+  }
+
+  #textOverlay, #textOverlay2 {
+    position: absolute;
+    color: white;
+    font-size: 12px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    display: none;
+    z-index: 5;
+  }
+
+  #textOverlay {
+    top: 25.5%;
+    left: 38.5%;
+    transform: translateX(-50%);
+  }
+
+  #textOverlay2 {
+    top: 25.5%;
+    left: 61.5%;
+    transform: translateX(-50%);
+  }
+</style>
