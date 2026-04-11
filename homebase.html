@@ -15,9 +15,13 @@
   <link rel="icon" type="image/png" sizes="192x192" href="./icon/inject-192x192.png">
 
   <style>
-    html, body {
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
       width: 100%;
       height: 100%;
       overflow: hidden;
@@ -26,39 +30,35 @@
 
     body {
       position: fixed;
-      inset: 0;
-
-      /* 🔥 FIX FULL HEIGHT iPhone */
-      height: 100dvh;
-      min-height: -webkit-fill-available;
-
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh; /* dynamic viewport height untuk iOS */
       font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    /* Background layer */
     #background {
       position: fixed;
-      inset: 0;
-
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       width: 100%;
       height: 100%;
-
-      /* 🔥 FIX AGAR TIDAK ADA GAP */
-      min-height: 100dvh;
-      min-height: -webkit-fill-available;
-
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-
       z-index: 1;
     }
 
+    /* Upload Menu */
     #uploadMenu {
       display: none;
       position: fixed;
@@ -71,17 +71,25 @@
       z-index: 10;
     }
 
-    img {
+    /* Gambar preview - FULL TANPA SAFE AREA */
+    #preview {
       position: fixed;
-      inset: 0;
-
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       width: 100%;
       height: 100%;
-
-      object-fit: cover; /* 🔥 penting */
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      object-fit: cover;
+      object-position: center;
+      display: none;
       z-index: 2;
     }
 
+    /* Text Overlay */
     #textOverlay, #textOverlay2 {
       position: absolute;
       color: white;
@@ -114,7 +122,7 @@
   <div id="textOverlay">Facebook</div>
   <div id="textOverlay2">Mail</div>
 
-  <img id="preview" alt="" style="display:none;" />
+  <img id="preview" alt="" />
 
 <script>
 const uploadMenu = document.getElementById('uploadMenu');
@@ -125,15 +133,32 @@ const textOverlay2 = document.getElementById('textOverlay2');
 
 const STORAGE_KEY = 'peek_saved_image';
 
-// 🔥 FIX HEIGHT iOS DINAMIS
-function fixHeight() {
-  document.body.style.height = window.innerHeight + "px";
+// 🔥 FIX HEIGHT iOS - update saat resize/orientation change
+function fixFullHeight() {
+  const vh = window.innerHeight;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+  
+  // Terapkan ke elemen yang membutuhkan full height
+  const fullElements = [document.body, preview];
+  fullElements.forEach(el => {
+    if (el) {
+      el.style.height = `${vh}px`;
+    }
+  });
 }
-window.addEventListener('resize', fixHeight);
-fixHeight();
 
-// Load gambar
+window.addEventListener('resize', () => {
+  setTimeout(fixFullHeight, 100);
+});
+window.addEventListener('orientationchange', () => {
+  setTimeout(fixFullHeight, 100);
+});
+fixFullHeight();
+
+// Load gambar dari localStorage
 window.addEventListener('load', function() {
+  fixFullHeight();
+  
   const savedImage = localStorage.getItem(STORAGE_KEY);
   if (savedImage) {
     preview.src = savedImage;
@@ -145,7 +170,8 @@ window.addEventListener('load', function() {
 });
 
 // Double click upload
-document.body.addEventListener('dblclick', () => {
+document.body.addEventListener('dblclick', (e) => {
+  e.preventDefault();
   uploadMenu.style.display = 'block';
 });
 
@@ -164,8 +190,18 @@ fileInput.addEventListener('change', (e) => {
       uploadMenu.style.display = 'none';
       textOverlay.style.display = 'block';
       textOverlay2.style.display = 'block';
+      
+      // Pastikan height tetap full setelah upload
+      setTimeout(fixFullHeight, 50);
     };
     reader.readAsDataURL(file);
+  }
+});
+
+// Tutup upload menu jika klik di luar (opsional)
+document.addEventListener('click', function(e) {
+  if (uploadMenu.style.display === 'block' && !uploadMenu.contains(e.target)) {
+    uploadMenu.style.display = 'none';
   }
 });
 
@@ -187,6 +223,7 @@ async function updateTextFromAPI() {
       textOverlay2.textContent = capitalize(words[1] || 'Mail');
     }
   } catch (err) {
+    console.log('API error, using default');
     textOverlay2.textContent = 'Mail';
   }
 }
