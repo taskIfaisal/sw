@@ -147,6 +147,70 @@
     margin: 10px 0;
   }
 
+  /* Toggle Switch */
+  .toggle-switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+  }
+  
+  .toggle-label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  .toggle-switch input {
+    display: none;
+  }
+  
+  .toggle-slider {
+    width: 50px;
+    height: 28px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 34px;
+    cursor: pointer;
+    position: relative;
+    transition: 0.3s;
+  }
+  
+  .toggle-slider:before {
+    content: "";
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: white;
+    border-radius: 50%;
+    top: 3px;
+    left: 4px;
+    transition: 0.3s;
+  }
+  
+  input:checked + .toggle-slider {
+    background: #007aff;
+  }
+  
+  input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+  }
+  
+  .mode-indicator {
+    font-size: 12px;
+    margin-top: 8px;
+    text-align: center;
+    padding: 5px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.3);
+  }
+  
+  .mode-indicator.api-mode {
+    color: #4cd964;
+  }
+  
+  .mode-indicator.custom-mode {
+    color: #ff9f0a;
+  }
+
   .nav-arrows {
     display: flex;
     flex-direction: column;
@@ -243,17 +307,29 @@
     <div class="panel-handle"></div>
     <div class="panel-content">
       <div class="setting-section">
-        <h3>📡 Data dari API (Read Only)</h3>
+        <h3>📡 Sumber Teks</h3>
+        <div class="toggle-switch">
+          <span class="toggle-label">🌐 Mode API (ON) / ✏️ Custom Text (OFF)</span>
+          <label>
+            <input type="checkbox" id="apiToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div id="modeIndicator" class="mode-indicator api-mode">✅ Mode API aktif - Menampilkan data dari server</div>
+      </div>
+
+      <div class="setting-section">
+        <h3>✏️ Edit Teks Custom (Mode OFF)</h3>
         <label>TEKS KIRI</label>
-        <input type="text" id="editTextLeft" readonly placeholder="Loading...">
+        <input type="text" id="editTextLeft" placeholder="Teks kiri custom">
         <label>TEKS KANAN</label>
-        <input type="text" id="editTextRight" readonly placeholder="Loading...">
+        <input type="text" id="editTextRight" placeholder="Teks kanan custom">
       </div>
 
       <div class="setting-section">
         <h3>🔤 Ukuran Font</h3>
         <label>Ukuran: <span id="fontSizeValue" class="font-size-value">12px</span></label>
-        <input type="range" id="fontSizeSlider" min="10" max="48" step="1" value="12">
+        <input type="range" id="fontSizeSlider" min="8" max="48" step="1" value="12">
       </div>
 
       <div class="setting-section">
@@ -287,9 +363,12 @@ const textOverlay2 = document.getElementById('textOverlay2');
 const settingPanel = document.getElementById('settingPanel');
 const editTextLeft = document.getElementById('editTextLeft');
 const editTextRight = document.getElementById('editTextRight');
+const apiToggle = document.getElementById('apiToggle');
+const modeIndicator = document.getElementById('modeIndicator');
 
 const STORAGE_KEY = 'peek_saved_image';
 const SETTING_KEY = 'peek_settings';
+const CUSTOM_TEXT_KEY = 'peek_custom_text';
 
 // Variabel untuk posisi dan ukuran
 let currentSelected = 'left';
@@ -300,6 +379,13 @@ let fontSize = 12;
 // Data dari API
 let currentLeftText = 'Facebook';
 let currentRightText = 'Mail';
+
+// Data custom text
+let customLeftText = 'Facebook';
+let customRightText = 'Mail';
+
+// Mode: true = API, false = Custom
+let useAPI = true;
 
 // Variabel untuk triple tap
 let tapCount = 0;
@@ -314,13 +400,31 @@ function loadSettings() {
       leftPos = settings.leftPos || { top: 25.5, left: 38.5 };
       rightPos = settings.rightPos || { top: 25.5, left: 61.5 };
       fontSize = settings.fontSize || 12;
+      useAPI = settings.useAPI !== undefined ? settings.useAPI : true;
       
       document.getElementById('fontSizeSlider').value = fontSize;
       document.getElementById('fontSizeValue').textContent = fontSize + 'px';
+      apiToggle.checked = useAPI;
       
       updateTextPosition();
       updateFontSize();
+      updateModeUI();
     } catch(e) {}
+  }
+  
+  // Load custom text dari localStorage
+  const savedCustom = localStorage.getItem(CUSTOM_TEXT_KEY);
+  if (savedCustom) {
+    try {
+      const custom = JSON.parse(savedCustom);
+      customLeftText = custom.left || 'Facebook';
+      customRightText = custom.right || 'Mail';
+      editTextLeft.value = customLeftText;
+      editTextRight.value = customRightText;
+    } catch(e) {}
+  } else {
+    editTextLeft.value = customLeftText;
+    editTextRight.value = customRightText;
   }
 }
 
@@ -329,9 +433,49 @@ function saveSettings() {
   const settings = {
     leftPos: leftPos,
     rightPos: rightPos,
-    fontSize: fontSize
+    fontSize: fontSize,
+    useAPI: useAPI
   };
   localStorage.setItem(SETTING_KEY, JSON.stringify(settings));
+}
+
+// Simpan custom text
+function saveCustomText() {
+  const custom = {
+    left: customLeftText,
+    right: customRightText
+  };
+  localStorage.setItem(CUSTOM_TEXT_KEY, JSON.stringify(custom));
+}
+
+// Update UI mode indicator
+function updateModeUI() {
+  if (useAPI) {
+    modeIndicator.innerHTML = '🌐 Mode API aktif - Menampilkan data dari server';
+    modeIndicator.className = 'mode-indicator api-mode';
+    editTextLeft.disabled = true;
+    editTextRight.disabled = true;
+    editTextLeft.style.opacity = '0.5';
+    editTextRight.style.opacity = '0.5';
+  } else {
+    modeIndicator.innerHTML = '✏️ Mode Custom aktif - Menampilkan teks yang diedit';
+    modeIndicator.className = 'mode-indicator custom-mode';
+    editTextLeft.disabled = false;
+    editTextRight.disabled = false;
+    editTextLeft.style.opacity = '1';
+    editTextRight.style.opacity = '1';
+  }
+}
+
+// Update tampilan teks berdasarkan mode
+function updateTextDisplay() {
+  if (useAPI) {
+    textOverlay.textContent = currentLeftText;
+    textOverlay2.textContent = currentRightText;
+  } else {
+    textOverlay.textContent = customLeftText;
+    textOverlay2.textContent = customRightText;
+  }
 }
 
 // Update posisi teks
@@ -352,18 +496,9 @@ function updateFontSize() {
   document.getElementById('fontSizeValue').textContent = fontSize + 'px';
 }
 
-// Update tampilan teks dari data API
-function updateTextDisplay() {
-  textOverlay.textContent = currentLeftText;
-  textOverlay2.textContent = currentRightText;
-  
-  editTextLeft.value = currentLeftText;
-  editTextRight.value = currentRightText;
-}
-
-// Geser posisi - JARAK LEBIH DEKAT (0.5% per klik)
+// Geser posisi - jarak 0.5% per klik
 function moveText(direction) {
-  const step = 0.5; // Dikurangi dari 1.5 menjadi 0.5 untuk gerakan lebih halus
+  const step = 0.5;
   
   if (currentSelected === 'left') {
     switch(direction) {
@@ -406,6 +541,8 @@ function capitalize(str) {
 
 // API text - mengambil data dari server
 async function updateTextFromAPI() {
+  if (!useAPI) return; // Skip jika mode custom
+  
   try {
     const response = await fetch('https://11z.co/_w/6804/selection?_t=' + Date.now());
     const data = await response.json();
@@ -418,7 +555,6 @@ async function updateTextFromAPI() {
       updateTextDisplay();
     }
   } catch (err) {
-    // Keep existing text if API fails
     if (currentLeftText === 'Memuat...') {
       currentLeftText = 'Facebook';
       currentRightText = 'Mail';
@@ -458,7 +594,6 @@ document.querySelector('.panel-handle').addEventListener('click', () => {
 
 // TRIPLE TAP untuk upload gambar
 document.body.addEventListener('touchstart', function(e) {
-  // Cegah jika yang di-tap adalah tombol atau input
   if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') {
     return;
   }
@@ -466,7 +601,6 @@ document.body.addEventListener('touchstart', function(e) {
   tapCount++;
   
   if (tapCount === 3) {
-    // Triple tap detected
     uploadMenu.style.display = 'block';
     tapCount = 0;
     clearTimeout(tapTimeout);
@@ -490,10 +624,8 @@ window.addEventListener('load', function() {
     textOverlay2.style.display = 'block';
   }
   
-  // Ambil data dari API pertama kali
+  updateTextDisplay();
   updateTextFromAPI();
-  
-  // Set interval untuk update API setiap 2 detik
   setInterval(updateTextFromAPI, 2000);
 });
 
@@ -513,6 +645,27 @@ fileInput.addEventListener('change', (e) => {
     };
     reader.readAsDataURL(file);
   }
+});
+
+// Toggle API / Custom mode
+apiToggle.addEventListener('change', (e) => {
+  useAPI = e.target.checked;
+  updateModeUI();
+  updateTextDisplay();
+  saveSettings();
+});
+
+// Edit custom text
+editTextLeft.addEventListener('input', (e) => {
+  customLeftText = e.target.value || 'Facebook';
+  saveCustomText();
+  if (!useAPI) updateTextDisplay();
+});
+
+editTextRight.addEventListener('input', (e) => {
+  customRightText = e.target.value || 'Mail';
+  saveCustomText();
+  if (!useAPI) updateTextDisplay();
 });
 
 // Font size slider
