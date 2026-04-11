@@ -568,9 +568,9 @@ function updateImageStatus() {
   }
 }
 
-// Geser posisi
+// Geser posisi - JARAK LEBIH DEKAT (0.3% per klik)
 function moveText(direction) {
-  const step = 0.5;
+  const step = 0.3; // Dikurangi dari 0.5 menjadi 0.3 untuk gerakan lebih halus
   
   if (currentSelected === 'left') {
     switch(direction) {
