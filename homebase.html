@@ -66,7 +66,7 @@
     display: none;
     z-index: 5;
     white-space: nowrap;
-    transition: all 0.1s ease;
+    transition: all 0.05s ease;
   }
 
   /* SETTING PANEL (SETENGAH LAYAR) */
@@ -361,9 +361,10 @@ function updateTextDisplay() {
   editTextRight.value = currentRightText;
 }
 
-// Geser posisi
+// Geser posisi - JARAK LEBIH DEKAT (0.5% per klik)
 function moveText(direction) {
-  const step = 1.5;
+  const step = 0.5; // Dikurangi dari 1.5 menjadi 0.5 untuk gerakan lebih halus
+  
   if (currentSelected === 'left') {
     switch(direction) {
       case 'up': leftPos.top = Math.max(5, leftPos.top - step); break;
@@ -474,7 +475,7 @@ document.body.addEventListener('touchstart', function(e) {
   clearTimeout(tapTimeout);
   tapTimeout = setTimeout(() => {
     tapCount = 0;
-  }, 500); // Reset setelah 500ms
+  }, 500);
 });
 
 // Load gambar dari localStorage
