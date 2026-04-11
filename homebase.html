@@ -147,67 +147,85 @@
     margin: 10px 0;
   }
 
-  /* Toggle Switch */
-  .toggle-switch {
+  /* Toggle Switch ala iPhone */
+  .toggle-container {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
   }
   
   .toggle-label {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
   }
   
-  .toggle-switch input {
-    display: none;
+  .toggle-label small {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-left: 5px;
+  }
+  
+  .iphone-toggle {
+    position: relative;
+    display: inline-block;
+    width: 51px;
+    height: 31px;
+  }
+  
+  .iphone-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
   }
   
   .toggle-slider {
-    width: 50px;
-    height: 28px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 34px;
+    position: absolute;
     cursor: pointer;
-    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255,255,255,0.3);
     transition: 0.3s;
+    border-radius: 34px;
   }
   
   .toggle-slider:before {
-    content: "";
     position: absolute;
-    width: 22px;
-    height: 22px;
-    background: white;
-    border-radius: 50%;
-    top: 3px;
-    left: 4px;
+    content: "";
+    height: 27px;
+    width: 27px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
     transition: 0.3s;
+    border-radius: 50%;
   }
   
   input:checked + .toggle-slider {
-    background: #007aff;
+    background-color: #34c759;
   }
   
   input:checked + .toggle-slider:before {
-    transform: translateX(22px);
+    transform: translateX(20px);
   }
   
-  .mode-indicator {
+  .mode-badge {
     font-size: 12px;
-    margin-top: 8px;
     text-align: center;
-    padding: 5px;
+    padding: 6px;
     border-radius: 8px;
-    background: rgba(0,0,0,0.3);
+    margin-top: 8px;
   }
   
-  .mode-indicator.api-mode {
-    color: #4cd964;
+  .mode-badge.api {
+    background: rgba(52, 199, 89, 0.2);
+    color: #34c759;
   }
   
-  .mode-indicator.custom-mode {
+  .mode-badge.custom {
+    background: rgba(255, 159, 10, 0.2);
     color: #ff9f0a;
   }
 
@@ -288,6 +306,13 @@
     border-radius: 15px;
     font-size: 12px;
   }
+  
+  .info-text {
+    font-size: 11px;
+    opacity: 0.5;
+    text-align: center;
+    margin-top: 10px;
+  }
   </style>
 </head>
 
@@ -306,24 +331,30 @@
   <div id="settingPanel">
     <div class="panel-handle"></div>
     <div class="panel-content">
+      
+      <!-- TOGGLE ON/OFF ala iPhone -->
       <div class="setting-section">
         <h3>📡 Sumber Teks</h3>
-        <div class="toggle-switch">
-          <span class="toggle-label">🌐 Mode API (ON) / ✏️ Custom Text (OFF)</span>
-          <label>
+        <div class="toggle-container">
+          <span class="toggle-label">
+            🌐 Mode API <small>(ON = API / OFF = Custom)</small>
+          </span>
+          <label class="iphone-toggle">
             <input type="checkbox" id="apiToggle" checked>
             <span class="toggle-slider"></span>
           </label>
         </div>
-        <div id="modeIndicator" class="mode-indicator api-mode">✅ Mode API aktif - Menampilkan data dari server</div>
+        <div id="modeBadge" class="mode-badge api">✅ Mode API: Menampilkan data dari server</div>
       </div>
 
-      <div class="setting-section">
-        <h3>✏️ Edit Teks Custom (Mode OFF)</h3>
+      <!-- EDIT TEKS CUSTOM (hanya aktif saat mode OFF) -->
+      <div class="setting-section" id="customTextSection">
+        <h3>✏️ Edit Teks Custom</h3>
         <label>TEKS KIRI</label>
-        <input type="text" id="editTextLeft" placeholder="Teks kiri custom">
+        <input type="text" id="editTextLeft" placeholder="Teks kiri custom" disabled>
         <label>TEKS KANAN</label>
-        <input type="text" id="editTextRight" placeholder="Teks kanan custom">
+        <input type="text" id="editTextRight" placeholder="Teks kanan custom" disabled>
+        <div class="info-text">Mode OFF untuk mengedit teks custom</div>
       </div>
 
       <div class="setting-section">
@@ -364,7 +395,8 @@ const settingPanel = document.getElementById('settingPanel');
 const editTextLeft = document.getElementById('editTextLeft');
 const editTextRight = document.getElementById('editTextRight');
 const apiToggle = document.getElementById('apiToggle');
-const modeIndicator = document.getElementById('modeIndicator');
+const modeBadge = document.getElementById('modeBadge');
+const customTextSection = document.getElementById('customTextSection');
 
 const STORAGE_KEY = 'peek_saved_image';
 const SETTING_KEY = 'peek_settings';
@@ -451,15 +483,15 @@ function saveCustomText() {
 // Update UI mode indicator
 function updateModeUI() {
   if (useAPI) {
-    modeIndicator.innerHTML = '🌐 Mode API aktif - Menampilkan data dari server';
-    modeIndicator.className = 'mode-indicator api-mode';
+    modeBadge.innerHTML = '✅ Mode API: Menampilkan data dari server';
+    modeBadge.className = 'mode-badge api';
     editTextLeft.disabled = true;
     editTextRight.disabled = true;
     editTextLeft.style.opacity = '0.5';
     editTextRight.style.opacity = '0.5';
   } else {
-    modeIndicator.innerHTML = '✏️ Mode Custom aktif - Menampilkan teks yang diedit';
-    modeIndicator.className = 'mode-indicator custom-mode';
+    modeBadge.innerHTML = '✏️ Mode Custom: Menampilkan teks yang diedit manual';
+    modeBadge.className = 'mode-badge custom';
     editTextLeft.disabled = false;
     editTextRight.disabled = false;
     editTextLeft.style.opacity = '1';
@@ -496,7 +528,7 @@ function updateFontSize() {
   document.getElementById('fontSizeValue').textContent = fontSize + 'px';
 }
 
-// Geser posisi - jarak 0.5% per klik
+// Geser posisi
 function moveText(direction) {
   const step = 0.5;
   
@@ -539,7 +571,7 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-// API text - mengambil data dari server
+// API text
 async function updateTextFromAPI() {
   if (!useAPI) return; // Skip jika mode custom
   
@@ -563,7 +595,7 @@ async function updateTextFromAPI() {
   }
 }
 
-// Gesture 2 jari swipe down untuk buka panel
+// Gesture 2 jari swipe down
 let touchStartY = null;
 let touchCount = 0;
 
@@ -587,12 +619,12 @@ document.addEventListener('touchmove', function(e) {
   }
 });
 
-// Tutup panel dengan handle
+// Tutup panel
 document.querySelector('.panel-handle').addEventListener('click', () => {
   settingPanel.classList.remove('open');
 });
 
-// TRIPLE TAP untuk upload gambar
+// TRIPLE TAP untuk upload
 document.body.addEventListener('touchstart', function(e) {
   if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') {
     return;
@@ -612,7 +644,7 @@ document.body.addEventListener('touchstart', function(e) {
   }, 500);
 });
 
-// Load gambar dari localStorage
+// Load data
 window.addEventListener('load', function() {
   loadSettings();
   
@@ -653,6 +685,11 @@ apiToggle.addEventListener('change', (e) => {
   updateModeUI();
   updateTextDisplay();
   saveSettings();
+  
+  // Jika mode API, ambil data terbaru
+  if (useAPI) {
+    updateTextFromAPI();
+  }
 });
 
 // Edit custom text
@@ -675,7 +712,7 @@ document.getElementById('fontSizeSlider').addEventListener('input', (e) => {
   saveSettings();
 });
 
-// Selector teks kiri/kanan
+// Selector teks
 document.getElementById('selectLeftBtn').addEventListener('click', () => {
   currentSelected = 'left';
   document.getElementById('selectLeftBtn').classList.add('active');
@@ -688,7 +725,7 @@ document.getElementById('selectRightBtn').addEventListener('click', () => {
   document.getElementById('selectLeftBtn').classList.remove('active');
 });
 
-// Event listener untuk tombol panah
+// Tombol panah
 document.querySelectorAll('.arrow-btn').forEach(btn => {
   btn.addEventListener('click', (e) => {
     const dir = btn.getAttribute('data-dir');
