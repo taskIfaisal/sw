@@ -6,13 +6,8 @@
   <title>Peek</title>
 
   <link rel="apple-touch-icon" href="./icon/inject-192x192.png">
-  <link rel="apple-touch-startup-image" href="./icon/inject-192x192.png">
-
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Peek">
-
-  <link rel="icon" type="image/png" sizes="192x192" href="./icon/inject-192x192.png">
 
   <style>
     * {
@@ -21,29 +16,33 @@
       box-sizing: border-box;
     }
 
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: black;
+    html {
+      height: -webkit-fill-available;
     }
 
     body {
       position: fixed;
       inset: 0;
+
       width: 100%;
-      height: 100dvh; /* 🔥 ini cukup */
+      height: -webkit-fill-available; /* 🔥 INI KUNCI iOS 15 */
+
+      overflow: hidden;
+      background: black;
+
       font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
 
-    /* Preview FULL FIX */
     #preview {
       position: fixed;
-      inset: 0; /* 🔥 lebih stabil dari top/left */
+      inset: 0;
+
       width: 100%;
       height: 100%;
+
       object-fit: cover;
       object-position: center;
+
       display: none;
       z-index: 2;
     }
