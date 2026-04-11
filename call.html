@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Download CSV dari API</title>
+    <meta charset="UTF-8">
+    <title>Download VCF dari API</title>
 </head>
 <body>
-    <h2>Klik tombol untuk mengambil data dari API dan download CSV</h2>
-    <button id="downloadBtn">Ambil Data & Download CSV</button>
+    <h2>Klik tombol untuk mengambil data dari API dan download VCF</h2>
+    <button id="downloadBtn" style="padding:10px 20px;font-size:16px;">Ambil Data & Download VCF</button>
     <p id="status">Menunggu tindakan...</p>
 
     <script>
@@ -24,23 +25,30 @@
                 // Ambil nama dari field 'value' di API
                 const nama = data.value || 'unknown';
                 
-                // Buat konten CSV
-                const csvContent = `nama,nomor\n${nama},${fixedPhone}`;
+                // Buat konten VCF (vCard format 3.0)
+                const vcfContent = `BEGIN:VCARD
+VERSION:3.0
+FN:${nama}
+TEL;TYPE=CELL:${fixedPhone}
+END:VCARD`;
                 
-                // Download file CSV
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                // Download file VCF
+                const blob = new Blob([vcfContent], { type: 'text/vcard;charset=utf-8;' });
                 const link = document.createElement('a');
                 const url = URL.createObjectURL(blob);
                 link.href = url;
-                link.setAttribute('download', 'budio.csv');
+                link.setAttribute('download', 'budio.vcf');
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
                 
-                statusEl.textContent = `Berhasil! CSV terdownload dengan data: Nama="${nama}", Nomor="${fixedPhone}"`;
+                statusEl.innerHTML = `✅ Berhasil! File <strong>budio.vcf</strong> terdownload.<br>
+                                     Data: Nama="${nama}", Nomor="${fixedPhone}"<br>
+                                     📁 File ini bisa diimpor ke kontak HP Anda.`;
             } catch (error) {
-                statusEl.textContent = `Error: ${error.message}`;
+                statusEl.innerHTML = `❌ Error: ${error.message}<br>
+                                     Pastikan Anda terhubung ke internet dan API dapat diakses.`;
                 console.error(error);
             }
         }
