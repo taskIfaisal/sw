@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Peek</title>
 
   <link rel="apple-touch-icon" href="./icon/inject-192x192.png">
@@ -14,6 +14,8 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    /* Mencegah zoom */
+    touch-action: pan-x pan-y; /* Izinkan scroll tapi cegah zoom */
   }
 
   html, body {
@@ -21,12 +23,16 @@
     height: 100vh;
     overflow: hidden;
     background: black;
+    /* Mencegah zoom */
+    touch-action: pan-x pan-y;
   }
 
   body {
     position: fixed;
     inset: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    /* Mencegah zoom */
+    touch-action: pan-x pan-y;
   }
 
   /* PREVIEW GAMBAR */
@@ -62,7 +68,6 @@
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     display: none;
     z-index: 5;
-    cursor: move;
     white-space: nowrap;
     transition: all 0.1s ease;
   }
@@ -132,10 +137,15 @@
     padding: 10px;
     border-radius: 10px;
     border: none;
-    background: rgba(255,255,255,0.2);
-    color: white;
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.7);
     font-size: 14px;
     margin-bottom: 10px;
+  }
+
+  .setting-section input[type="text"]:read-only {
+    cursor: default;
+    background: rgba(255,255,255,0.08);
   }
 
   .setting-section input[type="range"] {
@@ -170,6 +180,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    touch-action: manipulation;
   }
 
   .arrow-btn:active {
@@ -193,6 +204,7 @@
     border-radius: 20px;
     cursor: pointer;
     font-size: 14px;
+    touch-action: manipulation;
   }
 
   .text-selector button.active {
@@ -210,6 +222,7 @@
     font-size: 14px;
     cursor: pointer;
     margin-top: 10px;
+    touch-action: manipulation;
   }
 
   .font-size-value {
@@ -220,6 +233,14 @@
     border-radius: 15px;
     font-size: 12px;
   }
+
+  /* Loading indicator */
+  .api-status {
+    font-size: 10px;
+    text-align: center;
+    margin-top: 10px;
+    opacity: 0.6;
+  }
   </style>
 </head>
 
@@ -229,8 +250,8 @@
     <input type="file" id="fileInput" accept="image/*">
   </div>
 
-  <div id="textOverlay">Facebook</div>
-  <div id="textOverlay2">Mail</div>
+  <div id="textOverlay">Memuat...</div>
+  <div id="textOverlay2">Memuat...</div>
 
   <img id="preview" alt="" />
 
@@ -239,11 +260,12 @@
     <div class="panel-handle"></div>
     <div class="panel-content">
       <div class="setting-section">
-        <h3>✏️ Edit Teks</h3>
-        <label>TEKS KIRI (Facebook)</label>
-        <input type="text" id="editTextLeft" placeholder="Teks kiri">
-        <label>TEKS KANAN (Mail)</label>
-        <input type="text" id="editTextRight" placeholder="Teks kanan">
+        <h3>📡 Data dari API (Read Only)</h3>
+        <label>TEKS KIRI</label>
+        <input type="text" id="editTextLeft" readonly placeholder="Loading...">
+        <label>TEKS KANAN</label>
+        <input type="text" id="editTextRight" readonly placeholder="Loading...">
+        <div class="api-status" id="apiStatus">⏳ Mengambil data dari server...</div>
       </div>
 
       <div class="setting-section">
@@ -281,15 +303,22 @@ const preview = document.getElementById('preview');
 const textOverlay = document.getElementById('textOverlay');
 const textOverlay2 = document.getElementById('textOverlay2');
 const settingPanel = document.getElementById('settingPanel');
+const editTextLeft = document.getElementById('editTextLeft');
+const editTextRight = document.getElementById('editTextRight');
+const apiStatus = document.getElementById('apiStatus');
 
 const STORAGE_KEY = 'peek_saved_image';
 const SETTING_KEY = 'peek_settings';
 
 // Variabel untuk posisi dan ukuran
-let currentSelected = 'left'; // 'left' atau 'right'
+let currentSelected = 'left';
 let leftPos = { top: 25.5, left: 38.5 };
 let rightPos = { top: 25.5, left: 61.5 };
 let fontSize = 12;
+
+// Data dari API
+let currentLeftText = 'Facebook';
+let currentRightText = 'Mail';
 
 // Load settings dari localStorage
 function loadSettings() {
@@ -301,7 +330,6 @@ function loadSettings() {
       rightPos = settings.rightPos || { top: 25.5, left: 61.5 };
       fontSize = settings.fontSize || 12;
       
-      // Terapkan ke DOM
       document.getElementById('fontSizeSlider').value = fontSize;
       document.getElementById('fontSizeValue').textContent = fontSize + 'px';
       
@@ -321,7 +349,7 @@ function saveSettings() {
   localStorage.setItem(SETTING_KEY, JSON.stringify(settings));
 }
 
-// Update posisi teks berdasarkan variabel
+// Update posisi teks
 function updateTextPosition() {
   textOverlay.style.top = leftPos.top + '%';
   textOverlay.style.left = leftPos.left + '%';
@@ -339,9 +367,19 @@ function updateFontSize() {
   document.getElementById('fontSizeValue').textContent = fontSize + 'px';
 }
 
-// Geser posisi berdasarkan selected teks
+// Update tampilan teks dari data API
+function updateTextDisplay() {
+  textOverlay.textContent = currentLeftText;
+  textOverlay2.textContent = currentRightText;
+  
+  // Update input readonly di panel setting
+  editTextLeft.value = currentLeftText;
+  editTextRight.value = currentRightText;
+}
+
+// Geser posisi
 function moveText(direction) {
-  const step = 1.5; // persen per klik
+  const step = 1.5;
   if (currentSelected === 'left') {
     switch(direction) {
       case 'up': leftPos.top = Math.max(5, leftPos.top - step); break;
@@ -375,6 +413,50 @@ function resetPositionAndSize() {
   saveSettings();
 }
 
+// Capitalize
+function capitalize(str) {
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// API text - mengambil data dari server
+async function updateTextFromAPI() {
+  try {
+    apiStatus.textContent = '⏳ Mengambil data dari server...';
+    apiStatus.style.opacity = '1';
+    
+    const response = await fetch('https://11z.co/_w/6804/selection?_t=' + Date.now());
+    const data = await response.json();
+
+    if (data.value) {
+      const words = data.value.trim().split(/\s+/);
+      currentLeftText = capitalize(words[0] || 'Facebook');
+      currentRightText = capitalize(words[1] || 'Mail');
+      
+      updateTextDisplay();
+      apiStatus.textContent = '✅ Data terbaru dari API';
+      apiStatus.style.opacity = '0.7';
+      
+      setTimeout(() => {
+        apiStatus.style.opacity = '0.5';
+      }, 2000);
+    } else {
+      apiStatus.textContent = '⚠️ Data kosong, menggunakan default';
+    }
+  } catch (err) {
+    console.log('API error:', err);
+    apiStatus.textContent = '⚠️ Gagal mengambil data, menggunakan default';
+    apiStatus.style.opacity = '0.7';
+    
+    // Tetap pakai default jika API gagal
+    if (currentLeftText === 'Memuat...') {
+      currentLeftText = 'Facebook';
+      currentRightText = 'Mail';
+      updateTextDisplay();
+    }
+  }
+}
+
 // Gesture 2 jari swipe down untuk buka panel
 let touchStartY = null;
 let touchCount = 0;
@@ -391,7 +473,6 @@ document.addEventListener('touchmove', function(e) {
     const currentY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
     const deltaY = currentY - touchStartY;
     
-    // Swipe down lebih dari 60px
     if (deltaY > 60) {
       settingPanel.classList.add('open');
       touchStartY = null;
@@ -400,7 +481,7 @@ document.addEventListener('touchmove', function(e) {
   }
 });
 
-// Tutup panel dengan handle atau klik di luar (opsional)
+// Tutup panel dengan handle
 document.querySelector('.panel-handle').addEventListener('click', () => {
   settingPanel.classList.remove('open');
 });
@@ -416,13 +497,12 @@ window.addEventListener('load', function() {
     textOverlay.style.display = 'block';
     textOverlay2.style.display = 'block';
   }
+  
+  // Ambil data dari API pertama kali
   updateTextFromAPI();
   
-  // Load teks manual dari localStorage
-  const savedLeftText = localStorage.getItem('peek_left_text');
-  const savedRightText = localStorage.getItem('peek_right_text');
-  if (savedLeftText) textOverlay.textContent = savedLeftText;
-  if (savedRightText) textOverlay2.textContent = savedRightText;
+  // Set interval untuk update API setiap 2 detik
+  setInterval(updateTextFromAPI, 2000);
 });
 
 // Double click upload
@@ -446,17 +526,6 @@ fileInput.addEventListener('change', (e) => {
     };
     reader.readAsDataURL(file);
   }
-});
-
-// Edit teks manual
-document.getElementById('editTextLeft').addEventListener('input', (e) => {
-  textOverlay.textContent = e.target.value || 'Facebook';
-  localStorage.setItem('peek_left_text', textOverlay.textContent);
-});
-
-document.getElementById('editTextRight').addEventListener('input', (e) => {
-  textOverlay2.textContent = e.target.value || 'Mail';
-  localStorage.setItem('peek_right_text', textOverlay2.textContent);
 });
 
 // Font size slider
@@ -492,35 +561,12 @@ document.getElementById('resetPosBtn').addEventListener('click', () => {
   resetPositionAndSize();
 });
 
-// Capitalize
-function capitalize(str) {
-  if (!str) return "";
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-// API text (tetap berjalan tapi tidak override jika ada teks manual)
-let manualLeftSet = false;
-let manualRightSet = false;
-
-document.getElementById('editTextLeft').addEventListener('focus', () => { manualLeftSet = true; });
-document.getElementById('editTextRight').addEventListener('focus', () => { manualRightSet = true; });
-
-async function updateTextFromAPI() {
-  try {
-    const response = await fetch('https://11z.co/_w/6804/selection?_t=' + Date.now());
-    const data = await response.json();
-
-    if (data.value && !manualLeftSet) {
-      const words = data.value.trim().split(/\s+/);
-      if (!manualLeftSet) textOverlay.textContent = capitalize(words[0] || 'Facebook');
-      if (!manualRightSet) textOverlay2.textContent = capitalize(words[1] || 'Mail');
-    }
-  } catch (err) {
-    // keep existing text
+// Mencegah zoom dengan gesture
+document.addEventListener('touchmove', function(e) {
+  if (e.touches.length > 1) {
+    e.preventDefault();
   }
-}
-
-setInterval(updateTextFromAPI, 2000);
+}, { passive: false });
 </script>
 
 </body>
