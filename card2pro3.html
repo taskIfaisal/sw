@@ -50,7 +50,7 @@
             z-index: 1;
         }
         
-        /* Container untuk efek 3D - STYLE BARU */
+        /* Container untuk efek 3D - Versi Baru dengan dukungan sensor */
         .flip3d-container {
             position: absolute;
             z-index: 1000;
@@ -60,6 +60,7 @@
             visibility: hidden;
             opacity: 0;
             transition: opacity 0.3s ease;
+            transform-origin: center center;
         }
         
         .flip3d-card {
@@ -68,7 +69,7 @@
             position: relative;
             transform-style: preserve-3d;
             transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
-            border-radius: 16px;
+            border-radius: 12px;
         }
         
         .flip3d-card.flip {
@@ -83,16 +84,16 @@
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            border-radius: 16px;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            background-color: white;
         }
         
         .flip3d-front {
-            background-color: white;
+            transform: rotateY(0deg);
         }
         
         .flip3d-back {
-            background-color: white;
             transform: rotateY(180deg);
         }
         
@@ -885,7 +886,7 @@
             </div>
         </div>
 
-        <!-- EFFECT FLIP 3D - VERSI BARU -->
+        <!-- EFFECT FLIP 3D -->
         <div class="setting-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <h3 style="margin: 0;">Effect Flip 3D</h3>
@@ -895,7 +896,7 @@
                 </label>
             </div>
             <div class="effect-description">
-                ON: Double tap → delay 1 detik → kartu muncul di tengah (gambar depan: favorite aktif ke-1, gambar belakang: favorite aktif ke-2). Klik kartu untuk flip 3D!
+                ON: Double tap → delay 1 detik → kartu muncul di tengah (gambar depan: favorite aktif ke-1, gambar belakang: favorite aktif ke-2). Klik kartu untuk flip 3D! Bisa bergerak dengan sensor gyroscope.
             </div>
         </div>
 
@@ -1038,12 +1039,16 @@
         let shadowFadeOutTimeout = null;
         let shadowWaitTimeout = null;
         
-        // ===== VARIABEL UNTUK EFFECT FLIP 3D VERSI BARU =====
+        // ===== VARIABEL UNTUK EFFECT FLIP 3D DENGAN SENSOR =====
         let flip3DContainer = null;
         let flip3DCard = null;
         let isFlip3DActive = false;
         let flip3DFrontImage = '';
         let flip3DBackImage = '';
+        let flip3DPosX = 0;
+        let flip3DPosY = 0;
+        let flip3DSmoothBeta = 0;
+        let flip3DSmoothGamma = 0;
         
         const STORAGE_KEY = 'magic_card_data';
         
@@ -1062,18 +1067,6 @@
             mainCardPreview.style.top = '30px';
             mainCardPreview.style.left = '50%';
             mainCardPreview.style.transform = 'translateX(-50%)';
-            
-            // Update ukuran 3D card jika ada
-            if (flip3DContainer) {
-                flip3DContainer.style.width = currentCardSize + 'px';
-                flip3DContainer.style.height = 'auto';
-                const img = new Image();
-                img.src = flip3DFrontImage;
-                img.onload = () => {
-                    flip3DContainer.style.aspectRatio = img.width / img.height;
-                    flip3DCard.style.aspectRatio = img.width / img.height;
-                };
-            }
         }
         
         function updateMainCardPreview() {
@@ -1090,6 +1083,13 @@
             
             currentCardSize = parseInt(newSize);
             updatePreviewCardSize();
+            
+            // Update ukuran flip3D jika aktif
+            if (flip3DContainer && isFlip3DActive) {
+                flip3DContainer.style.width = currentCardSize + 'px';
+                // Update posisi agar tetap di tengah
+                centerFlip3DCard();
+            }
             
             if (originalCard.style.display !== 'none') {
                 const oldWidth = originalCard.offsetWidth;
@@ -1118,7 +1118,7 @@
         
         initSensor();
         
-        // ========== FUNGSI UNTUK FLIP 3D VERSI BARU ==========
+        // ========== FUNGSI UNTUK FLIP 3D VERSI BARU DENGAN SENSOR ==========
         function initFlip3D() {
             if (flip3DContainer) return;
             
@@ -1156,6 +1156,35 @@
                     flip3DCard.classList.toggle('flip');
                 }
             });
+        }
+        
+        function centerFlip3DCard() {
+            if (!flip3DContainer) return;
+            
+            // Dapatkan dimensi sebenarnya setelah gambar dimuat
+            const containerWidth = flip3DContainer.offsetWidth;
+            const containerHeight = flip3DContainer.offsetHeight;
+            
+            if (containerWidth > 0 && containerHeight > 0) {
+                flip3DPosX = (window.innerWidth - containerWidth) / 2;
+                flip3DPosY = (window.innerHeight - containerHeight) / 2;
+                flip3DContainer.style.left = flip3DPosX + 'px';
+                flip3DContainer.style.top = flip3DPosY + 'px';
+                flip3DContainer.style.transform = '';
+            } else {
+                // Fallback: gunakan perkiraan rasio 3:4
+                const estimatedHeight = currentCardSize * 1.4;
+                flip3DPosX = (window.innerWidth - currentCardSize) / 2;
+                flip3DPosY = (window.innerHeight - estimatedHeight) / 2;
+                flip3DContainer.style.left = flip3DPosX + 'px';
+                flip3DContainer.style.top = flip3DPosY + 'px';
+            }
+        }
+        
+        function updateFlip3DPosition() {
+            if (!flip3DContainer || !isFlip3DActive) return;
+            flip3DContainer.style.left = flip3DPosX + 'px';
+            flip3DContainer.style.top = flip3DPosY + 'px';
         }
         
         function getActiveImagesForFlip3D() {
@@ -1200,37 +1229,91 @@
             // Reset flip state
             flip3DCard.classList.remove('flip');
             
-            // Update ukuran
-            flip3DContainer.style.width = currentCardSize + 'px';
+            // Update ukuran berdasarkan gambar untuk proporsi yang tepat
             const img = new Image();
-            img.src = frontImage;
             img.onload = () => {
-                flip3DContainer.style.aspectRatio = img.width / img.height;
-                flip3DCard.style.aspectRatio = img.width / img.height;
+                const aspectRatio = img.width / img.height;
+                const newWidth = currentCardSize;
+                const newHeight = newWidth / aspectRatio;
+                flip3DContainer.style.width = newWidth + 'px';
+                flip3DContainer.style.height = newHeight + 'px';
+                flip3DCard.style.width = '100%';
+                flip3DCard.style.height = '100%';
                 
-                // Posisikan di tengah
-                const containerWidth = flip3DContainer.offsetWidth;
-                const containerHeight = flip3DContainer.offsetHeight;
-                const centerX = (window.innerWidth - containerWidth) / 2;
-                const centerY = (window.innerHeight - containerHeight) / 2;
+                // Posisikan di tengah setelah ukuran diketahui
+                centerFlip3DCard();
                 
-                flip3DContainer.style.left = centerX + 'px';
-                flip3DContainer.style.top = centerY + 'px';
+                // Animasi muncul
+                flip3DContainer.style.display = 'block';
+                flip3DContainer.style.visibility = 'visible';
+                flip3DContainer.style.opacity = '0';
+                flip3DContainer.style.transform = 'scale(0.9)';
+                
+                setTimeout(() => {
+                    flip3DContainer.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    flip3DContainer.style.opacity = '1';
+                    flip3DContainer.style.transform = 'scale(1)';
+                    
+                    setTimeout(() => {
+                        flip3DContainer.style.transition = '';
+                    }, 300);
+                }, 10);
+            };
+            img.src = frontImage;
+            
+            // Fallback jika gambar gagal load
+            img.onerror = () => {
+                const newHeight = currentCardSize * 1.4;
+                flip3DContainer.style.width = currentCardSize + 'px';
+                flip3DContainer.style.height = newHeight + 'px';
+                centerFlip3DCard();
                 flip3DContainer.style.display = 'block';
                 flip3DContainer.style.visibility = 'visible';
                 flip3DContainer.style.opacity = '1';
             };
             
             isFlip3DActive = true;
+            
+            // Reset posisi sensor untuk flip3D
+            flip3DSmoothBeta = 0;
+            flip3DSmoothGamma = 0;
         }
         
         function hideFlip3DCard() {
             if (flip3DContainer) {
-                flip3DContainer.style.display = 'none';
-                flip3DContainer.style.visibility = 'hidden';
+                flip3DContainer.style.transition = 'opacity 0.3s ease';
                 flip3DContainer.style.opacity = '0';
+                setTimeout(() => {
+                    flip3DContainer.style.display = 'none';
+                    flip3DContainer.style.visibility = 'hidden';
+                    flip3DContainer.style.transition = '';
+                }, 300);
             }
             isFlip3DActive = false;
+        }
+        
+        // Fungsi untuk menggerakkan flip3D card dengan sensor
+        function updateFlip3DWithSensor() {
+            if (!isFlip3DActive || !flip3DContainer || flip3DContainer.style.display !== 'block') return;
+            if (!sensorGerakCheckbox.checked) return;
+            if (isDragging) return;
+            
+            // Gunakan smoothing yang sama seperti kartu biasa
+            flip3DPosX += flip3DSmoothGamma * sensitivity;
+            flip3DPosY += flip3DSmoothBeta * sensitivity;
+            
+            // Batasi agar tidak keluar layar
+            const containerWidth = flip3DContainer.offsetWidth;
+            const containerHeight = flip3DContainer.offsetHeight;
+            const minX = 0;
+            const maxX = window.innerWidth - containerWidth;
+            const minY = 0;
+            const maxY = window.innerHeight - containerHeight;
+            
+            flip3DPosX = Math.max(minX, Math.min(maxX, flip3DPosX));
+            flip3DPosY = Math.max(minY, Math.min(maxY, flip3DPosY));
+            
+            updateFlip3DPosition();
         }
         
         function triggerFlip3DEffect() {
@@ -1252,7 +1335,7 @@
             // Sembunyikan kartu 3D jika ada
             hideFlip3DCard();
             
-            // Delay 1 detik lalu muncul kartu 3D
+            // Delay 1 detik lalu muncul kartu 3D (sama seperti effect standar)
             sequenceTimer = setTimeout(() => {
                 showFlip3DCard();
                 sequenceTimer = null;
@@ -1272,7 +1355,6 @@
         effectStandarCheckbox.addEventListener('change', (e) => {
             if (effectStandarCheckbox.checked) {
                 disableAllOtherEffects('standar');
-                // Hentikan flip 3D jika sedang aktif
                 hideFlip3DCard();
             }
             autoSave();
@@ -2135,7 +2217,6 @@
         // Keyboard event listener untuk testing (1 = tap, 2 = double tap)
         document.addEventListener('keydown', function(event) {
             if (event.key === '1') {
-                // Single tap - untuk effect tertentu bisa digunakan
                 event.preventDefault();
             } else if (event.key === '2') {
                 event.preventDefault();
@@ -2439,16 +2520,25 @@
 
             smoothBeta += (limitedBeta - smoothBeta) * smoothing;
             smoothGamma += (limitedGamma - smoothGamma) * smoothing;
+            
+            // Update untuk flip3D juga
+            flip3DSmoothBeta += (limitedBeta - flip3DSmoothBeta) * smoothing;
+            flip3DSmoothGamma += (limitedGamma - flip3DSmoothGamma) * smoothing;
         }
         
         function startSensorAnimation() {
             function animate() {
+                // Update posisi original card
                 if (isSensorEnabled && !isDragging && !isAnimatingMotion && sensorGerakCheckbox.checked && originalCard.style.display !== 'none' && !effectFlip3dCheckbox.checked) {
                     posX += smoothGamma * sensitivity;
                     posY += smoothBeta * sensitivity;
                     applyBounds();
                     updateCardTransform();
                 }
+                
+                // Update posisi flip3D card
+                updateFlip3DWithSensor();
+                
                 requestAnimationFrame(animate);
             }
             animate();
@@ -2492,12 +2582,7 @@
             }
             // Update posisi flip3D jika aktif
             if (isFlip3DActive && flip3DContainer && flip3DContainer.style.display === 'block') {
-                const containerWidth = flip3DContainer.offsetWidth;
-                const containerHeight = flip3DContainer.offsetHeight;
-                const centerX = (window.innerWidth - containerWidth) / 2;
-                const centerY = (window.innerHeight - containerHeight) / 2;
-                flip3DContainer.style.left = centerX + 'px';
-                flip3DContainer.style.top = centerY + 'px';
+                centerFlip3DCard();
             }
         });
         
