@@ -50,51 +50,48 @@
             z-index: 1;
         }
         
-        /* Container untuk efek 3D seperti contoh */
-        .card-3d-container {
+        /* Container untuk efek 3D - STYLE BARU */
+        .flip3d-container {
             position: absolute;
-            z-index: 2;
-            perspective: 1000px;
+            z-index: 1000;
+            perspective: 1200px;
             cursor: pointer;
+            display: none;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
         
-        .card-3d {
+        .flip3d-card {
             width: 100%;
             height: 100%;
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
-            cursor: pointer;
-            border-radius: 12px;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            border-radius: 16px;
         }
         
-        .card-3d.flip {
+        .flip3d-card.flip {
             transform: rotateY(180deg);
         }
         
-        .card-face {
+        .flip3d-face {
             position: absolute;
             width: 100%;
             height: 100%;
             backface-visibility: hidden;
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .card-front {
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
+            border-radius: 16px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+        }
+        
+        .flip3d-front {
             background-color: white;
         }
         
-        .card-back {
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+        .flip3d-back {
             background-color: white;
             transform: rotateY(180deg);
         }
@@ -888,7 +885,7 @@
             </div>
         </div>
 
-        <!-- EFFECT FLIP 3D -->
+        <!-- EFFECT FLIP 3D - VERSI BARU -->
         <div class="setting-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <h3 style="margin: 0;">Effect Flip 3D</h3>
@@ -898,7 +895,7 @@
                 </label>
             </div>
             <div class="effect-description">
-                ON: Double tap → kartu muncul di tengah → sentuh kartu → FLIP 3D (0.8dt) ke gambar 2 → sentuh lagi → shadow 3dt ke gambar 3 → sentuh lagi → shadow 3dt ke gambar 4 → tunggu 1dt → slide keluar ke atas
+                ON: Double tap → delay 1 detik → kartu muncul di tengah (gambar depan: favorite aktif ke-1, gambar belakang: favorite aktif ke-2). Klik kartu untuk flip 3D!
             </div>
         </div>
 
@@ -1041,20 +1038,12 @@
         let shadowFadeOutTimeout = null;
         let shadowWaitTimeout = null;
         
-        // ===== VARIABEL UNTUK EFFECT FLIP 3D =====
-        let isFlip3DActive = false;
-        let isFlipping = false;
-        let isShadowChanging = false;
-        let flip3DExitTimer = null;
-        let flip3DCurrentImageIndex = 0;
-        let flip3DActiveImagesList = [];
-        
-        // Elemen 3D untuk flip
+        // ===== VARIABEL UNTUK EFFECT FLIP 3D VERSI BARU =====
         let flip3DContainer = null;
         let flip3DCard = null;
-        let flip3DFront = null;
-        let flip3DBack = null;
-        let isFlip3DInitialized = false;
+        let isFlip3DActive = false;
+        let flip3DFrontImage = '';
+        let flip3DBackImage = '';
         
         const STORAGE_KEY = 'magic_card_data';
         
@@ -1078,7 +1067,12 @@
             if (flip3DContainer) {
                 flip3DContainer.style.width = currentCardSize + 'px';
                 flip3DContainer.style.height = 'auto';
-                flip3DContainer.style.aspectRatio = originalCard.offsetWidth / originalCard.offsetHeight || 'auto';
+                const img = new Image();
+                img.src = flip3DFrontImage;
+                img.onload = () => {
+                    flip3DContainer.style.aspectRatio = img.width / img.height;
+                    flip3DCard.style.aspectRatio = img.width / img.height;
+                };
             }
         }
         
@@ -1124,462 +1118,203 @@
         
         initSensor();
         
-        // ========== FUNGSI UNTUK INIT 3D CARD ==========
-        function initFlip3DCard() {
-            if (isFlip3DInitialized) return;
-            
-            // Sembunyikan kartu asli
-            originalCard.style.display = 'none';
-            originalCard.style.visibility = 'hidden';
+        // ========== FUNGSI UNTUK FLIP 3D VERSI BARU ==========
+        function initFlip3D() {
+            if (flip3DContainer) return;
             
             // Buat container 3D
             flip3DContainer = document.createElement('div');
-            flip3DContainer.className = 'card-3d-container';
+            flip3DContainer.className = 'flip3d-container';
             flip3DContainer.style.width = currentCardSize + 'px';
-            flip3DContainer.style.height = 'auto';
-            flip3DContainer.style.aspectRatio = 'auto';
             flip3DContainer.style.position = 'absolute';
-            flip3DContainer.style.left = '0';
-            flip3DContainer.style.top = '0';
-            flip3DContainer.style.zIndex = '2';
+            flip3DContainer.style.zIndex = '1000';
+            flip3DContainer.style.cursor = 'pointer';
             
             // Buat kartu 3D
             flip3DCard = document.createElement('div');
-            flip3DCard.className = 'card-3d';
+            flip3DCard.className = 'flip3d-card';
             flip3DCard.style.width = '100%';
             flip3DCard.style.height = '100%';
-            flip3DCard.style.aspectRatio = originalCard.offsetWidth / originalCard.offsetHeight || 'auto';
             
-            // Buat front face
-            flip3DFront = document.createElement('div');
-            flip3DFront.className = 'card-face card-front';
-            flip3DFront.style.backgroundImage = `url('${originalCard.src}')`;
-            flip3DFront.style.backgroundSize = 'contain';
-            flip3DFront.style.backgroundRepeat = 'no-repeat';
-            flip3DFront.style.backgroundPosition = 'center';
-            flip3DFront.style.backgroundColor = 'white';
+            // Front face
+            const front = document.createElement('div');
+            front.className = 'flip3d-face flip3d-front';
             
-            // Buat back face
-            flip3DBack = document.createElement('div');
-            flip3DBack.className = 'card-face card-back';
-            flip3DBack.style.backgroundImage = `url('${originalCard.src}')`;
-            flip3DBack.style.backgroundSize = 'contain';
-            flip3DBack.style.backgroundRepeat = 'no-repeat';
-            flip3DBack.style.backgroundPosition = 'center';
-            flip3DBack.style.backgroundColor = 'white';
+            // Back face
+            const back = document.createElement('div');
+            back.className = 'flip3d-face flip3d-back';
             
-            flip3DCard.appendChild(flip3DFront);
-            flip3DCard.appendChild(flip3DBack);
+            flip3DCard.appendChild(front);
+            flip3DCard.appendChild(back);
             flip3DContainer.appendChild(flip3DCard);
             document.body.appendChild(flip3DContainer);
             
-            // Event listener untuk tap
+            // Event listener untuk flip
             flip3DContainer.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (isFlip3DActive && !isFlipping && !isShadowChanging) {
-                    handleFlip3DTap();
+                if (isFlip3DActive && flip3DCard) {
+                    flip3DCard.classList.toggle('flip');
                 }
             });
-            
-            flip3DContainer.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1 && isFlip3DActive) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!isFlipping && !isShadowChanging) {
-                        handleFlip3DTap();
-                    }
-                }
-            });
-            
-            isFlip3DInitialized = true;
         }
         
-        function showFlip3DCardAtCenter() {
-            if (!flip3DContainer) initFlip3DCard();
-            
-            const cardWidth = flip3DContainer.offsetWidth;
-            const cardHeight = flip3DContainer.offsetHeight;
-            const centerX = (window.innerWidth - cardWidth) / 2;
-            const centerY = (window.innerHeight - cardHeight) / 2;
-            
-            flip3DContainer.style.left = centerX + 'px';
-            flip3DContainer.style.top = centerY + 'px';
-            flip3DContainer.style.display = 'block';
-            flip3DContainer.style.visibility = 'visible';
-            flip3DContainer.style.opacity = '1';
-            
-            // Reset flip
-            flip3DCard.classList.remove('flip');
-            
-            // Set gambar pertama
-            if (flip3DActiveImagesList.length > 0) {
-                const imgUrl = flip3DActiveImagesList[0].src;
-                flip3DFront.style.backgroundImage = `url('${imgUrl}')`;
-                flip3DBack.style.backgroundImage = `url('${imgUrl}')`;
-            }
+        function getActiveImagesForFlip3D() {
+            const activeList = [];
+            if (activeImages[1]) activeList.push({ index: 1, src: getPreviewSrc(1) });
+            if (activeImages[2]) activeList.push({ index: 2, src: getPreviewSrc(2) });
+            if (activeImages[3]) activeList.push({ index: 3, src: getPreviewSrc(3) });
+            if (activeImages[4]) activeList.push({ index: 4, src: getPreviewSrc(4) });
+            return activeList;
         }
         
-        function performFlip3D() {
-            return new Promise((resolve) => {
-                if (isFlipping) {
-                    resolve(false);
-                    return;
-                }
-                
-                isFlipping = true;
-                
-                // Matikan sensor gerak sementara
-                const wasSensorActive = isSensorActive;
-                isSensorActive = false;
-                
-                // Ganti gambar back face terlebih dahulu
-                const nextIndex = flip3DCurrentImageIndex + 1;
-                if (nextIndex < flip3DActiveImagesList.length) {
-                    flip3DBack.style.backgroundImage = `url('${flip3DActiveImagesList[nextIndex].src}')`;
-                }
-                
-                // Lakukan flip
-                flip3DCard.classList.add('flip');
-                
-                // Setelah flip selesai, tukar front dan back
-                setTimeout(() => {
-                    if (nextIndex < flip3DActiveImagesList.length) {
-                        flip3DCurrentImageIndex = nextIndex;
-                        sequenceStage = flip3DCurrentImageIndex + 1;
-                        
-                        // Tukar gambar front dengan back
-                        const newFrontImage = flip3DBack.style.backgroundImage;
-                        flip3DFront.style.backgroundImage = newFrontImage;
-                        flip3DBack.style.backgroundImage = newFrontImage;
-                    }
-                    
-                    // Kembalikan sensor gerak
-                    isSensorActive = wasSensorActive;
-                    
-                    isFlipping = false;
-                    resolve(true);
-                }, 800);
-            });
+        function getPreviewSrc(index) {
+            const preview = document.getElementById(`preview-${index}`);
+            const img = preview.querySelector('img');
+            return img ? img.src : '';
         }
         
-        function performShadowTransition() {
-            return new Promise((resolve) => {
-                if (isShadowChanging) {
-                    resolve(false);
-                    return;
-                }
-                
-                const nextIndex = flip3DCurrentImageIndex + 1;
-                if (nextIndex >= flip3DActiveImagesList.length) {
-                    resolve(false);
-                    return;
-                }
-                
-                isShadowChanging = true;
-                
-                // Matikan sensor gerak sementara
-                const wasSensorActive = isSensorActive;
-                isSensorActive = false;
-                
-                const nextImageSrc = flip3DActiveImagesList[nextIndex].src;
-                
-                // Tambah class animasi shadow
-                flip3DContainer.classList.add('card-shadow-effect');
-                
-                // Ganti gambar di tengah animasi
-                setTimeout(() => {
-                    flip3DFront.style.backgroundImage = `url('${nextImageSrc}')`;
-                    flip3DBack.style.backgroundImage = `url('${nextImageSrc}')`;
-                    flip3DCurrentImageIndex = nextIndex;
-                    sequenceStage = flip3DCurrentImageIndex + 1;
-                }, 1500);
-                
-                // Selesai animasi
-                setTimeout(() => {
-                    flip3DContainer.classList.remove('card-shadow-effect');
-                    
-                    // Kembalikan sensor gerak
-                    isSensorActive = wasSensorActive;
-                    
-                    isShadowChanging = false;
-                    resolve(true);
-                }, 3000);
-            });
-        }
-        
-        function scheduleFlip3DExit() {
-            if (flip3DExitTimer) clearTimeout(flip3DExitTimer);
-            
-            flip3DExitTimer = setTimeout(() => {
-                if (isFlip3DActive && flip3DContainer && flip3DContainer.style.display !== 'none') {
-                    exitCardFlip3D();
-                }
-                flip3DExitTimer = null;
-            }, 1000);
-        }
-        
-        function exitCardFlip3D() {
-            if (!flip3DContainer || flip3DContainer.style.display === 'none' || !isFlip3DActive) return;
-            
-            // Matikan sensor gerak sementara
-            const wasSensorActive = isSensorActive;
-            isSensorActive = false;
-            
-            flip3DContainer.classList.add('card-moving');
-            flip3DContainer.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
-            
-            const targetY = -flip3DContainer.offsetHeight - 100;
-            flip3DContainer.style.transform = `translateY(${targetY}px)`;
-            
-            setTimeout(() => {
-                flip3DContainer.style.display = 'none';
-                flip3DContainer.style.visibility = 'hidden';
-                flip3DContainer.classList.remove('card-moving');
-                flip3DContainer.style.transform = '';
-                isFlip3DActive = false;
-                isSequenceActive = false;
-                sequenceStage = 0;
-                isFlipping = false;
-                isShadowChanging = false;
-                
-                // Kembalikan sensor gerak
-                isSensorActive = wasSensorActive;
-                
-                if (flip3DExitTimer) clearTimeout(flip3DExitTimer);
-            }, 500);
-        }
-        
-        function handleFlip3DTap() {
-            if (isFlipping || isShadowChanging) return;
-            if (!isFlip3DActive || !flip3DContainer || flip3DContainer.style.display === 'none') return;
-            
-            const totalImages = flip3DActiveImagesList.length;
-            
-            if (totalImages === 1) {
-                return;
-            }
-            
-            // Gambar 1 -> FLIP 3D ke gambar 2
-            if (flip3DCurrentImageIndex === 0 && totalImages >= 2) {
-                performFlip3D().then(() => {
-                    if (flip3DCurrentImageIndex + 1 >= totalImages) {
-                        scheduleFlip3DExit();
-                    }
-                });
-                return;
-            }
-            
-            // Gambar 2 atau lebih -> shadow transition
-            if (flip3DCurrentImageIndex >= 1 && flip3DCurrentImageIndex + 1 < totalImages) {
-                performShadowTransition().then(() => {
-                    if (flip3DCurrentImageIndex + 1 >= totalImages) {
-                        scheduleFlip3DExit();
-                    }
-                });
-            }
-        }
-        
-        function showCardFlip3D() {
-            const activeList = getActiveImagesList();
+        function showFlip3DCard() {
+            const activeList = getActiveImagesForFlip3D();
             
             if (activeList.length === 0) {
                 return;
             }
             
-            // Reset state
+            // Gambar depan: favorite aktif ke-1
+            // Gambar belakang: favorite aktif ke-2 (jika ada)
+            const frontImage = activeList[0].src;
+            const backImage = activeList.length >= 2 ? activeList[1].src : activeList[0].src;
+            
+            flip3DFrontImage = frontImage;
+            flip3DBackImage = backImage;
+            
+            initFlip3D();
+            
+            // Set gambar
+            const frontDiv = flip3DCard.querySelector('.flip3d-front');
+            const backDiv = flip3DCard.querySelector('.flip3d-back');
+            
+            if (frontDiv) frontDiv.style.backgroundImage = `url('${frontImage}')`;
+            if (backDiv) backDiv.style.backgroundImage = `url('${backImage}')`;
+            
+            // Reset flip state
+            flip3DCard.classList.remove('flip');
+            
+            // Update ukuran
+            flip3DContainer.style.width = currentCardSize + 'px';
+            const img = new Image();
+            img.src = frontImage;
+            img.onload = () => {
+                flip3DContainer.style.aspectRatio = img.width / img.height;
+                flip3DCard.style.aspectRatio = img.width / img.height;
+                
+                // Posisikan di tengah
+                const containerWidth = flip3DContainer.offsetWidth;
+                const containerHeight = flip3DContainer.offsetHeight;
+                const centerX = (window.innerWidth - containerWidth) / 2;
+                const centerY = (window.innerHeight - containerHeight) / 2;
+                
+                flip3DContainer.style.left = centerX + 'px';
+                flip3DContainer.style.top = centerY + 'px';
+                flip3DContainer.style.display = 'block';
+                flip3DContainer.style.visibility = 'visible';
+                flip3DContainer.style.opacity = '1';
+            };
+            
             isFlip3DActive = true;
-            isFlipping = false;
-            isShadowChanging = false;
-            flip3DCurrentImageIndex = 0;
-            flip3DActiveImagesList = [...activeList];
-            
-            // Inisialisasi kartu 3D
-            initFlip3DCard();
-            
-            // Set gambar pertama
-            const imgUrl = flip3DActiveImagesList[0].src;
-            flip3DFront.style.backgroundImage = `url('${imgUrl}')`;
-            flip3DBack.style.backgroundImage = `url('${imgUrl}')`;
-            
-            // Tampilkan di tengah
-            showFlip3DCardAtCenter();
-            
-            // Set sequence
-            sequenceStage = 1;
-            isSequenceActive = true;
-            
-            // Jika hanya 1 gambar, langsung jadwalkan exit
-            if (flip3DActiveImagesList.length === 1) {
-                scheduleFlip3DExit();
+        }
+        
+        function hideFlip3DCard() {
+            if (flip3DContainer) {
+                flip3DContainer.style.display = 'none';
+                flip3DContainer.style.visibility = 'hidden';
+                flip3DContainer.style.opacity = '0';
             }
+            isFlip3DActive = false;
         }
         
         function triggerFlip3DEffect() {
-            // Bersihkan semua state sebelumnya
+            // Nonaktifkan semua effect lain terlebih dahulu (supaya tidak bentrok)
+            effectStandarCheckbox.checked = false;
+            shadowEffectCheckbox.checked = false;
+            effectSliderCheckbox.checked = false;
+            effectSkatingCheckbox.checked = false;
+            effectFlip3dCheckbox.checked = true;
+            
+            // Bersihkan semua timeout
             clearAllTimeouts();
             hideIndicator();
-            
-            // Nonaktifkan effect lain
-            if (effectStandarCheckbox.checked) effectStandarCheckbox.checked = false;
-            if (shadowEffectCheckbox.checked) shadowEffectCheckbox.checked = false;
-            if (effectSliderCheckbox.checked) effectSliderCheckbox.checked = false;
-            if (effectSkatingCheckbox.checked) effectSkatingCheckbox.checked = false;
-            
-            // Aktifkan effect ini
-            effectFlip3dCheckbox.checked = true;
             
             // Sembunyikan kartu asli
             originalCard.style.display = 'none';
             originalCard.style.visibility = 'hidden';
             
-            // Reset state
-            isFlip3DActive = false;
-            isFlipping = false;
-            isShadowChanging = false;
+            // Sembunyikan kartu 3D jika ada
+            hideFlip3DCard();
             
-            // Delay 1 detik lalu muncul kartu (sama seperti effect standar)
+            // Delay 1 detik lalu muncul kartu 3D
             sequenceTimer = setTimeout(() => {
-                showCardFlip3D();
+                showFlip3DCard();
                 sequenceTimer = null;
             }, 1000);
         }
         
-        // ========== KEYBOARD INPUT HANDLER ==========
-        function handleTapOne() {
-            if (effectFlip3dCheckbox.checked && isFlip3DActive && flip3DContainer && flip3DContainer.style.display !== 'none') {
-                handleFlip3DTap();
-            } else if (originalCard.style.display !== 'none' && originalCard.style.visibility === 'visible') {
-                triggerCardTap();
-            }
+        // ========== FUNGSI UNTUK MENJAGA AGAR TIDAK BENTROK ==========
+        function disableAllOtherEffects(exceptEffect) {
+            if (exceptEffect !== 'standar') effectStandarCheckbox.checked = false;
+            if (exceptEffect !== 'shadow') shadowEffectCheckbox.checked = false;
+            if (exceptEffect !== 'slider') effectSliderCheckbox.checked = false;
+            if (exceptEffect !== 'skating') effectSkatingCheckbox.checked = false;
+            if (exceptEffect !== 'flip3d') effectFlip3dCheckbox.checked = false;
         }
         
-        function handleTapTwo() {
-            triggerDoubleTapEffect();
-        }
+        // Event listener untuk checkbox effect - saling menonaktifkan
+        effectStandarCheckbox.addEventListener('change', (e) => {
+            if (effectStandarCheckbox.checked) {
+                disableAllOtherEffects('standar');
+                // Hentikan flip 3D jika sedang aktif
+                hideFlip3DCard();
+            }
+            autoSave();
+        });
         
-        function triggerCardTap() {
-            if (!isSequenceActive || originalCard.style.display === 'none' || originalCard.style.visibility !== 'visible') {
-                return;
-            }
-            
-            if (touchToChangeTimeout) {
-                clearTimeout(touchToChangeTimeout);
-            }
-            
-            const activeCount = activeImagesList.length;
-            
+        shadowEffectCheckbox.addEventListener('change', (e) => {
             if (shadowEffectCheckbox.checked) {
-                if (sequenceStage < activeCount) {
-                    touchToChangeTimeout = setTimeout(() => {
-                        if (isSequenceActive) {
-                            goToNextImageShadow();
-                        }
-                        touchToChangeTimeout = null;
-                    }, 3000);
-                } 
-                else if (sequenceStage === activeCount && activeCount > 0) {
-                    if (touchToChangeTimeout) clearTimeout(touchToChangeTimeout);
-                    fadeOutShadowCard();
-                }
-            } 
-            else if (effectStandarCheckbox.checked || effectSliderCheckbox.checked) {
-                if (sequenceStage < activeCount) {
-                    touchToChangeTimeout = setTimeout(() => {
-                        if (isSequenceActive) {
-                            if (!goToNextImage()) {
-                                isSequenceActive = false;
-                                sequenceStage = 0;
-                            }
-                        }
-                        touchToChangeTimeout = null;
-                    }, 3000);
-                } else {
-                    isSequenceActive = false;
-                    sequenceStage = 0;
-                }
+                disableAllOtherEffects('shadow');
+                hideFlip3DCard();
             }
-            else if (effectSkatingCheckbox.checked) {
-                if (sequenceStage < activeCount) {
-                    touchToChangeTimeout = setTimeout(() => {
-                        if (isSequenceActive) {
-                            goToNextImage();
-                        }
-                        touchToChangeTimeout = null;
-                    }, 3000);
-                } 
-                else if (sequenceStage === activeCount && activeCount > 0) {
-                    scheduleExitSkating();
-                }
-            }
-        }
+            autoSave();
+        });
         
-        function triggerDoubleTapEffect() {
-            clearAllTimeouts();
-            hideIndicator();
-            
+        effectSliderCheckbox.addEventListener('change', (e) => {
+            if (effectSliderCheckbox.checked) {
+                disableAllOtherEffects('slider');
+                hideFlip3DCard();
+            }
+            autoSave();
+        });
+
+        effectSkatingCheckbox.addEventListener('change', (e) => {
+            if (effectSkatingCheckbox.checked) {
+                disableAllOtherEffects('skating');
+                hideFlip3DCard();
+            }
+            autoSave();
+        });
+        
+        effectFlip3dCheckbox.addEventListener('change', (e) => {
             if (effectFlip3dCheckbox.checked) {
-                triggerFlip3DEffect();
-                return;
+                disableAllOtherEffects('flip3d');
+            } else {
+                // Jika dimatikan, sembunyikan kartu 3D
+                hideFlip3DCard();
             }
-            
-            if (shadowEffectCheckbox.checked) {
-                isSequenceActive = true;
-                sequenceStage = 1;
-                
-                sequenceTimer = setTimeout(() => {
-                    if (isSequenceActive) {
-                        showCardShadow();
-                    }
-                    sequenceTimer = null;
-                }, 5000);
-                
-            } else if (effectStandarCheckbox.checked) {
-                isSequenceActive = false;
-                
-                sequenceTimer = setTimeout(() => {
-                    showCardStandar();
-                    sequenceTimer = null;
-                }, 1000);
-                
-            } else if (effectSliderCheckbox.checked) {
-                const totalDelay = 4000;
-                const indicatorDelay = 3000;
-                
-                indicatorTimeout = setTimeout(() => {
-                    showIndicator();
-                }, indicatorDelay);
-                
-                cardAppearTimeout = setTimeout(() => {
-                    hideIndicator();
-                    showCardSlider();
-                }, totalDelay);
-                
-            } else if (effectSkatingCheckbox.checked) {
-                const totalDelay = 4000;
-                const indicatorDelay = 3000;
-                
-                indicatorTimeout = setTimeout(() => {
-                    showIndicator();
-                }, indicatorDelay);
-                
-                cardAppearTimeout = setTimeout(() => {
-                    hideIndicator();
-                    showCardSkating();
-                }, totalDelay);
-            }
-        }
+            autoSave();
+        });
         
-        // Keyboard event listener
-        document.addEventListener('keydown', function(event) {
-            if (event.key === '1' || event.key === '2') {
-                event.preventDefault();
-                
-                if (event.key === '1') {
-                    handleTapOne();
-                } else if (event.key === '2') {
-                    handleTapTwo();
-                }
-            }
+        sensorGerakCheckbox.addEventListener('change', (e) => {
+            isSensorActive = sensorGerakCheckbox.checked;
+            autoSave();
         });
         
         function getActiveImagesList() {
@@ -1589,12 +1324,6 @@
             if (activeImages[3]) list.push({ index: 3, element: preview3, src: getPreviewSrc(3) });
             if (activeImages[4]) list.push({ index: 4, element: preview4, src: getPreviewSrc(4) });
             return list;
-        }
-        
-        function getPreviewSrc(index) {
-            const preview = document.getElementById(`preview-${index}`);
-            const img = preview.querySelector('img');
-            return img ? img.src : '';
         }
         
         function updateActivePreviewStyles() {
@@ -1843,12 +1572,6 @@
             
             mainCardPreview.src = imageSrc;
             updateMainCardPreview();
-            
-            // Update juga kartu 3D jika sudah ada
-            if (flip3DFront) {
-                flip3DFront.style.backgroundImage = `url('${imageSrc}')`;
-                flip3DBack.style.backgroundImage = `url('${imageSrc}')`;
-            }
             
             scale = 1;
             updateCardTransform();
@@ -2329,61 +2052,6 @@
             saveToStorage();
         }
         
-        effectStandarCheckbox.addEventListener('change', (e) => {
-            if (effectStandarCheckbox.checked) {
-                shadowEffectCheckbox.checked = false;
-                effectSliderCheckbox.checked = false;
-                effectSkatingCheckbox.checked = false;
-                effectFlip3dCheckbox.checked = false;
-            }
-            autoSave();
-        });
-        
-        shadowEffectCheckbox.addEventListener('change', (e) => {
-            if (shadowEffectCheckbox.checked) {
-                effectStandarCheckbox.checked = false;
-                effectSliderCheckbox.checked = false;
-                effectSkatingCheckbox.checked = false;
-                effectFlip3dCheckbox.checked = false;
-            }
-            autoSave();
-        });
-        
-        effectSliderCheckbox.addEventListener('change', (e) => {
-            if (effectSliderCheckbox.checked) {
-                effectStandarCheckbox.checked = false;
-                shadowEffectCheckbox.checked = false;
-                effectSkatingCheckbox.checked = false;
-                effectFlip3dCheckbox.checked = false;
-            }
-            autoSave();
-        });
-
-        effectSkatingCheckbox.addEventListener('change', (e) => {
-            if (effectSkatingCheckbox.checked) {
-                effectStandarCheckbox.checked = false;
-                shadowEffectCheckbox.checked = false;
-                effectSliderCheckbox.checked = false;
-                effectFlip3dCheckbox.checked = false;
-            }
-            autoSave();
-        });
-        
-        effectFlip3dCheckbox.addEventListener('change', (e) => {
-            if (effectFlip3dCheckbox.checked) {
-                effectStandarCheckbox.checked = false;
-                shadowEffectCheckbox.checked = false;
-                effectSliderCheckbox.checked = false;
-                effectSkatingCheckbox.checked = false;
-            }
-            autoSave();
-        });
-        
-        sensorGerakCheckbox.addEventListener('change', (e) => {
-            isSensorActive = sensorGerakCheckbox.checked;
-            autoSave();
-        });
-        
         let startYPos = 0;
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
@@ -2464,6 +2132,53 @@
             lastTap = currentTime;
         });
         
+        // Keyboard event listener untuk testing (1 = tap, 2 = double tap)
+        document.addEventListener('keydown', function(event) {
+            if (event.key === '1') {
+                // Single tap - untuk effect tertentu bisa digunakan
+                event.preventDefault();
+            } else if (event.key === '2') {
+                event.preventDefault();
+                // Trigger double tap effect
+                clearAllTimeouts();
+                hideIndicator();
+                
+                if (effectFlip3dCheckbox.checked) {
+                    triggerFlip3DEffect();
+                }
+                else if (shadowEffectCheckbox.checked) {
+                    isSequenceActive = true;
+                    sequenceStage = 1;
+                    sequenceTimer = setTimeout(() => {
+                        if (isSequenceActive) showCardShadow();
+                        sequenceTimer = null;
+                    }, 5000);
+                } else if (effectStandarCheckbox.checked) {
+                    isSequenceActive = false;
+                    sequenceTimer = setTimeout(() => {
+                        showCardStandar();
+                        sequenceTimer = null;
+                    }, 1000);
+                } else if (effectSliderCheckbox.checked) {
+                    const totalDelay = 4000;
+                    const indicatorDelay = 3000;
+                    indicatorTimeout = setTimeout(() => showIndicator(), indicatorDelay);
+                    cardAppearTimeout = setTimeout(() => {
+                        hideIndicator();
+                        showCardSlider();
+                    }, totalDelay);
+                } else if (effectSkatingCheckbox.checked) {
+                    const totalDelay = 4000;
+                    const indicatorDelay = 3000;
+                    indicatorTimeout = setTimeout(() => showIndicator(), indicatorDelay);
+                    cardAppearTimeout = setTimeout(() => {
+                        hideIndicator();
+                        showCardSkating();
+                    }, totalDelay);
+                }
+            }
+        });
+        
         function clearAllTimeouts() {
             if (sequenceTimer) {
                 clearTimeout(sequenceTimer);
@@ -2496,10 +2211,6 @@
             if (shadowWaitTimeout) {
                 clearTimeout(shadowWaitTimeout);
                 shadowWaitTimeout = null;
-            }
-            if (flip3DExitTimer) {
-                clearTimeout(flip3DExitTimer);
-                flip3DExitTimer = null;
             }
         }
         
@@ -2650,13 +2361,6 @@
                 applyBounds();
                 updateCardTransform();
             }
-            
-            // PROSES TAP UNTUK PERUBAHAN GAMBAR (hanya untuk effect non-3D)
-            setTimeout(() => {
-                if (!effectFlip3dCheckbox.checked && originalCard.style.display !== 'none' && originalCard.style.visibility === 'visible' && isSequenceActive) {
-                    triggerCardTap();
-                }
-            }, 10);
         });
         
         bgUpload.addEventListener('change', (e) => {
@@ -2785,6 +2489,15 @@
                 posX = Math.round(posX);
                 posY = Math.round(posY);
                 updateCardTransform();
+            }
+            // Update posisi flip3D jika aktif
+            if (isFlip3DActive && flip3DContainer && flip3DContainer.style.display === 'block') {
+                const containerWidth = flip3DContainer.offsetWidth;
+                const containerHeight = flip3DContainer.offsetHeight;
+                const centerX = (window.innerWidth - containerWidth) / 2;
+                const centerY = (window.innerHeight - containerHeight) / 2;
+                flip3DContainer.style.left = centerX + 'px';
+                flip3DContainer.style.top = centerY + 'px';
             }
         });
         
