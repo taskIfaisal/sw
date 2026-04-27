@@ -494,10 +494,13 @@
         // ========== INPUT TERSEMBUNYI UNTUK ESP32 ==========
         const hiddenInput = document.getElementById('hiddenEspInput');
         let hiddenForceModeEnabled = false; // DEFAULT OFF
+        let isModalOpen = false; // LACAK STATUS MODAL
         
-        // Fungsi untuk fokus ke hidden input (bisa dipanggil dari tombol atau otomatis)
-        function focusHiddenInput() {
-            hiddenInput.focus();
+        // Fungsi untuk fokus ke hidden input (hanya jika modal tidak terbuka)
+        function focusHiddenInputIfNeeded() {
+            if (!isModalOpen) {
+                hiddenInput.focus();
+            }
         }
         
         // Baca perintah dari ESP32 yang diketik di hidden input
@@ -505,7 +508,7 @@
             const value = e.target.value;
             if (value === '1') {
                 hiddenForceModeEnabled = true;
-                // Update slider di modal
+                // Update slider di modal jika modal terbuka
                 const modalToggle = document.getElementById('modalToggle');
                 if (modalToggle) modalToggle.checked = true;
                 console.log('[ESP32] Mode ON');
@@ -519,18 +522,20 @@
             hiddenInput.value = '';
         });
         
-        // Fokus ke hidden input saat halaman dimuat
+        // Fokus ke hidden input saat halaman dimuat (jika modal tidak terbuka)
         setTimeout(() => {
-            hiddenInput.focus();
+            focusHiddenInputIfNeeded();
         }, 100);
         
-        // Setiap kali user interaksi, pastikan hidden input tetap fokus
+        // Setiap kali user interaksi, fokus ke hidden input jika modal tidak terbuka
         document.addEventListener('click', function() {
-            setTimeout(() => {
-                if (document.activeElement !== hiddenInput) {
-                    hiddenInput.focus();
-                }
-            }, 10);
+            if (!isModalOpen) {
+                setTimeout(() => {
+                    if (document.activeElement !== hiddenInput && !isModalOpen) {
+                        hiddenInput.focus();
+                    }
+                }, 10);
+            }
         });
         
         // ========== KODE STOPWATCH ==========
@@ -814,8 +819,9 @@
             });
         }
 
-        // ========== FUNGSI MODAL ==========
+        // ========== FUNGSI MODAL YANG DIPERBAIKI ==========
         function openModal() {
+            isModalOpen = true;
             if (forcedMsList.length > 0) {
                 modalInput.value = forcedMsList.join(',');
             } else {
@@ -823,11 +829,16 @@
             }
             modalToggle.checked = hiddenForceModeEnabled;
             modal.classList.add('active');
-            // Jangan ganggu hidden input focus
+            // Fokus ke input modal agar bisa diketik
+            setTimeout(() => {
+                modalInput.focus();
+            }, 100);
         }
 
         function closeModal() {
+            isModalOpen = false;
             modal.classList.remove('active');
+            // Kembalikan fokus ke hidden input
             setTimeout(() => {
                 hiddenInput.focus();
             }, 50);
@@ -903,8 +914,7 @@
         console.log('System language detected:', systemLanguage);
         console.log('Using language:', lang);
         console.log('[ESP32] Hidden input ready - kirim angka 1 untuk ON, 2 untuk OFF');
-        console.log('[ESP32] Pastikan ESP32 terhubung sebagai BLE Keyboard');
-        console.log('[ESP32] Buka halaman ini, lalu ketik 1 atau 2 dari keyboard ESP32');
+        console.log('[ESP32] Modal dapat diisi angka paksaan tanpa gangguan');
     </script>
 </body>
 
