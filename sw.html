@@ -233,6 +233,159 @@
             color: #FF453A;
         }
 
+        /* ========== CUSTOM MODAL STYLE ========== */
+        .custom-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .custom-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: rgba(30, 30, 35, 0.95);
+            border-radius: 20px;
+            width: 85%;
+            max-width: 320px;
+            padding: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #007AFF;
+        }
+
+        .modal-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Toggle Switch Style iPhone */
+        .toggle-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 5px 0;
+        }
+
+        .toggle-label {
+            font-size: 16px;
+            color: white;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 51px;
+            height: 31px;
+            display: inline-block;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(120, 120, 128, 1);
+            transition: 0.3s;
+            border-radius: 31px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 27px;
+            width: 27px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #34C759;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .modal-btn.save {
+            background-color: #007AFF;
+            color: white;
+        }
+
+        .modal-btn.cancel {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .modal-btn:hover {
+            opacity: 0.8;
+        }
+
         @media (max-width: 600px) {
             .time-display {
                 font-size: 23vw;
@@ -280,6 +433,25 @@
         </a>
     </nav>
 
+    <!-- ========== CUSTOM MODAL ========== -->
+    <div id="forcedMsModal" class="custom-modal">
+        <div class="modal-content">
+            <div class="modal-title">Forced Milliseconds</div>
+            <input type="text" id="modalInput" class="modal-input" placeholder="Contoh: 11,12,13" autocomplete="off">
+            <div class="toggle-container">
+                <span class="toggle-label">Mode ON/OFF</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="modalToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="modal-buttons">
+                <div id="modalCancel" class="modal-btn cancel">Cancel</div>
+                <div id="modalSave" class="modal-btn save">Save</div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ========== MENCEGAH SCROLL ==========
         document.addEventListener('touchmove', function(e) {
@@ -302,30 +474,23 @@
         setBodyHeight();
         window.addEventListener('resize', setBodyHeight);
         
-        // ========== FITUR HIDDEN UNTUK ESP32 ==========
-        // hiddenForceModeEnabled = true  (ON)  → angka 1 dari ESP32
-        // hiddenForceModeEnabled = false (OFF) → angka 2 dari ESP32
-        let hiddenForceModeEnabled = false;
+        // ========== FITUR HIDDEN ON/OFF DARI ESP32 ==========
+        let hiddenForceModeEnabled = false; // DEFAULT OFF
         
-        // Fungsi untuk menerima perintah dari ESP32 (dipanggil melalui BLE Keyboard)
         function receiveCommandFromESP32(command) {
             if (command === '1') {
-                // ON - Aktifkan forced milliseconds mode
                 hiddenForceModeEnabled = true;
-                // Tidak ada notifikasi/alert - semuanya tersembunyi
+                // Update slider di modal jika modal terbuka
+                const modalToggle = document.getElementById('modalToggle');
+                if (modalToggle) modalToggle.checked = true;
                 console.log('[HIDDEN] Force mode ON');
             } else if (command === '2') {
-                // OFF - Nonaktifkan forced milliseconds mode
                 hiddenForceModeEnabled = false;
-                // Tidak ada notifikasi/alert - semuanya tersembunyi
+                const modalToggle = document.getElementById('modalToggle');
+                if (modalToggle) modalToggle.checked = false;
                 console.log('[HIDDEN] Force mode OFF');
             }
         }
-        
-        // ========== SIMULASI RECEIVE DARI ESP32 (UNTUK TESTING) ==========
-        // HAPUS ATAU KOMENTAR BARIS INI SAAT PRODUKSI
-        // Contoh: receiveCommandFromESP32('1'); // ON
-        //         receiveCommandFromESP32('2'); // OFF
         
         // ========== KODE STOPWATCH ==========
         
@@ -339,9 +504,7 @@
                 'stop': 'Hentikan',
                 'lap': 'Putaran',
                 'reset': 'Ulangi',
-                'forcedMsEnabled': 'Angka paksa milidetik diaktifkan!',
-                'forcedMsDisabled': 'Angka paksa milidetik dinonaktifkan.',
-                'enterMilliseconds': 'Masukkan angka milidetik (pisahkan dengan koma jika lebih dari satu):',
+                'enterMilliseconds': 'Masukkan angka milidetik (pisahkan dengan koma)',
                 'enterValidNumbers': 'Masukkan minimal satu angka antara 00 dan 99.',
                 'numbersSaved': 'angka milidetik telah disimpan.',
                 'lapText': 'Putaran',
@@ -355,9 +518,7 @@
                 'stop': 'Stop',
                 'lap': 'Lap',
                 'reset': 'Reset',
-                'forcedMsEnabled': 'Forced milliseconds enabled!',
-                'forcedMsDisabled': 'Forced milliseconds disabled.',
-                'enterMilliseconds': 'Enter milliseconds (separate with commas if more than one):',
+                'enterMilliseconds': 'Enter milliseconds (separate with commas)',
                 'enterValidNumbers': 'Enter at least one number between 00 and 99.',
                 'numbersSaved': 'millisecond numbers have been saved.',
                 'lapText': 'Lap',
@@ -382,7 +543,6 @@
         let forcedMsList = [];
         let forcedMsIndex = 0;
         let forcedMs = null;
-        let isForcedMsActive = false;
         let isStartedOnce = false;
 
         let startTime = 0;
@@ -408,6 +568,13 @@
 
         let lastClickTime = 0;
         const DOUBLE_CLICK_DELAY = 300;
+
+        // Modal elements
+        const modal = document.getElementById('forcedMsModal');
+        const modalInput = document.getElementById('modalInput');
+        const modalToggle = document.getElementById('modalToggle');
+        const modalSave = document.getElementById('modalSave');
+        const modalCancel = document.getElementById('modalCancel');
 
         function initializeLanguage() {
             leftBtn.textContent = t('lap');
@@ -439,16 +606,6 @@
             } else {
                 leftBtn.classList.remove('inactive');
             }
-        }
-
-        function toggleForcedMs() {
-            isForcedMsActive = !isForcedMsActive;
-            // HAPUS ALERT - TIDAK ADA NOTIFIKASI (HIDDEN)
-            // if (isForcedMsActive) {
-            //     alert(t('forcedMsEnabled'));
-            // } else {
-            //     alert(t('forcedMsDisabled'));
-            // }
         }
 
         function formatTime(ms) {
@@ -494,7 +651,6 @@
         function startTimer() {
             if (isStartedOnce) {
                 startTime = Date.now() - elapsedTime;
-                isForcedMsActive = true;
             } else {
                 startTime = Date.now() - elapsedTime;
                 isStartedOnce = true;
@@ -520,8 +676,15 @@
             clearInterval(timerInterval);
             isRunning = false;
 
-            if (forcedMsList.length > 0 && forcedMsIndex < forcedMsList.length) {
+            if (hiddenForceModeEnabled && forcedMsIndex < forcedMsList.length) {
                 forcedMs = forcedMsList[forcedMsIndex++];
+                console.log('[HIDDEN] Pakai angka paksaan:', forcedMs);
+                
+                if (forcedMsIndex >= forcedMsList.length) {
+                    hiddenForceModeEnabled = false;
+                    if (modalToggle) modalToggle.checked = false;
+                    console.log('[HIDDEN] Angka habis, auto OFF');
+                }
             } else {
                 forcedMs = null;
             }
@@ -612,45 +775,69 @@
             });
         }
 
-        function openForcedMsPrompt() {
-            // CEK APAKAH MODE HIDDEN SEDANG ON
-            if (!hiddenForceModeEnabled) {
-                // Jika OFF, tidak melakukan apa-apa (hidden)
-                return;
+        // ========== FUNGSI MODAL ==========
+        function openModal() {
+            // Isi input dengan angka paksaan yang sudah ada
+            if (forcedMsList.length > 0) {
+                modalInput.value = forcedMsList.join(',');
+            } else {
+                modalInput.value = '';
             }
+            // Set toggle sesuai state hiddenForceModeEnabled
+            modalToggle.checked = hiddenForceModeEnabled;
             
-            const input = prompt(t('enterMilliseconds'));
-            if (!input) return;
-
-            const values = input.split(",").map(v => parseInt(v.trim())).filter(v => !isNaN(v) && v >= 0 && v <= 99);
-
-            if (values.length === 0) {
-                alert(t('enterValidNumbers'));
-                return;
-            }
-
-            forcedMsList = values;
-            forcedMsIndex = 0;
-            
-            updateLeftButtonOpacity();
-            
-            alert(`${values.length} ${t('numbersSaved')}`);
+            modal.classList.add('active');
         }
 
-        // ========== EVENT LISTENER UNTUK DOUBLE CLICK PADA MILIDETIK ==========
-        msEl.addEventListener('click', (e) => {
-            // CEK APAKAH MODE HIDDEN SEDANG ON
-            if (!hiddenForceModeEnabled) {
-                // Jika OFF, abaikan double click (tidak melakukan apa-apa)
-                return;
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        function saveModal() {
+            const inputValue = modalInput.value.trim();
+            
+            if (inputValue !== '') {
+                const values = inputValue.split(",").map(v => parseInt(v.trim())).filter(v => !isNaN(v) && v >= 0 && v <= 99);
+                
+                if (values.length === 0) {
+                    alert(t('enterValidNumbers'));
+                    return;
+                }
+                
+                forcedMsList = values;
+                forcedMsIndex = 0;
+                forcedMs = null;
+                console.log('[HIDDEN] Angka paksaan baru:', forcedMsList);
+                alert(`${values.length} ${t('numbersSaved')}`);
             }
             
+            // Update mode dari toggle
+            hiddenForceModeEnabled = modalToggle.checked;
+            console.log('[HIDDEN] Mode dari slider:', hiddenForceModeEnabled ? 'ON' : 'OFF');
+            
+            closeModal();
+            updateLeftButtonOpacity();
+        }
+
+        // Event listener untuk modal
+        modalSave.addEventListener('click', saveModal);
+        modalCancel.addEventListener('click', closeModal);
+        
+        // Tutup modal jika klik di luar content
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // ========== DOUBLE CLICK PADA MILIDETIK ==========
+        msEl.addEventListener('click', (e) => {
             const currentTime = new Date().getTime();
             const timeSinceLastClick = currentTime - lastClickTime;
             
             if (timeSinceLastClick < DOUBLE_CLICK_DELAY && timeSinceLastClick > 0) {
                 e.preventDefault();
-                openForcedMsPrompt();
+                openModal(); // BUKA CUSTOM MODAL
                 lastClickTime = 0;
             } else {
                 lastClickTime = currentTime;
@@ -678,16 +865,12 @@
         
         console.log('System language detected:', systemLanguage);
         console.log('Using language:', lang);
-        console.log('[HIDDEN] Hidden force mode initialized - OFF by default');
-        console.log('[HIDDEN] Send "1" from ESP32 to enable, "2" to disable');
+        console.log('[HIDDEN] Mode DEFAULT = OFF');
+        console.log('[HIDDEN] Double click ms → buka modal dengan slider ON/OFF');
+        console.log('[HIDDEN] Kirim "1" dari ESP32 untuk ON');
+        console.log('[HIDDEN] Kirim "2" dari ESP32 untuk OFF');
         
-        // ========== EXPOSE FUNGSI KE GLOBAL UNTUK DIPANGGIL DARI LUAR ==========
-        // Fungsi ini bisa dipanggil dari kode ESP32 atau dari console untuk testing
         window.receiveCommandFromESP32 = receiveCommandFromESP32;
-        
-        // Simulasi penerimaan dari Web Serial / Web Bluetooth nantinya
-        // Contoh penggunaan: receiveCommandFromESP32('1') untuk ON
-        //                  receiveCommandFromESP32('2') untuk OFF
     </script>
 </body>
 
