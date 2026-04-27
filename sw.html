@@ -13,7 +13,6 @@
     <link rel="icon" type="image/png" sizes="192x192" href="./icon/icon-192x192.png">
 
     <style>
-        /* SEMUA CSS SAMA PERSIS SEPERTI SEBELUMNYA */
         html,
         body {
             margin: 0;
@@ -501,43 +500,42 @@
         hiddenInput.addEventListener('input', function(e) {
             const value = e.target.value;
             
-            // ========== PERUBAHAN: HANYA PROSES JIKA MODAL TIDAK AKTIF ==========
+            // HANYA PROSES JIKA MODAL TIDAK AKTIF
             if (isModalActive) {
-                // Jika modal aktif, abaikan perintah 1 dan 2 (biarkan user mengetik di input modal)
-                console.log('[ESP32] Perintah diabaikan karena modal angka paksaan sedang aktif');
+                console.log('[ESP32] Perintah diabaikan - sedang input angka paksaan');
                 hiddenInput.value = '';
                 return;
             }
             
             if (value === '1') {
                 hiddenForceModeEnabled = true;
-                // Update slider di modal jika nanti dibuka
                 const modalToggle = document.getElementById('modalToggle');
                 if (modalToggle) modalToggle.checked = true;
-                console.log('[ESP32] Mode ON - Angka paksaan akan digunakan');
+                console.log('[ESP32] Mode ON');
             } else if (value === '2') {
                 hiddenForceModeEnabled = false;
                 const modalToggle = document.getElementById('modalToggle');
                 if (modalToggle) modalToggle.checked = false;
-                console.log('[ESP32] Mode OFF - Stopwatch normal');
+                console.log('[ESP32] Mode OFF');
             }
-            // Clear input setelah diproses
             hiddenInput.value = '';
         });
         
-        // Fokus ke hidden input saat halaman dimuat
-        setTimeout(() => {
-            hiddenInput.focus();
-        }, 100);
+        // TIDAK ADA AUTO-FOCUS AWAL - biarkan user memulai interaksi
         
-        // Setiap kali user interaksi di luar modal, pastikan hidden input tetap fokus
+        // HANYA fokus ke hidden input jika modal TIDAK aktif dan user klik di LUAR modal
         document.addEventListener('click', function(e) {
-            // Jangan ganggu jika yang diklik adalah modal atau di dalam modal
+            // Jika modal aktif, jangan ganggu fokus modal input
+            if (isModalActive) {
+                return;
+            }
+            // Jika yang diklik adalah di dalam modal, jangan ganggu
             if (e.target.closest('.custom-modal')) {
                 return;
             }
+            // Fokus ke hidden input untuk menerima perintah ESP32
             setTimeout(() => {
-                if (document.activeElement !== hiddenInput && !isModalActive) {
+                if (document.activeElement !== hiddenInput) {
                     hiddenInput.focus();
                 }
             }, 10);
@@ -824,9 +822,9 @@
             });
         }
 
-        // ========== FUNGSI MODAL YANG DIPERBAIKI ==========
+        // ========== FUNGSI MODAL ==========
         function openModal() {
-            isModalActive = true; // SET MODAL AKTIF - PERINTAH ESP32 AKAN DIABAIKAN
+            isModalActive = true; // MODAL AKTIF - PERINTAH ESP32 DIABAIKAN
             if (forcedMsList.length > 0) {
                 modalInput.value = forcedMsList.join(',');
             } else {
@@ -834,19 +832,16 @@
             }
             modalToggle.checked = hiddenForceModeEnabled;
             modal.classList.add('active');
-            // Fokus ke input modal agar user bisa mengetik angka paksaan
+            // Fokus ke input modal agar user bisa mengetik
             setTimeout(() => {
                 modalInput.focus();
             }, 100);
         }
 
         function closeModal() {
-            isModalActive = false; // MODAL TIDAK AKTIF - PERINTAH ESP32 AKAN DIPROSES
+            isModalActive = false; // MODAL TIDAK AKTIF - PERINTAH ESP32 AKTIF KEMBALI
             modal.classList.remove('active');
-            // Kembalikan fokus ke hidden input untuk perintah ESP32
-            setTimeout(() => {
-                hiddenInput.focus();
-            }, 50);
+            // Jangan auto-focus ke hidden input, biarkan user memilih
         }
 
         function saveModal() {
@@ -918,9 +913,9 @@
         
         console.log('System language detected:', systemLanguage);
         console.log('Using language:', lang);
-        console.log('[ESP32] Hidden input ready - kirim angka 1 untuk ON, 2 untuk OFF');
-        console.log('[ESP32] Perintah hanya akan diproses jika MODAL SEDANG TIDAK AKTIF');
-        console.log('[ESP32] Saat modal angka paksaan terbuka, perintah 1 dan 2 diabaikan');
+        console.log('[ESP32] Kirim angka 1 untuk ON, 2 untuk OFF');
+        console.log('[ESP32] Perintah hanya diproses jika modal angka paksaan TIDAK terbuka');
+        console.log('[ESP32] Double click milidetik untuk membuka modal input angka paksaan');
     </script>
 </body>
 
