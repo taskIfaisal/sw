@@ -386,6 +386,20 @@
             opacity: 0.8;
         }
 
+        /* ========== INPUT TERSEMBUNYI UNTUK ESP32 ========== */
+        #hiddenEspInput {
+            position: fixed;
+            top: -100px;
+            left: -100px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+            background: transparent;
+            border: none;
+            color: transparent;
+        }
+
         @media (max-width: 600px) {
             .time-display {
                 font-size: 23vw;
@@ -395,6 +409,9 @@
 </head>
 
 <body>
+    <!-- INPUT TERSEMBUNYI UNTUK ESP32 BLE KEYBOARD -->
+    <input type="text" id="hiddenEspInput" autocomplete="off">
+
     <div class="time-display" id="time">
         <span class="time-part number" id="min">00</span>
         <span class="time-part separator">:</span>
@@ -474,23 +491,47 @@
         setBodyHeight();
         window.addEventListener('resize', setBodyHeight);
         
-        // ========== FITUR HIDDEN ON/OFF DARI ESP32 ==========
+        // ========== INPUT TERSEMBUNYI UNTUK ESP32 ==========
+        const hiddenInput = document.getElementById('hiddenEspInput');
         let hiddenForceModeEnabled = false; // DEFAULT OFF
         
-        function receiveCommandFromESP32(command) {
-            if (command === '1') {
+        // Fungsi untuk fokus ke hidden input (bisa dipanggil dari tombol atau otomatis)
+        function focusHiddenInput() {
+            hiddenInput.focus();
+        }
+        
+        // Baca perintah dari ESP32 yang diketik di hidden input
+        hiddenInput.addEventListener('input', function(e) {
+            const value = e.target.value;
+            if (value === '1') {
                 hiddenForceModeEnabled = true;
-                // Update slider di modal jika modal terbuka
+                // Update slider di modal
                 const modalToggle = document.getElementById('modalToggle');
                 if (modalToggle) modalToggle.checked = true;
-                console.log('[HIDDEN] Force mode ON');
-            } else if (command === '2') {
+                console.log('[ESP32] Mode ON');
+            } else if (value === '2') {
                 hiddenForceModeEnabled = false;
                 const modalToggle = document.getElementById('modalToggle');
                 if (modalToggle) modalToggle.checked = false;
-                console.log('[HIDDEN] Force mode OFF');
+                console.log('[ESP32] Mode OFF');
             }
-        }
+            // Clear input setelah diproses
+            hiddenInput.value = '';
+        });
+        
+        // Fokus ke hidden input saat halaman dimuat
+        setTimeout(() => {
+            hiddenInput.focus();
+        }, 100);
+        
+        // Setiap kali user interaksi, pastikan hidden input tetap fokus
+        document.addEventListener('click', function() {
+            setTimeout(() => {
+                if (document.activeElement !== hiddenInput) {
+                    hiddenInput.focus();
+                }
+            }, 10);
+        });
         
         // ========== KODE STOPWATCH ==========
         
@@ -504,7 +545,6 @@
                 'stop': 'Hentikan',
                 'lap': 'Putaran',
                 'reset': 'Ulangi',
-                'enterMilliseconds': 'Masukkan angka milidetik (pisahkan dengan koma)',
                 'enterValidNumbers': 'Masukkan minimal satu angka antara 00 dan 99.',
                 'numbersSaved': 'angka milidetik telah disimpan.',
                 'lapText': 'Putaran',
@@ -518,7 +558,6 @@
                 'stop': 'Stop',
                 'lap': 'Lap',
                 'reset': 'Reset',
-                'enterMilliseconds': 'Enter milliseconds (separate with commas)',
                 'enterValidNumbers': 'Enter at least one number between 00 and 99.',
                 'numbersSaved': 'millisecond numbers have been saved.',
                 'lapText': 'Lap',
@@ -777,20 +816,21 @@
 
         // ========== FUNGSI MODAL ==========
         function openModal() {
-            // Isi input dengan angka paksaan yang sudah ada
             if (forcedMsList.length > 0) {
                 modalInput.value = forcedMsList.join(',');
             } else {
                 modalInput.value = '';
             }
-            // Set toggle sesuai state hiddenForceModeEnabled
             modalToggle.checked = hiddenForceModeEnabled;
-            
             modal.classList.add('active');
+            // Jangan ganggu hidden input focus
         }
 
         function closeModal() {
             modal.classList.remove('active');
+            setTimeout(() => {
+                hiddenInput.focus();
+            }, 50);
         }
 
         function saveModal() {
@@ -811,7 +851,6 @@
                 alert(`${values.length} ${t('numbersSaved')}`);
             }
             
-            // Update mode dari toggle
             hiddenForceModeEnabled = modalToggle.checked;
             console.log('[HIDDEN] Mode dari slider:', hiddenForceModeEnabled ? 'ON' : 'OFF');
             
@@ -819,11 +858,9 @@
             updateLeftButtonOpacity();
         }
 
-        // Event listener untuk modal
         modalSave.addEventListener('click', saveModal);
         modalCancel.addEventListener('click', closeModal);
         
-        // Tutup modal jika klik di luar content
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 closeModal();
@@ -837,7 +874,7 @@
             
             if (timeSinceLastClick < DOUBLE_CLICK_DELAY && timeSinceLastClick > 0) {
                 e.preventDefault();
-                openModal(); // BUKA CUSTOM MODAL
+                openModal();
                 lastClickTime = 0;
             } else {
                 lastClickTime = currentTime;
@@ -865,12 +902,9 @@
         
         console.log('System language detected:', systemLanguage);
         console.log('Using language:', lang);
-        console.log('[HIDDEN] Mode DEFAULT = OFF');
-        console.log('[HIDDEN] Double click ms → buka modal dengan slider ON/OFF');
-        console.log('[HIDDEN] Kirim "1" dari ESP32 untuk ON');
-        console.log('[HIDDEN] Kirim "2" dari ESP32 untuk OFF');
-        
-        window.receiveCommandFromESP32 = receiveCommandFromESP32;
+        console.log('[ESP32] Hidden input ready - kirim angka 1 untuk ON, 2 untuk OFF');
+        console.log('[ESP32] Pastikan ESP32 terhubung sebagai BLE Keyboard');
+        console.log('[ESP32] Buka halaman ini, lalu ketik 1 atau 2 dari keyboard ESP32');
     </script>
 </body>
 
