@@ -1,494 +1,514 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Batch Remove Background (Output .PNG) — Full Code</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #121212;
-      color: #f5f5f5;
-      margin: 0;
-      padding: 20px;
-    }
-    h2 {
-      margin: 0 0 16px 0;
-      font-size: 20px;
-    }
-    .config-box {
-      background: #1c1c1c;
-      border: 1px solid #2e2e2e;
-      border-radius: 8px;
-      padding: 14px;
-      margin-bottom: 16px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 12px;
-    }
-    .config-field label {
-      display: block;
-      font-size: 12px;
-      color: #aaa;
-      margin-bottom: 4px;
-    }
-    .config-field input {
-      width: 100%;
-      padding: 8px 10px;
-      border-radius: 6px;
-      border: 1px solid #3a3a3a;
-      background: #121212;
-      color: #fff;
-      font-size: 13px;
-    }
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .btn, button {
-      background: #4CAF50;
-      color: #fff;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: background 0.2s ease, opacity 0.2s ease;
-    }
-    .btn:hover:not(:disabled), button:hover:not(:disabled) {
-      background: #43a047;
-    }
-    .btn-blue {
-      background: #2196F3;
-    }
-    .btn-blue:hover:not(:disabled) {
-      background: #1976D2;
-    }
-    .btn-gray {
-      background: #424242;
-    }
-    .btn-gray:hover:not(:disabled) {
-      background: #525252;
-    }
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .summary {
-      font-size: 13px;
-      color: #ccc;
-      margin-left: auto;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 14px;
-    }
-    .card {
-      background: #1e1e1e;
-      border: 1px solid #303030;
-      border-radius: 8px;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .card img {
-      width: 100%;
-      height: 160px;
-      object-fit: contain;
-      background: repeating-conic-gradient(#2a2a2a 0% 25%, #383838 0% 50%) 50% / 16px 16px;
-      border-radius: 4px;
-    }
-    .filename {
-      font-size: 13px;
-      font-weight: 600;
-      word-break: break-all;
-    }
-    .subname {
-      font-size: 11px;
-      color: #9e9e9e;
-      word-break: break-all;
-    }
-    .status {
-      font-size: 12px;
-      color: #bbb;
-    }
-    .status.ok {
-      color: #4CAF50;
-    }
-    .status.err {
-      color: #ef5350;
-    }
-    .card-actions {
-      display: flex;
-      gap: 6px;
-      margin-top: auto;
-    }
-    .card-actions button {
-      flex: 1;
-      padding: 7px 10px;
-      font-size: 12px;
-      justify-content: center;
-    }
-    .hint {
-      font-size: 12px;
-      color: #888;
-      margin-top: 14px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Batch Remove Background</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 20px; min-height: 100vh;
+    background: #0f0f0f; color: #eee;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 5px; }
+  .subtitle { color: #888; font-size: 13px; margin-bottom: 20px; }
+
+  .upload-box {
+    border: 2px dashed #4CAF50; border-radius: 12px;
+    padding: 30px 20px; text-align: center;
+    background: rgba(76,175,80,0.05); cursor: pointer;
+    transition: all 0.2s;
+  }
+  .upload-box:hover { background: rgba(76,175,80,0.12); }
+  .upload-box.dragover { background: rgba(76,175,80,0.2); border-color: #66bb6a; }
+  .upload-box .icon { font-size: 40px; margin-bottom: 10px; }
+  .upload-box .text { font-size: 16px; margin-bottom: 5px; }
+  .upload-box .hint { font-size: 12px; color: #888; }
+
+  input[type="file"] { display: none; }
+
+  .toolbar {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin: 20px 0; align-items: center;
+  }
+  button {
+    border: none; border-radius: 8px; padding: 10px 16px;
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    transition: all 0.2s; font-family: inherit;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: #4CAF50; color: white; }
+  .btn-primary:hover:not(:disabled) { background: #45a049; }
+  .btn-secondary { background: #333; color: #eee; }
+  .btn-secondary:hover:not(:disabled) { background: #444; }
+  .btn-danger { background: #f44336; color: white; }
+  .btn-danger:hover:not(:disabled) { background: #d32f2f; }
+  .btn-download { background: #2196F3; color: white; }
+  .btn-download:hover:not(:disabled) { background: #1976D2; }
+
+  .stats {
+    display: flex; gap: 15px; flex-wrap: wrap;
+    font-size: 13px; color: #aaa; margin-bottom: 15px;
+  }
+  .stats span b { color: #4CAF50; }
+
+  .progress-bar {
+    height: 6px; background: #222; border-radius: 3px;
+    overflow: hidden; margin-bottom: 15px; display: none;
+  }
+  .progress-bar.active { display: block; }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, #4CAF50, #66bb6a);
+    width: 0%; transition: width 0.3s;
+  }
+
+  .file-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
+  }
+  .file-item {
+    background: #1a1a1a; border-radius: 10px; overflow: hidden;
+    border: 1px solid #2a2a2a; position: relative;
+    display: flex; flex-direction: column;
+  }
+  .file-item .thumb {
+    width: 100%; aspect-ratio: 1/1; background: #222;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .file-item .thumb img {
+    max-width: 100%; max-height: 100%; object-fit: contain;
+  }
+  .file-item .thumb .spinner {
+    width: 30px; height: 30px; border: 3px solid #333;
+    border-top-color: #4CAF50; border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .file-item .info {
+    padding: 8px; font-size: 11px;
+    border-top: 1px solid #2a2a2a;
+  }
+  .file-item .name {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    color: #ccc; margin-bottom: 4px;
+  }
+  .file-item .status { font-size: 10px; }
+  .status.pending { color: #888; }
+  .status.processing { color: #FF9800; }
+  .status.success { color: #4CAF50; }
+  .status.error { color: #f44336; }
+
+  .file-item .remove-btn {
+    position: absolute; top: 5px; right: 5px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(244,67,54,0.9); color: white;
+    border: none; font-size: 14px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0; cursor: pointer; z-index: 2;
+  }
+  .file-item .remove-btn:hover { background: #d32f2f; }
+
+  .file-item .download-btn {
+    position: absolute; top: 5px; left: 5px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(33,150,243,0.9); color: white;
+    border: none; font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0; cursor: pointer; z-index: 2;
+  }
+
+  .empty-state {
+    text-align: center; padding: 40px 20px; color: #666;
+    font-size: 14px;
+  }
+
+  .status-bar {
+    margin-top: 15px; padding: 10px 14px; border-radius: 8px;
+    font-size: 13px; display: none;
+  }
+  .status-bar.show { display: block; }
+  .status-bar.info { background: #1a2a3a; color: #64b5f6; }
+  .status-bar.success { background: #1a2e1a; color: #81c784; }
+  .status-bar.error { background: #2e1a1a; color: #e57373; }
+</style>
 </head>
 <body>
-  <h2>Batch Remove Background (Output .PNG + Unduh Sekaligus + Memory Clean)</h2>
+<div class="container">
+  <h1>🧹 Batch Remove Background</h1>
+  <div class="subtitle">Upload banyak gambar sekaligus → background dihapus → hasil PNG dengan nama file tetap sama</div>
 
-  <div class="config-box">
-    <div class="config-field">
-      <label for="endpoint-input">Endpoint URL API</label>
-      <input
-        type="text"
-        id="endpoint-input"
-        value="https://api.remove.bg/v1.0/removebg"
-        placeholder="https://api.remove.bg/v1.0/removebg atau endpoint Anda"
-      />
-    </div>
-    <div class="config-field">
-      <label for="api-key-input">API Key (opsional jika sudah di-handle server)</label>
-      <input
-        type="password"
-        id="api-key-input"
-        placeholder="Masukkan X-Api-Key jika panggil langsung"
-      />
-    </div>
+  <div class="upload-box" id="uploadBox">
+    <div class="icon">📁</div>
+    <div class="text">Klik atau seret gambar ke sini</div>
+    <div class="hint">Format: JPG, PNG, WEBP • Bisa pilih banyak file</div>
+    <input type="file" id="fileInput" accept="image/*" multiple>
   </div>
 
-  <div class="controls">
-    <label class="btn">
-      Pilih Banyak Gambar
-      <input type="file" id="batch-input" accept="image/*" multiple hidden />
-    </label>
-
-    <button id="process-btn" disabled>Proses Semua</button>
-    <button id="download-all-btn" class="btn-blue" disabled>Unduh Semua (.PNG)</button>
-    <button id="clear-btn" class="btn-gray" disabled>Bersihkan &amp; Bebaskan Memori</button>
-
-    <span id="summary" class="summary">Belum ada gambar dipilih</span>
+  <div class="toolbar">
+    <button class="btn-primary" id="processBtn" disabled>🚀 Proses Semua</button>
+    <button class="btn-download" id="downloadAllBtn" disabled>⬇️ Unduh Semua (ZIP)</button>
+    <button class="btn-danger" id="clearBtn" disabled>🗑️ Hapus Semua</button>
   </div>
 
-  <div id="result-grid" class="grid"></div>
+  <div class="stats" id="stats" style="display:none;">
+    <span>Total: <b id="statTotal">0</b></span>
+    <span>Berhasil: <b id="statSuccess">0</b></span>
+    <span>Gagal: <b id="statError">0</b></span>
+    <span>Diproses: <b id="statProcessing">0</b></span>
+  </div>
 
-  <p class="hint">
-    Semua nama file hasil otomatis menjadi <code>.png</code> (contoh: <code>foto1.jpg</code> → <code>foto1.png</code>) dan memori Object URL/Blob dibersihkan saat reset, hapus item, atau tutup halaman.
-  </p>
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
 
-  <script>
-    const endpointInput = document.getElementById('endpoint-input');
-    const apiKeyInput = document.getElementById('api-key-input');
-    const batchInput = document.getElementById('batch-input');
-    const processBtn = document.getElementById('process-btn');
-    const downloadAllBtn = document.getElementById('download-all-btn');
-    const clearBtn = document.getElementById('clear-btn');
-    const resultGrid = document.getElementById('result-grid');
-    const summaryEl = document.getElementById('summary');
+  <div class="status-bar" id="statusBar"></div>
 
-    const CONCURRENCY = 2; // Proses 2 gambar bersamaan agar aman dari rate limit
-    let items = [];
-    let isProcessing = false;
+  <div class="file-list" id="fileList"></div>
+  <div class="empty-state" id="emptyState">Belum ada file. Upload gambar dulu ya 👆</div>
+</div>
 
-    function formatMB(bytes) {
-      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+// ===== KONFIGURASI API REMOVE.BG =====
+const REMOVE_BG_API_KEY = '2crJY3ybEroko55EEQeVFh9C';
+const REMOVE_BG_API_URL = 'https://api.remove.bg/v1.0/removebg';
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+// ===== STATE =====
+let files = []; // { id, originalName, baseName, file, status, resultBlob, resultUrl, errorMsg }
+
+// ===== ELEMEN =====
+const uploadBox = document.getElementById('uploadBox');
+const fileInput = document.getElementById('fileInput');
+const fileListEl = document.getElementById('fileList');
+const emptyState = document.getElementById('emptyState');
+const processBtn = document.getElementById('processBtn');
+const downloadAllBtn = document.getElementById('downloadAllBtn');
+const clearBtn = document.getElementById('clearBtn');
+const stats = document.getElementById('stats');
+const statTotal = document.getElementById('statTotal');
+const statSuccess = document.getElementById('statSuccess');
+const statError = document.getElementById('statError');
+const statProcessing = document.getElementById('statProcessing');
+const progressBar = document.getElementById('progressBar');
+const progressFill = document.getElementById('progressFill');
+const statusBar = document.getElementById('statusBar');
+
+// ===== UTILITAS =====
+function showStatus(msg, type = 'info') {
+  statusBar.textContent = msg;
+  statusBar.className = 'status-bar show ' + type;
+  clearTimeout(showStatus._t);
+  showStatus._t = setTimeout(() => {
+    statusBar.classList.remove('show');
+  }, 5000);
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function getBaseName(filename) {
+  return filename.replace(/\.[^/.]+$/, '');
+}
+
+function updateStats() {
+  const total = files.length;
+  const success = files.filter(f => f.status === 'success').length;
+  const error = files.filter(f => f.status === 'error').length;
+  const processing = files.filter(f => f.status === 'processing').length;
+
+  statTotal.textContent = total;
+  statSuccess.textContent = success;
+  statError.textContent = error;
+  statProcessing.textContent = processing;
+
+  stats.style.display = total > 0 ? 'flex' : 'none';
+  emptyState.style.display = total > 0 ? 'none' : 'block';
+
+  processBtn.disabled = !files.some(f => f.status === 'pending' || f.status === 'error');
+  downloadAllBtn.disabled = !files.some(f => f.status === 'success');
+  clearBtn.disabled = files.length === 0;
+
+  const done = success + error;
+  const pct = total > 0 ? (done / total) * 100 : 0;
+  progressFill.style.width = pct + '%';
+}
+
+// ===== RENDER =====
+function renderFiles() {
+  fileListEl.innerHTML = '';
+  files.forEach(f => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.dataset.id = f.id;
+
+    const thumbSrc = f.resultUrl || f.previewUrl || '';
+    const statusText = {
+      pending: 'Menunggu...',
+      processing: 'Memproses...',
+      success: 'Berhasil',
+      error: 'Gagal: ' + (f.errorMsg || '')
+    }[f.status];
+
+    const spinner = f.status === 'processing'
+      ? '<div class="spinner"></div>'
+      : (thumbSrc ? `<img src="${thumbSrc}" alt="">` : '');
+
+    const downloadBtn = f.status === 'success'
+      ? `<button class="download-btn" data-action="download" data-id="${f.id}" title="Unduh">⬇</button>`
+      : '';
+
+    item.innerHTML = `
+      <button class="remove-btn" data-action="remove" data-id="${f.id}" title="Hapus">✕</button>
+      ${downloadBtn}
+      <div class="thumb">${spinner}</div>
+      <div class="info">
+        <div class="name" title="${f.originalName}">${f.baseName}.png</div>
+        <div class="status ${f.status}">${statusText}</div>
+      </div>
+    `;
+    fileListEl.appendChild(item);
+  });
+  updateStats();
+}
+
+// ===== UPLOAD =====
+function addFiles(fileList) {
+  const arr = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+  if (arr.length === 0) {
+    showStatus('Tidak ada file gambar valid', 'error');
+    return;
+  }
+
+  let added = 0, skipped = 0;
+  arr.forEach(file => {
+    if (file.size > MAX_FILE_SIZE) {
+      skipped++;
+      return;
+    }
+    // Cegah duplikat nama
+    const baseName = getBaseName(file.name);
+    if (files.some(f => f.baseName === baseName)) {
+      skipped++;
+      return;
     }
 
-    // Ubah ekstensi nama file asli menjadi .png (contoh: foto1.jpg -> foto1.png)
-    function toPngFilename(originalName) {
-      const baseName = originalName.replace(/\.[^/.]+$/, '');
-      return `${baseName || 'image'}.png`;
-    }
+    const id = 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    const entry = {
+      id,
+      originalName: file.name,
+      baseName: baseName,
+      file,
+      status: 'pending',
+      resultBlob: null,
+      resultUrl: null,
+      previewUrl: URL.createObjectURL(file),
+      errorMsg: null
+    };
+    files.push(entry);
+    added++;
+  });
 
-    // Bebaskan Object URL dan referensi berat pada satu item
-    function releaseItemMemory(item) {
-      if (item.previewUrl) {
-        URL.revokeObjectURL(item.previewUrl);
-        item.previewUrl = null;
-      }
-      if (item.resultUrl) {
-        URL.revokeObjectURL(item.resultUrl);
-        item.resultUrl = null;
-      }
-      item.file = null;
-      item.resultBlob = null;
-      if (item.imgEl) {
-        item.imgEl.src = '';
-        item.imgEl.remove();
-        item.imgEl = null;
-      }
-    }
+  renderFiles();
 
-    // Bersihkan seluruh state & memori DOM/Blob
-    function clearAllMemory() {
-      for (const item of items) {
-        releaseItemMemory(item);
-      }
-      items = [];
-      resultGrid.replaceChildren();
-      batchInput.value = '';
-      processBtn.disabled = true;
-      downloadAllBtn.disabled = true;
-      clearBtn.disabled = true;
-      summaryEl.textContent = 'Memori dibersihkan — belum ada gambar dipilih';
-    }
+  if (skipped > 0) {
+    showStatus(`${added} file ditambahkan, ${skipped} file dilewati (duplikat / >5MB)`, 'info');
+  } else if (added > 0) {
+    showStatus(`${added} file ditambahkan`, 'success');
+  }
+}
 
-    function updateControlsState() {
-      const hasItems = items.length > 0;
-      const doneCount = items.filter((it) => it.status === 'done' && it.resultBlob).length;
+uploadBox.addEventListener('click', () => fileInput.click());
+uploadBox.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadBox.classList.add('dragover');
+});
+uploadBox.addEventListener('dragleave', () => uploadBox.classList.remove('dragover'));
+uploadBox.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadBox.classList.remove('dragover');
+  addFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', (e) => {
+  addFiles(e.target.files);
+  fileInput.value = '';
+});
 
-      processBtn.disabled = !hasItems || isProcessing;
-      downloadAllBtn.disabled = doneCount === 0 || isProcessing;
-      clearBtn.disabled = !hasItems || isProcessing;
-      batchInput.disabled = isProcessing;
-    }
+// ===== PROSES =====
+async function processOne(entry) {
+  entry.status = 'processing';
+  entry.errorMsg = null;
+  renderFiles();
 
-    function updateSummary() {
-      if (!items.length) {
-        summaryEl.textContent = 'Belum ada gambar dipilih';
-        return;
-      }
-      const doneCount = items.filter((it) => it.status === 'done').length;
-      const errCount = items.filter((it) => it.status === 'error').length;
-      summaryEl.textContent = `Total: ${items.length} | Selesai: ${doneCount} | Gagal: ${errCount}`;
-    }
+  try {
+    const formData = new FormData();
+    formData.append('image_file', entry.file, entry.originalName);
+    formData.append('size', 'auto');
+    formData.append('format', 'png');
 
-    // Render daftar kartu saat memilih banyak gambar sekaligus
-    batchInput.addEventListener('change', (e) => {
-      const selectedFiles = Array.from(e.target.files || []);
-      if (!selectedFiles.length) return;
-
-      for (const oldItem of items) {
-        releaseItemMemory(oldItem);
-      }
-      items = [];
-      resultGrid.replaceChildren();
-
-      const fragment = document.createDocumentFragment();
-
-      selectedFiles.forEach((file, index) => {
-        const previewUrl = URL.createObjectURL(file);
-        const outputName = toPngFilename(file.name);
-
-        const card = document.createElement('div');
-        card.className = 'card';
-
-        const img = document.createElement('img');
-        img.src = previewUrl;
-        img.alt = outputName;
-
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'filename';
-        nameDiv.textContent = outputName;
-
-        const subDiv = document.createElement('div');
-        subDiv.className = 'subname';
-        subDiv.textContent = `Asli: ${file.name}`;
-
-        const statusDiv = document.createElement('div');
-        statusDiv.className = 'status';
-        statusDiv.textContent = `Siap (${formatMB(file.size)})`;
-
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'card-actions';
-
-        const singleDlBtn = document.createElement('button');
-        singleDlBtn.className = 'btn-blue';
-        singleDlBtn.textContent = 'Unduh .PNG';
-        singleDlBtn.disabled = true;
-
-        const removeSingleBtn = document.createElement('button');
-        removeSingleBtn.className = 'btn-gray';
-        removeSingleBtn.textContent = 'Hapus';
-
-        const itemObj = {
-          id: index,
-          file,
-          originalName: file.name,
-          outputName,
-          previewUrl,
-          resultBlob: null,
-          resultUrl: null,
-          status: 'pending',
-          cardEl: card,
-          imgEl: img,
-          statusEl: statusDiv,
-          singleDlBtn
-        };
-
-        singleDlBtn.addEventListener('click', () => {
-          triggerSingleDownload(itemObj);
-        });
-
-        removeSingleBtn.addEventListener('click', () => {
-          if (isProcessing) return;
-          releaseItemMemory(itemObj);
-          card.remove();
-          items = items.filter((it) => it !== itemObj);
-          updateSummary();
-          updateControlsState();
-        });
-
-        actionsDiv.append(singleDlBtn, removeSingleBtn);
-        card.append(img, nameDiv, subDiv, statusDiv, actionsDiv);
-        fragment.appendChild(card);
-
-        items.push(itemObj);
-      });
-
-      resultGrid.appendChild(fragment);
-      updateSummary();
-      updateControlsState();
+    const response = await fetch(REMOVE_BG_API_URL, {
+      method: 'POST',
+      headers: { 'X-Api-Key': REMOVE_BG_API_KEY },
+      body: formData
     });
 
-    async function processSingleItem(item) {
-      if (!item.file || item.status === 'done') return;
-
-      item.status = 'processing';
-      item.statusEl.className = 'status';
-      item.statusEl.textContent = 'Memproses (kualitas asli)...';
-
-      const endpoint = endpointInput.value.trim();
-      const apiKey = apiKeyInput.value.trim();
-
-      if (!endpoint) {
-        item.status = 'error';
-        item.statusEl.className = 'status err';
-        item.statusEl.textContent = 'Gagal: Endpoint URL kosong';
-        return;
-      }
-
-      try {
-        // Kirim File asli tanpa resize/kompresi agar resolusi & ketajaman terjaga
-        const formData = new FormData();
-        formData.append('image_file', item.file, item.originalName);
-        formData.append('size', 'auto');
-
-        const headers = {};
-        if (apiKey) {
-          headers['X-Api-Key'] = apiKey;
-        }
-
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers,
-          body: formData
-        });
-
-        if (!response.ok) {
-          const errText = await response.text().catch(() => '');
-          throw new Error(`HTTP ${response.status}${errText ? ` - ${errText.slice(0, 80)}` : ''}`);
-        }
-
-        const rawBlob = await response.blob();
-        if (!rawBlob || rawBlob.size === 0) {
-          throw new Error('Respons gambar kosong');
-        }
-
-        // Pastikan tipe MIME Blob bernilai image/png tanpa mengubah bit/kualitas gambar
-        const pngBlob = rawBlob.type === 'image/png'
-          ? rawBlob
-          : new Blob([rawBlob], { type: 'image/png' });
-
-        if (item.previewUrl) {
-          URL.revokeObjectURL(item.previewUrl);
-          item.previewUrl = null;
-        }
-
-        item.resultBlob = pngBlob;
-        item.resultUrl = URL.createObjectURL(pngBlob);
-        item.imgEl.src = item.resultUrl;
-        item.status = 'done';
-        item.statusEl.className = 'status ok';
-        item.statusEl.textContent = `Selesai (${formatMB(pngBlob.size)})`;
-        item.singleDlBtn.disabled = false;
-
-        // Lepaskan referensi File mentah setelah selesai diproses
-        item.file = null;
-      } catch (err) {
-        item.status = 'error';
-        item.statusEl.className = 'status err';
-        item.statusEl.textContent = `Gagal: ${err.message}`;
-      } finally {
-        updateSummary();
-      }
+    if (!response.ok) {
+      let errText = '';
+      try { errText = await response.text(); } catch (e) { errText = response.statusText; }
+      if (response.status === 402) throw new Error('Kredit API habis');
+      if (response.status === 400) throw new Error('Gambar tidak valid');
+      if (response.status === 403) throw new Error('API key salah/ditolak');
+      if (response.status === 429) throw new Error('Terlalu banyak request, coba lagi nanti');
+      throw new Error(`Error ${response.status}`);
     }
 
-    async function runBatchProcess() {
-      if (isProcessing || !items.length) return;
-      isProcessing = true;
-      updateControlsState();
+    const resultBlob = await response.blob();
+    entry.resultBlob = resultBlob;
+    entry.resultUrl = URL.createObjectURL(resultBlob);
+    entry.status = 'success';
+  } catch (err) {
+    console.error('Gagal proses', entry.originalName, err);
+    entry.status = 'error';
+    entry.errorMsg = err.message || 'Gagal';
+  }
+  renderFiles();
+}
 
-      let cursor = 0;
+async function processAll() {
+  const pending = files.filter(f => f.status === 'pending' || f.status === 'error');
+  if (pending.length === 0) {
+    showStatus('Tidak ada file yang perlu diproses', 'info');
+    return;
+  }
 
-      async function worker() {
-        while (cursor < items.length) {
-          const currentItem = items[cursor++];
-          await processSingleItem(currentItem);
-        }
-      }
+  processBtn.disabled = true;
+  progressBar.classList.add('active');
+  progressFill.style.width = '0%';
 
-      const workers = Array.from(
-        { length: Math.min(CONCURRENCY, items.length) },
-        worker
-      );
-      await Promise.all(workers);
+  // Proses sekuensial agar tidak kena rate limit
+  for (const entry of pending) {
+    await processOne(entry);
+  }
 
-      isProcessing = false;
-      updateSummary();
-      updateControlsState();
-    }
+  progressBar.classList.remove('active');
+  const success = files.filter(f => f.status === 'success').length;
+  const error = files.filter(f => f.status === 'error').length;
+  showStatus(`Selesai! ${success} berhasil, ${error} gagal`, error > 0 ? 'error' : 'success');
+  updateStats();
+}
 
-    // Unduh satu file dengan nama .png (contoh: foto1.jpg -> foto1.png)
-    function triggerSingleDownload(item) {
-      if (!item.resultBlob) return;
+processBtn.addEventListener('click', processAll);
 
-      const tempUrl = URL.createObjectURL(item.resultBlob);
-      const link = document.createElement('a');
-      link.href = tempUrl;
-      link.download = item.outputName;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+// ===== DOWNLOAD =====
+function downloadSingle(id) {
+  const entry = files.find(f => f.id === id);
+  if (!entry || !entry.resultBlob) return;
 
-      setTimeout(() => URL.revokeObjectURL(tempUrl), 1500);
-    }
+  const url = URL.createObjectURL(entry.resultBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = entry.baseName + '.png'; // nama tetap, ekstensi .png
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
-    // Unduh semua hasil .png sekaligus dengan jeda singkat antar file
-    async function downloadAllFiles() {
-      const completedItems = items.filter((it) => it.status === 'done' && it.resultBlob);
-      if (!completedItems.length) return;
+async function downloadAllZip() {
+  const done = files.filter(f => f.status === 'success' && f.resultBlob);
+  if (done.length === 0) {
+    showStatus('Belum ada file yang berhasil diproses', 'error');
+    return;
+  }
 
-      downloadAllBtn.disabled = true;
+  downloadAllBtn.disabled = true;
+  downloadAllBtn.textContent = '⏳ Membuat ZIP...';
 
-      for (let i = 0; i < completedItems.length; i++) {
-        triggerSingleDownload(completedItems[i]);
-        summaryEl.textContent = `Mengunduh ${i + 1} dari ${completedItems.length}...`;
-        await new Promise((resolve) => setTimeout(resolve, 250));
-      }
+  try {
+    const zip = new JSZip();
+    done.forEach(entry => {
+      zip.file(entry.baseName + '.png', entry.resultBlob);
+    });
 
-      updateSummary();
-      updateControlsState();
-    }
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'removed-background-' + Date.now() + '.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    showStatus(`ZIP berisi ${done.length} gambar berhasil dibuat & diunduh`, 'success');
+  } catch (err) {
+    console.error(err);
+    showStatus('Gagal membuat ZIP: ' + err.message, 'error');
+  } finally {
+    downloadAllBtn.disabled = false;
+    downloadAllBtn.textContent = '⬇️ Unduh Semua (ZIP)';
+  }
+}
 
-    processBtn.addEventListener('click', runBatchProcess);
-    downloadAllBtn.addEventListener('click', downloadAllFiles);
-    clearBtn.addEventListener('click', clearAllMemory);
+downloadAllBtn.addEventListener('click', downloadAllZip);
 
-    window.addEventListener('pagehide', clearAllMemory);
-  </script>
+// ===== REMOVE =====
+function removeFile(id) {
+  const idx = files.findIndex(f => f.id === id);
+  if (idx === -1) return;
+  const entry = files[idx];
+
+  // Bebaskan memory
+  if (entry.previewUrl) URL.revokeObjectURL(entry.previewUrl);
+  if (entry.resultUrl) URL.revokeObjectURL(entry.resultUrl);
+
+  files.splice(idx, 1);
+  renderFiles();
+  showStatus('File dihapus dari list', 'info');
+}
+
+function clearAll() {
+  if (files.length === 0) return;
+  if (!confirm(`Hapus semua ${files.length} file dari list?`)) return;
+
+  files.forEach(entry => {
+    if (entry.previewUrl) URL.revokeObjectURL(entry.previewUrl);
+    if (entry.resultUrl) URL.revokeObjectURL(entry.resultUrl);
+  });
+  files = [];
+  renderFiles();
+  showStatus('Semua file dihapus', 'info');
+}
+
+clearBtn.addEventListener('click', clearAll);
+
+// Delegasi event untuk tombol remove & download per-item
+fileListEl.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const id = btn.dataset.id;
+  if (btn.dataset.action === 'remove') removeFile(id);
+  else if (btn.dataset.action === 'download') downloadSingle(id);
+});
+
+// Bebaskan memory saat tab ditutup
+window.addEventListener('beforeunload', () => {
+  files.forEach(entry => {
+    if (entry.previewUrl) URL.revokeObjectURL(entry.previewUrl);
+    if (entry.resultUrl) URL.revokeObjectURL(entry.resultUrl);
+  });
+});
+
+// Init
+renderFiles();
+</script>
 </body>
 </html>
