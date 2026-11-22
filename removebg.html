@@ -41,6 +41,8 @@
   button:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-primary { background: #4CAF50; color: white; }
   .btn-primary:hover:not(:disabled) { background: #45a049; }
+  .btn-retry { background: #FF9800; color: white; }
+  .btn-retry:hover:not(:disabled) { background: #F57C00; }
   .btn-secondary { background: #333; color: #eee; }
   .btn-secondary:hover:not(:disabled) { background: #444; }
   .btn-danger { background: #f44336; color: white; }
@@ -53,6 +55,7 @@
     font-size: 13px; color: #aaa; margin-bottom: 15px;
   }
   .stats span b { color: #4CAF50; }
+  .stats span.stat-error b { color: #f44336; }
 
   .progress-bar {
     height: 6px; background: #222; border-radius: 3px;
@@ -75,6 +78,8 @@
     border: 1px solid #2a2a2a; position: relative;
     display: flex; flex-direction: column;
   }
+  .file-item.error { border-color: #f44336; }
+  .file-item.success { border-color: #4CAF50; }
   .file-item .thumb {
     width: 100%; aspect-ratio: 1/1; background: #222;
     display: flex; align-items: center; justify-content: center;
@@ -122,6 +127,7 @@
     display: flex; align-items: center; justify-content: center;
     padding: 0; cursor: pointer; z-index: 2;
   }
+  .file-item .download-btn:hover { background: #1976D2; }
 
   .empty-state {
     text-align: center; padding: 40px 20px; color: #666;
@@ -146,12 +152,13 @@
   <div class="upload-box" id="uploadBox">
     <div class="icon">📁</div>
     <div class="text">Klik atau seret gambar ke sini</div>
-    <div class="hint">Format: JPG, PNG, WEBP • Bisa pilih banyak file</div>
+    <div class="hint">Format: JPG, PNG, WEBP • Bisa pilih banyak file • Maks 5MB/file</div>
     <input type="file" id="fileInput" accept="image/*" multiple>
   </div>
 
   <div class="toolbar">
     <button class="btn-primary" id="processBtn" disabled>🚀 Proses Semua</button>
+    <button class="btn-retry" id="retryBtn" disabled>🔄 Ulangi Gagal</button>
     <button class="btn-download" id="downloadAllBtn" disabled>⬇️ Unduh Semua (ZIP)</button>
     <button class="btn-danger" id="clearBtn" disabled>🗑️ Hapus Semua</button>
   </div>
@@ -159,7 +166,7 @@
   <div class="stats" id="stats" style="display:none;">
     <span>Total: <b id="statTotal">0</b></span>
     <span>Berhasil: <b id="statSuccess">0</b></span>
-    <span>Gagal: <b id="statError">0</b></span>
+    <span class="stat-error">Gagal: <b id="statError">0</b></span>
     <span>Diproses: <b id="statProcessing">0</b></span>
   </div>
 
@@ -179,9 +186,11 @@
 const REMOVE_BG_API_KEY = '2crJY3ybEroko55EEQeVFh9C';
 const REMOVE_BG_API_URL = 'https://api.remove.bg/v1.0/removebg';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const AUTO_RETRY_MAX = 3;              // jumlah retry otomatis
+const AUTO_RETRY_BASE_DELAY = 1500;    // jeda dasar (ms) — akan dikali attempt
 
 // ===== STATE =====
-let files = []; // { id, originalName, baseName, file, status, resultBlob, resultUrl, errorMsg }
+let files = []; // { id, originalName, baseName, file, status, resultBlob, resultUrl, previewUrl, errorMsg, retryCount }
 
 // ===== ELEMEN =====
 const uploadBox = document.getElementById('uploadBox');
@@ -189,6 +198,7 @@ const fileInput = document.getElementById('fileInput');
 const fileListEl = document.getElementById('fileList');
 const emptyState = document.getElementById('emptyState');
 const processBtn = document.getElementById('processBtn');
+const retryBtn = document.getElementById('retryBtn');
 const downloadAllBtn = document.getElementById('downloadAllBtn');
 const clearBtn = document.getElementById('clearBtn');
 const stats = document.getElementById('stats');
@@ -220,6 +230,20 @@ function getBaseName(filename) {
   return filename.replace(/\.[^/.]+$/, '');
 }
 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// Deteksi error yang bersifat sementara (jaringan / rate limit) → layak di-retry
+function isRetryableError(msg) {
+  if (!msg) return false;
+  const m = msg.toLowerCase();
+  return m.includes('failed to fetch') ||
+         m.includes('networkerror') ||
+         m.includes('network') ||
+         m.includes('load failed') ||
+         m.includes('terlalu banyak') ||
+         m.includes('timeout');
+}
+
 function updateStats() {
   const total = files.length;
   const success = files.filter(f => f.status === 'success').length;
@@ -235,7 +259,8 @@ function updateStats() {
   emptyState.style.display = total > 0 ? 'none' : 'block';
 
   processBtn.disabled = !files.some(f => f.status === 'pending' || f.status === 'error');
-  downloadAllBtn.disabled = !files.some(f => f.status === 'success');
+  retryBtn.disabled = error === 0 || processing > 0;
+  downloadAllBtn.disabled = success === 0;
   clearBtn.disabled = files.length === 0;
 
   const done = success + error;
@@ -248,20 +273,25 @@ function renderFiles() {
   fileListEl.innerHTML = '';
   files.forEach(f => {
     const item = document.createElement('div');
-    item.className = 'file-item';
+    item.className = 'file-item ' + f.status;
     item.dataset.id = f.id;
 
     const thumbSrc = f.resultUrl || f.previewUrl || '';
+    const retryInfo = (f.retryCount && f.retryCount > 0) ? ` (retry ${f.retryCount}x)` : '';
+
     const statusText = {
       pending: 'Menunggu...',
       processing: 'Memproses...',
-      success: 'Berhasil',
+      success: 'Berhasil' + retryInfo,
       error: 'Gagal: ' + (f.errorMsg || '')
     }[f.status];
 
-    const spinner = f.status === 'processing'
-      ? '<div class="spinner"></div>'
-      : (thumbSrc ? `<img src="${thumbSrc}" alt="">` : '');
+    let thumbContent = '';
+    if (f.status === 'processing') {
+      thumbContent = '<div class="spinner"></div>';
+    } else if (thumbSrc) {
+      thumbContent = `<img src="${thumbSrc}" alt="">`;
+    }
 
     const downloadBtn = f.status === 'success'
       ? `<button class="download-btn" data-action="download" data-id="${f.id}" title="Unduh">⬇</button>`
@@ -270,7 +300,7 @@ function renderFiles() {
     item.innerHTML = `
       <button class="remove-btn" data-action="remove" data-id="${f.id}" title="Hapus">✕</button>
       ${downloadBtn}
-      <div class="thumb">${spinner}</div>
+      <div class="thumb">${thumbContent}</div>
       <div class="info">
         <div class="name" title="${f.originalName}">${f.baseName}.png</div>
         <div class="status ${f.status}">${statusText}</div>
@@ -289,21 +319,20 @@ function addFiles(fileList) {
     return;
   }
 
-  let added = 0, skipped = 0;
+  let added = 0, skippedSize = 0, skippedDup = 0;
   arr.forEach(file => {
     if (file.size > MAX_FILE_SIZE) {
-      skipped++;
+      skippedSize++;
       return;
     }
-    // Cegah duplikat nama
     const baseName = getBaseName(file.name);
     if (files.some(f => f.baseName === baseName)) {
-      skipped++;
+      skippedDup++;
       return;
     }
 
     const id = 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-    const entry = {
+    files.push({
       id,
       originalName: file.name,
       baseName: baseName,
@@ -312,18 +341,20 @@ function addFiles(fileList) {
       resultBlob: null,
       resultUrl: null,
       previewUrl: URL.createObjectURL(file),
-      errorMsg: null
-    };
-    files.push(entry);
+      errorMsg: null,
+      retryCount: 0
+    });
     added++;
   });
 
   renderFiles();
 
-  if (skipped > 0) {
-    showStatus(`${added} file ditambahkan, ${skipped} file dilewati (duplikat / >5MB)`, 'info');
-  } else if (added > 0) {
-    showStatus(`${added} file ditambahkan`, 'success');
+  const msgs = [];
+  if (added > 0) msgs.push(`${added} file ditambahkan`);
+  if (skippedSize > 0) msgs.push(`${skippedSize} dilewati (>5MB)`);
+  if (skippedDup > 0) msgs.push(`${skippedDup} duplikat`);
+  if (msgs.length > 0) {
+    showStatus(msgs.join(', '), added > 0 ? 'success' : 'error');
   }
 }
 
@@ -344,43 +375,68 @@ fileInput.addEventListener('change', (e) => {
 });
 
 // ===== PROSES =====
-async function processOne(entry) {
+async function processOne(entry, opts = {}) {
+  const { autoRetry = true, maxAutoRetry = AUTO_RETRY_MAX } = opts;
+
   entry.status = 'processing';
   entry.errorMsg = null;
   renderFiles();
 
-  try {
-    const formData = new FormData();
-    formData.append('image_file', entry.file, entry.originalName);
-    formData.append('size', 'auto');
-    formData.append('format', 'png');
+  let attempt = 0;
+  while (true) {
+    attempt++;
+    try {
+      const formData = new FormData();
+      formData.append('image_file', entry.file, entry.originalName);
+      formData.append('size', 'auto');
+      formData.append('format', 'png');
 
-    const response = await fetch(REMOVE_BG_API_URL, {
-      method: 'POST',
-      headers: { 'X-Api-Key': REMOVE_BG_API_KEY },
-      body: formData
-    });
+      const response = await fetch(REMOVE_BG_API_URL, {
+        method: 'POST',
+        headers: { 'X-Api-Key': REMOVE_BG_API_KEY },
+        body: formData
+      });
 
-    if (!response.ok) {
-      let errText = '';
-      try { errText = await response.text(); } catch (e) { errText = response.statusText; }
-      if (response.status === 402) throw new Error('Kredit API habis');
-      if (response.status === 400) throw new Error('Gambar tidak valid');
-      if (response.status === 403) throw new Error('API key salah/ditolak');
-      if (response.status === 429) throw new Error('Terlalu banyak request, coba lagi nanti');
-      throw new Error(`Error ${response.status}`);
+      if (!response.ok) {
+        let errText = '';
+        try { errText = await response.text(); } catch (e) { errText = response.statusText; }
+        if (response.status === 402) throw new Error('Kredit API habis');
+        if (response.status === 400) throw new Error('Gambar tidak valid');
+        if (response.status === 403) throw new Error('API key salah/ditolak');
+        if (response.status === 429) throw new Error('Terlalu banyak request, coba lagi nanti');
+        throw new Error(`Error ${response.status}`);
+      }
+
+      const resultBlob = await response.blob();
+      entry.resultBlob = resultBlob;
+      if (entry.resultUrl) URL.revokeObjectURL(entry.resultUrl);
+      entry.resultUrl = URL.createObjectURL(resultBlob);
+      entry.status = 'success';
+      entry.retryCount = attempt - 1;
+      renderFiles();
+      return; // sukses → keluar loop
+
+    } catch (err) {
+      const msg = err.message || 'Gagal';
+      const retryable = isRetryableError(msg);
+
+      if (autoRetry && retryable && attempt < maxAutoRetry) {
+        const waitMs = AUTO_RETRY_BASE_DELAY * attempt;
+        entry.errorMsg = `${msg} — coba ulang otomatis (${attempt}/${maxAutoRetry})...`;
+        renderFiles();
+        console.warn(`[Retry ${attempt}/${maxAutoRetry}] ${entry.originalName}: ${msg}`);
+        await sleep(waitMs);
+        continue;
+      }
+
+      console.error('Gagal proses', entry.originalName, err);
+      entry.status = 'error';
+      entry.errorMsg = msg;
+      entry.retryCount = attempt - 1;
+      renderFiles();
+      return;
     }
-
-    const resultBlob = await response.blob();
-    entry.resultBlob = resultBlob;
-    entry.resultUrl = URL.createObjectURL(resultBlob);
-    entry.status = 'success';
-  } catch (err) {
-    console.error('Gagal proses', entry.originalName, err);
-    entry.status = 'error';
-    entry.errorMsg = err.message || 'Gagal';
   }
-  renderFiles();
 }
 
 async function processAll() {
@@ -391,12 +447,15 @@ async function processAll() {
   }
 
   processBtn.disabled = true;
+  retryBtn.disabled = true;
   progressBar.classList.add('active');
   progressFill.style.width = '0%';
 
-  // Proses sekuensial agar tidak kena rate limit
+  let done = 0;
   for (const entry of pending) {
-    await processOne(entry);
+    await processOne(entry, { autoRetry: true, maxAutoRetry: AUTO_RETRY_MAX });
+    done++;
+    progressFill.style.width = ((done / pending.length) * 100) + '%';
   }
 
   progressBar.classList.remove('active');
@@ -406,7 +465,43 @@ async function processAll() {
   updateStats();
 }
 
+async function retryFailed() {
+  const failed = files.filter(f => f.status === 'error');
+  if (failed.length === 0) {
+    showStatus('Tidak ada file yang gagal', 'info');
+    return;
+  }
+
+  processBtn.disabled = true;
+  retryBtn.disabled = true;
+  progressBar.classList.add('active');
+  progressFill.style.width = '0%';
+
+  showStatus(`Mengulang ${failed.length} file yang gagal...`, 'info');
+
+  let done = 0;
+  for (const entry of failed) {
+    entry.status = 'pending';
+    entry.errorMsg = null;
+    renderFiles();
+
+    await processOne(entry, { autoRetry: true, maxAutoRetry: AUTO_RETRY_MAX });
+    done++;
+    progressFill.style.width = ((done / failed.length) * 100) + '%';
+  }
+
+  progressBar.classList.remove('active');
+  const nowSuccess = files.filter(f => f.status === 'success').length;
+  const stillError = files.filter(f => f.status === 'error').length;
+  showStatus(
+    `Retry selesai! Total berhasil: ${nowSuccess}, masih gagal: ${stillError}`,
+    stillError > 0 ? 'error' : 'success'
+  );
+  updateStats();
+}
+
 processBtn.addEventListener('click', processAll);
+retryBtn.addEventListener('click', retryFailed);
 
 // ===== DOWNLOAD =====
 function downloadSingle(id) {
@@ -416,7 +511,7 @@ function downloadSingle(id) {
   const url = URL.createObjectURL(entry.resultBlob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = entry.baseName + '.png'; // nama tetap, ekstensi .png
+  a.download = entry.baseName + '.png';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -466,7 +561,6 @@ function removeFile(id) {
   if (idx === -1) return;
   const entry = files[idx];
 
-  // Bebaskan memory
   if (entry.previewUrl) URL.revokeObjectURL(entry.previewUrl);
   if (entry.resultUrl) URL.revokeObjectURL(entry.resultUrl);
 
@@ -490,7 +584,6 @@ function clearAll() {
 
 clearBtn.addEventListener('click', clearAll);
 
-// Delegasi event untuk tombol remove & download per-item
 fileListEl.addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-action]');
   if (!btn) return;
@@ -499,7 +592,6 @@ fileListEl.addEventListener('click', (e) => {
   else if (btn.dataset.action === 'download') downloadSingle(id);
 });
 
-// Bebaskan memory saat tab ditutup
 window.addEventListener('beforeunload', () => {
   files.forEach(entry => {
     if (entry.previewUrl) URL.revokeObjectURL(entry.previewUrl);
@@ -507,7 +599,6 @@ window.addEventListener('beforeunload', () => {
   });
 });
 
-// Init
 renderFiles();
 </script>
 </body>
