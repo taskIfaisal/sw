@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Batch Remove Background</title>
+<title>Batch Remove Background + Green BG</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
@@ -43,6 +43,8 @@
   .btn-primary:hover:not(:disabled) { background: #45a049; }
   .btn-retry { background: #FF9800; color: white; }
   .btn-retry:hover:not(:disabled) { background: #F57C00; }
+  .btn-green { background: #015b06; color: white; border: 1px solid #0a8c10; }
+  .btn-green:hover:not(:disabled) { background: #0a8c10; }
   .btn-secondary { background: #333; color: #eee; }
   .btn-secondary:hover:not(:disabled) { background: #444; }
   .btn-danger { background: #f44336; color: white; }
@@ -69,7 +71,7 @@
 
   .file-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 12px;
     margin-top: 15px;
   }
@@ -84,6 +86,13 @@
     width: 100%; aspect-ratio: 1/1; background: #222;
     display: flex; align-items: center; justify-content: center;
     overflow: hidden;
+    background-image:
+      linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
+      linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
+      linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
   }
   .file-item .thumb img {
     max-width: 100%; max-height: 100%; object-fit: contain;
@@ -108,6 +117,11 @@
   .status.processing { color: #FF9800; }
   .status.success { color: #4CAF50; }
   .status.error { color: #f44336; }
+  .file-item .bg-badge {
+    font-size: 9px; padding: 2px 6px; border-radius: 4px;
+    display: inline-block; margin-top: 4px;
+    background: #015b06; color: #b6ffbb;
+  }
 
   .file-item .remove-btn {
     position: absolute; top: 5px; right: 5px;
@@ -119,15 +133,21 @@
   }
   .file-item .remove-btn:hover { background: #d32f2f; }
 
-  .file-item .download-btn {
+  .file-item .mini-actions {
     position: absolute; top: 5px; left: 5px;
+    display: flex; gap: 4px; z-index: 2;
+  }
+  .file-item .mini-actions button {
     width: 24px; height: 24px; border-radius: 50%;
-    background: rgba(33,150,243,0.9); color: white;
     border: none; font-size: 12px;
     display: flex; align-items: center; justify-content: center;
-    padding: 0; cursor: pointer; z-index: 2;
+    padding: 0; cursor: pointer;
+    color: white;
   }
-  .file-item .download-btn:hover { background: #1976D2; }
+  .file-item .btn-mini-green { background: rgba(1,91,6,0.95); border: 1px solid #0a8c10; }
+  .file-item .btn-mini-green:hover { background: #0a8c10; }
+  .file-item .btn-mini-download { background: rgba(33,150,243,0.95); }
+  .file-item .btn-mini-download:hover { background: #1976D2; }
 
   .empty-state {
     text-align: center; padding: 40px 20px; color: #666;
@@ -142,12 +162,37 @@
   .status-bar.info { background: #1a2a3a; color: #64b5f6; }
   .status-bar.success { background: #1a2e1a; color: #81c784; }
   .status-bar.error { background: #2e1a1a; color: #e57373; }
+
+  /* Modal pilihan unduh */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    display: none; align-items: center; justify-content: center;
+    z-index: 100; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #1a1a1a; border: 1px solid #333; border-radius: 12px;
+    padding: 24px; max-width: 380px; width: 100%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  }
+  .modal-box h3 { margin: 0 0 8px; font-size: 17px; }
+  .modal-box p { margin: 0 0 18px; font-size: 13px; color: #aaa; }
+  .modal-actions { display: flex; flex-direction: column; gap: 10px; }
+  .modal-actions button {
+    width: 100%; padding: 12px; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .modal-close {
+    margin-top: 14px; background: transparent; color: #888;
+    border: 1px solid #333; width: 100%;
+  }
+  .modal-close:hover { background: #222; color: #ccc; }
 </style>
 </head>
 <body>
 <div class="container">
   <h1>🧹 Batch Remove Background</h1>
-  <div class="subtitle">Upload banyak gambar sekaligus → background dihapus → hasil PNG dengan nama file tetap sama</div>
+  <div class="subtitle">Hapus background → pilih unduh transparan (PNG) atau dengan background hijau #015b06</div>
 
   <div class="upload-box" id="uploadBox">
     <div class="icon">📁</div>
@@ -159,7 +204,8 @@
   <div class="toolbar">
     <button class="btn-primary" id="processBtn" disabled>🚀 Proses Semua</button>
     <button class="btn-retry" id="retryBtn" disabled>🔄 Ulangi Gagal</button>
-    <button class="btn-download" id="downloadAllBtn" disabled>⬇️ Unduh Semua (ZIP)</button>
+    <button class="btn-green" id="applyGreenAllBtn" disabled>🎨 Pasang BG #015b06 (Semua)</button>
+    <button class="btn-download" id="downloadAllBtn" disabled>⬇️ Unduh Semua</button>
     <button class="btn-danger" id="clearBtn" disabled>🗑️ Hapus Semua</button>
   </div>
 
@@ -168,6 +214,7 @@
     <span>Berhasil: <b id="statSuccess">0</b></span>
     <span class="stat-error">Gagal: <b id="statError">0</b></span>
     <span>Diproses: <b id="statProcessing">0</b></span>
+    <span>BG Hijau: <b id="statGreen">0</b></span>
   </div>
 
   <div class="progress-bar" id="progressBar">
@@ -180,17 +227,33 @@
   <div class="empty-state" id="emptyState">Belum ada file. Upload gambar dulu ya 👆</div>
 </div>
 
+<!-- Modal pilihan unduh -->
+<div class="modal-overlay" id="downloadModal">
+  <div class="modal-box">
+    <h3>⬇️ Pilih Format Unduhan</h3>
+    <p id="downloadModalDesc">Pilih format file yang ingin diunduh.</p>
+    <div class="modal-actions">
+      <button class="btn-download" id="dlTransparent">🖼️ Unduh PNG (Transparan)</button>
+      <button class="btn-green" id="dlGreen">🟩 Unduh PNG (Background #015b06)</button>
+    </div>
+    <button class="modal-close" id="dlCancel">Batal</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script>
-// ===== KONFIGURASI API REMOVE.BG =====
+// ===== KONFIGURASI =====
 const REMOVE_BG_API_KEY = '2crJY3ybEroko55EEQeVFh9C';
 const REMOVE_BG_API_URL = 'https://api.remove.bg/v1.0/removebg';
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const AUTO_RETRY_MAX = 3;              // jumlah retry otomatis
-const AUTO_RETRY_BASE_DELAY = 1500;    // jeda dasar (ms) — akan dikali attempt
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const AUTO_RETRY_MAX = 3;
+const AUTO_RETRY_BASE_DELAY = 1500;
+const GREEN_BG = '#015b06';
 
 // ===== STATE =====
-let files = []; // { id, originalName, baseName, file, status, resultBlob, resultUrl, previewUrl, errorMsg, retryCount }
+let files = [];
+// entry: { id, originalName, baseName, file, status, resultBlob, resultUrl,
+//          greenBlob, greenUrl, hasGreen, previewUrl, errorMsg, retryCount }
 
 // ===== ELEMEN =====
 const uploadBox = document.getElementById('uploadBox');
@@ -199,6 +262,7 @@ const fileListEl = document.getElementById('fileList');
 const emptyState = document.getElementById('emptyState');
 const processBtn = document.getElementById('processBtn');
 const retryBtn = document.getElementById('retryBtn');
+const applyGreenAllBtn = document.getElementById('applyGreenAllBtn');
 const downloadAllBtn = document.getElementById('downloadAllBtn');
 const clearBtn = document.getElementById('clearBtn');
 const stats = document.getElementById('stats');
@@ -206,61 +270,58 @@ const statTotal = document.getElementById('statTotal');
 const statSuccess = document.getElementById('statSuccess');
 const statError = document.getElementById('statError');
 const statProcessing = document.getElementById('statProcessing');
+const statGreen = document.getElementById('statGreen');
 const progressBar = document.getElementById('progressBar');
 const progressFill = document.getElementById('progressFill');
 const statusBar = document.getElementById('statusBar');
+const downloadModal = document.getElementById('downloadModal');
+const downloadModalDesc = document.getElementById('downloadModalDesc');
+const dlTransparent = document.getElementById('dlTransparent');
+const dlGreen = document.getElementById('dlGreen');
+const dlCancel = document.getElementById('dlCancel');
+
+// State modal download
+let downloadMode = null; // { type: 'single', id } | { type: 'all' }
 
 // ===== UTILITAS =====
 function showStatus(msg, type = 'info') {
   statusBar.textContent = msg;
   statusBar.className = 'status-bar show ' + type;
   clearTimeout(showStatus._t);
-  showStatus._t = setTimeout(() => {
-    statusBar.classList.remove('show');
-  }, 5000);
+  showStatus._t = setTimeout(() => statusBar.classList.remove('show'), 5000);
 }
-
-function formatSize(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-}
-
-function getBaseName(filename) {
-  return filename.replace(/\.[^/.]+$/, '');
-}
-
+function getBaseName(filename) { return filename.replace(/\.[^/.]+$/, ''); }
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-// Deteksi error yang bersifat sementara (jaringan / rate limit) → layak di-retry
 function isRetryableError(msg) {
   if (!msg) return false;
   const m = msg.toLowerCase();
-  return m.includes('failed to fetch') ||
-         m.includes('networkerror') ||
-         m.includes('network') ||
-         m.includes('load failed') ||
-         m.includes('terlalu banyak') ||
-         m.includes('timeout');
+  return m.includes('failed to fetch') || m.includes('networkerror') ||
+         m.includes('network') || m.includes('load failed') ||
+         m.includes('terlalu banyak') || m.includes('timeout');
 }
 
+// ===== RENDER =====
 function updateStats() {
   const total = files.length;
   const success = files.filter(f => f.status === 'success').length;
   const error = files.filter(f => f.status === 'error').length;
   const processing = files.filter(f => f.status === 'processing').length;
+  const green = files.filter(f => f.hasGreen).length;
 
   statTotal.textContent = total;
   statSuccess.textContent = success;
   statError.textContent = error;
   statProcessing.textContent = processing;
+  statGreen.textContent = green;
 
   stats.style.display = total > 0 ? 'flex' : 'none';
   emptyState.style.display = total > 0 ? 'none' : 'block';
 
   processBtn.disabled = !files.some(f => f.status === 'pending' || f.status === 'error');
   retryBtn.disabled = error === 0 || processing > 0;
-  downloadAllBtn.disabled = success === 0;
+  applyGreenAllBtn.disabled = success === 0 || processing > 0;
+  downloadAllBtn.disabled = success === 0 || processing > 0;
   clearBtn.disabled = files.length === 0;
 
   const done = success + error;
@@ -268,7 +329,6 @@ function updateStats() {
   progressFill.style.width = pct + '%';
 }
 
-// ===== RENDER =====
 function renderFiles() {
   fileListEl.innerHTML = '';
   files.forEach(f => {
@@ -276,9 +336,9 @@ function renderFiles() {
     item.className = 'file-item ' + f.status;
     item.dataset.id = f.id;
 
-    const thumbSrc = f.resultUrl || f.previewUrl || '';
+    const thumbSrc = f.hasGreen && f.greenUrl ? f.greenUrl
+                   : (f.resultUrl || f.previewUrl || '');
     const retryInfo = (f.retryCount && f.retryCount > 0) ? ` (retry ${f.retryCount}x)` : '';
-
     const statusText = {
       pending: 'Menunggu...',
       processing: 'Memproses...',
@@ -287,23 +347,28 @@ function renderFiles() {
     }[f.status];
 
     let thumbContent = '';
-    if (f.status === 'processing') {
-      thumbContent = '<div class="spinner"></div>';
-    } else if (thumbSrc) {
-      thumbContent = `<img src="${thumbSrc}" alt="">`;
-    }
+    if (f.status === 'processing') thumbContent = '<div class="spinner"></div>';
+    else if (thumbSrc) thumbContent = `<img src="${thumbSrc}" alt="">`;
 
-    const downloadBtn = f.status === 'success'
-      ? `<button class="download-btn" data-action="download" data-id="${f.id}" title="Unduh">⬇</button>`
-      : '';
+    const greenBadge = f.hasGreen ? `<div class="bg-badge">BG #015b06</div>` : '';
+
+    const miniActions = f.status === 'success' ? `
+      <div class="mini-actions">
+        <button class="btn-mini-green" data-action="green" data-id="${f.id}" title="${f.hasGreen ? 'Hapus BG hijau' : 'Pasang BG #015b06'}">
+          ${f.hasGreen ? '↺' : '🎨'}
+        </button>
+        <button class="btn-mini-download" data-action="download" data-id="${f.id}" title="Unduh">⬇</button>
+      </div>
+    ` : '';
 
     item.innerHTML = `
       <button class="remove-btn" data-action="remove" data-id="${f.id}" title="Hapus">✕</button>
-      ${downloadBtn}
+      ${miniActions}
       <div class="thumb">${thumbContent}</div>
       <div class="info">
         <div class="name" title="${f.originalName}">${f.baseName}.png</div>
         <div class="status ${f.status}">${statusText}</div>
+        ${greenBadge}
       </div>
     `;
     fileListEl.appendChild(item);
@@ -314,67 +379,44 @@ function renderFiles() {
 // ===== UPLOAD =====
 function addFiles(fileList) {
   const arr = Array.from(fileList).filter(f => f.type.startsWith('image/'));
-  if (arr.length === 0) {
-    showStatus('Tidak ada file gambar valid', 'error');
-    return;
-  }
+  if (arr.length === 0) { showStatus('Tidak ada file gambar valid', 'error'); return; }
 
   let added = 0, skippedSize = 0, skippedDup = 0;
   arr.forEach(file => {
-    if (file.size > MAX_FILE_SIZE) {
-      skippedSize++;
-      return;
-    }
+    if (file.size > MAX_FILE_SIZE) { skippedSize++; return; }
     const baseName = getBaseName(file.name);
-    if (files.some(f => f.baseName === baseName)) {
-      skippedDup++;
-      return;
-    }
+    if (files.some(f => f.baseName === baseName)) { skippedDup++; return; }
 
     const id = 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
     files.push({
-      id,
-      originalName: file.name,
-      baseName: baseName,
-      file,
+      id, originalName: file.name, baseName, file,
       status: 'pending',
-      resultBlob: null,
-      resultUrl: null,
+      resultBlob: null, resultUrl: null,
+      greenBlob: null, greenUrl: null, hasGreen: false,
       previewUrl: URL.createObjectURL(file),
-      errorMsg: null,
-      retryCount: 0
+      errorMsg: null, retryCount: 0
     });
     added++;
   });
 
   renderFiles();
-
   const msgs = [];
   if (added > 0) msgs.push(`${added} file ditambahkan`);
   if (skippedSize > 0) msgs.push(`${skippedSize} dilewati (>5MB)`);
   if (skippedDup > 0) msgs.push(`${skippedDup} duplikat`);
-  if (msgs.length > 0) {
-    showStatus(msgs.join(', '), added > 0 ? 'success' : 'error');
-  }
+  if (msgs.length > 0) showStatus(msgs.join(', '), added > 0 ? 'success' : 'error');
 }
 
 uploadBox.addEventListener('click', () => fileInput.click());
-uploadBox.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  uploadBox.classList.add('dragover');
-});
+uploadBox.addEventListener('dragover', (e) => { e.preventDefault(); uploadBox.classList.add('dragover'); });
 uploadBox.addEventListener('dragleave', () => uploadBox.classList.remove('dragover'));
 uploadBox.addEventListener('drop', (e) => {
-  e.preventDefault();
-  uploadBox.classList.remove('dragover');
+  e.preventDefault(); uploadBox.classList.remove('dragover');
   addFiles(e.dataTransfer.files);
 });
-fileInput.addEventListener('change', (e) => {
-  addFiles(e.target.files);
-  fileInput.value = '';
-});
+fileInput.addEventListener('change', (e) => { addFiles(e.target.files); fileInput.value = ''; });
 
-// ===== PROSES =====
+// ===== PROSES REMOVE BG =====
 async function processOne(entry, opts = {}) {
   const { autoRetry = true, maxAutoRetry = AUTO_RETRY_MAX } = opts;
 
@@ -414,7 +456,7 @@ async function processOne(entry, opts = {}) {
       entry.status = 'success';
       entry.retryCount = attempt - 1;
       renderFiles();
-      return; // sukses → keluar loop
+      return;
 
     } catch (err) {
       const msg = err.message || 'Gagal';
@@ -441,19 +483,14 @@ async function processOne(entry, opts = {}) {
 
 async function processAll() {
   const pending = files.filter(f => f.status === 'pending' || f.status === 'error');
-  if (pending.length === 0) {
-    showStatus('Tidak ada file yang perlu diproses', 'info');
-    return;
-  }
+  if (pending.length === 0) { showStatus('Tidak ada file yang perlu diproses', 'info'); return; }
 
-  processBtn.disabled = true;
-  retryBtn.disabled = true;
-  progressBar.classList.add('active');
-  progressFill.style.width = '0%';
+  processBtn.disabled = true; retryBtn.disabled = true;
+  progressBar.classList.add('active'); progressFill.style.width = '0%';
 
   let done = 0;
   for (const entry of pending) {
-    await processOne(entry, { autoRetry: true, maxAutoRetry: AUTO_RETRY_MAX });
+    await processOne(entry);
     done++;
     progressFill.style.width = ((done / pending.length) * 100) + '%';
   }
@@ -467,25 +504,17 @@ async function processAll() {
 
 async function retryFailed() {
   const failed = files.filter(f => f.status === 'error');
-  if (failed.length === 0) {
-    showStatus('Tidak ada file yang gagal', 'info');
-    return;
-  }
+  if (failed.length === 0) { showStatus('Tidak ada file yang gagal', 'info'); return; }
 
-  processBtn.disabled = true;
-  retryBtn.disabled = true;
-  progressBar.classList.add('active');
-  progressFill.style.width = '0%';
-
+  processBtn.disabled = true; retryBtn.disabled = true;
+  progressBar.classList.add('active'); progressFill.style.width = '0%';
   showStatus(`Mengulang ${failed.length} file yang gagal...`, 'info');
 
   let done = 0;
   for (const entry of failed) {
-    entry.status = 'pending';
-    entry.errorMsg = null;
+    entry.status = 'pending'; entry.errorMsg = null;
     renderFiles();
-
-    await processOne(entry, { autoRetry: true, maxAutoRetry: AUTO_RETRY_MAX });
+    await processOne(entry);
     done++;
     progressFill.style.width = ((done / failed.length) * 100) + '%';
   }
@@ -493,77 +522,221 @@ async function retryFailed() {
   progressBar.classList.remove('active');
   const nowSuccess = files.filter(f => f.status === 'success').length;
   const stillError = files.filter(f => f.status === 'error').length;
-  showStatus(
-    `Retry selesai! Total berhasil: ${nowSuccess}, masih gagal: ${stillError}`,
-    stillError > 0 ? 'error' : 'success'
-  );
+  showStatus(`Retry selesai! Berhasil: ${nowSuccess}, masih gagal: ${stillError}`,
+    stillError > 0 ? 'error' : 'success');
   updateStats();
 }
 
 processBtn.addEventListener('click', processAll);
 retryBtn.addEventListener('click', retryFailed);
 
-// ===== DOWNLOAD =====
-function downloadSingle(id) {
-  const entry = files.find(f => f.id === id);
-  if (!entry || !entry.resultBlob) return;
+// ===== BACKGROUND HIJAU =====
+// Ubah blob PNG transparan → PNG dengan background #015b06
+function applyGreenBackground(blob, hexColor) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
 
-  const url = URL.createObjectURL(entry.resultBlob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = entry.baseName + '.png';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+        // Isi background hijau
+        ctx.fillStyle = hexColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Gambar objek transparan di atasnya
+        ctx.drawImage(img, 0, 0);
+
+        canvas.toBlob(outBlob => {
+          URL.revokeObjectURL(url);
+          if (outBlob) resolve(outBlob);
+          else reject(new Error('Gagal membuat blob'));
+        }, 'image/png');
+      } catch (e) {
+        URL.revokeObjectURL(url);
+        reject(e);
+      }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Gagal load gambar')); };
+    img.src = url;
+  });
 }
 
-async function downloadAllZip() {
-  const done = files.filter(f => f.status === 'success' && f.resultBlob);
-  if (done.length === 0) {
-    showStatus('Belum ada file yang berhasil diproses', 'error');
+async function toggleGreenForEntry(entry) {
+  if (!entry.resultBlob) { showStatus('File belum diproses', 'error'); return; }
+
+  // Jika sudah hijau → hapus (kembali transparan)
+  if (entry.hasGreen) {
+    if (entry.greenUrl) URL.revokeObjectURL(entry.greenUrl);
+    entry.greenBlob = null;
+    entry.greenUrl = null;
+    entry.hasGreen = false;
+    renderFiles();
+    showStatus(`BG hijau dihapus: ${entry.baseName}.png`, 'info');
     return;
   }
 
+  // Pasang hijau
+  try {
+    const greenBlob = await applyGreenBackground(entry.resultBlob, GREEN_BG);
+    if (entry.greenUrl) URL.revokeObjectURL(entry.greenUrl);
+    entry.greenBlob = greenBlob;
+    entry.greenUrl = URL.createObjectURL(greenBlob);
+    entry.hasGreen = true;
+    renderFiles();
+    showStatus(`BG #015b06 dipasang: ${entry.baseName}.png`, 'success');
+  } catch (err) {
+    console.error(err);
+    showStatus('Gagal pasang BG: ' + err.message, 'error');
+  }
+}
+
+async function applyGreenToAll() {
+  const targets = files.filter(f => f.status === 'success' && !f.hasGreen);
+  if (targets.length === 0) {
+    showStatus('Semua file sukses sudah punya BG hijau (atau belum ada sukses)', 'info');
+    return;
+  }
+
+  applyGreenAllBtn.disabled = true;
+  progressBar.classList.add('active'); progressFill.style.width = '0%';
+
+  let done = 0;
+  for (const entry of targets) {
+    await toggleGreenForEntry(entry);
+    done++;
+    progressFill.style.width = ((done / targets.length) * 100) + '%';
+  }
+
+  progressBar.classList.remove('active');
+  showStatus(`BG #015b06 dipasang ke ${targets.length} gambar`, 'success');
+  updateStats();
+}
+
+applyGreenAllBtn.addEventListener('click', applyGreenToAll);
+
+// ===== DOWNLOAD (dengan pilihan) =====
+function openDownloadModal(mode) {
+  downloadMode = mode;
+  if (mode.type === 'single') {
+    const entry = files.find(f => f.id === mode.id);
+    if (!entry) return;
+    downloadModalDesc.textContent = `File: ${entry.baseName}.png — pilih format unduhan:`;
+  } else {
+    const okCount = files.filter(f => f.status === 'success').length;
+    downloadModalDesc.textContent = `Akan mengunduh ZIP berisi ${okCount} gambar — pilih format:`;
+  }
+  downloadModal.classList.add('show');
+}
+
+function closeDownloadModal() {
+  downloadModal.classList.remove('show');
+  downloadMode = null;
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function doDownloadSingle(useGreen) {
+  if (!downloadMode || downloadMode.type !== 'single') return;
+  const entry = files.find(f => f.id === downloadMode.id);
+  if (!entry) return;
+
+  if (useGreen) {
+    if (!entry.hasGreen) {
+      // Buat on-the-fly jika belum dipasang
+      try {
+        const gb = await applyGreenBackground(entry.resultBlob, GREEN_BG);
+        downloadBlob(gb, entry.baseName + '_bg.png');
+        showStatus(`Diunduh: ${entry.baseName}_bg.png`, 'success');
+      } catch (e) { showStatus('Gagal: ' + e.message, 'error'); }
+    } else {
+      downloadBlob(entry.greenBlob, entry.baseName + '_bg.png');
+      showStatus(`Diunduh: ${entry.baseName}_bg.png`, 'success');
+    }
+  } else {
+    downloadBlob(entry.resultBlob, entry.baseName + '.png');
+    showStatus(`Diunduh: ${entry.baseName}.png`, 'success');
+  }
+  closeDownloadModal();
+}
+
+async function doDownloadAll(useGreen) {
+  if (!downloadMode || downloadMode.type !== 'all') return;
+  const done = files.filter(f => f.status === 'success' && f.resultBlob);
+  if (done.length === 0) { showStatus('Belum ada file berhasil', 'error'); return; }
+
   downloadAllBtn.disabled = true;
   downloadAllBtn.textContent = '⏳ Membuat ZIP...';
+  closeDownloadModal();
 
   try {
     const zip = new JSZip();
-    done.forEach(entry => {
-      zip.file(entry.baseName + '.png', entry.resultBlob);
-    });
+
+    for (let i = 0; i < done.length; i++) {
+      const entry = done[i];
+      progressBar.classList.add('active');
+      progressFill.style.width = (((i + 1) / done.length) * 100) + '%';
+
+      if (useGreen) {
+        let gb = entry.greenBlob;
+        if (!gb) {
+          try { gb = await applyGreenBackground(entry.resultBlob, GREEN_BG); }
+          catch (e) { console.warn('Skip green for', entry.baseName); continue; }
+        }
+        zip.file(entry.baseName + '_bg.png', gb);
+      } else {
+        zip.file(entry.baseName + '.png', entry.resultBlob);
+      }
+    }
 
     const blob = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'removed-background-' + Date.now() + '.zip';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-    showStatus(`ZIP berisi ${done.length} gambar berhasil dibuat & diunduh`, 'success');
+    const suffix = useGreen ? '-green-bg' : '-transparent';
+    downloadBlob(blob, `removed-${suffix}-${Date.now()}.zip`);
+    showStatus(`ZIP berisi ${done.length} gambar berhasil diunduh`, 'success');
   } catch (err) {
     console.error(err);
     showStatus('Gagal membuat ZIP: ' + err.message, 'error');
   } finally {
+    progressBar.classList.remove('active');
     downloadAllBtn.disabled = false;
-    downloadAllBtn.textContent = '⬇️ Unduh Semua (ZIP)';
+    downloadAllBtn.textContent = '⬇️ Unduh Semua';
   }
 }
 
-downloadAllBtn.addEventListener('click', downloadAllZip);
+dlTransparent.addEventListener('click', () => {
+  if (!downloadMode) return;
+  if (downloadMode.type === 'single') doDownloadSingle(false);
+  else doDownloadAll(false);
+});
+dlGreen.addEventListener('click', () => {
+  if (!downloadMode) return;
+  if (downloadMode.type === 'single') doDownloadSingle(true);
+  else doDownloadAll(true);
+});
+dlCancel.addEventListener('click', closeDownloadModal);
+downloadModal.addEventListener('click', (e) => {
+  if (e.target === downloadModal) closeDownloadModal();
+});
+
+downloadAllBtn.addEventListener('click', () => openDownloadModal({ type: 'all' }));
 
 // ===== REMOVE =====
 function removeFile(id) {
   const idx = files.findIndex(f => f.id === id);
   if (idx === -1) return;
   const entry = files[idx];
-
   if (entry.previewUrl) URL.revokeObjectURL(entry.previewUrl);
   if (entry.resultUrl) URL.revokeObjectURL(entry.resultUrl);
-
+  if (entry.greenUrl) URL.revokeObjectURL(entry.greenUrl);
   files.splice(idx, 1);
   renderFiles();
   showStatus('File dihapus dari list', 'info');
@@ -572,10 +745,10 @@ function removeFile(id) {
 function clearAll() {
   if (files.length === 0) return;
   if (!confirm(`Hapus semua ${files.length} file dari list?`)) return;
-
   files.forEach(entry => {
     if (entry.previewUrl) URL.revokeObjectURL(entry.previewUrl);
     if (entry.resultUrl) URL.revokeObjectURL(entry.resultUrl);
+    if (entry.greenUrl) URL.revokeObjectURL(entry.greenUrl);
   });
   files = [];
   renderFiles();
@@ -588,14 +761,19 @@ fileListEl.addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-action]');
   if (!btn) return;
   const id = btn.dataset.id;
-  if (btn.dataset.action === 'remove') removeFile(id);
-  else if (btn.dataset.action === 'download') downloadSingle(id);
+  const action = btn.dataset.action;
+  if (action === 'remove') removeFile(id);
+  else if (action === 'green') {
+    const entry = files.find(f => f.id === id);
+    if (entry) toggleGreenForEntry(entry);
+  } else if (action === 'download') openDownloadModal({ type: 'single', id });
 });
 
 window.addEventListener('beforeunload', () => {
   files.forEach(entry => {
     if (entry.previewUrl) URL.revokeObjectURL(entry.previewUrl);
     if (entry.resultUrl) URL.revokeObjectURL(entry.resultUrl);
+    if (entry.greenUrl) URL.revokeObjectURL(entry.greenUrl);
   });
 });
 
